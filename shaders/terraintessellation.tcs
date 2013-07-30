@@ -1,0 +1,120 @@
+#version 400
+
+// Only one vertex per patch (lower-left corner)
+layout( vertices = 1 ) out;
+
+// xz position from vertex shader
+in terrainVertex {
+    vec2 position;
+} In[];
+
+// xz position to tessellation evaluation shader
+out terrainVertex {
+    vec2 position;
+} Out[];
+
+uniform sampler2D heightMap;
+
+// Fully tessellated!
+const float tessellationLevel = 64.0;
+
+// The number of triangles created per height-map texel
+uniform int maxTrianglesPerTexel = 10;
+
+// Distance between each tessellation point at max tess level
+uniform float horizontalScale = 10.0;
+
+// Vertical scale to multiply height samples by
+uniform float verticalScale = 0.4;
+
+// Transformation matrix
+uniform mat4 mvp;
+
+uniform float pixelsPerTriangleEdge = 12.0;
+
+uniform vec2 viewportSize;
+
+const float maxTessLevel = 64.0;
+
+// Determine if patch is potentially visible or not based upon the
+// extent of it's 4 edges. Ignores vertical extent of internal points!
+// A better way would be to pass in the maximum vertical extent of
+// all points in this patch as an additional per-vertex attribute.
+// We can then construct a axis-aligned bounding box for this patch
+// and test that against the view frustrum
+bool isEdgeInViewFrustum( const in vec4 p1, const in vec4 p2 )
+{
+    return !( ( p1.x < -p1.w && p2.x < -p2.w )
+           || ( p1.x >  p1.w && p2.x >  p2.w )
+           || ( p1.y < -p1.w && p2.y < -p2.w )
+           || ( p1.y >  p1.w && p2.y >  p2.w )
+           || ( p1.z < -p1.w && p2.z < -p2.w )
+           || ( p1.z >  p1.w && p2.z >  p2.w ) );
+}
+
+// Calculate a fractional tessellation level from the clip-space positions
+// of 2 vertices making up one edge of the patch, v1 and v2. The function
+// works by constructing a sphere that encapsulates the edge and projecting
+// this into screen space. We then use a target number of pixels per
+// triangle edge to calculate the required tessellation level.
+float calcTessellationLevel( const in vec4 v1, const in vec4 v2 )
+{
+    vec4 p1 = 0.5 * ( v1 + v2 );
+    vec4 p2 = p1;
+    p2.y += distance( v1, v2 );
+    p1 = p1 / p1.w;
+    p2 = p2 / p2.w;
+    float l = length( 0.5 * viewportSize * ( p1.xy - p2.xy ) );
+    return clamp( l / pixelsPerTriangleEdge, 1.0, 64.0 );
+}
+
+void main()
+{
+    // Pass along the vertex position unmodified
+    Out[gl_InvocationID].position = In[gl_InvocationID].position;
+
+    // Calculate extent of this patch in texture coords [0,1]
+    vec2 patchExtent = maxTessLevel / ( textureSize( heightMap, 0 ) * maxTrianglesPerTexel );
+
+    vec2 patchCornersXZ[4];
+    patchCornersXZ[0] = Out[gl_InvocationID].position;                              // min x, min z
+    patchCornersXZ[1] = Out[gl_InvocationID].position + vec2( 0.0, patchExtent.y ); // min x, max z
+    patchCornersXZ[2] = Out[gl_InvocationID].position + vec2( patchExtent.x, 0.0 ); // max x, min z
+    patchCornersXZ[3] = Out[gl_InvocationID].position + patchExtent;                // max x, max z
+
+    vec4 clipSpacePatchCorners[4];
+    for ( int i = 0; i < 4; i++ )
+    {
+        vec4 position;
+        position.xz = patchCornersXZ[i] * horizontalScale;
+        position.y = verticalScale * texture( heightMap, patchCornersXZ[i] ).r;
+        position.w = 1.0;
+
+        // Transform to clip-space
+        clipSpacePatchCorners[i] = mvp * position;
+    }
+
+    // Determine if we can cull this patch
+    if ( isEdgeInViewFrustum( clipSpacePatchCorners[0], clipSpacePatchCorners[2] )
+      || isEdgeInViewFrustum( clipSpacePatchCorners[0], clipSpacePatchCorners[1] )
+      || isEdgeInViewFrustum( clipSpacePatchCorners[1], clipSpacePatchCorners[3] )
+      || isEdgeInViewFrustum( clipSpacePatchCorners[2], clipSpacePatchCorners[3] ) )
+    {
+        gl_TessLevelOuter[0] = calcTessellationLevel( clipSpacePatchCorners[0], clipSpacePatchCorners[1] ); // x = min,   z = const
+        gl_TessLevelOuter[1] = calcTessellationLevel( clipSpacePatchCorners[0], clipSpacePatchCorners[2] ); // x = const, z = min
+        gl_TessLevelOuter[2] = calcTessellationLevel( clipSpacePatchCorners[2], clipSpacePatchCorners[3] ); // x = max,   z = const
+        gl_TessLevelOuter[3] = calcTessellationLevel( clipSpacePatchCorners[1], clipSpacePatchCorners[3] ); // x = const, z = max
+        gl_TessLevelInner[0] = max( gl_TessLevelOuter[1], gl_TessLevelOuter[3] ); // z = const
+        gl_TessLevelInner[1] = max( gl_TessLevelOuter[0], gl_TessLevelOuter[2] ); // x = const
+    }
+    else
+    {
+        // Set the tessellation levels to 0 to cull the patch
+        gl_TessLevelOuter[0] = 0.0;
+        gl_TessLevelOuter[1] = 0.0;
+        gl_TessLevelOuter[2] = 0.0;
+        gl_TessLevelOuter[3] = 0.0;
+        gl_TessLevelInner[0] = 0.0;
+        gl_TessLevelInner[1] = 0.0;
+    }
+}
