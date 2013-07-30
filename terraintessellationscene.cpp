@@ -398,8 +398,6 @@ void MapView::prepareVertexArrayObject()
         QOpenGLVertexArrayObject::Binder binder(&m_vao);
         QOpenGLShaderProgramPtr shader = m_material->shader();
 
-        qDebug() << shader.data();
-
         shader->bind();
         m_patchBuffer.bind();
         shader->enableAttributeArray("vertexPosition");
