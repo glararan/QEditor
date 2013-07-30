@@ -17,20 +17,20 @@ void LogHandler(QtMsgType type, const QMessageLogContext& context, const QString
     switch(type)
     {
         case QtDebugMsg:
-            text = QString("Debug (%s:%u, %s): %1").arg(context.file).arg(context.line).arg(context.function).arg(lMessage.constData());
+            text = QString("Debug (%1:%2, %3): %4").arg(context.file).arg(context.line).arg(context.function).arg(lMessage.constData());
             break;
 
         case QtWarningMsg:
-            text = QString("Warning (%s:%u, %s): %1").arg(context.file).arg(context.line).arg(context.function).arg(lMessage.constData());
+            text = QString("Warning (%1:%2, %3): %4").arg(context.file).arg(context.line).arg(context.function).arg(lMessage.constData());
             break;
 
         case QtCriticalMsg:
-            text = QString("Critical (%s:%u, %s): %1").arg(context.file).arg(context.line).arg(context.function).arg(lMessage.constData());
+            text = QString("Critical (%1:%2, %3): %4").arg(context.file).arg(context.line).arg(context.function).arg(lMessage.constData());
             break;
 
         case QtFatalMsg:
             {
-                text = QString("Fatal (%s:%u, %s): %1").arg(context.file).arg(context.line).arg(context.function).arg(lMessage.constData());
+                text = QString("Fatal (%1:%2, %3): %4").arg(context.file).arg(context.line).arg(context.function).arg(lMessage.constData());
                 abort();
             }
             break;
@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
 
-    //qInstallMessageHandler(LogHandler);
+    qInstallMessageHandler(LogHandler);
 
     MainWindow mw;
     mw.showMaximized();

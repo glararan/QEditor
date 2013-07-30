@@ -396,8 +396,6 @@ void MapView::SpeedMultiplier(float multiplier)
 {
     speed_mult = multiplier;
 
-    qDebug() << multiplier;
-
     if(speed_mult < 0.0f)
         speed_mult = 0.0f;
 
