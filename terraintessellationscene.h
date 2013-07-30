@@ -31,6 +31,7 @@ public:
     void setSideSpeed(float vx)     { m_v.setX(vx); }
     void setVerticalSpeed(float vy) { m_v.setY(vy); }
     void setForwardSpeed(float vz)  { m_v.setZ(vz); }
+    void setFieldOfView(float zoom) { camera_zoom += zoom; }
     void setViewCenterFixed(bool b) { m_viewCenterFixed = b; }
 
     // Camera orientation control
@@ -81,6 +82,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent* e);
     void mouseMoveEvent(QMouseEvent* e);
 
+    void wheelEvent(QWheelEvent* e);
     void timerEvent(QTimerEvent*);
 
 private:
@@ -104,6 +106,11 @@ private:
     bool  m_viewCenterFixed;
     float m_panAngle;
     float m_tiltAngle;
+    float camera_zoom;
+    float Lcamera_zoom; // last zoom value
+    float aspectRatio;
+    float nearPlane;
+    float farPlane;
 
     const float speed;
     float speed_mult;

@@ -20,6 +20,11 @@ MapView::MapView(QWidget* parent)
 , m_viewCenterFixed(false)
 , m_panAngle(0.0f)
 , m_tiltAngle(0.0f)
+, camera_zoom(25.0f)
+, Lcamera_zoom(camera_zoom)
+, aspectRatio(static_cast<float>(width()) / static_cast<float>(height()))
+, nearPlane(0.1f)
+, farPlane(128.0f)
 , speed(44.7f) // in m/s. Equivalent to 100 miles/hour)
 , speed_mult(1.0f)
 , m_patchBuffer(QOpenGLBuffer::VertexBuffer)
@@ -156,6 +161,14 @@ void MapView::update(float t)
         m_tiltAngle = 0.0f;
     }
 
+    // Update the camera perspective projection if camera zoom is changed
+    if(camera_zoom != Lcamera_zoom)
+    {
+        m_camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
+
+        Lcamera_zoom = camera_zoom;
+    }
+
     // Update status bar
     QString sbMessage = QString("speed multiplier: %1").arg(speed_mult);
     /*QString sbMessage = "Initialized!";
@@ -245,8 +258,8 @@ void MapView::resizeGL(int w, int h)
     m_viewportSize = QVector2D(float(w), float(h));
 
     // Update the projection matrix
-    float aspect = static_cast<float>(w) / static_cast<float>(h);
-    m_camera->setPerspectiveProjection(25.0f, aspect, 0.1f, 128.0f);
+    aspectRatio = static_cast<float>(w) / static_cast<float>(h);
+    m_camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 
     // Update the viewport matrix
     float w2 = w / 2.0f;
@@ -439,20 +452,34 @@ void MapView::keyPressEvent(QKeyEvent* e)
             exit(0);
             break;
 
-        case Qt::Key_D:
-            setSideSpeed(speed * speed_mult);
-            break;
-
-        case Qt::Key_A:
-            setSideSpeed(-speed * speed_mult);
-            break;
-
         case Qt::Key_W:
             setForwardSpeed(speed * speed_mult);
             break;
 
         case Qt::Key_S:
             setForwardSpeed(-speed * speed_mult);
+            break;
+
+        case Qt::Key_A:
+            setSideSpeed(-speed * speed_mult);
+            break;
+
+        case Qt::Key_D:
+            setSideSpeed(speed * speed_mult);
+            break;
+
+        case Qt::Key_Q:
+            {
+                setForwardSpeed(speed * speed_mult);
+                setSideSpeed(-speed * speed_mult);
+            }
+            break;
+
+        case Qt::Key_E:
+            {
+                setForwardSpeed(speed * speed_mult);
+                setSideSpeed(speed * speed_mult);
+            }
             break;
 
         case Qt::Key_Space:
@@ -542,14 +569,22 @@ void MapView::keyReleaseEvent(QKeyEvent* e)
 {
     switch (e->key())
     {
+        case Qt::Key_W:
+        case Qt::Key_S:
+            setForwardSpeed(0.0f);
+            break;
+
         case Qt::Key_D:
         case Qt::Key_A:
             setSideSpeed(0.0f);
             break;
 
-        case Qt::Key_W:
-        case Qt::Key_S:
-            setForwardSpeed(0.0f);
+        case Qt::Key_Q:
+        case Qt::Key_E:
+            {
+                setForwardSpeed(0.0f);
+                setSideSpeed(0.0f);
+            }
             break;
 
         case Qt::Key_Space:
@@ -627,4 +662,16 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
     }
 
     QGLWidget::mouseMoveEvent(e);
+}
+
+void MapView::wheelEvent(QWheelEvent* e)
+{
+    setFieldOfView(e->delta() / 120);
+
+    if(camera_zoom > 25.0f)
+        camera_zoom = 25.0f;
+    else if(camera_zoom < 20.0f)
+        camera_zoom = 20.0f;
+
+    QGLWidget::wheelEvent(e);
 }
