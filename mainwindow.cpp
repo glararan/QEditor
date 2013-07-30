@@ -5,7 +5,7 @@
 
 #include <QAction>
 
-MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWindow)
+MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWindow), ToolBarItem("action_mapview_m0")
 {
     ui->setupUi(this);
 
@@ -31,6 +31,12 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(ui->actionSpeed_0_2, SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
 
     connect(this, SIGNAL(setSpeedMultiplier(float)), mapView, SLOT(setSpeedMultiplier(float)));
+
+    /// toolbar
+    connect(ui->action_mapview_m0, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
+    connect(ui->action_mapview_m1, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
+
+    connect(this, SIGNAL(setModeEditing(int)), mapView, SLOT(setModeEditing(int)));
 }
 
 MainWindow::~MainWindow()
@@ -38,12 +44,16 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+QString MainWindow::getActionName(QObject* object) const
+{
+    return qobject_cast<QAction*>(object)->objectName();
+}
+
 void MainWindow::setSpeedMultiplier()
 {
     float multiplier = 1.0f;
 
-    QAction* action = qobject_cast<QAction*>(this->sender());
-    QString sName   = action->objectName();
+    QString sName = getActionName(this->sender());
 
     if(sName == "actionSpeed_0")
         multiplier = 0.0f;
@@ -63,4 +73,31 @@ void MainWindow::setSpeedMultiplier()
         multiplier = -0.1f;
 
     emit setSpeedMultiplier(multiplier);
+}
+
+void MainWindow::setToolBarItem()
+{
+    QString iName = getActionName(this->sender());
+
+    if(iName == ToolBarItem)
+    {
+        qobject_cast<QAction*>(this->sender())->setChecked(true);
+
+        return;
+    }
+
+    foreach(QAction* action, ui->toolbar->actions())
+    {
+        if(action->isChecked())
+            action->setChecked(false);
+    }
+
+    qobject_cast<QAction*>(this->sender())->setChecked(true);
+
+    ToolBarItem = iName;
+
+    if(iName == "action_mapview_m0")
+        emit setModeEditing(0);
+    else if(iName == "action_mapview_m1")
+        emit setModeEditing(1);
 }

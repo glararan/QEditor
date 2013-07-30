@@ -442,6 +442,13 @@ void MapView::ClearStatusBarMessage()
     sbDataList.clear();
 }
 
+void MapView::setModeEditing(int option)
+{
+    switch(option)
+    {
+    }
+}
+
 void MapView::keyPressEvent(QKeyEvent* e)
 {
     switch (e->key())

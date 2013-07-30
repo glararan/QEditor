@@ -162,6 +162,7 @@ private:
 
 public slots:
     void setSpeedMultiplier(float value);
+    void setModeEditing(int option);
 
 signals:
     void statusBar(QString message);

@@ -47,7 +47,7 @@
   </widget>
   <widget class="QToolBar" name="toolbar">
    <property name="styleSheet">
-    <string notr="true">QToolBar {padding:5px}</string>
+    <string notr="true">QToolBar {padding:5px;spacing:5px}</string>
    </property>
    <property name="movable">
     <bool>false</bool>
@@ -65,6 +65,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="action_mapview_m0"/>
+   <addaction name="action_mapview_m1"/>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -169,6 +170,18 @@
    </property>
    <property name="shortcut">
     <string>-</string>
+   </property>
+  </action>
+  <action name="action_mapview_m1">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="terrain_tessellation.qrc">
+     <normaloff>:/terrain</normaloff>:/terrain</iconset>
+   </property>
+   <property name="text">
+    <string>Nástroj upravování terénu</string>
    </property>
   </action>
  </widget>

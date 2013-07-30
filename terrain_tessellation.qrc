@@ -6,5 +6,6 @@
         <file>shaders/terraintessellation.tes</file>
         <file>shaders/terraintessellation.vert</file>
         <file alias="arrow">arrow.png</file>
+        <file alias="terrain">terrain.png</file>
     </qresource>
 </RCC>
