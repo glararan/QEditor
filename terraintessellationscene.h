@@ -105,6 +105,7 @@ private:
     float m_panAngle;
     float m_tiltAngle;
 
+    const float speed;
     float speed_mult;
 
     QMatrix4x4 m_viewportMatrix;
@@ -136,6 +137,7 @@ private:
 
     // mouse
     bool m_leftButtonPressed;
+    bool m_rightButtonPressed;
 
     QPoint m_prevPos;
     QPoint m_pos;

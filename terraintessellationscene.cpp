@@ -20,6 +20,7 @@ MapView::MapView(QWidget* parent)
 , m_viewCenterFixed(false)
 , m_panAngle(0.0f)
 , m_tiltAngle(0.0f)
+, speed(44.7f) // in m/s. Equivalent to 100 miles/hour)
 , speed_mult(1.0f)
 , m_patchBuffer(QOpenGLBuffer::VertexBuffer)
 , m_screenSpaceError(12.0f)
@@ -30,6 +31,7 @@ MapView::MapView(QWidget* parent)
 , m_time(0.0f)
 , m_metersToUnits(0.05f) // 500 units == 10 km => 0.05 units/m
 , m_leftButtonPressed(false)
+, m_rightButtonPressed(false)
 , m_displayMode(TexturedAndLit)
 , m_displayModeSubroutines(DisplayModeCount)
 , m_funcs(0)
@@ -431,8 +433,6 @@ void MapView::ClearStatusBarMessage()
 
 void MapView::keyPressEvent(QKeyEvent* e)
 {
-    const float speed = 44.7f; // in m/s. Equivalent to 100 miles/hour
-
     switch (e->key())
     {
         case Qt::Key_Escape:
@@ -455,11 +455,11 @@ void MapView::keyPressEvent(QKeyEvent* e)
             setForwardSpeed(-speed * speed_mult);
             break;
 
-        case Qt::Key_PageUp:
+        case Qt::Key_Space:
             setVerticalSpeed(speed * speed_mult);
             break;
 
-        case Qt::Key_PageDown:
+        case Qt::Key_X:
             setVerticalSpeed(-speed * speed_mult);
             break;
 
@@ -552,8 +552,8 @@ void MapView::keyReleaseEvent(QKeyEvent* e)
             setForwardSpeed(0.0f);
             break;
 
-        case Qt::Key_PageUp:
-        case Qt::Key_PageDown:
+        case Qt::Key_Space:
+        case Qt::Key_X:
             setVerticalSpeed(0.0f);
             break;
 
@@ -574,20 +574,46 @@ void MapView::mousePressEvent(QMouseEvent* e)
         m_pos = m_prevPos = e->pos();
     }
 
+    if(e->button() == Qt::RightButton)
+    {
+        m_rightButtonPressed = true;
+        m_pos = m_prevPos = e->pos();
+    }
+
+    if(m_leftButtonPressed && m_rightButtonPressed)
+    {
+        setForwardSpeed(speed * speed_mult);
+
+        m_pos = m_prevPos = e->pos();
+    }
+
     QGLWidget::mousePressEvent(e);
 }
 
 void MapView::mouseReleaseEvent(QMouseEvent* e)
 {
     if(e->button() == Qt::LeftButton)
+    {
         m_leftButtonPressed = false;
+
+        if(m_v.z() > 0.0f)
+            setForwardSpeed(0.0f);
+    }
+
+    if(e->button() == Qt::RightButton)
+    {
+        m_rightButtonPressed = false;
+
+        if(m_v.z() > 0.0f)
+            setForwardSpeed(0.0f);
+    }
 
     QGLWidget::mouseReleaseEvent(e);
 }
 
 void MapView::mouseMoveEvent(QMouseEvent* e)
 {
-    if(m_leftButtonPressed)
+    if(m_leftButtonPressed || m_rightButtonPressed)
     {
         m_pos = e->pos();
 
