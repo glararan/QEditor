@@ -672,7 +672,7 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
 
 void MapView::wheelEvent(QWheelEvent* e)
 {
-    setFieldOfView(e->delta() / 120);
+    setFieldOfView(-(e->delta() / 120));
 
     if(camera_zoom > 25.0f)
         camera_zoom = 25.0f;
