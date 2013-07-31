@@ -24,6 +24,12 @@ class MapView : public QGLWidget
     Q_OBJECT
 
 public:
+    enum eEditingMode
+    {
+        Objects = 0,
+        Terrain = 1
+    };
+
     MapView(QWidget* parent = 0);
     ~MapView();
 
@@ -152,6 +158,8 @@ private:
     // status bar
     QVector<QString>      sbMessageList;
     QHash<int, QVariant> sbDataList;
+
+    eEditingMode eMode;
 
     DisplayMode m_displayMode;
     QStringList m_displayModeNames;

@@ -37,6 +37,7 @@ MapView::MapView(QWidget* parent)
 , m_metersToUnits(0.05f) // 500 units == 10 km => 0.05 units/m
 , m_leftButtonPressed(false)
 , m_rightButtonPressed(false)
+, eMode((eEditingMode)0)
 , m_displayMode(TexturedAndLit)
 , m_displayModeSubroutines(DisplayModeCount)
 , m_funcs(0)
@@ -447,6 +448,14 @@ void MapView::setModeEditing(int option)
 {
     switch(option)
     {
+        case Objects:
+        case Terrain:
+            eMode = (eEditingMode)option;
+            break;
+
+        default:
+            eMode = (eEditingMode)0;
+            break;
     }
 }
 
@@ -672,7 +681,7 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
 
 void MapView::wheelEvent(QWheelEvent* e)
 {
-    setFieldOfView(-(e->delta() / 120));
+    setFieldOfView(-(static_cast<float>(e->delta()) / 240));
 
     if(camera_zoom > 25.0f)
         camera_zoom = 25.0f;
