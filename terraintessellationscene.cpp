@@ -167,6 +167,8 @@ void MapView::update(float t)
         m_camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 
         Lcamera_zoom = camera_zoom;
+
+        qDebug() << Lcamera_zoom;
     }
 
     // Update status bar
@@ -297,7 +299,7 @@ void MapView::prepareTextures()
     sampler->setWrapMode(Sampler::DirectionS, GL_CLAMP_TO_EDGE);
     sampler->setWrapMode(Sampler::DirectionT, GL_CLAMP_TO_EDGE);
 
-    QImage heightMapImage("../terrain_tessellation/heightmap-1024x1024.png");
+    QImage heightMapImage("heightmap-1024x1024.png");
     m_funcs->glActiveTexture(GL_TEXTURE0);
 
     TexturePtr heightMap(new Texture);
@@ -316,7 +318,7 @@ void MapView::prepareTextures()
     tilingSampler->setWrapMode(Sampler::DirectionS, GL_REPEAT);
     tilingSampler->setWrapMode(Sampler::DirectionT, GL_REPEAT);
 
-    QImage grassImage("../terrain_tessellation/grass.png");
+    QImage grassImage("grass.png");
     m_funcs->glActiveTexture(GL_TEXTURE1);
 
     TexturePtr grassTexture(new Texture);
@@ -326,7 +328,7 @@ void MapView::prepareTextures()
     grassTexture->generateMipMaps();
     m_material->setTextureUnitConfiguration(1, grassTexture, tilingSampler, QByteArrayLiteral("grassTexture"));
 
-    QImage rockImage("../terrain_tessellation/rock.png");
+    QImage rockImage("rock.png");
     m_funcs->glActiveTexture(GL_TEXTURE2);
 
     TexturePtr rockTexture(new Texture);
@@ -336,7 +338,7 @@ void MapView::prepareTextures()
     rockTexture->generateMipMaps();
     m_material->setTextureUnitConfiguration(2, rockTexture, tilingSampler, QByteArrayLiteral("rockTexture"));
 
-    QImage snowImage("../terrain_tessellation/snowrocks.png");
+    QImage snowImage("snowrocks.png");
     m_funcs->glActiveTexture(GL_TEXTURE3);
 
     TexturePtr snowTexture(new Texture);

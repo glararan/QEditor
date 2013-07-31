@@ -6,6 +6,14 @@ QT += core gui widgets
 
 #DEFINES -= QT_NO_WARNING_OUTPUT QT_NO_DEBUG_OUTPUT
 
+install_it.path = $$OUT_PWD
+install_it.files += $$PWD/heightmap-1024x1024.png
+install_it.files += $$PWD/grass.png
+install_it.files += $$PWD/rock.png
+install_it.files += $$PWD/snowrocks.png
+
+INSTALLS += install_it
+
 TEMPLATE = app
 
 INCLUDEPATH += common

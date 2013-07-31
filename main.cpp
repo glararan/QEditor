@@ -3,9 +3,6 @@
 #include <QFile>
 #include <QTextStream>
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "mainwindow.h"
 
 void LogHandler(QtMsgType type, const QMessageLogContext& context, const QString& message)
@@ -41,11 +38,23 @@ void LogHandler(QtMsgType type, const QMessageLogContext& context, const QString
 
     QTextStream tStream(&file);
     tStream << text << endl;
+
+    file.close();
+}
+
+void LogTruncate()
+{
+    QFile file("log.txt");
+    file.open(QIODevice::WriteOnly);
+    file.resize(0);
+    file.close();
 }
 
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
+
+    LogTruncate();
 
     qInstallMessageHandler(LogHandler);
 

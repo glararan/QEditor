@@ -7,5 +7,9 @@
         <file>shaders/terraintessellation.vert</file>
         <file alias="arrow">arrow.png</file>
         <file alias="terrain">terrain.png</file>
+        <file>grass.png</file>
+        <file>heightmap-1024x1024.png</file>
+        <file>rock.png</file>
+        <file>snowrocks.png</file>
     </qresource>
 </RCC>
