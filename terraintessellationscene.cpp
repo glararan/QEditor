@@ -170,7 +170,7 @@ void MapView::update(float t)
     }
 
     // Update status bar
-    QString sbMessage = QString("speed multiplier: %1").arg(speed_mult);
+    QString sbMessage = QString("speed multiplier: %1, x: %2, y: %3, z: %4, zoom: %5, ").arg(speed_mult).arg(m_camera->position().x()).arg(m_camera->position().z()).arg(m_camera->position().y()).arg(camera_zoom);
     /*QString sbMessage = "Initialized!";
 
     for(int i = 0; i < sbMessageList.count(); i++)
@@ -178,10 +178,9 @@ void MapView::update(float t)
         QVariant sbData = NULL;
 
         if(!sbDataList.isEmpty())
-            sbData = sbDataList.takeFirst();
+            sbData = sbDataList[i];
 
-        qDebug() << sbData.toString();
-        QString combine = QString(sbMessageList[i]).arg(sbData.toString());
+        QString combine = QString(sbMessageList[i] + "%1").arg(sbData.toString());
 
         if(i == 0)
             sbMessage = combine;
@@ -427,13 +426,13 @@ void MapView::setSpeedMultiplier(float value)
 void MapView::AddStatusBarMessage(QString message)
 {
     sbMessageList << message;
-    sbDataList << NULL;
+    sbDataList[sbDataList.count()] = NULL;
 }
 
 void MapView::AddStatusBarMessage(QString message, QVariant data)
 {
     sbMessageList << message;
-    sbDataList << data;
+    sbDataList[sbDataList.count()] = data;
 }
 
 void MapView::ClearStatusBarMessage()

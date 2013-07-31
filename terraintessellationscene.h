@@ -13,7 +13,7 @@
 #include <QMatrix4x4>
 #include <QStringList>
 #include <QTime>
-#include <QLinkedList>
+#include <QHash>
 
 class Camera;
 
@@ -151,7 +151,7 @@ private:
 
     // status bar
     QVector<QString>      sbMessageList;
-    QLinkedList<QVariant> sbDataList;
+    QHash<int, QVariant> sbDataList;
 
     DisplayMode m_displayMode;
     QStringList m_displayModeNames;
