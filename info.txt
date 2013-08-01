@@ -1,0 +1,15 @@
+/// Basic info
+
+/// MapView info
+Heightmap:
+    black = 0.0f
+    white = maximální vertikální výška
+
+/// Todo list
+MapView:
+    1. Vytvořit editaci terenu založeno na editaci QImage "editedHeightMap", nejprve snadnější verze
+        Lehčí verze): Získat pozici kamery m_camera->position->x() a podle ní zakreslit na mapu 1024x1024 pixel s barvou černou nebo bílou, shift = zvýšení, ctrl = snížení
+        Pozn: mapa je zmenšena z 1024.0f na 533.33333f, k obrázku - vzal bych pixel na místě a zvýšil ho třeba o 0.005f a s radiusem šel dolu až k 0.0005f
+
+        Finální verze): Získá pozici kurzoru a podle ní zakreslí na mapu 1024x1024 stejně jako v lehčí verzi, finální verze se bude vlastně rozlišovat kurzorem a shift + ctrl
+        se nahradí v toolbaru, radius a síla opět v toolbaru

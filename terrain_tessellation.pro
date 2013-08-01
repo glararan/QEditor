@@ -32,7 +32,8 @@ OTHER_FILES += shaders/terraintessellation.vert \
                shaders/terraintessellation.geom \
                shaders/terraintessellation.frag \
                shaders/terraintessellation.tcs \
-               shaders/terraintessellation.tes
+               shaders/terraintessellation.tes \
+    info.txt
 
 FORMS += \
     mainwindow.ui
