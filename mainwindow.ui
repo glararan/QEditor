@@ -101,6 +101,8 @@
      <addaction name="actionSpeed_0_2"/>
     </widget>
     <addaction name="menu_Speed_Multiplier"/>
+    <addaction name="separator"/>
+    <addaction name="action_Test"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTools"/>
@@ -182,6 +184,11 @@
    </property>
    <property name="text">
     <string>Nástroj upravování terénu</string>
+   </property>
+  </action>
+  <action name="action_Test">
+   <property name="text">
+    <string>&amp;Test</string>
    </property>
   </action>
  </widget>

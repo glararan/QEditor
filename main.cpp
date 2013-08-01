@@ -42,21 +42,23 @@ void LogHandler(QtMsgType type, const QMessageLogContext& context, const QString
     file.close();
 }
 
-void LogTruncate()
+void LogInitialize()
 {
+    /// truncate log
     QFile file("log.txt");
     file.open(QIODevice::WriteOnly);
     file.resize(0);
     file.close();
+
+    /// install log
+    qInstallMessageHandler(LogHandler);
 }
 
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
 
-    LogTruncate();
-
-    qInstallMessageHandler(LogHandler);
+    LogInitialize();
 
     MainWindow mw;
     mw.showMaximized();

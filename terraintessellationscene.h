@@ -103,6 +103,15 @@ private:
     void AddStatusBarMessage(QString message, QVariant data);
     void ClearStatusBarMessage();
 
+    /*
+     * Terrain changing
+     * TODO own class for control map height, x, y, z, etc.
+    */
+    bool changeTerrain(float x, float z, float change, float radius, int brush);
+
+
+    /* ******** */
+
     QOpenGLContext* m_context;
 
     Camera* m_camera;
@@ -127,6 +136,8 @@ private:
     // The terrain "object"
     QOpenGLVertexArrayObject m_vao;
     QOpenGLBuffer            m_patchBuffer;
+
+    QVector<float> positionData;
 
     int   m_patchCount;
     float m_screenSpaceError;
@@ -156,10 +167,12 @@ private:
     QPoint m_pos;
 
     // status bar
-    QVector<QString>      sbMessageList;
+    QVector<QString>     sbMessageList;
     QHash<int, QVariant> sbDataList;
 
     eEditingMode eMode;
+
+    QImage heightMapImage, editedHeightMap, lastEditeHeightMap;
 
     DisplayMode m_displayMode;
     QStringList m_displayModeNames;
@@ -168,9 +181,13 @@ private:
     QOpenGLFunctions_4_0_Core* m_funcs;
     QSize m_heightMapSize;
 
+    void doTest2();
+
 public slots:
     void setSpeedMultiplier(float value);
     void setModeEditing(int option);
+
+    void doTest();
 
 signals:
     void statusBar(QString message);

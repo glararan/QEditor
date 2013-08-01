@@ -32,6 +32,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     connect(this, SIGNAL(setSpeedMultiplier(float)), mapView, SLOT(setSpeedMultiplier(float)));
 
+    // tools - test
+    connect(ui->action_Test, SIGNAL(triggered()), mapView, SLOT(doTest()));
+
     /// toolbar
     connect(ui->action_mapview_m0, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
     connect(ui->action_mapview_m1, SIGNAL(triggered()), this, SLOT(setToolBarItem()));

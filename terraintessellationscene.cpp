@@ -28,16 +28,20 @@ MapView::MapView(QWidget* parent)
 , speed(44.7f) // in m/s. Equivalent to 100 miles/hour)
 , speed_mult(1.0f)
 , m_patchBuffer(QOpenGLBuffer::VertexBuffer)
+, positionData(0)
 , m_screenSpaceError(12.0f)
 , m_modelMatrix()
-, m_horizontalScale(500.0f)
-, m_verticalScale(20.0f)
+, m_horizontalScale(533.33333f)
+, m_verticalScale(m_horizontalScale / 16.0f)
 , m_sunTheta(30.0f)
 , m_time(0.0f)
 , m_metersToUnits(0.05f) // 500 units == 10 km => 0.05 units/m
 , m_leftButtonPressed(false)
 , m_rightButtonPressed(false)
 , eMode((eEditingMode)0)
+, heightMapImage(0)
+, editedHeightMap(0)
+, lastEditeHeightMap(0)
 , m_displayMode(TexturedAndLit)
 , m_displayModeSubroutines(DisplayModeCount)
 , m_funcs(0)
@@ -58,8 +62,10 @@ MapView::MapView(QWidget* parent)
     m_modelMatrix.setToIdentity();
 
     // Initialize the camera position and orientation
-    m_camera->setPosition(QVector3D(250.0f, 10.0f, 250.0f));
-    m_camera->setViewCenter(QVector3D(250.0f, 10.0f, 249.0f));
+    //m_camera->setPosition(QVector3D(250.0f, 10.0f, 250.0f));
+    //m_camera->setViewCenter(QVector3D(250.0f, 10.0f, 249.0f));
+    m_camera->setPosition(QVector3D(1.0f, 10.0f, 1.0f));
+    m_camera->setViewCenter(QVector3D(1.0f, 10.0f, 0.0f));
     m_camera->setUpVector(QVector3D(0.0f, 1.0f, 0.0f));
 
     m_displayModeNames << QStringLiteral("shaderSimpleWireFrame")
@@ -80,6 +86,9 @@ MapView::~MapView()
 {
     delete m_context;
     delete m_camera;
+
+    m_patchBuffer.destroy();
+    m_vao.destroy();
 }
 
 void MapView::timerEvent(QTimerEvent*)
@@ -94,7 +103,6 @@ void MapView::timerEvent(QTimerEvent*)
 
 void MapView::initializeGL()
 {
-    //m_context->makeCurrent()
     this->makeCurrent();
 
     m_funcs = m_context->versionFunctions<QOpenGLFunctions_4_0_Core>();
@@ -146,6 +154,32 @@ void MapView::update(float t)
     const float dt = t - m_time;
     m_time         = t;
 
+    // Update heightmap
+    if(!heightMapImage.isNull() && heightMapImage != editedHeightMap && editedHeightMap != lastEditeHeightMap)
+    {
+        qDebug() << "update heightmap";
+
+        SamplerPtr sampler(new Sampler);
+        sampler->create();
+        sampler->setMinificationFilter(GL_LINEAR);
+        sampler->setMagnificationFilter(GL_LINEAR);
+        sampler->setWrapMode(Sampler::DirectionS, GL_CLAMP_TO_EDGE);
+        sampler->setWrapMode(Sampler::DirectionT, GL_CLAMP_TO_EDGE);
+
+        TexturePtr heightMap(new Texture);
+        heightMap->create();
+        heightMap->bind();
+        heightMap->setImage(editedHeightMap);
+
+        m_material->setTextureUnitConfiguration(0, heightMap, sampler, QByteArrayLiteral("heightMap"));
+
+        doTest2();
+
+        lastEditeHeightMap = editedHeightMap;
+
+        qDebug() << "updated heightmap";
+    }
+
     // Update the camera position and orientation
     Camera::CameraTranslationOption option = m_viewCenterFixed ? Camera::DontTranslateViewCenter : Camera::TranslateViewCenter;
     m_camera->translate(m_v * dt * m_metersToUnits, option);
@@ -168,8 +202,6 @@ void MapView::update(float t)
         m_camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 
         Lcamera_zoom = camera_zoom;
-
-        qDebug() << Lcamera_zoom;
     }
 
     // Update status bar
@@ -285,10 +317,10 @@ void MapView::prepareShaders()
 {
     m_material = MaterialPtr(new Material);
     m_material->setShaders(":/shaders/terraintessellation.vert",
-                            ":/shaders/terraintessellation.tcs",
-                            ":/shaders/terraintessellation.tes",
-                            ":/shaders/terraintessellation.geom",
-                            ":/shaders/terraintessellation.frag");
+                           ":/shaders/terraintessellation.tcs",
+                           ":/shaders/terraintessellation.tes",
+                           ":/shaders/terraintessellation.geom",
+                           ":/shaders/terraintessellation.frag");
 }
 
 void MapView::prepareTextures()
@@ -300,7 +332,9 @@ void MapView::prepareTextures()
     sampler->setWrapMode(Sampler::DirectionS, GL_CLAMP_TO_EDGE);
     sampler->setWrapMode(Sampler::DirectionT, GL_CLAMP_TO_EDGE);
 
-    QImage heightMapImage("heightmap-1024x1024.png");
+    heightMapImage.load("heightmap-1024x1024.png");
+    editedHeightMap = heightMapImage;
+
     m_funcs->glActiveTexture(GL_TEXTURE0);
 
     TexturePtr heightMap(new Texture);
@@ -364,7 +398,7 @@ void MapView::prepareVertexBuffers(QSize heightMapSize)
     const int zDivisions = trianglesPerHeightSample * heightMapSize.height() / maxTessellationLevel;
 
     m_patchCount = xDivisions * zDivisions;
-    QVector<float> positionData(2 * m_patchCount); // 2 floats per vertex
+    positionData.resize(2 * m_patchCount); // 2 floats per vertex
 
     qDebug() << "Total number of patches =" << m_patchCount;
 
@@ -457,6 +491,126 @@ void MapView::setModeEditing(int option)
             eMode = (eEditingMode)0;
             break;
     }
+}
+
+static const double MAPCHUNK_DIAMETER = 47.140452079103168293389624140323;
+static const float MAPSIZE = 1024.0f;
+static const float CHUNKSIZE = MAPSIZE / 16.0f;
+
+bool MapView::changeTerrain(float x, float z, float change, float radius, int brush)
+{
+    //float dist, xdiff, zdiff;
+
+    bool changed = false;
+
+    /*xdiff = 250.0f - x + CHUNKSIZE / 2;
+    zdiff = 250.0f - z + CHUNKSIZE / 2;
+
+    dist = sqrt((xdiff * xdiff) + (zdiff * zdiff));
+
+    if(dist > (radius + MAPCHUNK_DIAMETER))
+        return changed;*/
+
+
+    const int maxTessellationLevel = 64;
+    const int trianglesPerHeightSample = 10;
+    const int xDivisions = trianglesPerHeightSample * m_heightMapSize.width() / maxTessellationLevel;
+    const int zDivisions = trianglesPerHeightSample * m_heightMapSize.height() / maxTessellationLevel;
+
+    const float dx = 1.0f / static_cast<float>(xDivisions);
+    const float dz = 1.0f / static_cast<float>(zDivisions);
+
+    for(int j = 0; j < 2 * zDivisions; j += 2)
+    {
+        float z = static_cast<float>(j) * dz * 0.5;
+
+        for(int i = 0; i < 2 * xDivisions; i += 2)
+        {
+            float x         = static_cast<float>(i) * dx * 0.5;
+            const int index = xDivisions * j + i;
+
+            positionData[index]     = x;
+            positionData[index + 1] = z;
+
+            if(j < 11 && i < 3)
+            {
+                positionData[index] = x - 0.001f;
+                positionData[index + 1] = z - 0.001f;
+            }
+
+            /*if(j < 4 && i == 0)
+            {
+                qDebug() << "xDivisions: " << xDivisions;
+                qDebug() << "j: " << j;
+                qDebug() << "i: " << i;
+            }
+
+            if(j == 0)
+            {
+                qDebug() << "[" << index << "] x: " << x;
+                qDebug() << "[" << index << "] z: " << z;
+            }*/
+
+            changed = true;
+        }
+    }
+
+    if(changed)
+    {
+        m_patchBuffer.create();
+        m_patchBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
+        m_patchBuffer.bind();
+        m_patchBuffer.allocate(positionData.data(), positionData.size() * sizeof(float));
+        m_patchBuffer.release();
+
+        m_vao.destroy();
+
+        m_vao.create();
+        {
+            QOpenGLVertexArrayObject::Binder binder(&m_vao);
+            QOpenGLShaderProgramPtr shader = m_material->shader();
+
+            shader->bind();
+            m_patchBuffer.bind();
+            shader->enableAttributeArray("vertexPosition");
+            shader->setAttributeBuffer("vertexPosition", GL_FLOAT, 0, 2);
+        }
+    }
+
+    return changed;
+
+    //return false;
+}
+
+void MapView::doTest()
+{
+    //changeTerrain(m_camera->position().x(), m_camera->position().z(), 7.5f * m_time * 1, 30.0f, 1);
+
+    qDebug() << "inverting!";
+
+    editedHeightMap.invertPixels(QImage::InvertRgb);
+}
+
+void MapView::doTest2()
+{
+    qDebug() << "destroying m_vao";
+
+    m_vao.destroy();
+
+    qDebug() << "creating m_vao";
+
+    m_vao.create();
+    {
+        QOpenGLVertexArrayObject::Binder binder(&m_vao);
+        QOpenGLShaderProgramPtr shader = m_material->shader();
+
+        shader->bind();
+        m_patchBuffer.bind();
+        shader->enableAttributeArray("vertexPosition");
+        shader->setAttributeBuffer("vertexPosition", GL_FLOAT, 0, 2);
+    }
+
+    qDebug() << "m_vao created!";
 }
 
 void MapView::keyPressEvent(QKeyEvent* e)
