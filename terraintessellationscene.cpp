@@ -62,10 +62,8 @@ MapView::MapView(QWidget* parent)
     m_modelMatrix.setToIdentity();
 
     // Initialize the camera position and orientation
-    //m_camera->setPosition(QVector3D(250.0f, 10.0f, 250.0f));
-    //m_camera->setViewCenter(QVector3D(250.0f, 10.0f, 249.0f));
-    m_camera->setPosition(QVector3D(1.0f, 10.0f, 1.0f));
-    m_camera->setViewCenter(QVector3D(1.0f, 10.0f, 0.0f));
+    m_camera->setPosition(QVector3D(250.0f, 10.0f, 250.0f));
+    m_camera->setViewCenter(QVector3D(250.0f, 10.0f, 249.0f));
     m_camera->setUpVector(QVector3D(0.0f, 1.0f, 0.0f));
 
     m_displayModeNames << QStringLiteral("shaderSimpleWireFrame")
@@ -588,7 +586,7 @@ void MapView::doTest()
 
     qDebug() << "inverting!";
 
-    editedHeightMap.invertPixels(QImage::InvertRgb);
+    editedHeightMap.invertPixels(QImage::InvertRgba);
 }
 
 void MapView::doTest2()
