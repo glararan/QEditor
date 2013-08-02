@@ -503,11 +503,6 @@ int MapView::horizontalScaleToHeightMapScale(float position)
     return static_cast<int>(position / m_horizontalScale * heightMapImage.width());
 }
 
-float calculate(int val, int width, float scale)
-{
-    return static_cast<float>(val / width) * scale;
-}
-
 float MapView::swapPosition(float position)
 {
     return m_horizontalScale - position;
@@ -580,10 +575,6 @@ bool MapView::changeTerrain(float x, float z, float change, float radius, int br
                 if(checkColors[i] < 0)
                     checkColors[i] = 0;
             }
-
-            qDebug() << "loop x:" << _x << "loop y:" << _y;
-            qDebug() << "x: " << calculate(_x, 1024, 533.33333f);
-            qDebug() << "y: " << calculate(_y, 1024, 533.33333f);
 
             pixelColor = QColor(red, green, blue).rgb();
 
