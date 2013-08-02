@@ -11,5 +11,20 @@ MapView:
         Lehčí verze): Získat pozici kamery m_camera->position->x() a podle ní zakreslit na mapu 1024x1024 pixel s barvou černou nebo bílou, shift = zvýšení, ctrl = snížení
         Pozn: mapa je zmenšena z 1024.0f na 533.33333f, k obrázku - vzal bych pixel na místě a zvýšil ho třeba o 0.005f a s radiusem šel dolu až k 0.0005f
 
+            Výpočet souřadnice na 1024px z 533.33333px
+                příklad: (1024 => 533)
+                553 x => 553/1024*533.33333 => 288
+                675 z => 675/1024*533.33333 => 352
+
+                288 x => 288/533.33333*1024 => 553
+                352 z => 352/533.33333*1024 => 675
+
+            VAROVÁNÍ:
+                pixel 1024x1024 je na souřadnici 533.33x0
+                pixel 1024x0    je na souřadnici 533.33x533.33
+                pixel 0x1024    je na souřadnici 0x0
+                pixel 0x0       je na souřadnici 0x533.33
+
+
         Finální verze): Získá pozici kurzoru a podle ní zakreslí na mapu 1024x1024 stejně jako v lehčí verzi, finální verze se bude vlastně rozlišovat kurzorem a shift + ctrl
         se nahradí v toolbaru, radius a síla opět v toolbaru

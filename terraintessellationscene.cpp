@@ -38,10 +38,13 @@ MapView::MapView(QWidget* parent)
 , m_metersToUnits(0.05f) // 500 units == 10 km => 0.05 units/m
 , m_leftButtonPressed(false)
 , m_rightButtonPressed(false)
+, mouse_position(QPoint(0, 0))
 , eMode((eEditingMode)0)
 , heightMapImage(0)
 , editedHeightMap(0)
 , lastEditeHeightMap(0)
+, minColor(0.005f)
+, maxColor(0.0005f)
 , m_displayMode(TexturedAndLit)
 , m_displayModeSubroutines(DisplayModeCount)
 , m_funcs(0)
@@ -155,7 +158,7 @@ void MapView::update(float t)
     // Update heightmap
     if(!heightMapImage.isNull() && heightMapImage != editedHeightMap && editedHeightMap != lastEditeHeightMap)
     {
-        qDebug() << "update heightmap";
+        qDebug() << "updating heightmap";
 
         SamplerPtr sampler(new Sampler);
         sampler->create();
@@ -171,7 +174,7 @@ void MapView::update(float t)
 
         m_material->setTextureUnitConfiguration(0, heightMap, sampler, QByteArrayLiteral("heightMap"));
 
-        doTest2();
+        reCreateTerrain();
 
         lastEditeHeightMap = editedHeightMap;
 
@@ -495,107 +498,120 @@ static const double MAPCHUNK_DIAMETER = 47.140452079103168293389624140323;
 static const float MAPSIZE = 1024.0f;
 static const float CHUNKSIZE = MAPSIZE / 16.0f;
 
+int MapView::horizontalScaleToHeightMapScale(float position)
+{
+    return static_cast<int>(position / m_horizontalScale * heightMapImage.width());
+}
+
+float calculate(int val, int width, float scale)
+{
+    return static_cast<float>(val / width) * scale;
+}
+
+float MapView::swapPosition(float position)
+{
+    return m_horizontalScale - position;
+}
+
 bool MapView::changeTerrain(float x, float z, float change, float radius, int brush)
 {
-    //float dist, xdiff, zdiff;
-
     bool changed = false;
 
-    /*xdiff = 250.0f - x + CHUNKSIZE / 2;
-    zdiff = 250.0f - z + CHUNKSIZE / 2;
+    // square brush
+    float linear = 1.0f - (1.0f / radius);
 
-    dist = sqrt((xdiff * xdiff) + (zdiff * zdiff));
+    int minX = horizontalScaleToHeightMapScale(x - radius);
+    int maxX = horizontalScaleToHeightMapScale(x + radius);
 
-    if(dist > (radius + MAPCHUNK_DIAMETER))
-        return changed;*/
+    int minY = horizontalScaleToHeightMapScale(swapPosition(z + radius));
+    int maxY = horizontalScaleToHeightMapScale(swapPosition(z - radius));
 
+    int sizeX = maxX - minX;
+    int sizeY = maxY - minY;
 
-    const int maxTessellationLevel = 64;
-    const int trianglesPerHeightSample = 10;
-    const int xDivisions = trianglesPerHeightSample * m_heightMapSize.width() / maxTessellationLevel;
-    const int zDivisions = trianglesPerHeightSample * m_heightMapSize.height() / maxTessellationLevel;
+    int centerX = minX + (sizeX / 2);
+    int centerY = minY + (sizeY / 2);
 
-    const float dx = 1.0f / static_cast<float>(xDivisions);
-    const float dz = 1.0f / static_cast<float>(zDivisions);
+    QImage editingHeightMap(editedHeightMap);
 
-    for(int j = 0; j < 2 * zDivisions; j += 2)
+    qDebug() << "minX: " << minX;
+    qDebug() << "maxX: " << maxX;
+    qDebug() << "minY: " << minY  - (sizeY / 2);
+    qDebug() << "maxY: " << maxY  - (sizeY / 2);
+
+    qDebug() << "change: " << change;
+
+    for(int _x = minX; _x < maxX; _x++)
     {
-        float z = static_cast<float>(j) * dz * 0.5;
-
-        for(int i = 0; i < 2 * xDivisions; i += 2)
+        for(int _y = minY; _y < maxY; _y++)
         {
-            float x         = static_cast<float>(i) * dx * 0.5;
-            const int index = xDivisions * j + i;
+            QRgb pixelColor = editingHeightMap.pixel(_x, _y);
 
-            positionData[index]     = x;
-            positionData[index + 1] = z;
+            int red   = qRed(pixelColor);
+            int green = qGreen(pixelColor);
+            int blue  = qBlue(pixelColor);
 
-            if(j < 11 && i < 3)
+            if(_x == minX && _y == minY)
             {
-                positionData[index] = x - 0.001f;
-                positionData[index + 1] = z - 0.001f;
+                qDebug() << "red: " << red;
+                qDebug() << "green: " << green;
+                qDebug() << "blue: " << blue;
             }
 
-            /*if(j < 4 && i == 0)
+            red   = red   + change * (1.0f - linear / radius);
+            green = green + change * (1.0f - linear / radius);
+            blue  = blue  + change * (1.0f - linear / radius);
+
+            if(_x == minX && _y == minY)
             {
-                qDebug() << "xDivisions: " << xDivisions;
-                qDebug() << "j: " << j;
-                qDebug() << "i: " << i;
+                qDebug() << "n red: " << red;
+                qDebug() << "n green: " << green;
+                qDebug() << "n blue: " << blue;
             }
 
-            if(j == 0)
+            QVector<int> checkColors;
+            checkColors << red << green << blue;
+
+            for(int i = 0; i < checkColors.count(); i++)
             {
-                qDebug() << "[" << index << "] x: " << x;
-                qDebug() << "[" << index << "] z: " << z;
-            }*/
+                if(checkColors[i] > 255)
+                    checkColors[i] = 255;
+
+                if(checkColors[i] < 0)
+                    checkColors[i] = 0;
+            }
+
+            qDebug() << "loop x:" << _x << "loop y:" << _y;
+            qDebug() << "x: " << calculate(_x, 1024, 533.33333f);
+            qDebug() << "y: " << calculate(_y, 1024, 533.33333f);
+
+            pixelColor = QColor(red, green, blue).rgb();
+
+            editingHeightMap.setPixel(_x, _y, pixelColor);
 
             changed = true;
         }
     }
 
     if(changed)
-    {
-        m_patchBuffer.create();
-        m_patchBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
-        m_patchBuffer.bind();
-        m_patchBuffer.allocate(positionData.data(), positionData.size() * sizeof(float));
-        m_patchBuffer.release();
-
-        m_vao.destroy();
-
-        m_vao.create();
-        {
-            QOpenGLVertexArrayObject::Binder binder(&m_vao);
-            QOpenGLShaderProgramPtr shader = m_material->shader();
-
-            shader->bind();
-            m_patchBuffer.bind();
-            shader->enableAttributeArray("vertexPosition");
-            shader->setAttributeBuffer("vertexPosition", GL_FLOAT, 0, 2);
-        }
-    }
+        editedHeightMap = editingHeightMap;
+    else
+        qDebug() << "changed: " << changed;
 
     return changed;
-
-    //return false;
 }
 
 void MapView::doTest()
 {
-    //changeTerrain(m_camera->position().x(), m_camera->position().z(), 7.5f * m_time * 1, 30.0f, 1);
-
-    qDebug() << "inverting!";
-
-    editedHeightMap.invertPixels(QImage::InvertRgba);
+    if(changeTerrain(m_camera->position().x(), m_camera->position().z(), 7.5f * m_time * 0.1f, 10.0f, 1))
+        qDebug() << "terrain changed!";
+    else
+        qDebug() << "terrain changing failed!";
 }
 
-void MapView::doTest2()
+void MapView::reCreateTerrain()
 {
-    qDebug() << "destroying m_vao";
-
     m_vao.destroy();
-
-    qDebug() << "creating m_vao";
 
     m_vao.create();
     {
@@ -607,8 +623,6 @@ void MapView::doTest2()
         shader->enableAttributeArray("vertexPosition");
         shader->setAttributeBuffer("vertexPosition", GL_FLOAT, 0, 2);
     }
-
-    qDebug() << "m_vao created!";
 }
 
 void MapView::keyPressEvent(QKeyEvent* e)
@@ -827,6 +841,8 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
         pan(dx);
         tilt(dy);
     }
+
+    mouse_position = e->pos();
 
     QGLWidget::mouseMoveEvent(e);
 }

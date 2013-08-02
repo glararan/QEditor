@@ -160,8 +160,9 @@ private:
     QTime m_Utime;
 
     // mouse
-    bool m_leftButtonPressed;
-    bool m_rightButtonPressed;
+    bool m_leftButtonPressed, m_rightButtonPressed;
+
+    QPoint mouse_position;
 
     QPoint m_prevPos;
     QPoint m_pos;
@@ -174,6 +175,8 @@ private:
 
     QImage heightMapImage, editedHeightMap, lastEditeHeightMap;
 
+    float minColor, maxColor;
+
     DisplayMode m_displayMode;
     QStringList m_displayModeNames;
     QVector<GLuint> m_displayModeSubroutines;
@@ -181,7 +184,9 @@ private:
     QOpenGLFunctions_4_0_Core* m_funcs;
     QSize m_heightMapSize;
 
-    void doTest2();
+    void reCreateTerrain();
+    int horizontalScaleToHeightMapScale(float position);
+    float swapPosition(float position);
 
 public slots:
     void setSpeedMultiplier(float value);
