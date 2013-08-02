@@ -19,12 +19,12 @@ TEMPLATE = app
 INCLUDEPATH += common
 
 SOURCES  += main.cpp \
-            terraintessellationscene.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    mapview.cpp
 
 HEADERS  += \
-            terraintessellationscene.h \
-    mainwindow.h
+    mainwindow.h \
+    mapview.h
 
 RESOURCES += terrain_tessellation.qrc
 

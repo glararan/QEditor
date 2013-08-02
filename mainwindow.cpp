@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include "terraintessellationscene.h"
+#include "mapview.h"
 
 #include <QAction>
 

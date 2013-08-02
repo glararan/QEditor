@@ -1,4 +1,4 @@
-#include "terraintessellationscene.h"
+#include "mapview.h"
 #include "camera.h"
 
 #include <QImage>
