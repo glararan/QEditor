@@ -121,6 +121,8 @@ private:
     bool  m_viewCenterFixed;
     float m_panAngle;
     float m_tiltAngle;
+    float panAngle;
+    float tiltAngle;
     float camera_zoom;
     float Lcamera_zoom; // last zoom value
     float aspectRatio;

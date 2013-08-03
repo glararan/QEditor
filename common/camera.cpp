@@ -87,6 +87,7 @@ void Camera::setPerspectiveProjection(float fieldOfView, float aspectRatio, floa
 void Camera::setNearPlane(const float& nearPlane)
 {
     Q_D(Camera);
+
     if(qFuzzyCompare(d->m_nearPlane, nearPlane))
         return;
 
@@ -105,6 +106,7 @@ float Camera::nearPlane() const
 void Camera::setFarPlane(const float& farPlane)
 {
     Q_D(Camera);
+
     if(qFuzzyCompare(d->m_farPlane, farPlane))
         return;
 
@@ -123,6 +125,7 @@ float Camera::farPlane() const
 void Camera::setFieldOfView(const float& fieldOfView)
 {
     Q_D(Camera);
+
     if(qFuzzyCompare(d->m_fieldOfView, fieldOfView))
         return;
 
@@ -141,6 +144,7 @@ float Camera::fieldOfView() const
 void Camera::setAspectRatio(const float& aspectRatio)
 {
     Q_D(Camera);
+
     if(qFuzzyCompare(d->m_aspectRatio, aspectRatio))
         return;
 
@@ -159,10 +163,13 @@ float Camera::aspectRatio() const
 void Camera::setLeft(const float& left)
 {
     Q_D(Camera);
-    if (qFuzzyCompare(d->m_left, left))
+
+    if(qFuzzyCompare(d->m_left, left))
         return;
+
     d->m_left = left;
-    if (d->m_projectionType == OrthogonalProjection)
+
+    if(d->m_projectionType == OrthogonalProjection)
         d->updateOrthogonalProjection();
 }
 
@@ -193,6 +200,7 @@ float Camera::right() const
 void Camera::setBottom(const float& bottom)
 {
     Q_D(Camera);
+
     if(qFuzzyCompare(d->m_bottom, bottom))
         return;
 
@@ -211,6 +219,7 @@ float Camera::bottom() const
 void Camera::setTop(const float& top)
 {
     Q_D(Camera);
+
     if(qFuzzyCompare(d->m_top, top))
         return;
 
@@ -229,6 +238,7 @@ float Camera::top() const
 QMatrix4x4 Camera::viewMatrix() const
 {
     Q_D(const Camera);
+
     if(d->m_viewMatrixDirty)
     {
         d->m_viewMatrix.setToIdentity();
@@ -236,6 +246,7 @@ QMatrix4x4 Camera::viewMatrix() const
 
         d->m_viewMatrixDirty = false;
     }
+
     return d->m_viewMatrix;
 }
 
@@ -263,6 +274,7 @@ void Camera::translate(const QVector3D& vLocal, CameraTranslationOption option)
 
     // Calculate the amount to move by in world coordinates
     QVector3D vWorld;
+
     if(!qFuzzyIsNull(vLocal.x()))
     {
         // Calculate the vector for the local x axis
@@ -306,7 +318,7 @@ void Camera::translateWorld(const QVector3D& vWorld , CameraTranslationOption op
     d->m_position += vWorld;
 
     // May be also update the view center coordinates
-    if (option == TranslateViewCenter)
+    if(option == TranslateViewCenter)
         d->m_viewCenter += vWorld;
 
     // Refresh the camera -> view center vector

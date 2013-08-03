@@ -20,6 +20,8 @@ MapView::MapView(QWidget* parent)
 , m_viewCenterFixed(false)
 , m_panAngle(0.0f)
 , m_tiltAngle(0.0f)
+, panAngle(0.0f)
+, tiltAngle(0.0f)
 , camera_zoom(25.0f)
 , Lcamera_zoom(camera_zoom)
 , aspectRatio(static_cast<float>(width()) / static_cast<float>(height()))
@@ -188,12 +190,36 @@ void MapView::update(float t)
     if(!qFuzzyIsNull(m_panAngle))
     {
         m_camera->pan(m_panAngle, QVector3D(0.0f, 1.0f, 0.0f));
+        panAngle  += m_panAngle;
         m_panAngle = 0.0f;
     }
 
+    if(panAngle > 360.0f || panAngle < -360.0f)
+        panAngle = 0.0f;
+
     if(!qFuzzyIsNull(m_tiltAngle))
     {
+        if(tiltAngle + m_tiltAngle > 90.0f || tiltAngle + m_tiltAngle < -90.0f)
+        {
+            float copyTAngle = m_tiltAngle;
+
+            if(tiltAngle + copyTAngle > 90.0f)
+            {
+                while(tiltAngle + copyTAngle - 0.1f > 90.0f)
+                    copyTAngle -= 0.1f;
+            }
+            else if(tiltAngle + copyTAngle < -90.0f)
+            {
+                while(tiltAngle + copyTAngle + 0.1f < -90.0f)
+                    copyTAngle += 0.1f;
+            }
+
+            m_tiltAngle = copyTAngle;
+            copyTAngle  = 0.0f;
+        }
+
         m_camera->tilt(m_tiltAngle);
+        tiltAngle  += m_tiltAngle;
         m_tiltAngle = 0.0f;
     }
 
@@ -206,7 +232,7 @@ void MapView::update(float t)
     }
 
     // Update status bar
-    QString sbMessage = QString("speed multiplier: %1, x: %2, y: %3, z: %4, zoom: %5, ").arg(speed_mult).arg(m_camera->position().x()).arg(m_camera->position().z()).arg(m_camera->position().y()).arg(camera_zoom);
+    QString sbMessage = QString("speed multiplier: %1, x: %2, y: %3, z: %4, zoom: %5, pan: %6, tilt: %7").arg(speed_mult).arg(m_camera->position().x()).arg(m_camera->position().z()).arg(m_camera->position().y()).arg(camera_zoom).arg(panAngle).arg(tiltAngle);
     /*QString sbMessage = "Initialized!";
 
     for(int i = 0; i < sbMessageList.count(); i++)
