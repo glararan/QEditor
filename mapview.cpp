@@ -760,64 +760,6 @@ void MapView::reCreateTerrain()
     }
 }
 
-void MapView::UnProject(int x, int y, int z, int mx, int my, QMatrix4x4 ModelView, QMatrix4x4 Projection)
-{
-    QVector4D nearPoint, cameraPos, rayDir;
-
-    float norm_x = 2.0f * x / mx - 1.0f;
-    float norm_y = 1.0f - 2.0f * y / my;
-
-    QMatrix4x4 unview = (ModelView * Projection).inverted();
-
-    nearPoint = unview * QVector4D(norm_x, norm_y, 0, 1);
-    cameraPos = ModelView.inverted().column(3);
-    rayDir    = (nearPoint - cameraPos).normalized();
-}
-
-QVector3D MapView::UnProjectt(int x, int y)
-{
-    float depth[1];
-    GLdouble modelm[16], projm[16], pos[3];
-    int view[4];
-
-    QVector3D ret;
-
-    m_funcs->glGetDoublev( GL_MODELVIEW_MATRIX, modelm );
-    m_funcs->glGetDoublev( GL_PROJECTION_MATRIX, projm );
-    m_funcs->glGetIntegerv( GL_VIEWPORT, (GLint*)view );
-    m_funcs->glReadPixels(x,y,1,1,GL_DEPTH_COMPONENT,GL_FLOAT,depth);
-    gluUnProject(x,y,depth[0],modelm,projm,(GLint*)view,&pos[0],&pos[1],&pos[2]);
-
-    ret.setX((float)pos[0]);
-    ret.setY((float)pos[1]);
-    ret.setZ((float)pos[2]);
-
-    return ret;
-}
-
-QVector3D MapView::UnProjectx(int x, int y, const QVector3D &vecOrigin)
-{
-    int iRealY;
-    GLdouble vecWorld[3];
-
-    GLdouble modelm[16], projm[16];
-    int view[4];
-
-    m_funcs->glGetDoublev( GL_MODELVIEW_MATRIX, modelm );
-    m_funcs->glGetDoublev( GL_PROJECTION_MATRIX, projm );
-    m_funcs->glGetIntegerv( GL_VIEWPORT, (GLint*)view );
-
-    iRealY = view[3] - y;
-
-    gluUnProject((GLdouble)x, (GLdouble)iRealY, 0.0, modelm, projm, view, &vecWorld[0], &vecWorld[1], &vecWorld[2]);
-
-    QVector3D pos(static_cast<float>(vecWorld[0]), static_cast<float>(vecWorld[1]), static_cast<float>(vecWorld[2]));
-
-    qDebug() << pos;
-
-    return (pos - vecOrigin);
-}
-
 void MapView::setCameraPosition(QVector3D* position)
 {
     const QVector3D location(position->x(), position->y(), position->z());
