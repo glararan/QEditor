@@ -100,8 +100,25 @@
      <addaction name="actionSpeed_0_1"/>
      <addaction name="actionSpeed_0_2"/>
     </widget>
+    <widget class="QMenu" name="menu_Display_Mode">
+     <property name="title">
+      <string>&amp;Display Mode</string>
+     </property>
+     <addaction name="action_Default"/>
+     <addaction name="action_Terrain_Wireframe"/>
+     <addaction name="action_Wireframe"/>
+     <addaction name="action_Grass"/>
+     <addaction name="actionGrass_Rock"/>
+     <addaction name="actionGrass_Rock_Snow"/>
+     <addaction name="actionWireframe_Height"/>
+     <addaction name="action_Colored"/>
+     <addaction name="action_Light_and_Shadow"/>
+     <addaction name="actionH_idden"/>
+    </widget>
     <addaction name="menu_Speed_Multiplier"/>
+    <addaction name="menu_Display_Mode"/>
     <addaction name="separator"/>
+    <addaction name="actionTeleport"/>
     <addaction name="action_Test"/>
    </widget>
    <addaction name="menuFile"/>
@@ -189,6 +206,124 @@
   <action name="action_Test">
    <property name="text">
     <string>&amp;Test</string>
+   </property>
+  </action>
+  <action name="action_Default">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Default</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
+   </property>
+  </action>
+  <action name="action_Terrain_Wireframe">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Terrain + Wireframe</string>
+   </property>
+   <property name="shortcut">
+    <string>F2</string>
+   </property>
+  </action>
+  <action name="action_Wireframe">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Wireframe</string>
+   </property>
+   <property name="shortcut">
+    <string>F3</string>
+   </property>
+  </action>
+  <action name="action_Grass">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Grass</string>
+   </property>
+   <property name="shortcut">
+    <string>F4</string>
+   </property>
+  </action>
+  <action name="actionGrass_Rock">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Grass + &amp;Rock</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
+  </action>
+  <action name="actionGrass_Rock_Snow">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Grass + Rock + &amp;Snow</string>
+   </property>
+   <property name="shortcut">
+    <string>F6</string>
+   </property>
+  </action>
+  <action name="actionWireframe_Height">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Wireframe + &amp;Height</string>
+   </property>
+   <property name="shortcut">
+    <string>F7</string>
+   </property>
+  </action>
+  <action name="action_Colored">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Colored</string>
+   </property>
+   <property name="shortcut">
+    <string>F8</string>
+   </property>
+  </action>
+  <action name="action_Light_and_Shadow">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Light and Shadow</string>
+   </property>
+   <property name="shortcut">
+    <string>F9</string>
+   </property>
+  </action>
+  <action name="actionH_idden">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>H&amp;idden</string>
+   </property>
+   <property name="shortcut">
+    <string>F10</string>
+   </property>
+  </action>
+  <action name="actionTeleport">
+   <property name="text">
+    <string>Teleport</string>
    </property>
   </action>
  </widget>

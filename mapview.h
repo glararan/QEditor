@@ -24,12 +24,6 @@ class MapView : public QGLWidget
     Q_OBJECT
 
 public:
-    enum eEditingMode
-    {
-        Objects = 0,
-        Terrain = 1
-    };
-
     MapView(QWidget* parent = 0);
     ~MapView();
 
@@ -69,11 +63,22 @@ public:
         GrassRocksAndSnow,
         LightingFactors,
         TexturedAndLit,
+        WorldTexturedWireframed,
+        Hidden,
         DisplayModeCount
     };
 
     void setDisplayMode(DisplayMode displayMode) { m_displayMode = displayMode; }
     DisplayMode displayMode() const              { return m_displayMode; }
+
+    enum eEditingMode
+    {
+        Objects = 0,
+        Terrain = 1
+    };
+
+    void setEditingMode(eEditingMode editingMode) { eMode = editingMode; }
+    eEditingMode editingMode() const              { return eMode; }
 
 protected:
     void initializeGL();
@@ -169,6 +174,11 @@ private:
     QPoint m_prevPos;
     QPoint m_pos;
 
+    QVector3D terrain_pos;
+
+    // keyboard
+    bool shiftDown, ctrlDown, altDown;
+
     // status bar
     QVector<QString>     sbMessageList;
     QHash<int, QVariant> sbDataList;
@@ -192,7 +202,9 @@ private:
 
 public slots:
     void setSpeedMultiplier(float value);
+    void setDisplayMode(int mode);
     void setModeEditing(int option);
+    void setCameraPosition(QVector3D* position);
 
     void doTest();
 

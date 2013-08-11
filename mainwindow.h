@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+#include "ui/teleportwidget.h"
+
 namespace Ui
 {
     class MainWindow;
@@ -21,15 +23,22 @@ private:
 
     Ui::MainWindow* ui;
 
+    QString DisplayMode;
     QString ToolBarItem;
+
+    TeleportWidget* teleportW;
 
 signals:
     void setSpeedMultiplier(float multiplier);
+    void setDisplayMode(int mode);
     void setModeEditing(int option);
 
 private slots:
     void setSpeedMultiplier();
+    void setDisplayMode();
     void setToolBarItem();
+
+    void showTeleport();
 };
 
 #endif // MAINWINDOW_H

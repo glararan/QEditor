@@ -1,6 +1,8 @@
 #include "mapview.h"
 #include "camera.h"
 
+#include <gl/GLU.h>
+
 #include <QImage>
 #include <QKeyEvent>
 #include <QGLWidget>
@@ -41,6 +43,10 @@ MapView::MapView(QWidget* parent)
 , m_leftButtonPressed(false)
 , m_rightButtonPressed(false)
 , mouse_position(QPoint(0, 0))
+, terrain_pos()
+, shiftDown(false)
+, ctrlDown(false)
+, altDown(false)
 , eMode((eEditingMode)0)
 , heightMapImage(0)
 , editedHeightMap(0)
@@ -78,7 +84,9 @@ MapView::MapView(QWidget* parent)
                        << QStringLiteral("shadeGrassAndRocks")
                        << QStringLiteral("shadeGrassRocksAndSnow")
                        << QStringLiteral("shadeLightingFactors")
-                       << QStringLiteral("shadeTexturedAndLit");
+                       << QStringLiteral("shadeTexturedAndLit")
+                       << QStringLiteral("shadeWorldTexturedWireframed")
+                       << QStringLiteral("shadeHidden");
 
     AddStatusBarMessage("speed multiplier: ", speed_mult);
 
@@ -141,6 +149,11 @@ void MapView::initializeGL()
     shader->setUniformValue("fog.color", QVector4D(0.65f, 0.77f, 1.0f, 1.0f));
     shader->setUniformValue("fog.minDistance", 50.0f);
     shader->setUniformValue("fog.maxDistance", 128.0f);
+
+    // Set the brush parameteres
+    shader->setUniformValue("brush", 0);
+    shader->setUniformValue("cursorPos", QVector2D(0.0f, 0.0f));
+    shader->setUniformValue("brushRadius", 0.0f);
 
     // Get subroutine indices
     for(int i = 0; i < DisplayModeCount; ++i)
@@ -231,8 +244,62 @@ void MapView::update(float t)
         Lcamera_zoom = camera_zoom;
     }
 
+    /// mouse on terrain
+    if(editingMode() == Terrain)
+    {
+        bool invert = false;
+
+        QMatrix4x4 viewMatrix       = m_camera->viewMatrix();
+        QMatrix4x4 modelViewMatrix  = viewMatrix * m_modelMatrix;
+        QMatrix4x4 modelViewProject = m_camera->projectionMatrix() * modelViewMatrix;
+        QMatrix4x4 inverted         = m_viewportMatrix * modelViewProject;
+
+        inverted = inverted.inverted(&invert);
+
+        float posZ;
+        float posY = m_viewportSize.x() - mouse_position.y();
+
+        m_funcs->glReadPixels(mouse_position.x(), /*posY*/mouse_position.y(), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
+
+        QVector4D clickedPointOnScreen(mouse_position.x(), /*posY*/mouse_position.y(), posZ, 1.0f);
+        QVector4D clickedPointIn3DOrgn = inverted * clickedPointOnScreen;
+
+        clickedPointIn3DOrgn = clickedPointIn3DOrgn / clickedPointIn3DOrgn.w();
+
+        terrain_pos = clickedPointIn3DOrgn.toVector3DAffine();
+
+        qDebug() << invert << terrain_pos;
+        //qDebug() << posX << " " << posY << " " << posZ;
+    }
+
+    // Change terrain
+    if(m_leftButtonPressed)
+    {
+        if(shiftDown)
+        {
+            if(eMode == Terrain)
+            {
+                const QVector3D& position(terrain_pos);
+
+                float radius = 1.0f;
+                int brush = 1; // currently not needed
+
+                changeTerrain(position.x(), position.z(), 7.5f * dt * 10.0f, radius, brush);
+            }
+        }
+    }
+
     // Update status bar
-    QString sbMessage = QString("speed multiplier: %1, x: %2, y: %3, z: %4, zoom: %5, pan: %6, tilt: %7").arg(speed_mult).arg(m_camera->position().x()).arg(m_camera->position().z()).arg(m_camera->position().y()).arg(camera_zoom).arg(panAngle).arg(tiltAngle);
+    QString sbMessage = QString("speed multiplier: %1, x: %2, y: %3, z: %4, zoom: %5, pan: %6, tilt: %7, mouseX: %8, mouseY: %9")
+            .arg(speed_mult)
+            .arg(m_camera->position().x())
+            .arg(m_camera->position().z())
+            .arg(m_camera->position().y())
+            .arg(camera_zoom)
+            .arg(panAngle)
+            .arg(tiltAngle)
+            .arg(mouse_position.x())
+            .arg(mouse_position.y());
     /*QString sbMessage = "Initialized!";
 
     for(int i = 0; i < sbMessageList.count(); i++)
@@ -300,12 +367,29 @@ void MapView::paintGL()
     shader->setUniformValue("material.Ks", QVector3D(0.3f, 0.3f, 0.3f));
     shader->setUniformValue("material.shininess", 10.0f);
 
-    // Render the quad as a patch
+    if(displayMode() != Hidden)
     {
-        QOpenGLVertexArrayObject::Binder binder(&m_vao);
-        shader->setPatchVertexCount(1);
+        // Render the quad as a patch
+        {
+            QOpenGLVertexArrayObject::Binder binder(&m_vao);
+            shader->setPatchVertexCount(1);
 
-        glDrawArrays(GL_PATCHES, 0, m_patchCount);
+            glDrawArrays(GL_PATCHES, 0, m_patchCount);
+        }
+    }
+
+    /// Terrain brush
+    if(eMode == Terrain)
+    {
+        shader->setUniformValue("brush", 1);
+        shader->setUniformValue("cursorPos", QVector2D(terrain_pos.x(), terrain_pos.z()));
+        shader->setUniformValue("brushRadius", 10.0f);
+    }
+    else
+    {
+        shader->setUniformValue("brush", 0);
+        shader->setUniformValue("cursorPos", QVector2D(0.0f, 0.0f));
+        shader->setUniformValue("brushRadius", 0.0f);
     }
 }
 
@@ -520,6 +604,40 @@ void MapView::setModeEditing(int option)
     }
 }
 
+void MapView::setDisplayMode(int mode)
+{
+    if(mode == SimpleWireFrame || mode == WorldHeight || mode == WorldTexturedWireframed)
+    {
+        QOpenGLShaderProgramPtr shader = m_material->shader();
+        shader->bind();
+
+        if(mode == WorldTexturedWireframed)
+            shader->setUniformValue("line.width", 0.5f);
+        else
+            shader->setUniformValue("line.width", 0.2f);
+    }
+
+    switch(mode)
+    {
+        case SimpleWireFrame:
+        case WorldHeight:
+        case WorldNormals:
+        case Grass:
+        case GrassAndRocks:
+        case GrassRocksAndSnow:
+        case LightingFactors:
+        case TexturedAndLit:
+        case WorldTexturedWireframed:
+        case Hidden:
+            setDisplayMode((DisplayMode)mode);
+            break;
+
+        default:
+            setDisplayMode((DisplayMode)0);
+            break;
+    }
+}
+
 static const double MAPCHUNK_DIAMETER = 47.140452079103168293389624140323;
 static const float MAPSIZE = 1024.0f;
 static const float CHUNKSIZE = MAPSIZE / 16.0f;
@@ -555,10 +673,10 @@ bool MapView::changeTerrain(float x, float z, float change, float radius, int br
 
     QImage editingHeightMap(editedHeightMap);
 
-    qDebug() << "minX: " << minX;
-    qDebug() << "maxX: " << maxX;
-    qDebug() << "minY: " << minY  - (sizeY / 2);
-    qDebug() << "maxY: " << maxY  - (sizeY / 2);
+    qDebug() << "minX: " << minX << "(" << (x - radius) << ")";
+    qDebug() << "maxX: " << maxX << "(" << (x + radius) << ")";;
+    qDebug() << "minY: " << minY  - (sizeY / 2) << "(" << (z - radius) << ")";;
+    qDebug() << "maxY: " << maxY  - (sizeY / 2) << "(" << (z + radius) << ")";;
 
     qDebug() << "change: " << change;
 
@@ -642,6 +760,78 @@ void MapView::reCreateTerrain()
     }
 }
 
+void MapView::UnProject(int x, int y, int z, int mx, int my, QMatrix4x4 ModelView, QMatrix4x4 Projection)
+{
+    QVector4D nearPoint, cameraPos, rayDir;
+
+    float norm_x = 2.0f * x / mx - 1.0f;
+    float norm_y = 1.0f - 2.0f * y / my;
+
+    QMatrix4x4 unview = (ModelView * Projection).inverted();
+
+    nearPoint = unview * QVector4D(norm_x, norm_y, 0, 1);
+    cameraPos = ModelView.inverted().column(3);
+    rayDir    = (nearPoint - cameraPos).normalized();
+}
+
+QVector3D MapView::UnProjectt(int x, int y)
+{
+    float depth[1];
+    GLdouble modelm[16], projm[16], pos[3];
+    int view[4];
+
+    QVector3D ret;
+
+    m_funcs->glGetDoublev( GL_MODELVIEW_MATRIX, modelm );
+    m_funcs->glGetDoublev( GL_PROJECTION_MATRIX, projm );
+    m_funcs->glGetIntegerv( GL_VIEWPORT, (GLint*)view );
+    m_funcs->glReadPixels(x,y,1,1,GL_DEPTH_COMPONENT,GL_FLOAT,depth);
+    gluUnProject(x,y,depth[0],modelm,projm,(GLint*)view,&pos[0],&pos[1],&pos[2]);
+
+    ret.setX((float)pos[0]);
+    ret.setY((float)pos[1]);
+    ret.setZ((float)pos[2]);
+
+    return ret;
+}
+
+QVector3D MapView::UnProjectx(int x, int y, const QVector3D &vecOrigin)
+{
+    int iRealY;
+    GLdouble vecWorld[3];
+
+    GLdouble modelm[16], projm[16];
+    int view[4];
+
+    m_funcs->glGetDoublev( GL_MODELVIEW_MATRIX, modelm );
+    m_funcs->glGetDoublev( GL_PROJECTION_MATRIX, projm );
+    m_funcs->glGetIntegerv( GL_VIEWPORT, (GLint*)view );
+
+    iRealY = view[3] - y;
+
+    gluUnProject((GLdouble)x, (GLdouble)iRealY, 0.0, modelm, projm, view, &vecWorld[0], &vecWorld[1], &vecWorld[2]);
+
+    QVector3D pos(static_cast<float>(vecWorld[0]), static_cast<float>(vecWorld[1]), static_cast<float>(vecWorld[2]));
+
+    qDebug() << pos;
+
+    return (pos - vecOrigin);
+}
+
+void MapView::setCameraPosition(QVector3D* position)
+{
+    const QVector3D location(position->x(), position->y(), position->z());
+
+    // reset tilt angle
+    tiltAngle = 0.0f;
+    panAngle  = 0.0f;
+
+    // set position and rotation
+    m_camera->setPosition(location);
+    m_camera->setViewCenter(QVector3D(location.x(), location.y(), location.z() - 1.0f));
+    m_camera->setUpVector(QVector3D(0.0f, 1.0f, 0.0f));
+}
+
 void MapView::keyPressEvent(QKeyEvent* e)
 {
     switch (e->key())
@@ -689,17 +879,16 @@ void MapView::keyPressEvent(QKeyEvent* e)
             break;
 
         case Qt::Key_Shift:
-            setViewCenterFixed(true);
+            //setViewCenterFixed(true);
+            shiftDown = true;
             break;
 
-        case Qt::Key_Plus:
-            //setTerrainHorizontalScale(terrainHorizontalScale() + 0.1);
-            SpeedMultiplier(speed_mult + 0.1f);
+        case Qt::Key_Control:
+            ctrlDown = true;
             break;
 
-        case Qt::Key_Minus:
-            //setTerrainHorizontalScale(terrainHorizontalScale() - 0.1);
-            SpeedMultiplier(speed_mult - 0.1f);
+        case Qt::Key_Alt:
+            altDown = true;
             break;
 
         case Qt::Key_Home:
@@ -726,36 +915,19 @@ void MapView::keyPressEvent(QKeyEvent* e)
             setScreenSpaceError(screenSpaceError() - 0.1);
             break;
 
+        /// Used in MainWindow
+        case Qt::Key_Plus:
+        case Qt::Key_Minus:
         case Qt::Key_F1:
-            setDisplayMode(TexturedAndLit);
-            break;
-
         case Qt::Key_F2:
-            setDisplayMode(SimpleWireFrame);
-            break;
-
         case Qt::Key_F3:
-            setDisplayMode(WorldHeight);
-            break;
-
         case Qt::Key_F4:
-            setDisplayMode(WorldNormals);
-            break;
-
         case Qt::Key_F5:
-            setDisplayMode(Grass);
-            break;
-
         case Qt::Key_F6:
-            setDisplayMode(GrassAndRocks);
-            break;
-
         case Qt::Key_F7:
-            setDisplayMode(GrassRocksAndSnow);
-            break;
-
         case Qt::Key_F8:
-            setDisplayMode(LightingFactors);
+        case Qt::Key_F9:
+        case Qt::Key_F10:
             break;
 
         default:
@@ -791,7 +963,16 @@ void MapView::keyReleaseEvent(QKeyEvent* e)
             break;
 
         case Qt::Key_Shift:
-            setViewCenterFixed(false);
+            //setViewCenterFixed(false);
+            shiftDown = false;
+            break;
+
+        case Qt::Key_Control:
+            ctrlDown = false;
+            break;
+
+        case Qt::Key_Alt:
+            altDown = false;
             break;
 
         default:
@@ -859,7 +1040,8 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
         tilt(dy);
     }
 
-    mouse_position = e->pos();
+    //mouse_position = e->pos();
+    mouse_position = this->mapFromGlobal(QCursor::pos());
 
     QGLWidget::mouseMoveEvent(e);
 }

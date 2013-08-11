@@ -2,7 +2,8 @@
 
 layout (location = 0) in vec2 vertexPosition;
 
-out terrainVertex {
+out terrainVertex
+{
     vec2 position;
 } Out;
 

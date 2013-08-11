@@ -20,11 +20,13 @@ INCLUDEPATH += common
 
 SOURCES  += main.cpp \
     mainwindow.cpp \
-    mapview.cpp
+    mapview.cpp \
+    ui/teleportwidget.cpp
 
 HEADERS  += \
     mainwindow.h \
-    mapview.h
+    mapview.h \
+    ui/teleportwidget.h
 
 RESOURCES += terrain_tessellation.qrc
 
@@ -36,4 +38,5 @@ OTHER_FILES += shaders/terraintessellation.vert \
     info.txt
 
 FORMS += \
-    mainwindow.ui
+    mainwindow.ui \
+    ui/teleportwidget.ui
