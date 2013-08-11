@@ -28,3 +28,12 @@ MapView:
 
         Finální verze): Získá pozici kurzoru a podle ní zakreslí na mapu 1024x1024 stejně jako v lehčí verzi, finální verze se bude vlastně rozlišovat kurzorem a shift + ctrl
         se nahradí v toolbaru, radius a síla opět v toolbaru
+
+    2. Výpočet do dálky pozice xyz
+        tilt -90 = Y (převedená pak na Z) nižší hodnota (až -118+-)
+        tilt +90 = Y (převedená pak na Z) vyšší hodnota (až 136+-)
+
+        pan 0          = Z (převedená pak na Y) nižší hodnota (až 216 [230])
+        pan -90  & 270 = X nižší hodnota (až 216 [230] [odhad])
+        pan -180 & 180 = Z (převedená pak na Y) nižší hodnota (-||-)
+        pan -270 & 90  = X vyšší hodnota

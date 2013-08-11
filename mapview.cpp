@@ -261,7 +261,7 @@ void MapView::update(float t)
 
         m_funcs->glReadPixels((int)mouse_position.x(), posY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
 
-        QVector4D clickedPointOnScreen(mouse_position.x(), posY, posZ, 1.0f);
+        QVector4D clickedPointOnScreen(mouse_position.x(), (float)posY, posZ, 1.0f);
         QVector4D clickedPointIn3DOrgn = inverted * clickedPointOnScreen;
 
         clickedPointIn3DOrgn = clickedPointIn3DOrgn / clickedPointIn3DOrgn.w();
