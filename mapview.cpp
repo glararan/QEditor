@@ -257,11 +257,11 @@ void MapView::update(float t)
         inverted = inverted.inverted(&invert);
 
         float posZ;
-        float posY = m_viewportSize.x() - mouse_position.y();
+        int   posY = (int)m_viewportSize.y() - (int)mouse_position.y() - 1;
 
-        m_funcs->glReadPixels(mouse_position.x(), /*posY*/mouse_position.y(), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
+        m_funcs->glReadPixels((int)mouse_position.x(), posY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
 
-        QVector4D clickedPointOnScreen(mouse_position.x(), /*posY*/mouse_position.y(), posZ, 1.0f);
+        QVector4D clickedPointOnScreen(mouse_position.x(), posY, posZ, 1.0f);
         QVector4D clickedPointIn3DOrgn = inverted * clickedPointOnScreen;
 
         clickedPointIn3DOrgn = clickedPointIn3DOrgn / clickedPointIn3DOrgn.w();

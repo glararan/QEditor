@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
 
-    LogInitialize();
+    //LogInitialize();
 
     MainWindow mw;
     mw.showMaximized();
