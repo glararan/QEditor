@@ -249,8 +249,6 @@ void MapView::update(float t)
     {
         // getWorldCoordinates can be used to spawn object in middle of screen
         terrain_pos = getWorldCoordinates(mouse_position.x(), mouse_position.y());
-
-        qDebug() << terrain_pos;
     }
 
     // Change terrain
@@ -769,10 +767,12 @@ QVector3D MapView::getWorldCoordinates(float mouseX, float mouseY)
 
     m_funcs->glReadPixels((int)mouseX, (int)posY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
 
-    QVector4D clickedPointOnScreen(mouseX, posY, posZ, 1.0f);
+    QVector4D clickedPointOnScreen(mouseX, posY, 2.0f * posZ - 1.0f, 1.0f);
     QVector4D clickedPointIn3DOrgn = inverted * clickedPointOnScreen;
 
-    clickedPointIn3DOrgn = clickedPointIn3DOrgn / clickedPointIn3DOrgn.w();
+    clickedPointIn3DOrgn /= clickedPointIn3DOrgn.w(); // == clickedPointIn3DOrgn *= 1.0f / clickedPointIn3DOrgn.w();
+
+    qDebug() << clickedPointIn3DOrgn.toVector3DAffine();
 
     return clickedPointIn3DOrgn.toVector3DAffine();
 }
