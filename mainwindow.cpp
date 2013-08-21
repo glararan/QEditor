@@ -51,8 +51,9 @@ MainWindow::MainWindow(QWidget* parent)
 
     connect(this, SIGNAL(setDisplayMode(int)), mapView, SLOT(setDisplayMode(int)));
 
-    // tools - teleport
+    // tools - teleport, reset camera
     connect(ui->actionTeleport, SIGNAL(triggered()), this, SLOT(showTeleport()));
+    connect(ui->action_Reset_camera, SIGNAL(triggered()), mapView, SLOT(resetCamera()));
 
     connect(teleportW, SIGNAL(TeleportTo(QVector3D*)), mapView, SLOT(setCameraPosition(QVector3D*)));
 
@@ -174,7 +175,14 @@ void MainWindow::setToolBarItem()
 
 void MainWindow::showTeleport()
 {
-    teleportW->exec();
-    //teleportW->show();
-    //teleportW->set
+    addDockWindow("Teleport", teleportW);
+}
+
+void MainWindow::addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area)
+{
+    QDockWidget* dockWidget = new QDockWidget(title);
+    dockWidget->setWidget(widget);
+    dockWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+
+    addDockWidget(area, dockWidget);
 }

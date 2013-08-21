@@ -200,11 +200,15 @@ private:
     int horizontalScaleToHeightMapScale(float position);
     float swapPosition(float position);
 
+    QVector3D getWorldCoordinates(float mouseX, float mouseY);
+
 public slots:
     void setSpeedMultiplier(float value);
     void setDisplayMode(int mode);
     void setModeEditing(int option);
     void setCameraPosition(QVector3D* position);
+
+    void resetCamera();
 
     void doTest();
 

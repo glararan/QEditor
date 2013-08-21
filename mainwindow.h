@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QDockWidget>
 
 #include "ui/teleportwidget.h"
 
@@ -27,6 +28,8 @@ private:
     QString ToolBarItem;
 
     TeleportWidget* teleportW;
+
+    void addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area = Qt::RightDockWidgetArea);
 
 signals:
     void setSpeedMultiplier(float multiplier);

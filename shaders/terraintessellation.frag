@@ -311,13 +311,9 @@ vec4 shadeHidden()
     return vec4(0);
 }
 
-in worldVertex
+in terrainVertex
 {
-    vec4 worldPosition;
-    vec3 worldNormal;
-    vec4 position;
-    vec3 normal;
-    vec2 texCoords;
+    vec2 position;
 } In[];
 
 vec4 brushColor = vec4(0, 1, 0, 1);
@@ -325,6 +321,15 @@ vec4 brushColor = vec4(0, 1, 0, 1);
 uniform int   brush;
 uniform vec2  cursorPos;
 uniform float brushRadius;
+
+uniform float horizontalScale = 10.0;
+
+uniform sampler2D heightMap;
+
+// The number of triangles created per height-map texel
+uniform int maxTrianglesPerTexel = 10;
+
+const float maxTessLevel = 64.0;
 
 void main()
 {
@@ -341,22 +346,16 @@ void main()
     // Terrain brush
     if(brush == 1)
     {
-        /*vec2 p = In[0].texCoords;
+        vec2 patchExtent = maxTessLevel / (textureSize(heightMap, 0) * maxTrianglesPerTexel);
+        vec2 p = (In[0].position.xy + gl_FragCoord.xy * patchExtent) * horizontalScale;
 
-        float strUnc = length(p - cursorPos) / brushRadius;
-        float str = strUnc > 1.0f ? 0.0f : strUnc;
-
-        outColor += brushColor * strUnc;*/
-
-        /*float distRing = distance(In.position, cursorPos);
+        float distRing = distance(p / brushRadius, cursorPos);
 
         if(distRing < brushRadius)
         {
             float str = max(0.0, mix(-1.5, 0.5, distRing / brushRadius));
             outColor += brushColor * str;
         }
-        else
-            outColor.x += 1.0;*/
     }
 
     fragColor = outColor;

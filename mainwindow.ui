@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>Qt - Editor terénu</string>
   </property>
+  <property name="dockNestingEnabled">
+   <bool>true</bool>
+  </property>
   <widget class="QWidget" name="centralwidget"/>
   <widget class="QToolBar" name="toolbar3">
    <property name="enabled">
@@ -119,6 +122,8 @@
     <addaction name="menu_Display_Mode"/>
     <addaction name="separator"/>
     <addaction name="actionTeleport"/>
+    <addaction name="action_Reset_camera"/>
+    <addaction name="separator"/>
     <addaction name="action_Test"/>
    </widget>
    <addaction name="menuFile"/>
@@ -324,6 +329,14 @@
   <action name="actionTeleport">
    <property name="text">
     <string>Teleport</string>
+   </property>
+  </action>
+  <action name="action_Reset_camera">
+   <property name="text">
+    <string>&amp;Reset camera</string>
+   </property>
+   <property name="shortcut">
+    <string>R</string>
    </property>
   </action>
  </widget>

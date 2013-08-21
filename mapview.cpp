@@ -247,29 +247,10 @@ void MapView::update(float t)
     /// mouse on terrain
     if(editingMode() == Terrain)
     {
-        bool invert = false;
+        // getWorldCoordinates can be used to spawn object in middle of screen
+        terrain_pos = getWorldCoordinates(mouse_position.x(), mouse_position.y());
 
-        QMatrix4x4 viewMatrix       = m_camera->viewMatrix();
-        QMatrix4x4 modelViewMatrix  = viewMatrix * m_modelMatrix;
-        QMatrix4x4 modelViewProject = m_camera->projectionMatrix() * modelViewMatrix;
-        QMatrix4x4 inverted         = m_viewportMatrix * modelViewProject;
-
-        inverted = inverted.inverted(&invert);
-
-        float posZ;
-        int   posY = (int)m_viewportSize.y() - (int)mouse_position.y() - 1;
-
-        m_funcs->glReadPixels((int)mouse_position.x(), posY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
-
-        QVector4D clickedPointOnScreen(mouse_position.x(), (float)posY, posZ, 1.0f);
-        QVector4D clickedPointIn3DOrgn = inverted * clickedPointOnScreen;
-
-        clickedPointIn3DOrgn = clickedPointIn3DOrgn / clickedPointIn3DOrgn.w();
-
-        terrain_pos = clickedPointIn3DOrgn.toVector3DAffine();
-
-        qDebug() << invert << terrain_pos;
-        //qDebug() << posX << " " << posY << " " << posZ;
+        qDebug() << terrain_pos;
     }
 
     // Change terrain
@@ -774,6 +755,43 @@ void MapView::setCameraPosition(QVector3D* position)
     m_camera->setUpVector(QVector3D(0.0f, 1.0f, 0.0f));
 }
 
+QVector3D MapView::getWorldCoordinates(float mouseX, float mouseY)
+{
+    QMatrix4x4 viewMatrix       = m_camera->viewMatrix();
+    QMatrix4x4 modelViewMatrix  = viewMatrix * m_modelMatrix;
+    QMatrix4x4 modelViewProject = m_camera->projectionMatrix() * modelViewMatrix;
+    QMatrix4x4 inverted         = m_viewportMatrix * modelViewProject;
+
+    inverted = inverted.inverted();
+
+    float posZ;
+    float posY = m_viewportSize.y() - mouseY - 1.0f;
+
+    m_funcs->glReadPixels((int)mouseX, (int)posY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
+
+    QVector4D clickedPointOnScreen(mouseX, posY, posZ, 1.0f);
+    QVector4D clickedPointIn3DOrgn = inverted * clickedPointOnScreen;
+
+    clickedPointIn3DOrgn = clickedPointIn3DOrgn / clickedPointIn3DOrgn.w();
+
+    return clickedPointIn3DOrgn.toVector3DAffine();
+}
+
+void MapView::resetCamera()
+{
+    QVector3D Cpos = m_camera->position();
+
+    m_camera->setUpVector(QVector3D(0.0f, 1.0f, 0.0f));
+    m_camera->setPosition(Cpos);
+
+    Cpos.setZ(Cpos.z() - 1.0f);
+
+    m_camera->setViewCenter(Cpos);
+
+    panAngle  = 0.0f;
+    tiltAngle = 0.0f;
+}
+
 void MapView::keyPressEvent(QKeyEvent* e)
 {
     switch (e->key())
@@ -969,12 +987,12 @@ void MapView::mouseReleaseEvent(QMouseEvent* e)
 
 void MapView::mouseMoveEvent(QMouseEvent* e)
 {
-    if(m_leftButtonPressed || m_rightButtonPressed)
+    if((m_leftButtonPressed || m_rightButtonPressed) && !shiftDown && !altDown && !ctrlDown)
     {
         m_pos = e->pos();
 
-        float dx = 0.2f * (m_pos.x() - m_prevPos.x());
-        float dy = -0.2f * (m_pos.y() - m_prevPos.y());
+        float dx = 0.4f * (m_pos.x() - m_prevPos.x());
+        float dy = -0.4f * (m_pos.y() - m_prevPos.y());
 
         m_prevPos = m_pos;
 
