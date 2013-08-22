@@ -314,22 +314,15 @@ vec4 shadeHidden()
 in terrainVertex
 {
     vec2 position;
-} In[];
+} In;
+
+in vec2 VTexCoord;
 
 vec4 brushColor = vec4(0, 1, 0, 1);
 
 uniform int   brush;
 uniform vec2  cursorPos;
 uniform float brushRadius;
-
-uniform float horizontalScale = 10.0;
-
-uniform sampler2D heightMap;
-
-// The number of triangles created per height-map texel
-uniform int maxTrianglesPerTexel = 10;
-
-const float maxTessLevel = 64.0;
 
 void main()
 {
@@ -344,19 +337,16 @@ void main()
     vec4 outColor = mix(fog.color, c, fogFactor);
 
     // Terrain brush
-    if(brush == 1)
+    /*if(brush == 1)
     {
-        vec2 patchExtent = maxTessLevel / (textureSize(heightMap, 0) * maxTrianglesPerTexel);
-        vec2 p = (In[0].position.xy + gl_FragCoord.xy * patchExtent) * horizontalScale;
+        float dx = VTexCoord.x;
+        float dy = VTexCoord.y;
 
-        float distRing = distance(p / brushRadius, cursorPos);
+        float dist = sqrt(dx * dx + dy * dy);
 
-        if(distRing < brushRadius)
-        {
-            float str = max(0.0, mix(-1.5, 0.5, distRing / brushRadius));
-            outColor += brushColor * str;
-        }
-    }
+        if(dist < brushRadius)
+            outColor += mix(brushColor, vec4(0.0, 0.0, 0.0, 0.0), smoothstep(brushRadius, brushRadius, dist));
+    }*/
 
     fragColor = outColor;
 }

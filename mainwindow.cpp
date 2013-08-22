@@ -18,8 +18,12 @@ MainWindow::MainWindow(QWidget* parent)
     MapView* mapView = new MapView(this);
     setCentralWidget(mapView);
 
+    // init modes
+    initMode1();
+
     /// map view
     connect(mapView, SIGNAL(statusBar(QString)), ui->statusbar, SLOT(showMessage(QString)));
+    connect(mapView, SIGNAL(updateShapingRadius(double)), this, SLOT(setShapingRadius(double)));
 
     /// menu bar
     // file
@@ -65,6 +69,13 @@ MainWindow::MainWindow(QWidget* parent)
     connect(ui->action_mapview_m1, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
 
     connect(this, SIGNAL(setModeEditing(int)), mapView, SLOT(setModeEditing(int)));
+
+    /// toolbar3
+    connect(t_radius, SIGNAL(valueChanged(double)), t_radius_value_label, SLOT(setNum(double)));
+    connect(t_speed,  SIGNAL(valueChanged(double)), t_speed_value_label,  SLOT(setNum(double)));
+
+    connect(t_radius, SIGNAL(valueChanged(double)), mapView, SLOT(setShapingRadius(double)));
+    connect(t_speed,  SIGNAL(valueChanged(double)), mapView, SLOT(setShapingSpeed(double)));
 }
 
 MainWindow::~MainWindow()
@@ -170,7 +181,11 @@ void MainWindow::setToolBarItem()
     if(iName == "action_mapview_m0")
         emit setModeEditing(0);
     else if(iName == "action_mapview_m1")
+    {
         emit setModeEditing(1);
+
+        showMode1();
+    }
 }
 
 void MainWindow::showTeleport()
@@ -185,4 +200,53 @@ void MainWindow::addDockWindow(const QString& title, QWidget* widget, Qt::DockWi
     dockWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 
     addDockWidget(area, dockWidget);
+}
+
+void MainWindow::initMode1()
+{
+    t_radius = new QDSlider();
+    t_radius->setMaximum(100.0);
+    t_radius->setValue(10.0);
+    t_radius->setMaximumWidth(this->width() / 3);
+
+    t_speed = new QDSlider();
+    t_speed->setMaximum(10.0);
+    t_speed->setValue(1.0);
+    t_speed->setMaximumWidth(this->width() / 3);
+
+    t_brush = new QButtonGroup();
+
+    t_brush_circle = new QRadioButton("Circle");
+    t_brush_circle->setChecked(true);
+    t_brush->addButton(t_brush_circle);
+
+    t_radius_label       = new QLabel("Radius");
+    t_radius_value_label = new QLabel(QString("%1").arg(t_radius->value()));
+    t_speed_label        = new QLabel("Speed");
+    t_speed_value_label  = new QLabel(QString("%1").arg(t_speed->value()));
+
+    t_radius_label->setStyleSheet("margin-left:20px;");
+    t_speed_label->setStyleSheet("margin-left:20px;");
+}
+
+void MainWindow::showMode1()
+{
+    ui->toolbar3->clear();
+
+    ui->toolbar3->addWidget(t_brush_circle);
+    ui->toolbar3->addWidget(t_radius_label);
+    ui->toolbar3->addWidget(t_radius);
+    ui->toolbar3->addWidget(t_radius_value_label);
+    ui->toolbar3->addWidget(t_speed_label);
+    ui->toolbar3->addWidget(t_speed);
+    ui->toolbar3->addWidget(t_speed_value_label);
+
+    t_brush_circle->show();
+    t_radius->show();
+    t_speed->show();
+}
+
+void MainWindow::setShapingRadius(double value)
+{
+    t_radius->setValue(t_radius->value() + value);
 }

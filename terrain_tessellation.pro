@@ -21,12 +21,14 @@ INCLUDEPATH += common
 SOURCES  += main.cpp \
     mainwindow.cpp \
     mapview.cpp \
-    ui/teleportwidget.cpp
+    ui/teleportwidget.cpp \
+    ui/qdslider.cpp
 
 HEADERS  += \
     mainwindow.h \
     mapview.h \
-    ui/teleportwidget.h
+    ui/teleportwidget.h \
+    ui/qdslider.h
 
 RESOURCES += terrain_tessellation.qrc
 

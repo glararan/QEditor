@@ -114,6 +114,10 @@ private:
     */
     bool changeTerrain(float x, float z, float change, float radius, int brush);
 
+    float shaping_speed;
+    float shaping_radius;
+    int   shaping_brush;
+
 
     /* ******** */
 
@@ -197,8 +201,10 @@ private:
     QSize m_heightMapSize;
 
     void reCreateTerrain();
-    int horizontalScaleToHeightMapScale(float position);
+    int horizToHMapSize(float position);
+    float HMapSizeToHoriz(int position);
     float swapPosition(float position);
+    float swapPositionBack(float position);
 
     QVector3D getWorldCoordinates(float mouseX, float mouseY);
 
@@ -207,6 +213,9 @@ public slots:
     void setDisplayMode(int mode);
     void setModeEditing(int option);
     void setCameraPosition(QVector3D* position);
+    void setShapingSpeed(double speed);
+    void setShapingRadius(double radius);
+    void setShapingBrush(int brush);
 
     void resetCamera();
 
@@ -214,6 +223,10 @@ public slots:
 
 signals:
     void statusBar(QString message);
+
+    void updateShapingSpeed(double speed);
+    void updateShapingRadius(double radius);
+    void updateShapingBrush(int brush);
 };
 
 #endif // MAPVIEW_H

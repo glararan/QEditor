@@ -44,6 +44,9 @@ MapView::MapView(QWidget* parent)
 , m_rightButtonPressed(false)
 , mouse_position(QPoint(0, 0))
 , terrain_pos()
+, shaping_speed(1.0f)
+, shaping_radius(10.0f)
+, shaping_brush(1)
 , shiftDown(false)
 , ctrlDown(false)
 , altDown(false)
@@ -173,8 +176,6 @@ void MapView::update(float t)
     // Update heightmap
     if(!heightMapImage.isNull() && heightMapImage != editedHeightMap && editedHeightMap != lastEditeHeightMap)
     {
-        qDebug() << "updating heightmap";
-
         SamplerPtr sampler(new Sampler);
         sampler->create();
         sampler->setMinificationFilter(GL_LINEAR);
@@ -192,8 +193,6 @@ void MapView::update(float t)
         reCreateTerrain();
 
         lastEditeHeightMap = editedHeightMap;
-
-        qDebug() << "updated heightmap";
     }
 
     // Update the camera position and orientation
@@ -260,10 +259,7 @@ void MapView::update(float t)
             {
                 const QVector3D& position(terrain_pos);
 
-                float radius = 1.0f;
-                int brush = 1; // currently not needed
-
-                changeTerrain(position.x(), position.z(), 7.5f * dt * 10.0f, radius, brush);
+                changeTerrain(position.x(), position.z(), 7.5f * dt * shaping_speed, shaping_radius / 5.33333f, shaping_brush);
             }
         }
     }
@@ -362,7 +358,7 @@ void MapView::paintGL()
     {
         shader->setUniformValue("brush", 1);
         shader->setUniformValue("cursorPos", QVector2D(terrain_pos.x(), terrain_pos.z()));
-        shader->setUniformValue("brushRadius", 10.0f);
+        shader->setUniformValue("brushRadius", 30.0f);
     }
     else
     {
@@ -621,9 +617,14 @@ static const double MAPCHUNK_DIAMETER = 47.140452079103168293389624140323;
 static const float MAPSIZE = 1024.0f;
 static const float CHUNKSIZE = MAPSIZE / 16.0f;
 
-int MapView::horizontalScaleToHeightMapScale(float position)
+int MapView::horizToHMapSize(float position)
 {
     return static_cast<int>(position / m_horizontalScale * heightMapImage.width());
+}
+
+float MapView::HMapSizeToHoriz(int position)
+{
+    return static_cast<float>(position) / static_cast<float>(heightMapImage.width()) * m_horizontalScale;
 }
 
 float MapView::swapPosition(float position)
@@ -631,18 +632,20 @@ float MapView::swapPosition(float position)
     return m_horizontalScale - position;
 }
 
+float MapView::swapPositionBack(float position)
+{
+    return heightMapImage.width() - position;
+}
+
 bool MapView::changeTerrain(float x, float z, float change, float radius, int brush)
 {
     bool changed = false;
 
-    // square brush
-    float linear = 1.0f - (1.0f / radius);
+    int minX = horizToHMapSize(x - radius);
+    int maxX = horizToHMapSize(x + radius);
 
-    int minX = horizontalScaleToHeightMapScale(x - radius);
-    int maxX = horizontalScaleToHeightMapScale(x + radius);
-
-    int minY = horizontalScaleToHeightMapScale(swapPosition(z + radius));
-    int maxY = horizontalScaleToHeightMapScale(swapPosition(z - radius));
+    int minY = horizToHMapSize(swapPosition(z + radius));
+    int maxY = horizToHMapSize(swapPosition(z - radius));
 
     int sizeX = maxX - minX;
     int sizeY = maxY - minY;
@@ -652,58 +655,62 @@ bool MapView::changeTerrain(float x, float z, float change, float radius, int br
 
     QImage editingHeightMap(editedHeightMap);
 
-    qDebug() << "minX: " << minX << "(" << (x - radius) << ")";
-    qDebug() << "maxX: " << maxX << "(" << (x + radius) << ")";;
-    qDebug() << "minY: " << minY  - (sizeY / 2) << "(" << (z - radius) << ")";;
-    qDebug() << "maxY: " << maxY  - (sizeY / 2) << "(" << (z + radius) << ")";;
-
-    qDebug() << "change: " << change;
+    /*qDebug() << "minX: " << minX << "(" << (x - radius) << ")";
+    qDebug() << "maxX: " << maxX << "(" << (x + radius) << ")";
+    qDebug() << "minY: " << minY  - (sizeY / 2) << "(" << (z - radius) << ")";
+    qDebug() << "maxY: " << maxY  - (sizeY / 2) << "(" << (z + radius) << ")";*/
 
     for(int _x = minX; _x < maxX; _x++)
     {
-        for(int _y = minY; _y < maxY; _y++)
+        for(int _y = minY; _y < maxY; _y++) // _y mean z!
         {
-            QRgb pixelColor = editingHeightMap.pixel(_x, _y);
-
-            int red   = qRed(pixelColor);
-            int green = qGreen(pixelColor);
-            int blue  = qBlue(pixelColor);
-
-            if(_x == minX && _y == minY)
+            switch(brush)
             {
-                qDebug() << "red: " << red;
-                qDebug() << "green: " << green;
-                qDebug() << "blue: " << blue;
+                case 1:
+                default:
+                    {
+                        float xdiff = HMapSizeToHoriz(_x) - x;
+                        float ydiff = HMapSizeToHoriz(swapPositionBack(_y)) - z;
+
+                        float dist = sqrt(xdiff * xdiff + ydiff * ydiff);
+
+                        float changeFormula = change * (1.0f - dist / radius);
+
+                        qDebug() << changeFormula;
+
+                        if(dist < radius)
+                        {
+                            QRgb pixelColor = editingHeightMap.pixel(_x, _y);
+
+                            int red   = qRed(pixelColor);
+                            int green = qGreen(pixelColor);
+                            int blue  = qBlue(pixelColor);
+
+                            red   = red   + changeFormula;
+                            green = green + changeFormula;
+                            blue  = blue  + changeFormula;
+
+                            QVector<int> checkColors;
+                            checkColors << red << green << blue;
+
+                            for(int i = 0; i < checkColors.count(); i++)
+                            {
+                                if(checkColors[i] > 255)
+                                    checkColors[i] = 255;
+
+                                if(checkColors[i] < 0)
+                                    checkColors[i] = 0;
+                            }
+
+                            pixelColor = QColor(red, green, blue).rgb();
+
+                            editingHeightMap.setPixel(_x, _y, pixelColor);
+
+                            changed = true;
+                        }
+                    }
+                    break;
             }
-
-            red   = red   + change * (1.0f - linear / radius);
-            green = green + change * (1.0f - linear / radius);
-            blue  = blue  + change * (1.0f - linear / radius);
-
-            if(_x == minX && _y == minY)
-            {
-                qDebug() << "n red: " << red;
-                qDebug() << "n green: " << green;
-                qDebug() << "n blue: " << blue;
-            }
-
-            QVector<int> checkColors;
-            checkColors << red << green << blue;
-
-            for(int i = 0; i < checkColors.count(); i++)
-            {
-                if(checkColors[i] > 255)
-                    checkColors[i] = 255;
-
-                if(checkColors[i] < 0)
-                    checkColors[i] = 0;
-            }
-
-            pixelColor = QColor(red, green, blue).rgb();
-
-            editingHeightMap.setPixel(_x, _y, pixelColor);
-
-            changed = true;
         }
     }
 
@@ -772,8 +779,6 @@ QVector3D MapView::getWorldCoordinates(float mouseX, float mouseY)
 
     clickedPointIn3DOrgn /= clickedPointIn3DOrgn.w(); // == clickedPointIn3DOrgn *= 1.0f / clickedPointIn3DOrgn.w();
 
-    qDebug() << clickedPointIn3DOrgn.toVector3DAffine();
-
     return clickedPointIn3DOrgn.toVector3DAffine();
 }
 
@@ -790,6 +795,21 @@ void MapView::resetCamera()
 
     panAngle  = 0.0f;
     tiltAngle = 0.0f;
+}
+
+void MapView::setShapingSpeed(double speed)
+{
+    shaping_speed = static_cast<float>(speed);
+}
+
+void MapView::setShapingRadius(double radius)
+{
+    shaping_radius = static_cast<float>(radius);
+}
+
+void MapView::setShapingBrush(int brush)
+{
+    shaping_brush = brush;
 }
 
 void MapView::keyPressEvent(QKeyEvent* e)
@@ -987,18 +1007,20 @@ void MapView::mouseReleaseEvent(QMouseEvent* e)
 
 void MapView::mouseMoveEvent(QMouseEvent* e)
 {
+    m_pos = e->pos();
+
+    float dx = 0.4f * (m_pos.x() - m_prevPos.x());
+    float dy = -0.4f * (m_pos.y() - m_prevPos.y());
+
     if((m_leftButtonPressed || m_rightButtonPressed) && !shiftDown && !altDown && !ctrlDown)
     {
-        m_pos = e->pos();
-
-        float dx = 0.4f * (m_pos.x() - m_prevPos.x());
-        float dy = -0.4f * (m_pos.y() - m_prevPos.y());
-
-        m_prevPos = m_pos;
-
         pan(dx);
         tilt(dy);
     }
+    else if(m_leftButtonPressed && altDown)
+       updateShapingRadius(dx);
+
+    m_prevPos = m_pos;
 
     //mouse_position = e->pos();
     mouse_position = this->mapFromGlobal(QCursor::pos());
