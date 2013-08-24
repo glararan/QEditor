@@ -316,13 +316,13 @@ in terrainVertex
     vec2 position;
 } In;
 
-in vec2 VTexCoord;
-
 vec4 brushColor = vec4(0, 1, 0, 1);
 
 uniform int   brush;
 uniform vec2  cursorPos;
 uniform float brushRadius;
+
+uniform float horizontalScale = 10.0;
 
 void main()
 {
@@ -337,16 +337,20 @@ void main()
     vec4 outColor = mix(fog.color, c, fogFactor);
 
     // Terrain brush
-    /*if(brush == 1)
+    if(brush == 1)
     {
-        float dx = VTexCoord.x;
-        float dy = VTexCoord.y;
+        float dx = texCoords.x * horizontalScale - cursorPos.x;
+        float dy = texCoords.y * horizontalScale - cursorPos.y;
 
-        float dist = sqrt(dx * dx + dy * dy);
+        float bDist   = sqrt(dx * dx + dy * dy);
+        float bRadius = brushRadius;
 
-        if(dist < brushRadius)
-            outColor += mix(brushColor, vec4(0.0, 0.0, 0.0, 0.0), smoothstep(brushRadius, brushRadius, dist));
-    }*/
+        if(bDist < bRadius)
+        {
+            float str = max(0, mix(-1.5, 0.5, bDist / brushRadius));
+            outColor += brushColor * str;
+        }
+    }
 
     fragColor = outColor;
 }

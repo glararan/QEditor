@@ -356,9 +356,9 @@ void MapView::paintGL()
     /// Terrain brush
     if(eMode == Terrain)
     {
-        shader->setUniformValue("brush", 1);
+        shader->setUniformValue("brush", shaping_brush);
         shader->setUniformValue("cursorPos", QVector2D(terrain_pos.x(), terrain_pos.z()));
-        shader->setUniformValue("brushRadius", 30.0f);
+        shader->setUniformValue("brushRadius", shaping_radius);
     }
     else
     {
@@ -675,8 +675,6 @@ bool MapView::changeTerrain(float x, float z, float change, float radius, int br
                         float dist = sqrt(xdiff * xdiff + ydiff * ydiff);
 
                         float changeFormula = change * (1.0f - dist / radius);
-
-                        qDebug() << changeFormula;
 
                         if(dist < radius)
                         {
@@ -1018,11 +1016,13 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
         tilt(dy);
     }
     else if(m_leftButtonPressed && altDown)
-       updateShapingRadius(dx);
+    {
+        if(eMode == Terrain)
+            updateShapingRadius(dx);
+    }
 
     m_prevPos = m_pos;
 
-    //mouse_position = e->pos();
     mouse_position = this->mapFromGlobal(QCursor::pos());
 
     QGLWidget::mouseMoveEvent(e);
