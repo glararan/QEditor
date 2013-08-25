@@ -46,7 +46,9 @@ MapView::MapView(QWidget* parent)
 , terrain_pos()
 , shaping_speed(1.0f)
 , shaping_radius(10.0f)
+, shaping_radius_multiplier(5.33333f)
 , shaping_brush(1)
+, brushColor(0.0f, 1.0f, 0.0f, 1.0f)
 , shiftDown(false)
 , ctrlDown(false)
 , altDown(false)
@@ -259,7 +261,7 @@ void MapView::update(float t)
             {
                 const QVector3D& position(terrain_pos);
 
-                changeTerrain(position.x(), position.z(), 7.5f * dt * shaping_speed, shaping_radius / 5.33333f, shaping_brush);
+                changeTerrain(position.x(), position.z(), 7.5f * dt * shaping_speed, shaping_radius / shaping_radius_multiplier, shaping_brush);
             }
         }
     }
@@ -359,12 +361,16 @@ void MapView::paintGL()
         shader->setUniformValue("brush", shaping_brush);
         shader->setUniformValue("cursorPos", QVector2D(terrain_pos.x(), terrain_pos.z()));
         shader->setUniformValue("brushRadius", shaping_radius);
+        shader->setUniformValue("brushRadiusMultiplier", shaping_radius_multiplier);
+        shader->setUniformValue("brushColor", brushColor);
     }
     else
     {
         shader->setUniformValue("brush", 0);
         shader->setUniformValue("cursorPos", QVector2D(0.0f, 0.0f));
         shader->setUniformValue("brushRadius", 0.0f);
+        shader->setUniformValue("brushRadiusMultiplier", 0.0f);
+        shader->setUniformValue("brushColor", QVector4D(0.0f, 0.0f, 0.0f, 0.0f));
     }
 }
 

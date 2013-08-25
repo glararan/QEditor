@@ -116,7 +116,10 @@ private:
 
     float shaping_speed;
     float shaping_radius;
+    float shaping_radius_multiplier;
     int   shaping_brush;
+
+    QVector4D brushColor;
 
 
     /* ******** */

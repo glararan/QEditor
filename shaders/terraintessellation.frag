@@ -316,11 +316,11 @@ in terrainVertex
     vec2 position;
 } In;
 
-vec4 brushColor = vec4(0, 1, 0, 1);
-
-uniform int   brush;
+uniform int   brush = 0;
 uniform vec2  cursorPos;
-uniform float brushRadius;
+uniform float brushRadius = 10;
+uniform float brushMultiplier = 5.33333;
+uniform vec4  brushColor = vec4(0, 1, 0, 1);
 
 uniform float horizontalScale = 10.0;
 
@@ -342,10 +342,9 @@ void main()
         float dx = texCoords.x * horizontalScale - cursorPos.x;
         float dy = texCoords.y * horizontalScale - cursorPos.y;
 
-        float bDist   = sqrt(dx * dx + dy * dy);
-        float bRadius = brushRadius;
+        float bDist = sqrt(dx * dx + dy * dy) * brushMultiplier;
 
-        if(bDist < bRadius)
+        if(bDist < brushRadius)
         {
             float str = max(0, mix(-1.5, 0.5, bDist / brushRadius));
             outColor += brushColor * str;
