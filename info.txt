@@ -8,8 +8,10 @@ Heightmap:
 /// Todo list
 MapView:
     1. Vytvořit editaci terenu založeno na editaci QImage "editedHeightMap", nejprve snadnější verze
-        Lehčí verze): Získat pozici kamery m_camera->position->x() a podle ní zakreslit na mapu 1024x1024 pixel s barvou černou nebo bílou, shift = zvýšení, ctrl = snížení
-        Pozn: mapa je zmenšena z 1024.0f na 533.33333f, k obrázku - vzal bych pixel na místě a zvýšil ho třeba o 0.005f a s radiusem šel dolu až k 0.0005f
+        Získá pozici kurzoru a podle ní zakreslí na mapu 1024x1024, shift + ctrl
+        se nahradí v toolbaru, radius a síla opět v toolbaru, shift = zvýšení, ctrl = snížení
+
+        Pozn: mapa je zmenšena z 1024.0f na 533.33333f
 
             Výpočet souřadnice na 1024px z 533.33333px
                 příklad: (1024 => 533)
@@ -25,15 +27,16 @@ MapView:
                 pixel 0x1024    je na souřadnici 0x0
                 pixel 0x0       je na souřadnici 0x533.33
 
+            Heightmap Info:
+                stupně šedý 8-bit
 
-        Finální verze): Získá pozici kurzoru a podle ní zakreslí na mapu 1024x1024 stejně jako v lehčí verzi, finální verze se bude vlastně rozlišovat kurzorem a shift + ctrl
-        se nahradí v toolbaru, radius a síla opět v toolbaru
+                0-255 Blue  (Černá)
+            pak 0-255 Red   (Šedá)
+            pak 0-255 Green (Bílá)
 
-    2. Výpočet do dálky pozice xyz
-        tilt -90 = Y (převedená pak na Z) nižší hodnota (až -118+-)
-        tilt +90 = Y (převedená pak na Z) vyšší hodnota (až 136+-)
+List pro funkce:
+    Rozdělit MapView na třídy MapView[pouze ukazovat data], World[spravování objektů], Map(?)[spravování heightmapy a alphamap],
 
-        pan 0          = Z (převedená pak na Y) nižší hodnota (až 216 [230])
-        pan -90  & 270 = X nižší hodnota (až 216 [230] [odhad])
-        pan -180 & 180 = Z (převedená pak na Y) nižší hodnota (-||-)
-        pan -270 & 90  = X vyšší hodnota
+Tessellation shader resources
+http://codeflow.org/entries/2010/nov/07/opengl-4-tessellation/
+https://github.com/tijutv/GPU-Terrain-Generation

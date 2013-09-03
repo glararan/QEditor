@@ -11,5 +11,7 @@
         <file>heightmap-1024x1024.png</file>
         <file>rock.png</file>
         <file>snowrocks.png</file>
+        <file alias="circle_icon">circle.png</file>
+        <file alias="square_icon">square.png</file>
     </qresource>
 </RCC>

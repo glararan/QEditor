@@ -44,6 +44,14 @@ uniform vec4 color2 = vec4(0.89, 0.68, 0.00, 1.00);
 uniform vec4 color3 = vec4(0.75, 0.00, 0.00, 1.00);
 uniform vec4 color4 = vec4(1.00, 1.00, 1.00, 1.00);
 
+uniform int   brush = 0;
+uniform vec2  cursorPos;
+uniform float brushRadius = 10;
+uniform float brushMultiplier = 5.33333;
+uniform vec4  brushColor = vec4(0, 1, 0, 1);
+
+uniform float horizontalScale = 10.0;
+
 in wireFrameVertex
 {
     noperspective vec3 edgeDistance;
@@ -141,7 +149,7 @@ float textureDistanceBlendFactor()
 {
     float dist = abs(position.z);
 
-    return (dist - 30.0) / (30.0 - 5.0);
+    return (dist - 30.0) / (30.0 - 5.0) / brushMultiplier;
 }
 
 void nearAndFarTexCoords(out vec2 uvNear, out vec2 uvFar)
@@ -316,14 +324,6 @@ in terrainVertex
     vec2 position;
 } In;
 
-uniform int   brush = 0;
-uniform vec2  cursorPos;
-uniform float brushRadius = 10;
-uniform float brushMultiplier = 5.33333;
-uniform vec4  brushColor = vec4(0, 1, 0, 1);
-
-uniform float horizontalScale = 10.0;
-
 void main()
 {
     // Compute fragment color depending upon selected shading mode
@@ -342,7 +342,7 @@ void main()
         float dx = texCoords.x * horizontalScale - cursorPos.x;
         float dy = texCoords.y * horizontalScale - cursorPos.y;
 
-        float bDist = sqrt(dx * dx + dy * dy) * brushMultiplier;
+        float bDist = sqrt(dx * dx + dy * dy) * (brushMultiplier + 2);
 
         if(bDist < brushRadius)
         {

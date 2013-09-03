@@ -5,7 +5,7 @@
 #include <QDockWidget>
 #include <QSlider>
 #include <QButtonGroup>
-#include <QRadioButton>
+#include <QPushButton>
 #include <QLabel>
 
 #include "ui/qdslider.h"
@@ -42,15 +42,22 @@ private:
 
     QButtonGroup* t_brush;
 
-    QRadioButton* t_brush_circle;
+    QPushButton* t_brush_circle;
+    QPushButton* t_brush_square;
+
+    QLabel* t_brush_label;
 
     QLabel* t_radius_label;
     QLabel* t_radius_value_label;
     QLabel* t_speed_label;
     QLabel* t_speed_value_label;
 
-    void initMode1();
+    void initMode();
+
+    void showMode0();
     void showMode1();
+
+    void hideToolbarActions();
 
 signals:
     void setSpeedMultiplier(float multiplier);

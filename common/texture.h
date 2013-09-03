@@ -32,6 +32,7 @@ public:
     void initializeToEmpty(const QSize& size);
 
     void setImage(const QImage& image);
+    void setImage(float* pixelArray, int width, int height);
     void setCubeMapImage(GLenum face, const QImage& image);
     void setRawData2D(GLenum target, int mipmapLevel, GLenum internalFormat,
                       int width, int height, int borderWidth,

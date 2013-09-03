@@ -121,6 +121,7 @@ private:
 
     QVector4D brushColor;
 
+    float* mapData;
 
     /* ******** */
 
@@ -136,7 +137,6 @@ private:
     float panAngle;
     float tiltAngle;
     float camera_zoom;
-    float Lcamera_zoom; // last zoom value
     float aspectRatio;
     float nearPlane;
     float farPlane;
@@ -183,6 +183,8 @@ private:
 
     QVector3D terrain_pos;
 
+    QVector<float> dynamicZoom;
+
     // keyboard
     bool shiftDown, ctrlDown, altDown;
 
@@ -192,9 +194,7 @@ private:
 
     eEditingMode eMode;
 
-    QImage heightMapImage, editedHeightMap, lastEditeHeightMap;
-
-    float minColor, maxColor;
+    QImage heightMapImage;
 
     DisplayMode m_displayMode;
     QStringList m_displayModeNames;
@@ -203,7 +203,6 @@ private:
     QOpenGLFunctions_4_0_Core* m_funcs;
     QSize m_heightMapSize;
 
-    void reCreateTerrain();
     int horizToHMapSize(float position);
     float HMapSizeToHoriz(int position);
     float swapPosition(float position);

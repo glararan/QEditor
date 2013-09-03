@@ -2,12 +2,15 @@ include( common/common.pri )
 
 QT += core gui widgets
 
+QTPLUGIN += QtRawLibrary2
+
 #CONFIG += console
 
 #DEFINES -= QT_NO_WARNING_OUTPUT QT_NO_DEBUG_OUTPUT
 
 install_it.path = $$OUT_PWD
 install_it.files += $$PWD/heightmap-1024x1024.png
+install_it.files += $$PWD/heightmap-1024x1024.raw
 install_it.files += $$PWD/grass.png
 install_it.files += $$PWD/rock.png
 install_it.files += $$PWD/snowrocks.png
