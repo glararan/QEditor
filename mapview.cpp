@@ -1,8 +1,6 @@
 #include "mapview.h"
 #include "camera.h"
 
-#include <gl/GLU.h>
-
 #include <QImage>
 #include <QKeyEvent>
 #include <QGLWidget>
@@ -25,10 +23,9 @@ MapView::MapView(QWidget* parent)
 , panAngle(0.0f)
 , tiltAngle(0.0f)
 , camera_zoom(25.0f)
-, Lcamera_zoom(camera_zoom)
 , aspectRatio(static_cast<float>(width()) / static_cast<float>(height()))
 , nearPlane(0.1f)
-, farPlane(128.0f)
+, farPlane(256.0f)
 , speed(44.7f) // in m/s. Equivalent to 100 miles/hour)
 , speed_mult(1.0f)
 , m_patchBuffer(QOpenGLBuffer::VertexBuffer)
@@ -39,7 +36,7 @@ MapView::MapView(QWidget* parent)
 , m_verticalScale(m_horizontalScale / 16.0f)
 , m_sunTheta(30.0f)
 , m_time(0.0f)
-, m_metersToUnits(0.05f) // 500 units == 10 km => 0.05 units/m
+, m_metersToUnits(m_verticalScale / speed) // 500 units == 10 km => 0.05 units/m
 , m_leftButtonPressed(false)
 , m_rightButtonPressed(false)
 , mouse_position(QPoint(0, 0))
@@ -53,11 +50,7 @@ MapView::MapView(QWidget* parent)
 , ctrlDown(false)
 , altDown(false)
 , eMode((eEditingMode)0)
-, heightMapImage(0)
-, editedHeightMap(0)
-, lastEditeHeightMap(0)
-, minColor(0.005f)
-, maxColor(0.0005f)
+, heightMapImage(0, 0, QImage::Format_Indexed8)
 , m_displayMode(TexturedAndLit)
 , m_displayModeSubroutines(DisplayModeCount)
 , m_funcs(0)
@@ -82,7 +75,7 @@ MapView::MapView(QWidget* parent)
     m_camera->setViewCenter(QVector3D(250.0f, 10.0f, 249.0f));
     m_camera->setUpVector(QVector3D(0.0f, 1.0f, 0.0f));
 
-    m_displayModeNames << QStringLiteral("shaderSimpleWireFrame")
+    m_displayModeNames << QStringLiteral("shaderSimple")
                        << QStringLiteral("shadeWorldHeight")
                        << QStringLiteral("shadeWorldNormal")
                        << QStringLiteral("shadeGrass")
@@ -90,10 +83,26 @@ MapView::MapView(QWidget* parent)
                        << QStringLiteral("shadeGrassRocksAndSnow")
                        << QStringLiteral("shadeLightingFactors")
                        << QStringLiteral("shadeTexturedAndLit")
-                       << QStringLiteral("shadeWorldTexturedWireframed")
+                       << QStringLiteral("shadeWorldTexturedd")
                        << QStringLiteral("shadeHidden");
 
     AddStatusBarMessage("speed multiplier: ", speed_mult);
+
+    //QVector<QVariant*> cont;
+    QList<QVariant*> vlist;
+
+    int ex = 2;
+
+    vlist.append(&(static_cast<QVariant>(&ex)));
+
+    //cont.push_back(reinterpret_cast<QVariant*>(ex));
+
+    ex = 10;
+
+    qDebug() << vlist.last();
+
+    /*for(int i = 0; i < cont.count(); i++)
+        qDebug() << cont[i];*/
 
     startTimer(16);
 }
@@ -105,6 +114,10 @@ MapView::~MapView()
 
     m_patchBuffer.destroy();
     m_vao.destroy();
+
+    delete m_funcs;
+
+    delete mapData;
 }
 
 void MapView::timerEvent(QTimerEvent*)
@@ -143,17 +156,16 @@ void MapView::initializeGL()
 
     glClearColor(0.65f, 0.77f, 1.0f, 1.0f);
 
-    // Set the wireframe line properties
+    // Set the  line properties
     QOpenGLShaderProgramPtr shader = m_material->shader();
     shader->bind();
     shader->setUniformValue("line.width", 0.2f);
-    //shader->setUniformValue("line.color", QVector4D(1.0f, 1.0f, 1.0f, 0.0f)); // white
     shader->setUniformValue("line.color", QVector4D(0.17f, 0.50f, 1.0f, 1.0f)); // blue
 
     // Set the fog parameters
     shader->setUniformValue("fog.color", QVector4D(0.65f, 0.77f, 1.0f, 1.0f));
-    shader->setUniformValue("fog.minDistance", 50.0f);
-    shader->setUniformValue("fog.maxDistance", 128.0f);
+    shader->setUniformValue("fog.minDistance", farPlane / 2);
+    shader->setUniformValue("fog.maxDistance", farPlane - 32.0f);
 
     // Set the brush parameteres
     shader->setUniformValue("brush", 0);
@@ -175,28 +187,6 @@ void MapView::update(float t)
     const float dt = t - m_time;
     m_time         = t;
 
-    // Update heightmap
-    if(!heightMapImage.isNull() && heightMapImage != editedHeightMap && editedHeightMap != lastEditeHeightMap)
-    {
-        SamplerPtr sampler(new Sampler);
-        sampler->create();
-        sampler->setMinificationFilter(GL_LINEAR);
-        sampler->setMagnificationFilter(GL_LINEAR);
-        sampler->setWrapMode(Sampler::DirectionS, GL_CLAMP_TO_EDGE);
-        sampler->setWrapMode(Sampler::DirectionT, GL_CLAMP_TO_EDGE);
-
-        TexturePtr heightMap(new Texture);
-        heightMap->create();
-        heightMap->bind();
-        heightMap->setImage(editedHeightMap);
-
-        m_material->setTextureUnitConfiguration(0, heightMap, sampler, QByteArrayLiteral("heightMap"));
-
-        reCreateTerrain();
-
-        lastEditeHeightMap = editedHeightMap;
-    }
-
     // Update the camera position and orientation
     Camera::CameraTranslationOption option = m_viewCenterFixed ? Camera::DontTranslateViewCenter : Camera::TranslateViewCenter;
     m_camera->translate(m_v * dt * m_metersToUnits, option);
@@ -206,10 +196,10 @@ void MapView::update(float t)
         m_camera->pan(m_panAngle, QVector3D(0.0f, 1.0f, 0.0f));
         panAngle  += m_panAngle;
         m_panAngle = 0.0f;
-    }
 
-    if(panAngle > 360.0f || panAngle < -360.0f)
-        panAngle = 0.0f;
+        if(panAngle > 360.0f || panAngle < -360.0f)
+            panAngle = 0.0f;
+    }
 
     if(!qFuzzyIsNull(m_tiltAngle))
     {
@@ -237,13 +227,77 @@ void MapView::update(float t)
         m_tiltAngle = 0.0f;
     }
 
-    // Update the camera perspective projection if camera zoom is changed
-    if(camera_zoom != Lcamera_zoom)
+    // Dynamic zoom
+    if(dynamicZoom.count() > 0)
     {
-        m_camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
+        QVector<int> posIndexs;
+        QVector<int> negIndexs;
 
-        Lcamera_zoom = camera_zoom;
+        for(int i = 0; i < dynamicZoom.count(); i++)
+        {
+            if(dynamicZoom[i] == 0.5f)
+                posIndexs.append(i);
+            else if(dynamicZoom[i] == -0.5f)
+                negIndexs.append(i);
+        }
+
+        if(posIndexs.count() >= negIndexs.count() && posIndexs.count() > 0)
+        {
+            for(int i = 0; i < posIndexs.count(); i++)
+            {
+                if(negIndexs.count() == 0)
+                    break;
+
+                dynamicZoom.remove(posIndexs[i]);
+                dynamicZoom.remove(negIndexs[i]);
+
+                posIndexs.remove(i);
+                negIndexs.remove(i);
+            }
+        }
+        else if(negIndexs.count() > posIndexs.count() && negIndexs.count() > 0)
+        {
+            for(int i = 0; i < negIndexs.count(); i++)
+            {
+                if(posIndexs.count() == 0)
+                    break;
+
+                dynamicZoom.remove(posIndexs[i]);
+                dynamicZoom.remove(negIndexs[i]);
+
+                posIndexs.remove(i);
+                negIndexs.remove(i);
+            }
+        }
+
+        if(dynamicZoom[0] > 0)
+        {
+            dynamicZoom[0] += 0.5f;
+
+            if(dynamicZoom[0] > 13)
+                dynamicZoom.remove(0);
+            else
+               setFieldOfView(0.02f);
+        }
+        else
+        {
+            dynamicZoom[0] -= 0.5f;
+
+            if(dynamicZoom[0] < -13)
+                dynamicZoom.remove(0);
+            else
+                setFieldOfView(-0.02f);
+        }
+
+        if(camera_zoom > 25.0f)
+            camera_zoom = 25.0f;
+        else if(camera_zoom < 20.0f)
+            camera_zoom = 20.0f;
     }
+
+    // Update the camera perspective projection if camera zoom is changed
+    if(camera_zoom != m_camera->fieldOfView())
+        m_camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 
     /// mouse on terrain
     if(editingMode() == Terrain)
@@ -385,6 +439,7 @@ void MapView::resizeGL(int w, int h)
 
     // Update the projection matrix
     aspectRatio = static_cast<float>(w) / static_cast<float>(h);
+
     m_camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 
     // Update the viewport matrix
@@ -424,15 +479,23 @@ void MapView::prepareTextures()
     sampler->setWrapMode(Sampler::DirectionS, GL_CLAMP_TO_EDGE);
     sampler->setWrapMode(Sampler::DirectionT, GL_CLAMP_TO_EDGE);
 
-    heightMapImage.load("heightmap-1024x1024.png");
-    editedHeightMap = heightMapImage;
+    mapData = new float[1024 * 1024];
+
+    for(int i = 0; i < 1024 * 1024; ++i)
+        mapData[i] = 0.1f * i / 1024 * 1024;// 0.01f;
+
+    heightMapImage = QImage( /*sizeof(mapData) / 2*/ 64, /*sizeof(mapData) / 2*/ 64, QImage::Format_Indexed8);
+    //heightMapImage.load("heightmap-1024x1024.png");
 
     m_funcs->glActiveTexture(GL_TEXTURE0);
+
+    //float* te = (float*)heightMapImage.bits();
 
     TexturePtr heightMap(new Texture);
     heightMap->create();
     heightMap->bind();
-    heightMap->setImage(heightMapImage);
+    //heightMap->setImage(heightMapImage);
+    heightMap->setImage(mapData, sizeof(mapData) / 2, sizeof(mapData) / 2);
 
     m_heightMapSize = heightMapImage.size();
     m_material->setTextureUnitConfiguration(0, heightMap, sampler, QByteArrayLiteral("heightMap"));
@@ -555,13 +618,13 @@ void MapView::setSpeedMultiplier(float value)
 void MapView::AddStatusBarMessage(QString message)
 {
     sbMessageList << message;
-    sbDataList[sbDataList.count()] = NULL;
+    sbDataList.append(NULL);
 }
 
 void MapView::AddStatusBarMessage(QString message, QVariant data)
 {
     sbMessageList << message;
-    sbDataList[sbDataList.count()] = data;
+    sbDataList.append(reinterpret_cast<QVariant*>(&data));
 }
 
 void MapView::ClearStatusBarMessage()
@@ -619,10 +682,6 @@ void MapView::setDisplayMode(int mode)
     }
 }
 
-static const double MAPCHUNK_DIAMETER = 47.140452079103168293389624140323;
-static const float MAPSIZE = 1024.0f;
-static const float CHUNKSIZE = MAPSIZE / 16.0f;
-
 int MapView::horizToHMapSize(float position)
 {
     return static_cast<int>(position / m_horizontalScale * heightMapImage.width());
@@ -659,8 +718,6 @@ bool MapView::changeTerrain(float x, float z, float change, float radius, int br
     int centerX = minX + (sizeX / 2);
     int centerY = minY + (sizeY / 2);
 
-    QImage editingHeightMap(editedHeightMap);
-
     /*qDebug() << "minX: " << minX << "(" << (x - radius) << ")";
     qDebug() << "maxX: " << maxX << "(" << (x + radius) << ")";
     qDebug() << "minY: " << minY  - (sizeY / 2) << "(" << (z - radius) << ")";
@@ -684,31 +741,9 @@ bool MapView::changeTerrain(float x, float z, float change, float radius, int br
 
                         if(dist < radius)
                         {
-                            QRgb pixelColor = editingHeightMap.pixel(_x, _y);
+                            int index = (_x * _y) % 2 == 0 ? (_x * _y) : (_x * _y) - 1;
 
-                            int red   = qRed(pixelColor);
-                            int green = qGreen(pixelColor);
-                            int blue  = qBlue(pixelColor);
-
-                            red   = red   + changeFormula;
-                            green = green + changeFormula;
-                            blue  = blue  + changeFormula;
-
-                            QVector<int> checkColors;
-                            checkColors << red << green << blue;
-
-                            for(int i = 0; i < checkColors.count(); i++)
-                            {
-                                if(checkColors[i] > 255)
-                                    checkColors[i] = 255;
-
-                                if(checkColors[i] < 0)
-                                    checkColors[i] = 0;
-                            }
-
-                            pixelColor = QColor(red, green, blue).rgb();
-
-                            editingHeightMap.setPixel(_x, _y, pixelColor);
+                            mapData[index] += 0.05f;
 
                             changed = true;
                         }
@@ -719,7 +754,21 @@ bool MapView::changeTerrain(float x, float z, float change, float radius, int br
     }
 
     if(changed)
-        editedHeightMap = editingHeightMap;
+    {
+        SamplerPtr sampler(new Sampler);
+        sampler->create();
+        sampler->setMinificationFilter(GL_LINEAR);
+        sampler->setMagnificationFilter(GL_LINEAR);
+        sampler->setWrapMode(Sampler::DirectionS, GL_CLAMP_TO_EDGE);
+        sampler->setWrapMode(Sampler::DirectionT, GL_CLAMP_TO_EDGE);
+
+        TexturePtr heightMap(new Texture);
+        heightMap->create();
+        heightMap->bind();
+        heightMap->setImage(mapData, sizeof(mapData) / 2, sizeof(mapData) / 2);
+
+        m_material->setTextureUnitConfiguration(0, heightMap, sampler, QByteArrayLiteral("heightMap"));
+    }
     else
         qDebug() << "changed: " << changed;
 
@@ -732,22 +781,6 @@ void MapView::doTest()
         qDebug() << "terrain changed!";
     else
         qDebug() << "terrain changing failed!";
-}
-
-void MapView::reCreateTerrain()
-{
-    m_vao.destroy();
-
-    m_vao.create();
-    {
-        QOpenGLVertexArrayObject::Binder binder(&m_vao);
-        QOpenGLShaderProgramPtr shader = m_material->shader();
-
-        shader->bind();
-        m_patchBuffer.bind();
-        shader->enableAttributeArray("vertexPosition");
-        shader->setAttributeBuffer("vertexPosition", GL_FLOAT, 0, 2);
-    }
 }
 
 void MapView::setCameraPosition(QVector3D* position)
@@ -1036,12 +1069,8 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
 
 void MapView::wheelEvent(QWheelEvent* e)
 {
-    setFieldOfView(-(static_cast<float>(e->delta()) / 240));
-
-    if(camera_zoom > 25.0f)
-        camera_zoom = 25.0f;
-    else if(camera_zoom < 20.0f)
-        camera_zoom = 20.0f;
+    if(!shiftDown && !altDown && !ctrlDown)
+        dynamicZoom.push_back(-(static_cast<float>(e->delta()) / 240));
 
     QGLWidget::wheelEvent(e);
 }

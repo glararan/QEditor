@@ -13,7 +13,6 @@
 #include <QMatrix4x4>
 #include <QStringList>
 #include <QTime>
-#include <QHash>
 
 class Camera;
 
@@ -189,8 +188,8 @@ private:
     bool shiftDown, ctrlDown, altDown;
 
     // status bar
-    QVector<QString>     sbMessageList;
-    QHash<int, QVariant> sbDataList;
+    QVector<QString>   sbMessageList;
+    QVector<QVariant*> sbDataList;
 
     eEditingMode eMode;
 
