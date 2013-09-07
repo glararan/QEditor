@@ -83,26 +83,16 @@ MapView::MapView(QWidget* parent)
                        << QStringLiteral("shadeGrassRocksAndSnow")
                        << QStringLiteral("shadeLightingFactors")
                        << QStringLiteral("shadeTexturedAndLit")
-                       << QStringLiteral("shadeWorldTexturedd")
+                       << QStringLiteral("shadeWorldTexturedWireframed")
                        << QStringLiteral("shadeHidden");
 
-    AddStatusBarMessage("speed multiplier: ", speed_mult);
-
-    //QVector<QVariant*> cont;
-    QList<QVariant*> vlist;
-
-    int ex = 2;
-
-    vlist.append(&(static_cast<QVariant>(&ex)));
-
-    //cont.push_back(reinterpret_cast<QVariant*>(ex));
-
-    ex = 10;
-
-    qDebug() << vlist.last();
-
-    /*for(int i = 0; i < cont.count(); i++)
-        qDebug() << cont[i];*/
+    AddStatusBarMessage("speed multiplier: ", &speed_mult     , "float");
+    AddStatusBarMessage("camera: "          , &m_camera->pos(), "QVector3D");
+    AddStatusBarMessage("zoom: "            , &camera_zoom    , "float");
+    AddStatusBarMessage("pan: "             , &panAngle       , "float");
+    AddStatusBarMessage("tilt: "            , &tiltAngle      , "float");
+    AddStatusBarMessage("mouse: "           , &mouse_position , "QPoint");
+    AddStatusBarMessage("terrain coords: "  , &terrain_pos    , "QVector3D_xzy");
 
     startTimer(16);
 }
@@ -321,7 +311,7 @@ void MapView::update(float t)
     }
 
     // Update status bar
-    QString sbMessage = QString("speed multiplier: %1, x: %2, y: %3, z: %4, zoom: %5, pan: %6, tilt: %7, mouseX: %8, mouseY: %9")
+    /*QString sbMessage = QString("speed multiplier: %1, x: %2, y: %3, z: %4, zoom: %5, pan: %6, tilt: %7, mouseX: %8, mouseY: %9")
             .arg(speed_mult)
             .arg(m_camera->position().x())
             .arg(m_camera->position().z())
@@ -330,23 +320,54 @@ void MapView::update(float t)
             .arg(panAngle)
             .arg(tiltAngle)
             .arg(mouse_position.x())
-            .arg(mouse_position.y());
-    /*QString sbMessage = "Initialized!";
+            .arg(mouse_position.y());*/
+    QString sbMessage = "Initialized!";
 
-    for(int i = 0; i < sbMessageList.count(); i++)
+    if(sbMessageList.count() > 0)
     {
-        QVariant sbData = NULL;
+        for(int i = 0; i < sbMessageList.count(); i++)
+        {
+            QVariant sbData = NULL;
 
-        if(!sbDataList.isEmpty())
-            sbData = sbDataList[i];
+            if(!sbDataTypeList.isEmpty() && !sbDataList.isEmpty())
+            {
+                if(sbDataTypeList[i] != "")
+                {
+                    if(sbDataTypeList[i] == "bool")
+                        sbData = *(bool*)sbDataList.at(i);
+                    else if(sbDataTypeList[i] == "byte")
+                        sbData = *(byte*)sbDataList.at(i);
+                    else if(sbDataTypeList[i] == "char")
+                        sbData = *(char*)sbDataList.at(i);
+                    else if(sbDataTypeList[i] == "int")
+                        sbData = *(int*)sbDataList.at(i);
+                    else if(sbDataTypeList[i] == "long")
+                        sbData = *(long*)sbDataList.at(i);
+                    else if(sbDataTypeList[i] == "float")
+                        sbData = *(float*)sbDataList.at(i);
+                    else if(sbDataTypeList[i] == "double")
+                        sbData = *(double*)sbDataList.at(i);
+                    else if(sbDataTypeList[i] == "uint")
+                        sbData = *(uint*)sbDataList.at(i);
+                    else if(sbDataTypeList[i] == "QString")
+                        sbData = *(QString*)sbDataList.at(i);
+                    else if(sbDataTypeList[i] == "QVector3D")
+                        sbData = QString("(x: %1, y: %2, z: %3)").arg((*(QVector3D*)sbDataList.at(i)).x()).arg((*(QVector3D*)sbDataList.at(i)).y()).arg((*(QVector3D*)sbDataList.at(i)).z());
+                    else if(sbDataTypeList[i] == "QVector3D_xzy")
+                        sbData = QString("(x: %1, y: %2, z: %3)").arg((*(QVector3D*)sbDataList.at(i)).x()).arg((*(QVector3D*)sbDataList.at(i)).z()).arg((*(QVector3D*)sbDataList.at(i)).y());
+                    else if(sbDataTypeList[i] == "QPoint")
+                        sbData = QString("(x: %1, y: %2)").arg((*(QPoint*)sbDataList.at(i)).x()).arg((*(QPoint*)sbDataList.at(i)).y());
+                }
+            }
 
-        QString combine = QString(sbMessageList[i] + "%1").arg(sbData.toString());
+            QString combine = QString(sbMessageList[i] + "%1").arg(sbData.toString());
 
-        if(i == 0)
-            sbMessage = combine;
-        else
-            sbMessage += ", " + combine;
-    }*/
+            if(i == 0)
+                sbMessage = combine;
+            else
+                sbMessage += ", " + combine;
+        }
+    }
 
     emit statusBar(sbMessage);
 
@@ -482,22 +503,21 @@ void MapView::prepareTextures()
     mapData = new float[1024 * 1024];
 
     for(int i = 0; i < 1024 * 1024; ++i)
-        mapData[i] = 0.1f * i / 1024 * 1024;// 0.01f;
+        mapData[i] = 0.0f;//1.0f * i;// 0.01f;
 
-    heightMapImage = QImage( /*sizeof(mapData) / 2*/ 64, /*sizeof(mapData) / 2*/ 64, QImage::Format_Indexed8);
-    //heightMapImage.load("heightmap-1024x1024.png");
+    //heightMapImage = QImage( /*sizeof(mapData) / 2*/ 64, /*sizeof(mapData) / 2*/ 64, QImage::Format_Indexed8);
+    heightMapImage.load("heightmap-1024x1024.png");
 
     m_funcs->glActiveTexture(GL_TEXTURE0);
-
-    //float* te = (float*)heightMapImage.bits();
 
     TexturePtr heightMap(new Texture);
     heightMap->create();
     heightMap->bind();
-    //heightMap->setImage(heightMapImage);
-    heightMap->setImage(mapData, sizeof(mapData) / 2, sizeof(mapData) / 2);
+    heightMap->setImage(heightMapImage);
+    //heightMap->setImage(mapData, sizeof(mapData) / 2, sizeof(mapData) / 2);
+    //heightMap->setImage(mapData, 1024, 1024);
 
-    m_heightMapSize = heightMapImage.size();
+    m_heightMapSize = QSize(1024, 1024);//heightMapImage.size();
     m_material->setTextureUnitConfiguration(0, heightMap, sampler, QByteArrayLiteral("heightMap"));
 
     SamplerPtr tilingSampler(new Sampler);
@@ -615,16 +635,18 @@ void MapView::setSpeedMultiplier(float value)
         SpeedMultiplier(speed_mult + value);
 }
 
-void MapView::AddStatusBarMessage(QString message)
+void MapView::AddStatusBarMessage(const QString message)
 {
     sbMessageList << message;
     sbDataList.append(NULL);
+    sbDataTypeList.append("");
 }
 
-void MapView::AddStatusBarMessage(QString message, QVariant data)
+void MapView::AddStatusBarMessage(const QString message, const void* data, const QString data_type)
 {
     sbMessageList << message;
-    sbDataList.append(reinterpret_cast<QVariant*>(&data));
+    sbDataList.append(data);
+    sbDataTypeList.append(data_type);
 }
 
 void MapView::ClearStatusBarMessage()

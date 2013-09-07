@@ -49,8 +49,9 @@ public:
     QVector3D position() const;
     QVector3D upVector() const;
     QVector3D viewCenter() const;
-
     QVector3D viewVector() const;
+
+    const QVector3D& pos() const;
 
     ProjectionType projectionType() const;
 

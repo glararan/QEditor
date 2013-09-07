@@ -103,8 +103,8 @@ private:
 
     void SpeedMultiplier(float multiplier);
 
-    void AddStatusBarMessage(QString message);
-    void AddStatusBarMessage(QString message, QVariant data);
+    void AddStatusBarMessage(const QString message);
+    void AddStatusBarMessage(const QString message, const void* data, const QString data_type);
     void ClearStatusBarMessage();
 
     /*
@@ -141,7 +141,7 @@ private:
     float farPlane;
 
     const float speed;
-    float speed_mult;
+    float       speed_mult;
 
     QMatrix4x4 m_viewportMatrix;
     QVector2D  m_viewportSize;
@@ -188,8 +188,9 @@ private:
     bool shiftDown, ctrlDown, altDown;
 
     // status bar
-    QVector<QString>   sbMessageList;
-    QVector<QVariant*> sbDataList;
+    QVector<QString>     sbMessageList;
+    QVector<const void*> sbDataList;
+    QVector<QString>     sbDataTypeList;
 
     eEditingMode eMode;
 

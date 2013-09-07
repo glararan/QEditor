@@ -66,7 +66,7 @@ void Texture::setImage(float* pixelArray, int width, int height)
 {
     Q_ASSERT(m_type == Texture2D);
 
-    setRawData2D(m_type, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, pixelArray);
+    setRawData2D(m_type, 0, GL_RGBA32F_ARB, width, height, 0, GL_RGBA32F_ARB, GL_FLOAT, &pixelArray[0]);
 }
 
 void Texture::setCubeMapImage(GLenum face, const QImage& image)

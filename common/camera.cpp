@@ -8,18 +8,28 @@ Camera::Camera(QObject* parent) : QObject(parent), d_ptr(new CameraPrivate(this)
 Camera::ProjectionType Camera::projectionType() const
 {
     Q_D(const Camera);
+
     return d->m_projectionType;
 }
 
 QVector3D Camera::position() const
 {
     Q_D(const Camera);
+
+    return d->m_position;
+}
+
+const QVector3D& Camera::pos() const
+{
+    Q_D(const Camera);
+
     return d->m_position;
 }
 
 void Camera::setPosition(const QVector3D& position)
 {
     Q_D(Camera);
+
     d->m_position        = position;
     d->m_cameraToCenter  = d->m_viewCenter - position;
     d->m_viewMatrixDirty = true;
@@ -28,6 +38,7 @@ void Camera::setPosition(const QVector3D& position)
 void Camera::setUpVector(const QVector3D& upVector)
 {
     Q_D(Camera);
+
     d->m_upVector        = upVector;
     d->m_viewMatrixDirty = true;
 }
@@ -35,12 +46,14 @@ void Camera::setUpVector(const QVector3D& upVector)
 QVector3D Camera::upVector() const
 {
     Q_D(const Camera);
+
     return d->m_upVector;
 }
 
 void Camera::setViewCenter(const QVector3D& viewCenter)
 {
     Q_D(Camera);
+
     d->m_viewCenter      = viewCenter;
     d->m_cameraToCenter  = viewCenter - d->m_position;
     d->m_viewMatrixDirty = true;
@@ -49,18 +62,21 @@ void Camera::setViewCenter(const QVector3D& viewCenter)
 QVector3D Camera::viewCenter() const
 {
     Q_D(const Camera);
+
     return d->m_viewCenter;
 }
 
 QVector3D Camera::viewVector() const
 {
     Q_D(const Camera);
+
     return d->m_cameraToCenter;
 }
 
 void Camera::setOrthographicProjection(float left, float right, float bottom, float top, float nearPlane, float farPlane)
 {
     Q_D(Camera);
+
     d->m_left           = left;
     d->m_right          = right;
     d->m_bottom         = bottom;
@@ -75,6 +91,7 @@ void Camera::setOrthographicProjection(float left, float right, float bottom, fl
 void Camera::setPerspectiveProjection(float fieldOfView, float aspectRatio, float nearPlane, float farPlane)
 {
     Q_D(Camera);
+
     d->m_fieldOfView    = fieldOfView;
     d->m_aspectRatio    = aspectRatio;
     d->m_nearPlane      = nearPlane;
@@ -100,6 +117,7 @@ void Camera::setNearPlane(const float& nearPlane)
 float Camera::nearPlane() const
 {
     Q_D(const Camera);
+
     return d->m_nearPlane;
 }
 
@@ -138,6 +156,7 @@ void Camera::setFieldOfView(const float& fieldOfView)
 float Camera::fieldOfView() const
 {
     Q_D(const Camera);
+
     return d->m_fieldOfView;
 }
 
@@ -157,6 +176,7 @@ void Camera::setAspectRatio(const float& aspectRatio)
 float Camera::aspectRatio() const
 {
     Q_D(const Camera);
+
     return d->m_aspectRatio;
 }
 
@@ -176,12 +196,14 @@ void Camera::setLeft(const float& left)
 float Camera::left() const
 {
     Q_D(const Camera);
+
     return d->m_left;
 }
 
 void Camera::setRight(const float& right)
 {
     Q_D(Camera);
+
     if (qFuzzyCompare(d->m_right, right))
         return;
 
@@ -194,6 +216,7 @@ void Camera::setRight(const float& right)
 float Camera::right() const
 {
     Q_D(const Camera);
+
     return d->m_right;
 }
 
@@ -213,6 +236,7 @@ void Camera::setBottom(const float& bottom)
 float Camera::bottom() const
 {
     Q_D(const Camera);
+
     return d->m_bottom;
 }
 
@@ -232,6 +256,7 @@ void Camera::setTop(const float& top)
 float Camera::top() const
 {
     Q_D(const Camera);
+
     return d->m_top;
 }
 
@@ -253,12 +278,14 @@ QMatrix4x4 Camera::viewMatrix() const
 QMatrix4x4 Camera::projectionMatrix() const
 {
     Q_D(const Camera);
+
     return d->m_projectionMatrix;
 }
 
 QMatrix4x4 Camera::viewProjectionMatrix() const
 {
     Q_D(const Camera);
+
     if(d->m_viewMatrixDirty || d->m_viewProjectionMatrixDirty)
     {
         d->m_viewProjectionMatrix      = d->m_projectionMatrix * viewMatrix();
@@ -330,6 +357,7 @@ void Camera::translateWorld(const QVector3D& vWorld , CameraTranslationOption op
 QQuaternion Camera::tiltRotation(const float& angle) const
 {
     Q_D(const Camera);
+
     QVector3D xBasis = QVector3D::crossProduct(d->m_upVector, d->m_cameraToCenter.normalized()).normalized();
 
     return QQuaternion::fromAxisAndAngle(xBasis, -angle);
@@ -338,6 +366,7 @@ QQuaternion Camera::tiltRotation(const float& angle) const
 QQuaternion Camera::panRotation(const float& angle) const
 {
     Q_D(const Camera);
+
     return QQuaternion::fromAxisAndAngle(d->m_upVector, angle);
 }
 
@@ -349,6 +378,7 @@ QQuaternion Camera::panRotation(const float& angle, const QVector3D& axis) const
 QQuaternion Camera::rollRotation(const float& angle) const
 {
     Q_D(const Camera);
+
     return QQuaternion::fromAxisAndAngle(d->m_cameraToCenter, -angle);
 }
 
@@ -397,6 +427,7 @@ void Camera::rollAboutViewCenter(const float& angle)
 void Camera::rotate(const QQuaternion& q)
 {
     Q_D(Camera);
+
     d->m_upVector       = q.rotatedVector(d->m_upVector);
     d->m_cameraToCenter = q.rotatedVector(d->m_cameraToCenter);
     d->m_viewCenter     = d->m_position + d->m_cameraToCenter;
@@ -405,6 +436,7 @@ void Camera::rotate(const QQuaternion& q)
 void Camera::rotateAboutViewCenter(const QQuaternion& q)
 {
     Q_D(Camera);
+
     d->m_upVector       = q.rotatedVector(d->m_upVector);
     d->m_cameraToCenter = q.rotatedVector(d->m_cameraToCenter);
     d->m_position       = d->m_viewCenter - d->m_cameraToCenter;
