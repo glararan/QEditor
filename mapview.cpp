@@ -87,7 +87,7 @@ MapView::MapView(QWidget* parent)
                        << QStringLiteral("shadeHidden");
 
     AddStatusBarMessage("speed multiplier: ", &speed_mult     , "float");
-    AddStatusBarMessage("camera: "          , &m_camera->pos(), "QVector3D");
+    AddStatusBarMessage("camera: "          , &m_camera->pos(), "QVector3D_xzy");
     AddStatusBarMessage("zoom: "            , &camera_zoom    , "float");
     AddStatusBarMessage("pan: "             , &panAngle       , "float");
     AddStatusBarMessage("tilt: "            , &tiltAngle      , "float");
