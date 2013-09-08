@@ -95,6 +95,8 @@ protected:
     void wheelEvent(QWheelEvent* e);
     void timerEvent(QTimerEvent*);
 
+    void focusInEvent(QFocusEvent* e);
+
 private:
     void prepareShaders();
     void prepareTextures();
@@ -120,7 +122,10 @@ private:
 
     QVector4D brushColor;
 
-    float* mapData;
+    float mapData[1024 * 1024 * sizeof(float)];
+
+    SamplerPtr terrainSampler;
+    TexturePtr terrainTexture;
 
     /* ******** */
 
@@ -207,6 +212,7 @@ private:
     float HMapSizeToHoriz(int position);
     float swapPosition(float position);
     float swapPositionBack(float position);
+    int swapPositionBackInt(int position);
 
     QVector3D getWorldCoordinates(float mouseX, float mouseY);
 

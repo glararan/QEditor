@@ -87,7 +87,7 @@ void main()
     {
         vec4 position;
         position.xz = patchCornersXZ[i] * horizontalScale;
-        position.y = verticalScale * texture( heightMap, patchCornersXZ[i] ).r;
+        position.y = verticalScale * texture( heightMap, patchCornersXZ[i] ).a; // .r
         position.w = 1.0;
 
         // Transform to clip-space

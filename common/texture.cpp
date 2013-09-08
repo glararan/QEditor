@@ -62,11 +62,20 @@ void Texture::setImage(const QImage& image)
     setRawData2D(m_type, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
 }
 
-void Texture::setImage(float* pixelArray, int width, int height)
+void Texture::setImage(void* pixelArray, int width, int height)
 {
     Q_ASSERT(m_type == Texture2D);
 
-    setRawData2D(m_type, 0, GL_RGBA32F_ARB, width, height, 0, GL_RGBA32F_ARB, GL_FLOAT, &pixelArray[0]);
+    setRawData2D(m_type, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, pixelArray);
+}
+
+void Texture::updateImage(void* pixelArray, int width, int height)
+{
+    Q_ASSERT(m_type == Texture2D);
+
+    glBindTexture(m_type, m_textureId);
+
+    glTexSubImage2D(m_type, 0, 0, 0, width, height, GL_RGBA, GL_FLOAT, pixelArray);
 }
 
 void Texture::setCubeMapImage(GLenum face, const QImage& image)
