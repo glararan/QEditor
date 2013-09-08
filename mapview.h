@@ -96,6 +96,7 @@ protected:
     void timerEvent(QTimerEvent*);
 
     void focusInEvent(QFocusEvent* e);
+    void focusOutEvent(QFocusEvent* e);
 
 private:
     void prepareShaders();
@@ -113,12 +114,13 @@ private:
      * Terrain changing
      * TODO own class for control map height, x, y, z, etc.
     */
-    bool changeTerrain(float x, float z, float change, float radius, int brush);
+    bool changeTerrain(float x, float z, float change, float radius, int brush, int brush_type);
 
     float shaping_speed;
     float shaping_radius;
     float shaping_radius_multiplier;
     int   shaping_brush;
+    int   shaping_brush_type;
 
     QVector4D brushColor;
 
@@ -224,6 +226,7 @@ public slots:
     void setShapingSpeed(double speed);
     void setShapingRadius(double radius);
     void setShapingBrush(int brush);
+    void setShapingBrushType(int type);
 
     void resetCamera();
 

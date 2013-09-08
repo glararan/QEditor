@@ -1,8 +1,6 @@
-include( common/common.pri )
+include(common/common.pri)
 
 QT += core gui widgets
-
-QTPLUGIN += QtRawLibrary2
 
 #CONFIG += console
 
@@ -10,7 +8,6 @@ QTPLUGIN += QtRawLibrary2
 
 install_it.path = $$OUT_PWD
 install_it.files += $$PWD/heightmap-1024x1024.png
-install_it.files += $$PWD/heightmap-1024x1024.raw
 install_it.files += $$PWD/grass.png
 install_it.files += $$PWD/rock.png
 install_it.files += $$PWD/snowrocks.png

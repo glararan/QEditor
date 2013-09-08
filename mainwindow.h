@@ -6,6 +6,7 @@
 #include <QSlider>
 #include <QButtonGroup>
 #include <QPushButton>
+#include <QComboBox>
 #include <QLabel>
 
 #include "ui/qdslider.h"
@@ -45,18 +46,23 @@ private:
     QPushButton* t_brush_circle;
     QPushButton* t_brush_square;
 
+    QComboBox* t_brush_type;
+
     QLabel* t_brush_label;
+    QLabel* t_brush_type_label;
 
     QLabel* t_radius_label;
     QLabel* t_radius_value_label;
     QLabel* t_speed_label;
     QLabel* t_speed_value_label;
 
+    QList<QString> mode0Actions;
+    QList<QString> mode1Actions;
+
     void initMode();
+    void showMode(QList<QString>& parentList);
 
-    void showMode0();
-    void showMode1();
-
+    void addToolbarAction(QWidget* widget, QList<QString>& parentList);
     void hideToolbarActions();
 
 signals:

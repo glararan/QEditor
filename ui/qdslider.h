@@ -11,6 +11,7 @@ class QDSlider : public QSlider
 public:
     QDSlider(int decimals = 2, QWidget* parent = 0);
 
+    void setMinimum(double value);
     void setMaximum(double value);
     void setValue(double value);
 

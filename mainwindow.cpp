@@ -71,6 +71,8 @@ MainWindow::MainWindow(QWidget* parent)
     connect(this, SIGNAL(setModeEditing(int)), mapView, SLOT(setModeEditing(int)));
 
     /// toolbar3
+    connect(t_brush_type, SIGNAL(currentIndexChanged(int)), mapView, SLOT(setShapingBrushType(int)));
+
     connect(t_radius, SIGNAL(valueChanged(double)), t_radius_value_label, SLOT(setNum(double)));
     connect(t_speed,  SIGNAL(valueChanged(double)), t_speed_value_label,  SLOT(setNum(double)));
 
@@ -182,13 +184,13 @@ void MainWindow::setToolBarItem()
     {
         emit setModeEditing(0);
 
-        showMode0();
+        showMode(mode0Actions);
     }
     else if(iName == "action_mapview_m1")
     {
         emit setModeEditing(1);
 
-        showMode1();
+        showMode(mode1Actions);
     }
 }
 
@@ -209,38 +211,62 @@ void MainWindow::addDockWindow(const QString& title, QWidget* widget, Qt::DockWi
 void MainWindow::initMode()
 {
     t_radius = new QDSlider();
+    t_radius->setMinimum(3.0);
     t_radius->setMaximum(100.0);
     t_radius->setValue(10.0);
     t_radius->setMaximumWidth(this->width() / 3);
+    t_radius->setObjectName("t_radius");
 
     t_speed = new QDSlider();
     t_speed->setMaximum(10.0);
     t_speed->setValue(1.0);
     t_speed->setMaximumWidth(this->width() / 3);
+    t_speed->setObjectName("t_speed");
 
     t_brush = new QButtonGroup();
+    t_brush->setObjectName("t_brush");
 
     t_brush_circle = new QPushButton(QIcon(":/circle_icon"), "");
     t_brush_circle->setToolTip("Circle Brush");
     t_brush_circle->setCheckable(true);
     t_brush_circle->setChecked(true);
     t_brush_circle->setIconSize(QSize(24, 24));
+    t_brush_circle->setObjectName("t_brush_circle");
     t_brush->addButton(t_brush_circle);
 
     t_brush_square = new QPushButton(QIcon(":/square_icon"), "");
     t_brush_square->setToolTip("Square Brush");
     t_brush_square->setCheckable(true);
     t_brush_square->setIconSize(QSize(24, 24));
+    t_brush_square->setObjectName("t_brush_square");
     t_brush->addButton(t_brush_square);
 
-    t_brush_label = new QLabel("Brushes:");
+    t_brush_type = new QComboBox();
+    t_brush_type->setToolTip("Select brush type");
+    t_brush_type->setObjectName("t_brush_type");
+    t_brush_type->addItem("Linear"  , 1);
+    t_brush_type->addItem("Flat"    , 2);
+    t_brush_type->addItem("Smooth"  , 3);
+    t_brush_type->addItem("Unknown1", 4);
+    t_brush_type->addItem("Unknown2", 5);
+
+    t_brush_label      = new QLabel("Brushes:");
+    t_brush_type_label = new QLabel("Brush type:");
 
     t_radius_label       = new QLabel("Radius:");
     t_radius_value_label = new QLabel(QString("%1").arg(t_radius->value()));
     t_speed_label        = new QLabel("Speed:");
     t_speed_value_label  = new QLabel(QString("%1").arg(t_speed->value()));
 
+    t_brush_label->setObjectName("t_brush_label");
+    t_brush_type_label->setObjectName("t_brush_type_label");
+    t_radius_label->setObjectName("t_radius_label");
+    t_radius_value_label->setObjectName("t_radius_value_label");
+    t_speed_label->setObjectName("t_speed_label");
+    t_speed_value_label->setObjectName("t_speed_value_label");
+
     t_brush_label->setStyleSheet("margin:-3px 5px 0 0;");
+    t_brush_type_label->setStyleSheet("margin:-3px 5px 0 0;");
 
     t_radius_label->setStyleSheet("margin:-3px 5px 0 20px;");
     t_speed_label->setStyleSheet("margin:-3px 5px 0 20px;");
@@ -248,40 +274,50 @@ void MainWindow::initMode()
     t_radius_value_label->setStyleSheet("margin:-3px 0 0 5px;");
     t_speed_value_label->setStyleSheet("margin:-3px 0 0 5px;");
 
-    ui->toolbar3->addWidget(t_brush_label);
-    ui->toolbar3->addWidget(t_brush_circle);
-    ui->toolbar3->addWidget(t_brush_square);
-    ui->toolbar3->addWidget(t_radius_label);
-    ui->toolbar3->addWidget(t_radius);
-    ui->toolbar3->addWidget(t_radius_value_label);
-    ui->toolbar3->addWidget(t_speed_label);
-    ui->toolbar3->addWidget(t_speed);
-    ui->toolbar3->addWidget(t_speed_value_label);
+    /// mode1
+    addToolbarAction(t_brush_label       , mode1Actions);
+    addToolbarAction(t_brush_circle      , mode1Actions);
+    addToolbarAction(t_brush_square      , mode1Actions);
+    addToolbarAction(t_brush_square      , mode1Actions);
+    addToolbarAction(t_brush_type_label  , mode1Actions);
+    addToolbarAction(t_brush_type        , mode1Actions);
+    addToolbarAction(t_radius_label      , mode1Actions);
+    addToolbarAction(t_radius            , mode1Actions);
+    addToolbarAction(t_radius_value_label, mode1Actions);
+    addToolbarAction(t_speed_label       , mode1Actions);
+    addToolbarAction(t_speed             , mode1Actions);
+    addToolbarAction(t_speed_value_label , mode1Actions);
 
     hideToolbarActions();
 }
 
-void MainWindow::showMode0()
-{
-    hideToolbarActions();
-}
-
-void MainWindow::showMode1()
+void MainWindow::showMode(QList<QString>& parentList)
 {
     hideToolbarActions();
 
-    // todo where Mode0 end, where Mode1 end
-    for(int i = 0; i < ui->toolbar3->actions().count(); i++)
+    QList<QAction*> actions = ui->toolbar3->actions();
+
+    foreach(QAction* action, actions)
     {
-        QList<QAction*> actions = ui->toolbar3->actions();
-
-        actions[i]->setVisible(true);
+        for(int i = 0; i < parentList.count(); i++)
+        {
+            if(action->objectName() == parentList[i])
+                action->setVisible(true);
+        }
     }
 }
 
 void MainWindow::setShapingRadius(double value)
 {
     t_radius->setValue(t_radius->value() + value);
+}
+
+void MainWindow::addToolbarAction(QWidget* widget, QList<QString>& parentList)
+{
+    ui->toolbar3->addWidget(widget);
+    ui->toolbar3->actions().last()->setObjectName(widget->objectName());
+
+    parentList.append(widget->objectName());
 }
 
 void MainWindow::hideToolbarActions()

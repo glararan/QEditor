@@ -23,6 +23,13 @@ void QDSlider::intToDouble(int value)
     emit valueChanged(val);
 }
 
+void QDSlider::setMinimum(double value)
+{
+    value = QString::number(value, 'f', decs).toDouble() * multiplier;
+
+    QSlider::setMinimum(value);
+}
+
 void QDSlider::setMaximum(double value)
 {
     value = QString::number(value, 'f', decs).toDouble() * multiplier;
