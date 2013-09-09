@@ -33,7 +33,6 @@ MapView::MapView(QWidget* parent)
 , m_screenSpaceError(12.0f)
 , m_modelMatrix()
 , m_horizontalScale(533.33333f)
-, m_verticalScale(1.0f)
 , m_sunTheta(30.0f)
 , m_time(0.0f)
 , m_metersToUnits(4 * M_PI / speed) // 500 units == 10 km => 0.05 units/m
@@ -409,7 +408,6 @@ void MapView::paintGL()
 
     // Set the horizontal and vertical scales applied in the tess eval shader
     shader->setUniformValue("horizontalScale", m_horizontalScale);
-    shader->setUniformValue("verticalScale", m_verticalScale);
     shader->setUniformValue("pixelsPerTriangleEdge", m_screenSpaceError);
 
     // Pass in the usual transformation matrices
@@ -1230,18 +1228,10 @@ void MapView::keyPressEvent(QKeyEvent* e)
             break;
 
         case Qt::Key_Home:
-            //setTerrainVerticalScale(terrainVerticalScale() + 0.05);
-            break;
-
-        case Qt::Key_End:
-            //setTerrainVerticalScale(terrainVerticalScale() - 0.05);
-            break;
-
-        case Qt::Key_BracketLeft:
             setSunAngle(sunAngle() - 0.2);
             break;
 
-        case Qt::Key_BracketRight:
+        case Qt::Key_End:
             setSunAngle(sunAngle() + 0.2);
             break;
 

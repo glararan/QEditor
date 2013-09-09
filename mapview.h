@@ -41,9 +41,6 @@ public:
     void setTerrainHorizontalScale(float horizontalScale) { m_horizontalScale = horizontalScale; }
     float terrainHorizontalScale() const                  { return m_horizontalScale; }
 
-    void setTerrainVerticalScale(float verticalScale)     { m_verticalScale = verticalScale; }
-    float terrainVerticalScale() const                    { return m_verticalScale; }
-
     // Sun position
     void setSunAngle(float sunAngle) { m_sunTheta = sunAngle; qDebug() << m_sunTheta; }
     float sunAngle() const           { return m_sunTheta; }
@@ -179,7 +176,6 @@ private:
     QMatrix4x4 m_modelMatrix;
 
     float m_horizontalScale;
-    float m_verticalScale;
 
     // Angle of sun. 0 is directly overhead, 90 to the East, -90 to the West
     float m_sunTheta;
