@@ -27,6 +27,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     /// menu bar
     // file
+    connect(ui->action_Save, SIGNAL(triggered()), mapView, SLOT(save()));
     connect(ui->action_Exit, SIGNAL(triggered()), this, SLOT(close()));
 
     // tools - speed multiplier
@@ -71,7 +72,10 @@ MainWindow::MainWindow(QWidget* parent)
     connect(this, SIGNAL(setModeEditing(int)), mapView, SLOT(setModeEditing(int)));
 
     /// toolbar3
-    connect(t_brush_type, SIGNAL(currentIndexChanged(int)), mapView, SLOT(setShapingBrushType(int)));
+    connect(t_terrain_mode, SIGNAL(currentIndexChanged(int)), this   , SLOT(setTerrain_Mode(int)));
+    connect(this,           SIGNAL(setTerrainMode(int))     , mapView, SLOT(setTerrainMode(int)));
+
+    connect(t_brush_type  , SIGNAL(currentIndexChanged(int)), mapView, SLOT(setShapingBrushType(int)));
 
     connect(t_radius, SIGNAL(valueChanged(double)), t_radius_value_label, SLOT(setNum(double)));
     connect(t_speed,  SIGNAL(valueChanged(double)), t_speed_value_label,  SLOT(setNum(double)));
@@ -241,14 +245,30 @@ void MainWindow::initMode()
     t_brush_square->setObjectName("t_brush_square");
     t_brush->addButton(t_brush_square);
 
+    t_terrain_mode = new QComboBox();
+    t_terrain_mode->setToolTip("Select terrain mode");
+    t_terrain_mode->setObjectName("t_terrain_mode");
+    t_terrain_mode->addItem("Shaping"  , 0);
+    t_terrain_mode->addItem("Smoothing", 1);
+
+    t_terrain_mode_0.append(qMakePair<QString, QVariant>("Linear"  , 1));
+    t_terrain_mode_0.append(qMakePair<QString, QVariant>("Flat"    , 2));
+    t_terrain_mode_0.append(qMakePair<QString, QVariant>("Smooth"  , 3));
+    t_terrain_mode_0.append(qMakePair<QString, QVariant>("Unknown1", 4));
+    t_terrain_mode_0.append(qMakePair<QString, QVariant>("Unknown2", 5));
+
+    t_terrain_mode_1.append(qMakePair<QString, QVariant>("Linear"  , 1));
+    t_terrain_mode_1.append(qMakePair<QString, QVariant>("Flat"    , 2));
+    t_terrain_mode_1.append(qMakePair<QString, QVariant>("Smooth"  , 3));
+
     t_brush_type = new QComboBox();
     t_brush_type->setToolTip("Select brush type");
     t_brush_type->setObjectName("t_brush_type");
-    t_brush_type->addItem("Linear"  , 1);
-    t_brush_type->addItem("Flat"    , 2);
-    t_brush_type->addItem("Smooth"  , 3);
-    t_brush_type->addItem("Unknown1", 4);
-    t_brush_type->addItem("Unknown2", 5);
+
+    for(int i = 0; i < t_terrain_mode_0.count(); i++)
+        t_brush_type->addItem(t_terrain_mode_0.at(i).first, t_terrain_mode_0.at(i).second);
+
+    t_terrain_mode_label = new QLabel("Mode:");
 
     t_brush_label      = new QLabel("Brushes:");
     t_brush_type_label = new QLabel("Brush type:");
@@ -258,12 +278,15 @@ void MainWindow::initMode()
     t_speed_label        = new QLabel("Speed:");
     t_speed_value_label  = new QLabel(QString("%1").arg(t_speed->value()));
 
+    t_terrain_mode_label->setObjectName("t_terrain_mode_label");
     t_brush_label->setObjectName("t_brush_label");
     t_brush_type_label->setObjectName("t_brush_type_label");
     t_radius_label->setObjectName("t_radius_label");
     t_radius_value_label->setObjectName("t_radius_value_label");
     t_speed_label->setObjectName("t_speed_label");
     t_speed_value_label->setObjectName("t_speed_value_label");
+
+    t_terrain_mode_label->setStyleSheet("margin:-3px 5px 0 0;");
 
     t_brush_label->setStyleSheet("margin:-3px 5px 0 0;");
     t_brush_type_label->setStyleSheet("margin:-3px 5px 0 0;");
@@ -279,6 +302,8 @@ void MainWindow::initMode()
     addToolbarAction(t_brush_circle      , mode1Actions);
     addToolbarAction(t_brush_square      , mode1Actions);
     addToolbarAction(t_brush_square      , mode1Actions);
+    addToolbarAction(t_terrain_mode_label, mode1Actions);
+    addToolbarAction(t_terrain_mode      , mode1Actions);
     addToolbarAction(t_brush_type_label  , mode1Actions);
     addToolbarAction(t_brush_type        , mode1Actions);
     addToolbarAction(t_radius_label      , mode1Actions);
@@ -310,6 +335,33 @@ void MainWindow::showMode(QList<QString>& parentList)
 void MainWindow::setShapingRadius(double value)
 {
     t_radius->setValue(t_radius->value() + value);
+}
+
+void MainWindow::setTerrain_Mode(int index)
+{
+    switch(index)
+    {
+        case 0:
+        default:
+            {
+                t_brush_type->clear();
+
+                for(int i = 0; i < t_terrain_mode_0.count(); i++)
+                    t_brush_type->addItem(t_terrain_mode_0.at(i).first, t_terrain_mode_0.at(i).second);
+            }
+            break;
+
+        case 1:
+            {
+                t_brush_type->clear();
+
+                for(int i = 0; i < t_terrain_mode_1.count(); i++)
+                    t_brush_type->addItem(t_terrain_mode_1.at(i).first, t_terrain_mode_1.at(i).second);
+            }
+            break;
+    }
+
+    emit setTerrainMode(index);
 }
 
 void MainWindow::addToolbarAction(QWidget* widget, QList<QString>& parentList)

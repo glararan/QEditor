@@ -79,6 +79,15 @@ public:
     void setEditingMode(eEditingMode editingMode) { eMode = editingMode; }
     eEditingMode editingMode() const              { return eMode; }
 
+    enum eTerrainMode
+    {
+        Shaping   = 0,
+        Smoothing = 1
+    };
+
+    void setTerrainMode(eTerrainMode terrainMode) { eTerrain = terrainMode; }
+    eTerrainMode terrainMode() const              { return eTerrain; }
+
 protected:
     void initializeGL();
     void resizeGL(int w, int h);
@@ -115,6 +124,8 @@ private:
      * TODO own class for control map height, x, y, z, etc.
     */
     bool changeTerrain(float x, float z, float change, float radius, int brush, int brush_type);
+    bool flattenTerrain(float x, float z, float y, float change, float radius, int brush, int brush_type);
+    bool blurTerrain(float x, float z, float change, float radius, int brush, int brush_type);
 
     float shaping_speed;
     float shaping_radius;
@@ -200,6 +211,7 @@ private:
     QVector<QString>     sbDataTypeList;
 
     eEditingMode eMode;
+    eTerrainMode eTerrain;
 
     QImage heightMapImage;
 
@@ -227,8 +239,11 @@ public slots:
     void setShapingRadius(double radius);
     void setShapingBrush(int brush);
     void setShapingBrushType(int type);
+    void setTerrainMode(int mode);
 
     void resetCamera();
+
+    void save();
 
     void doTest();
 

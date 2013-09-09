@@ -83,6 +83,7 @@
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <addaction name="action_Save"/>
     <addaction name="action_Exit"/>
    </widget>
    <widget class="QMenu" name="menuTools">
@@ -337,6 +338,11 @@
    </property>
    <property name="shortcut">
     <string>R</string>
+   </property>
+  </action>
+  <action name="action_Save">
+   <property name="text">
+    <string>&amp;Save</string>
    </property>
   </action>
  </widget>

@@ -342,7 +342,7 @@ void main()
         float dx = texCoords.x * horizontalScale - cursorPos.x;
         float dy = texCoords.y * horizontalScale - cursorPos.y;
 
-        float bDist = sqrt(dx * dx + dy * dy) * (brushMultiplier + 2);
+        float bDist = sqrt(dx * dx + dy * dy) * (brushMultiplier);
 
         if(bDist < brushRadius)
         {

@@ -46,7 +46,10 @@ private:
     QPushButton* t_brush_circle;
     QPushButton* t_brush_square;
 
+    QComboBox* t_terrain_mode;
     QComboBox* t_brush_type;
+
+    QLabel* t_terrain_mode_label;
 
     QLabel* t_brush_label;
     QLabel* t_brush_type_label;
@@ -59,6 +62,9 @@ private:
     QList<QString> mode0Actions;
     QList<QString> mode1Actions;
 
+    QList<QPair<QString, QVariant>> t_terrain_mode_0;
+    QList<QPair<QString, QVariant>> t_terrain_mode_1;
+
     void initMode();
     void showMode(QList<QString>& parentList);
 
@@ -69,6 +75,7 @@ signals:
     void setSpeedMultiplier(float multiplier);
     void setDisplayMode(int mode);
     void setModeEditing(int option);
+    void setTerrainMode(int mode);
 
 private slots:
     void setSpeedMultiplier();
@@ -76,6 +83,8 @@ private slots:
     void setToolBarItem();
 
     void setShapingRadius(double value);
+
+    void setTerrain_Mode(int index);
 
     void showTeleport();
 };

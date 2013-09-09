@@ -36,7 +36,7 @@ MapView::MapView(QWidget* parent)
 , m_verticalScale(1.0f)
 , m_sunTheta(30.0f)
 , m_time(0.0f)
-, m_metersToUnits(2 * M_PI / speed) // 500 units == 10 km => 0.05 units/m
+, m_metersToUnits(4 * M_PI / speed) // 500 units == 10 km => 0.05 units/m
 , m_leftButtonPressed(false)
 , m_rightButtonPressed(false)
 , mouse_position(QPoint(0, 0))
@@ -53,6 +53,7 @@ MapView::MapView(QWidget* parent)
 , ctrlDown(false)
 , altDown(false)
 , eMode((eEditingMode)0)
+, eTerrain((eTerrainMode)0)
 , heightMapImage(0, 0, QImage::Format_Indexed8)
 , m_displayMode(TexturedAndLit)
 , m_displayModeSubroutines(DisplayModeCount)
@@ -309,7 +310,10 @@ void MapView::update(float t)
             {
                 const QVector3D& position(terrain_pos);
 
-                changeTerrain(position.x(), position.z(), 7.5f * dt * shaping_speed, shaping_radius / shaping_radius_multiplier, shaping_brush, shaping_brush_type);
+                if(eTerrain == Shaping)
+                    changeTerrain(position.x(), position.z(), 7.5f * dt * shaping_speed, shaping_radius / shaping_radius_multiplier, shaping_brush, shaping_brush_type);
+                else if(eTerrain == Smoothing)
+                    flattenTerrain(position.x(), position.z(), position.y(), pow(0.2f, dt) * shaping_speed, shaping_radius / shaping_radius_multiplier, shaping_brush, shaping_brush_type);
             }
         }
         else if(ctrlDown)
@@ -318,7 +322,10 @@ void MapView::update(float t)
             {
                 const QVector3D& position(terrain_pos);
 
-                changeTerrain(position.x(), position.z(), -7.5f * dt * shaping_speed, shaping_radius / shaping_radius_multiplier, shaping_brush, shaping_brush_type);
+                if(eTerrain == Shaping)
+                    changeTerrain(position.x(), position.z(), -7.5f * dt * shaping_speed, shaping_radius / shaping_radius_multiplier, shaping_brush, shaping_brush_type);
+                else if(eTerrain == Smoothing)
+                    blurTerrain(position.x(), position.z(), pow(0.2f, dt) * shaping_speed, shaping_radius / shaping_radius_multiplier, shaping_brush, shaping_brush_type);
             }
         }
     }
@@ -513,8 +520,22 @@ void MapView::prepareTextures()
     terrainSampler->setWrapMode(Sampler::DirectionS, GL_CLAMP_TO_EDGE);
     terrainSampler->setWrapMode(Sampler::DirectionT, GL_CLAMP_TO_EDGE);
 
-    for(int i = 0; i < 1024 * 1024 * sizeof(float); ++i)
-        mapData[i] = 0.1f * (qrand() % 5);
+    QFile file("map01.map");
+
+    if(file.exists() && file.open(QIODevice::ReadOnly))
+    {
+        QDataStream data(&file);
+        data.setVersion(QDataStream::Qt_5_0);
+        data.setFloatingPointPrecision(QDataStream::SinglePrecision);
+
+        for(int i = 0; i < 1024 * 1024 * 4; ++i)
+            data >> mapData[i];
+    }
+    else
+    {
+        for(int i = 0; i < 1024 * 1024 * sizeof(float); ++i)
+            mapData[i] = 0.1f * (qrand() % 5);
+    }
 
     //heightMapImage.load("heightmap-1024x1024.png");
 
@@ -757,123 +778,273 @@ bool MapView::changeTerrain(float x, float z, float change, float radius, int br
                 case 1: // Circle
                 default:
                     {
-                        switch(brush_type)
+                        float xdiff = HMapSizeToHoriz(_x) - x;
+                        float ydiff = HMapSizeToHoriz(swapPositionBack(_y)) - z;
+
+                        float dist = sqrt(xdiff * xdiff + ydiff * ydiff);
+
+                        if(dist < radius)
                         {
-                            case 1: // Linear
-                            default:
-                                {
-                                    float xdiff = HMapSizeToHoriz(_x) - x;
-                                    float ydiff = HMapSizeToHoriz(swapPositionBack(_y)) - z;
+                            int X = _x % m_heightMapSize.width();
+                            int Y = swapPositionBackInt(_y) % m_heightMapSize.width();
 
-                                    float dist = sqrt(xdiff * xdiff + ydiff * ydiff);
+                            int index = (Y * m_heightMapSize.width()) + X;
 
-                                    float changeFormula = change * (1.0f - dist / radius);
-
-                                    if(dist < radius)
+                            switch(brush_type)
+                            {
+                                case 1: // Linear
+                                default:
                                     {
-                                        int X = _x % m_heightMapSize.width();
-                                        int Y = swapPositionBackInt(_y) % m_heightMapSize.width();
-
-                                        int index = (Y * m_heightMapSize.width()) + X;
+                                        float changeFormula = change * (1.0f - dist / radius);
 
                                         mapData[index * 4] += changeFormula;
 
                                         changed = true;
                                     }
-                                }
-                                break;
+                                    break;
 
-                            case 2: // Flat
-                                {
-                                    float xdiff = HMapSizeToHoriz(_x) - x;
-                                    float ydiff = HMapSizeToHoriz(swapPositionBack(_y)) - z;
-
-                                    float dist = sqrt(xdiff * xdiff + ydiff * ydiff);
-
-                                    float changeFormula = change;
-
-                                    if(dist < radius)
+                                case 2: // Flat
                                     {
-                                        int X = _x % m_heightMapSize.width();
-                                        int Y = swapPositionBackInt(_y) % m_heightMapSize.width();
-
-                                        int index = (Y * m_heightMapSize.width()) + X;
+                                        float changeFormula = change;
 
                                         mapData[index * 4] += changeFormula;
 
                                         changed = true;
                                     }
-                                }
-                                break;
+                                    break;
 
-                            case 3: // Smooth
-                                {
-                                    float xdiff = HMapSizeToHoriz(_x) - x;
-                                    float ydiff = HMapSizeToHoriz(swapPositionBack(_y)) - z;
-
-                                    float dist = sqrt(xdiff * xdiff + ydiff * ydiff);
-
-                                    float changeFormula = change / (1.0f + dist / radius);
-
-                                    if(dist < radius)
+                                case 3: // Smooth
                                     {
-                                        int X = _x % m_heightMapSize.width();
-                                        int Y = swapPositionBackInt(_y) % m_heightMapSize.width();
-
-                                        int index = (Y * m_heightMapSize.width()) + X;
+                                        float changeFormula = change / (1.0f + dist / radius);
 
                                         mapData[index * 4] += changeFormula;
 
                                         changed = true;
                                     }
-                                }
-                                break;
+                                    break;
 
-                            case 4: // ...
-                                {
-                                    float xdiff = HMapSizeToHoriz(_x) - x;
-                                    float ydiff = HMapSizeToHoriz(swapPositionBack(_y)) - z;
-
-                                    float dist = sqrt(xdiff * xdiff + ydiff * ydiff);
-
-                                    float changeFormula = change * ((dist / radius) * (dist / radius) + dist / radius + 1.0f);
-
-                                    if(dist < radius)
+                                case 4: // ...
                                     {
-                                        int X = _x % m_heightMapSize.width();
-                                        int Y = swapPositionBackInt(_y) % m_heightMapSize.width();
-
-                                        int index = (Y * m_heightMapSize.width()) + X;
+                                        float changeFormula = change * ((dist / radius) * (dist / radius) + dist / radius + 1.0f);
 
                                         mapData[index * 4] += changeFormula;
 
                                         changed = true;
                                     }
-                                }
-                                break;
+                                    break;
 
-                            case 5: // ...
-                                {
-                                    float xdiff = HMapSizeToHoriz(_x) - x;
-                                    float ydiff = HMapSizeToHoriz(swapPositionBack(_y)) - z;
-
-                                    float dist = sqrt(xdiff * xdiff + ydiff * ydiff);
-
-                                    float changeFormula = change * cos(dist / radius);
-
-                                    if(dist < radius)
+                                case 5: // ...
                                     {
-                                        int X = _x % m_heightMapSize.width();
-                                        int Y = swapPositionBackInt(_y) % m_heightMapSize.width();
-
-                                        int index = (Y * m_heightMapSize.width()) + X;
+                                        float changeFormula = change * cos(dist / radius);
 
                                         mapData[index * 4] += changeFormula;
 
                                         changed = true;
                                     }
+                                    break;
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+    }
+
+    if(changed)
+    {
+        terrainTexture->updateImage(&mapData, 1024, 1024);
+
+        m_material->setTextureUnitConfiguration(0, terrainTexture, terrainSampler, QByteArrayLiteral("heightMap"));
+    }
+    else
+        qDebug() << "changed: " << changed;
+
+    return changed;
+}
+
+bool MapView::flattenTerrain(float x, float z, float y, float change, float radius, int brush, int brush_type)
+{
+    bool changed = false;
+
+    int minX = horizToHMapSize(x - radius);
+    int maxX = horizToHMapSize(x + radius);
+
+    int minY = horizToHMapSize(swapPosition(z + radius));
+    int maxY = horizToHMapSize(swapPosition(z - radius));
+
+    for(int _x = minX; _x < maxX; ++_x)
+    {
+        for(int _y = minY; _y < maxY; ++_y) // _y mean z!
+        {
+            switch(brush)
+            {
+                case 1:
+                default:
+                    {
+                        float xdiff = HMapSizeToHoriz(_x) - x;
+                        float ydiff = HMapSizeToHoriz(swapPositionBack(_y)) - z;
+
+                        float dist = sqrt(xdiff * xdiff + ydiff * ydiff);
+
+                        if(dist < radius)
+                        {
+                            int X = _x % m_heightMapSize.width();
+                            int Y = swapPositionBackInt(_y) % m_heightMapSize.width();
+
+                            int index = (Y * m_heightMapSize.width()) + X;
+
+                            switch(brush_type)
+                            {
+                                case 1: // Linear
+                                default:
+                                    {
+                                        float changeFormula = 1.0f - (1.0f - change) * (1.0f - dist / radius);
+
+                                        mapData[index * 4] = changeFormula * mapData[index * 4] + (1 - changeFormula) * y;
+
+                                        changed = true;
+                                    }
+                                    break;
+
+                                case 2: // Flat
+                                    {
+                                        mapData[index * 4] = change * mapData[index * 4] + (1 - change) * y;
+
+                                        changed = true;
+                                    }
+                                    break;
+
+                                case 3: // Smooth
+                                    {
+                                        float changeFormula = 1.0f - pow(1.0f - change, 1.0f + dist / radius);
+
+                                        mapData[index * 4] = changeFormula * mapData[index * 4] + (1 - changeFormula) * y;
+
+                                        changed = true;
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+    }
+
+    if(changed)
+    {
+        terrainTexture->updateImage(&mapData, 1024, 1024);
+
+        m_material->setTextureUnitConfiguration(0, terrainTexture, terrainSampler, QByteArrayLiteral("heightMap"));
+    }
+    else
+        qDebug() << "changed: " << changed;
+
+    return changed;
+}
+
+bool MapView::blurTerrain(float x, float z, float change, float radius, int brush, int brush_type)
+{
+    bool changed = false;
+
+    int minX = horizToHMapSize(x - radius);
+    int maxX = horizToHMapSize(x + radius);
+
+    int minY = horizToHMapSize(swapPosition(z + radius));
+    int maxY = horizToHMapSize(swapPosition(z - radius));
+
+    for(int _x = minX; _x < maxX; ++_x)
+    {
+        for(int _y = minY; _y < maxY; ++_y) // _y mean z!
+        {
+            switch(brush)
+            {
+                case 1:
+                default:
+                    {
+                        float xdiff = HMapSizeToHoriz(_x) - x;
+                        float ydiff = HMapSizeToHoriz(swapPositionBack(_y)) - z;
+
+                        float dist = sqrt(xdiff * xdiff + ydiff * ydiff);
+
+                        if(dist < radius)
+                        {
+                            int X = _x % m_heightMapSize.width();
+                            int Y = swapPositionBackInt(_y) % m_heightMapSize.width();
+
+                            int index = (Y * m_heightMapSize.width()) + X;
+
+                            float TotalHeight, TotalWidth, tx, tz, h, dist2;
+
+                            TotalHeight = 0;
+                            TotalWidth  = 0;
+
+                            int Rad = (radius / m_metersToUnits);
+
+                            for(int j = -Rad * 2; j <= Rad * 2; ++j)
+                            {
+                                tz = z + j * m_metersToUnits / 2;
+
+                                for(int k = -Rad; k <= Rad; ++k)
+                                {
+                                    tx = x + k * m_metersToUnits + (j % 2) * m_metersToUnits / 2.0f;
+
+                                    xdiff = tx - HMapSizeToHoriz(_x);
+                                    ydiff = tz - HMapSizeToHoriz(swapPositionBack(_y));
+
+                                    dist2 = sqrt(xdiff * xdiff + ydiff * ydiff);
+
+                                    if(dist2 > radius)
+                                        continue;
+
+                                    int X2 = static_cast<int>(tx) % m_heightMapSize.width();
+                                    int Y2 = swapPositionBackInt(tz) % m_heightMapSize.width();
+
+                                    int index2 = (Y2 * m_heightMapSize.width()) + X2;
+
+                                    const float height = mapData[index2 * sizeof(float)];
+
+                                    if(height)
+                                    {
+                                        TotalHeight += (1.0f - dist2 / radius) * height;
+                                        TotalWidth  += (1.0f - dist2 / radius);
+                                    }
                                 }
-                                break;
+                            }
+
+                            h = TotalHeight / TotalWidth;
+
+                            switch(brush_type)
+                            {
+                                case 1: // Linear
+                                default:
+                                    {
+                                        float changeFormula = 1.0f - (1.0f - change) * (1.0f - dist / radius);
+
+                                        mapData[index * 4] = changeFormula * mapData[index * 4] + (1 - changeFormula) * h;
+
+                                        changed = true;
+                                    }
+                                    break;
+
+                                case 2: // Flat
+                                    {
+                                        mapData[index * 4] = change * mapData[index * 4] + (1 - change) * h;
+
+                                        changed = true;
+                                    }
+                                    break;
+
+                                case 3: // Smooth
+                                    {
+                                        float changeFormula = 1.0f - pow(1.0f - change, (1.0f + dist / radius));
+
+                                        mapData[index * 4] = changeFormula * mapData[index * 4] + (1 - changeFormula) * h;
+
+                                        changed = true;
+                                    }
+                                    break;
+                            }
                         }
                     }
                     break;
@@ -966,6 +1137,37 @@ void MapView::setShapingBrush(int brush)
 void MapView::setShapingBrushType(int type)
 {
     shaping_brush_type = type + 1;
+}
+
+void MapView::setTerrainMode(int mode)
+{
+    eTerrain = (eTerrainMode)mode;
+}
+
+void MapView::save()
+{
+    QString fileName("map01.map");
+
+    QFile file(fileName);
+
+    if(!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+    {
+        qCritical("Could not open file to be written");
+
+        return;
+    }
+
+    QDataStream data(&file);
+    data.setVersion(QDataStream::Qt_5_0);
+    data.setFloatingPointPrecision(QDataStream::SinglePrecision);
+
+    for(int i = 0; i < 1024 * 1024 * 4; ++i)
+        data << mapData[i];
+
+    file.flush();
+    file.close();
+
+    qDebug() << "Successfully written to " << fileName;
 }
 
 void MapView::keyPressEvent(QKeyEvent* e)
