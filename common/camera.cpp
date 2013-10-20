@@ -441,3 +441,24 @@ void Camera::rotateAboutViewCenter(const QQuaternion& q)
     d->m_cameraToCenter = q.rotatedVector(d->m_cameraToCenter);
     d->m_position       = d->m_viewCenter - d->m_cameraToCenter;
 }
+
+void Camera::resetRotation()
+{
+    Q_D(Camera);
+
+    QVector3D Cpos = d->m_position;
+
+    setUpVector(QVector3D(0.0f, 1.0f, 0.0f));
+    setPosition(Cpos);
+
+    Cpos.setZ(Cpos.z() - 1.0f);
+
+    setViewCenter(Cpos);
+}
+
+void Camera::moveToPosition(const QVector3D& position)
+{
+    setPosition(position);
+    setViewCenter(QVector3D(position.x(), position.y(), position.z() - 1.0f));
+    setUpVector(QVector3D(0.0f, 1.0f, 0.0f));
+}

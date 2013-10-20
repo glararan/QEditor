@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include "mapview.h"
+#include "ui/about.h"
 
 #include <QAction>
 
@@ -14,9 +14,16 @@ MainWindow::MainWindow(QWidget* parent)
 {
     ui->setupUi(this);
 
+    // world constructor
+    world = new World("test");
+
     // map view constructor
-    MapView* mapView = new MapView(this);
+    mapView = new MapView(world, this);
+
     setCentralWidget(mapView);
+
+    // settings constructor
+    settingsW = new MapView_Settings(world->getBrush()->Color());
 
     // init modes
     initMode();
@@ -56,18 +63,26 @@ MainWindow::MainWindow(QWidget* parent)
 
     connect(this, SIGNAL(setDisplayMode(int)), mapView, SLOT(setDisplayMode(int)));
 
-    // tools - teleport, reset camera
-    connect(ui->actionTeleport, SIGNAL(triggered()), this, SLOT(showTeleport()));
+    // tools - settings, teleport, reset camera
+    connect(ui->action_Settings,     SIGNAL(triggered()), this,    SLOT(showSettings()));
+    connect(ui->actionTeleport,      SIGNAL(triggered()), this,    SLOT(showTeleport()));
     connect(ui->action_Reset_camera, SIGNAL(triggered()), mapView, SLOT(resetCamera()));
 
     connect(teleportW, SIGNAL(TeleportTo(QVector3D*)), mapView, SLOT(setCameraPosition(QVector3D*)));
 
+    connect(settingsW, SIGNAL(setColorOfBrush(QColor*)),      mapView, SLOT(setBrushColor(QColor*)));
+    connect(settingsW, SIGNAL(setEnvironmentDistance(float)), mapView, SLOT(setEnvionmentDistance(float)));
+
     // tools - test
     connect(ui->action_Test, SIGNAL(triggered()), mapView, SLOT(doTest()));
+
+    // help - about
+    connect(ui->action_About, SIGNAL(triggered()), this, SLOT(showAbout()));
 
     /// toolbar
     connect(ui->action_mapview_m0, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
     connect(ui->action_mapview_m1, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
+    connect(ui->action_mapview_m2, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
 
     connect(this, SIGNAL(setModeEditing(int)), mapView, SLOT(setModeEditing(int)));
 
@@ -87,6 +102,37 @@ MainWindow::MainWindow(QWidget* parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+
+    delete teleportW;
+    delete settingsW;
+
+    delete t_radius;
+    delete t_speed;
+
+    delete t_brush;
+
+    delete t_brush_circle;
+    delete t_brush_square;
+
+    delete t_terrain_mode;
+    delete t_brush_type;
+
+    delete t_terrain_mode_label;
+
+    delete t_brush_label;
+    delete t_brush_type_label;
+
+    delete t_radius_label;
+    delete t_radius_value_label;
+    delete t_speed_label;
+    delete t_speed_value_label;
+
+    qDebug() << "destroyed UI in MainWindow";
+
+    delete world;
+    delete mapView;
+
+    qDebug() << "MainWindow was destroyed!";
 }
 
 QString MainWindow::getActionName(QObject* object) const
@@ -196,11 +242,28 @@ void MainWindow::setToolBarItem()
 
         showMode(mode1Actions);
     }
+    else if(iName == "action_mapview_m2")
+    {
+        emit setModeEditing(2);
+
+        showMode(mode2Actions);
+    }
 }
 
 void MainWindow::showTeleport()
 {
     addDockWindow("Teleport", teleportW);
+}
+
+void MainWindow::showSettings()
+{
+    addDockWindow("Settings", settingsW);
+}
+
+void MainWindow::showAbout()
+{
+    About* about = new About();
+    about->exec();
 }
 
 void MainWindow::addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area)
@@ -265,7 +328,7 @@ void MainWindow::initMode()
     t_brush_type->setToolTip("Select brush type");
     t_brush_type->setObjectName("t_brush_type");
 
-    for(int i = 0; i < t_terrain_mode_0.count(); i++)
+    for(int i = 0; i < t_terrain_mode_0.count(); ++i)
         t_brush_type->addItem(t_terrain_mode_0.at(i).first, t_terrain_mode_0.at(i).second);
 
     t_terrain_mode_label = new QLabel("Mode:");
@@ -324,7 +387,7 @@ void MainWindow::showMode(QList<QString>& parentList)
 
     foreach(QAction* action, actions)
     {
-        for(int i = 0; i < parentList.count(); i++)
+        for(int i = 0; i < parentList.count(); ++i)
         {
             if(action->objectName() == parentList[i])
                 action->setVisible(true);
@@ -346,7 +409,7 @@ void MainWindow::setTerrain_Mode(int index)
             {
                 t_brush_type->clear();
 
-                for(int i = 0; i < t_terrain_mode_0.count(); i++)
+                for(int i = 0; i < t_terrain_mode_0.count(); ++i)
                     t_brush_type->addItem(t_terrain_mode_0.at(i).first, t_terrain_mode_0.at(i).second);
             }
             break;
@@ -355,7 +418,7 @@ void MainWindow::setTerrain_Mode(int index)
             {
                 t_brush_type->clear();
 
-                for(int i = 0; i < t_terrain_mode_1.count(); i++)
+                for(int i = 0; i < t_terrain_mode_1.count(); ++i)
                     t_brush_type->addItem(t_terrain_mode_1.at(i).first, t_terrain_mode_1.at(i).second);
             }
             break;

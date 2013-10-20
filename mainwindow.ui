@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Qt - Editor terénu</string>
+   <string>QEditor</string>
   </property>
   <property name="dockNestingEnabled">
    <bool>true</bool>
@@ -69,6 +69,7 @@
    </attribute>
    <addaction name="action_mapview_m0"/>
    <addaction name="action_mapview_m1"/>
+   <addaction name="action_mapview_m2"/>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -83,7 +84,11 @@
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <addaction name="action_New"/>
+    <addaction name="action_Load"/>
+    <addaction name="separator"/>
     <addaction name="action_Save"/>
+    <addaction name="separator"/>
     <addaction name="action_Exit"/>
    </widget>
    <widget class="QMenu" name="menuTools">
@@ -122,13 +127,29 @@
     <addaction name="menu_Speed_Multiplier"/>
     <addaction name="menu_Display_Mode"/>
     <addaction name="separator"/>
+    <addaction name="action_Settings"/>
     <addaction name="actionTeleport"/>
     <addaction name="action_Reset_camera"/>
     <addaction name="separator"/>
     <addaction name="action_Test"/>
    </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="action_Undo"/>
+    <addaction name="action_Redo"/>
+   </widget>
+   <widget class="QMenu" name="menu_Help">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="action_About"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
    <addaction name="menuTools"/>
+   <addaction name="menu_Help"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action_Exit">
@@ -343,6 +364,51 @@
   <action name="action_Save">
    <property name="text">
     <string>&amp;Save</string>
+   </property>
+  </action>
+  <action name="action_New">
+   <property name="text">
+    <string>&amp;New</string>
+   </property>
+  </action>
+  <action name="action_Load">
+   <property name="text">
+    <string>&amp;Load</string>
+   </property>
+  </action>
+  <action name="action_mapview_m2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="terrain_tessellation.qrc">
+     <normaloff>:/brush_icon</normaloff>:/brush_icon</iconset>
+   </property>
+   <property name="text">
+    <string>Nástroj kreslení textur</string>
+   </property>
+   <property name="toolTip">
+    <string>Paint</string>
+   </property>
+  </action>
+  <action name="action_Undo">
+   <property name="text">
+    <string>&amp;Undo</string>
+   </property>
+  </action>
+  <action name="action_Redo">
+   <property name="text">
+    <string>&amp;Redo</string>
+   </property>
+  </action>
+  <action name="action_Settings">
+   <property name="text">
+    <string>&amp;Settings</string>
+   </property>
+  </action>
+  <action name="action_About">
+   <property name="text">
+    <string>&amp;About</string>
    </property>
   </action>
  </widget>

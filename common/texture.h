@@ -5,7 +5,7 @@
 #include <QSharedPointer>
 
 class QImage;
-class QOpenGLFunctions;
+class QOpenGLFunctions_4_2_Core;
 
 class Texture
 {
@@ -18,34 +18,34 @@ public:
         TextureCubeMap = GL_TEXTURE_CUBE_MAP
     };
 
-    Texture(TextureType type = Texture2D);
+    Texture(TextureType Type = Texture2D);
     ~Texture();
 
-    TextureType type() const { return m_type; }
+    TextureType Type() const { return type; }
 
     void create();
     void destroy();
-    GLuint textureId() const { return m_textureId; }
     void bind();
     void release();
+
+    GLuint textureID() const { return textureId; }
 
     void initializeToEmpty(const QSize& size);
 
     void setImage(const QImage& image);
-    void setImage(void* pixelArray, int width, int height);
     void setCubeMapImage(GLenum face, const QImage& image);
     void setRawData2D(GLenum target, int mipmapLevel, GLenum internalFormat,
                       int width, int height, int borderWidth,
                       GLenum format, GLenum type, const void* data);
 
-    void updateImage(void* pixelArray, int width, int height);
-
     void generateMipMaps();
 
 private:
-    TextureType m_type;
-    GLuint m_textureId;
-    QOpenGLFunctions* m_funcs;
+    TextureType type;
+
+    GLuint textureId;
+
+    QOpenGLFunctions_4_2_Core* GLfuncs;
 };
 
 typedef QSharedPointer<Texture> TexturePtr;

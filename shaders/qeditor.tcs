@@ -15,7 +15,7 @@ out terrainVertex
     vec2 position;
 } Out[];
 
-uniform sampler2D heightMap;
+uniform sampler2DArray heightMap;
 
 // Fully tessellated!
 const float tessellationLevel = 64.0;
@@ -77,7 +77,7 @@ void main()
     Out[gl_InvocationID].position = In[gl_InvocationID].position;
 
     // Calculate extent of this patch in texture coords [0,1]
-    vec2 patchExtent = maxTessLevel / (textureSize(heightMap, 0) * maxTrianglesPerTexel);
+    vec2 patchExtent = maxTessLevel / (textureSize(heightMap, 0).xy * maxTrianglesPerTexel);
 
     vec2 patchCornersXZ[4];
     patchCornersXZ[0] = Out[gl_InvocationID].position;                            // min x, min z
@@ -90,7 +90,7 @@ void main()
     {
         vec4 position;
         position.xz = patchCornersXZ[i] * horizontalScale;
-        position.y  = texture(heightMap, patchCornersXZ[i]).r;
+        position.y  = texture(heightMap, vec3(patchCornersXZ[i], 0)).r;
         position.w  = 1.0;
 
         // Transform to clip-space
@@ -107,6 +107,7 @@ void main()
         gl_TessLevelOuter[1] = calcTessellationLevel(clipSpacePatchCorners[0], clipSpacePatchCorners[2]); // x = const, z = min
         gl_TessLevelOuter[2] = calcTessellationLevel(clipSpacePatchCorners[2], clipSpacePatchCorners[3]); // x = max,   z = const
         gl_TessLevelOuter[3] = calcTessellationLevel(clipSpacePatchCorners[1], clipSpacePatchCorners[3]); // x = const, z = max
+
         gl_TessLevelInner[0] = max(gl_TessLevelOuter[1], gl_TessLevelOuter[3]); // z = const
         gl_TessLevelInner[1] = max(gl_TessLevelOuter[0], gl_TessLevelOuter[2]); // x = const
     }
@@ -117,6 +118,7 @@ void main()
         gl_TessLevelOuter[1] = 0.0;
         gl_TessLevelOuter[2] = 0.0;
         gl_TessLevelOuter[3] = 0.0;
+
         gl_TessLevelInner[0] = 0.0;
         gl_TessLevelInner[1] = 0.0;
     }

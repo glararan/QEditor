@@ -44,13 +44,15 @@ uniform vec4 color2 = vec4(0.89, 0.68, 0.00, 1.00);
 uniform vec4 color3 = vec4(0.75, 0.00, 0.00, 1.00);
 uniform vec4 color4 = vec4(1.00, 1.00, 1.00, 1.00);
 
-uniform int   brush = 0;
-uniform vec2  cursorPos;
-uniform float brushRadius = 10;
+uniform int   brush           = 0;
+uniform vec2  cursorPos       = vec2(0, 0);
+uniform float brushRadius     = 10;
 uniform float brushMultiplier = 5.33333;
-uniform vec4  brushColor = vec4(0, 1, 0, 1);
+uniform vec4  brushColor      = vec4(0, 1, 0, 1);
 
 uniform float horizontalScale = 10.0;
+
+uniform vec2 viewportSize;
 
 in wireFrameVertex
 {
@@ -162,7 +164,6 @@ void nearAndFarTexCoords(out vec2 uvNear, out vec2 uvFar)
 subroutine(ShaderModelType)
 vec4 shadeSimpleWireFrame()
 {
-    //vec4 color = vec4(0.0);
     vec4 color = vec4(0, 0, 0, 0);
 
     return wireFrame(color, line.color);
@@ -318,11 +319,6 @@ vec4 shadeHidden()
 {
     return vec4(0);
 }
-
-in terrainVertex
-{
-    vec2 position;
-} In;
 
 void main()
 {

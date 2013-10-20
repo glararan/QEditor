@@ -11,6 +11,10 @@
 
 #include "ui/qdslider.h"
 #include "ui/teleportwidget.h"
+#include "ui/mapview_settings.h"
+
+#include "world.h"
+#include "mapview.h"
 
 namespace Ui
 {
@@ -34,6 +38,8 @@ private:
     QString ToolBarItem;
 
     TeleportWidget* teleportW;
+
+    MapView_Settings* settingsW;
 
     void addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area = Qt::RightDockWidgetArea);
 
@@ -59,17 +65,24 @@ private:
     QLabel* t_speed_label;
     QLabel* t_speed_value_label;
 
-    QList<QString> mode0Actions;
-    QList<QString> mode1Actions;
-
     QList<QPair<QString, QVariant>> t_terrain_mode_0;
     QList<QPair<QString, QVariant>> t_terrain_mode_1;
+
+    // Editing mode = 2
+
+    QList<QString> mode0Actions;
+    QList<QString> mode1Actions;
+    QList<QString> mode2Actions;
 
     void initMode();
     void showMode(QList<QString>& parentList);
 
     void addToolbarAction(QWidget* widget, QList<QString>& parentList);
     void hideToolbarActions();
+
+    //
+    World*   world;
+    MapView* mapView;
 
 signals:
     void setSpeedMultiplier(float multiplier);
@@ -87,6 +100,8 @@ private slots:
     void setTerrain_Mode(int index);
 
     void showTeleport();
+    void showSettings();
+    void showAbout();
 };
 
 #endif // MAINWINDOW_H

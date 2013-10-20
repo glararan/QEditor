@@ -222,6 +222,8 @@ bool TeleportWidget::checkCoords(QString coords)
                     else
                         dotComma = true;
                 }
+
+                break;
             }
             else
             {

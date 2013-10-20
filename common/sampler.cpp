@@ -26,6 +26,7 @@ void Sampler::destroy()
     if(m_samplerId)
     {
         m_funcs->glDeleteSamplers(1, &m_samplerId);
+
         m_samplerId = 0;
     }
 }

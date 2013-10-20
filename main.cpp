@@ -2,6 +2,7 @@
 #include <QtDebug>
 #include <QFile>
 #include <QTextStream>
+#include <QTime>
 
 #include "mainwindow.h"
 
@@ -59,6 +60,8 @@ int main(int argc, char* argv[])
     QApplication app(argc, argv);
 
     LogInitialize();
+
+    qsrand((uint)QTime::currentTime().msec());
 
     MainWindow mw;
     mw.showMaximized();

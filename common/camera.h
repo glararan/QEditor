@@ -86,6 +86,10 @@ public:
     void setTop(const float& top);
     float top() const;
 
+    void resetRotation();
+
+    void moveToPosition(const QVector3D& position);
+
     QMatrix4x4 viewMatrix() const;
     QMatrix4x4 projectionMatrix() const;
     QMatrix4x4 viewProjectionMatrix() const;

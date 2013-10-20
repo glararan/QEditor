@@ -1,10 +1,10 @@
 <RCC>
     <qresource prefix="/">
-        <file>shaders/terraintessellation.frag</file>
-        <file>shaders/terraintessellation.geom</file>
-        <file>shaders/terraintessellation.tcs</file>
-        <file>shaders/terraintessellation.tes</file>
-        <file>shaders/terraintessellation.vert</file>
+        <file>shaders/qeditor.frag</file>
+        <file>shaders/qeditor.geom</file>
+        <file>shaders/qeditor.tcs</file>
+        <file>shaders/qeditor.tes</file>
+        <file>shaders/qeditor.vert</file>
         <file alias="arrow">arrow.png</file>
         <file alias="terrain">terrain.png</file>
         <file>grass.png</file>
@@ -13,5 +13,6 @@
         <file>snowrocks.png</file>
         <file alias="circle_icon">circle.png</file>
         <file alias="square_icon">square.png</file>
+        <file alias="brush_icon">brush.png</file>
     </qresource>
 </RCC>

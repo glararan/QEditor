@@ -1,38 +1,36 @@
 /// Basic info
+1. download quazip - http://quazip.sourceforge.net/index.html
+2. add to 2nd quazip.pro: INCLUDEPATH += "C:\Qt\Qt5.1.0\5.1.0\msvc2010_opengl\include\QtZlib"
+3. fix errors from "voidp gzFile" to "gzFile file", and again change
+4. compile, copy .lib to C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Lib, headers to C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Include
+5. copy .dll to system
 
 /// MapView info
 Heightmap:
-    black = 0.0f
-    white = maximální vertikální výška
+    Pozn: mapa je zmenšena z 1024.0f na 533.33333f
+
+    Výpočet souřadnice na 1024px z 533.33333px
+        příklad: (1024 => 533)
+        553 x => 553/1024*533.33333 => 288
+        675 z => 675/1024*533.33333 => 352
+
+        288 x => 288/533.33333*1024 => 553
+        352 z => 352/533.33333*1024 => 675
+
+    VAROVÁNÍ:
+        pixel 1024x1024 je na souřadnici 533.33x0
+        pixel 1024x0    je na souřadnici 533.33x533.33
+        pixel 0x1024    je na souřadnici 0x0
+        pixel 0x0       je na souřadnici 0x533.33
 
 /// Todo list
+General:
+    1. Vymyslet vytváření mapy (64x64 plocha, kde se nakliká na jaké souřadnici budou?)
+    2. Save (dodělat save z QListu kde budou soubory)
+
 MapView:
-    1. Vytvořit editaci terenu založeno na editaci QImage "editedHeightMap", nejprve snadnější verze
-        Získá pozici kurzoru a podle ní zakreslí na mapu 1024x1024, shift + ctrl
-        se nahradí v toolbaru, radius a síla opět v toolbaru, shift = zvýšení, ctrl = snížení
-
-        Pozn: mapa je zmenšena z 1024.0f na 533.33333f
-
-            Výpočet souřadnice na 1024px z 533.33333px
-                příklad: (1024 => 533)
-                553 x => 553/1024*533.33333 => 288
-                675 z => 675/1024*533.33333 => 352
-
-                288 x => 288/533.33333*1024 => 553
-                352 z => 352/533.33333*1024 => 675
-
-            VAROVÁNÍ:
-                pixel 1024x1024 je na souřadnici 533.33x0
-                pixel 1024x0    je na souřadnici 533.33x533.33
-                pixel 0x1024    je na souřadnici 0x0
-                pixel 0x0       je na souřadnici 0x533.33
-
-            Heightmap Info:
-                stupně šedý 8-bit
-
-                0-255 Blue  (Černá)
-            pak 0-255 Red   (Šedá)
-            pak 0-255 Green (Bílá)
+    1. editace terenu shift + ctrl se nahradí v toolbaru, shift = zvýšení, ctrl = snížení
+    2. kreslení textur
 
 List pro funkce:
     Rozdělit MapView na třídy MapView[pouze ukazovat data], World[spravování objektů], Map(?)[spravování heightmapy a alphamap],
@@ -40,3 +38,30 @@ List pro funkce:
 Tessellation shader resources
 http://codeflow.org/entries/2010/nov/07/opengl-4-tessellation/
 https://github.com/tijutv/GPU-Terrain-Generation
+
+voda
+- přidání
+- odebrání
+- výška
+- upravení
+  - RGBA
+  - Typ (lava, ocean, reka)
+
+omezení
+- přidání
+- oderbrání
+
+olistění
+- přidání
+ - generace olistění
+ - 0-20? na čtvereček
+ - velikost přidání
+- odebrání
+
+/// Done list
+- Teren 32bit float point rendering
+- Zvyseni/Snizeni terenu
+- Archiv na bazi .zip
+
+-- testing
+MapTile bude mít mapData a vytvoří se chunk position, propočítá se pomocí chunkPosition index v mapData u tile, otázka je jak rychlý to bude???
