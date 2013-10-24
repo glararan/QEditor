@@ -63,5 +63,9 @@ olistění
 - Zvyseni/Snizeni terenu
 - Archiv na bazi .zip
 
--- testing
-MapTile bude mít mapData a vytvoří se chunk position, propočítá se pomocí chunkPosition index v mapData u tile, otázka je jak rychlý to bude???
+GLSL:
+http://en.wikibooks.org/wiki/GLSL_Programming/Vector_and_Matrix_Operations
+x = s = r
+y = t = g
+z = b = ?
+w = a = q

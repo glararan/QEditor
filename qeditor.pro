@@ -28,7 +28,9 @@ SOURCES  += main.cpp \
     mapview.cpp \
     mathhelper.cpp \
     brush.cpp \
-    ui/about.cpp
+    ui/about.cpp \
+    ui/texturepicker.cpp \
+    ui/tableview.cpp
 
 HEADERS  += \
     mainwindow.h \
@@ -42,7 +44,9 @@ HEADERS  += \
     mapview.h \
     mathhelper.h \
     brush.h \
-    ui/about.h
+    ui/about.h \
+    ui/texturepicker.h \
+    ui/tableview.h
 
 RESOURCES += \
     qeditor.qrc
@@ -59,7 +63,8 @@ FORMS += \
     mainwindow.ui \
     ui/teleportwidget.ui \
     ui/mapview_settings.ui \
-    ui/about.ui
+    ui/about.ui \
+    ui/texturepicker.ui
 
 unix|win32: LIBS += -L$$PWD/ -lquazip
 

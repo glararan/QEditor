@@ -7,12 +7,15 @@
         <file>shaders/qeditor.vert</file>
         <file alias="arrow">arrow.png</file>
         <file alias="terrain">terrain.png</file>
-        <file>grass.png</file>
         <file>heightmap-1024x1024.png</file>
-        <file>rock.png</file>
-        <file>snowrocks.png</file>
         <file alias="circle_icon">circle.png</file>
         <file alias="square_icon">square.png</file>
         <file alias="brush_icon">brush.png</file>
+        <file alias="app_icon">icon.png</file>
+    </qresource>
+    <qresource prefix="/textures">
+        <file>grass.png</file>
+        <file>rock.png</file>
+        <file>snowrocks.png</file>
     </qresource>
 </RCC>

@@ -347,5 +347,17 @@ void main()
         }
     }
 
+    // Borders
+    if(brush == 1)
+    {
+        float lineWidth = 0.1;
+
+        float maxVal = 1.0 - (lineWidth / horizontalScale);
+        float minVal = lineWidth / horizontalScale;
+
+        if(texCoords.x > maxVal || texCoords.y > maxVal || texCoords.x < minVal || texCoords.y < minVal)
+            outColor = vec4(1.0, 0.0, 0.0, 1.0);
+    }
+
     fragColor = outColor;
 }

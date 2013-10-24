@@ -70,7 +70,6 @@ MapTile::MapTile(World* mWorld, int x, int y, const QString& mapFile)
 
     QFile file(fileName);
 
-    // se nabinduje a vytvoří texture array
     terrainMapData->create();
     terrainMapData->bind(true);
 
@@ -87,7 +86,6 @@ MapTile::MapTile(World* mWorld, int x, int y, const QString& mapFile)
         qDebug() << "chunk["<< i / CHUNKS << ", " << i % CHUNKS << "]: " << i << " bases: " << mapChunks[i / CHUNKS][i % CHUNKS]->getBases();
     }
 
-    // nastaví se do materialu a pak se posílá do shaderu...
     world->material->setTextureArrayUnitConfiguration(0, terrainMapData, terrainSampler, QByteArrayLiteral("heightMap"));
 
     /// in future in mapchunks each own 8 custom textures

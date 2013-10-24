@@ -261,8 +261,8 @@ bool MapChunk::flattenTerrain(float x, float z, float y, float change, float rad
     int minX = horizToHMapSize(x - radius);
     int maxX = horizToHMapSize(x + radius);
 
-    int minY = horizToHMapSize(z + radius);
-    int maxY = horizToHMapSize(z - radius);
+    int minY = horizToHMapSize(z - radius);
+    int maxY = horizToHMapSize(z + radius);
 
     for(int _x = minX; _x < maxX; ++_x)
     {
@@ -355,8 +355,8 @@ bool MapChunk::blurTerrain(float x, float z, float change, float radius, int bru
     int minX = horizToHMapSize(x - radius);
     int maxX = horizToHMapSize(x + radius);
 
-    int minY = horizToHMapSize(z + radius);
-    int maxY = horizToHMapSize(z - radius);
+    int minY = horizToHMapSize(z - radius);
+    int maxY = horizToHMapSize(z + radius);
 
     for(int _x = minX; _x < maxX; ++_x)
     {

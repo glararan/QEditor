@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>QEditor</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="qeditor.qrc">
+    <normaloff>:/app_icon</normaloff>:/app_icon</iconset>
+  </property>
   <property name="dockNestingEnabled">
    <bool>true</bool>
   </property>
@@ -127,6 +131,7 @@
     <addaction name="menu_Speed_Multiplier"/>
     <addaction name="menu_Display_Mode"/>
     <addaction name="separator"/>
+    <addaction name="action_Texture_Picker"/>
     <addaction name="action_Settings"/>
     <addaction name="actionTeleport"/>
     <addaction name="action_Reset_camera"/>
@@ -165,7 +170,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="terrain_tessellation.qrc">
+    <iconset resource="qeditor.qrc">
      <normaloff>:/arrow</normaloff>:/arrow</iconset>
    </property>
    <property name="text">
@@ -223,7 +228,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="terrain_tessellation.qrc">
+    <iconset resource="qeditor.qrc">
      <normaloff>:/terrain</normaloff>:/terrain</iconset>
    </property>
    <property name="text">
@@ -381,7 +386,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="terrain_tessellation.qrc">
+    <iconset resource="qeditor.qrc">
      <normaloff>:/brush_icon</normaloff>:/brush_icon</iconset>
    </property>
    <property name="text">
@@ -411,9 +416,14 @@
     <string>&amp;About</string>
    </property>
   </action>
+  <action name="action_Texture_Picker">
+   <property name="text">
+    <string>Texture &amp;Picker</string>
+   </property>
+  </action>
  </widget>
  <resources>
-  <include location="terrain_tessellation.qrc"/>
+  <include location="qeditor.qrc"/>
  </resources>
  <connections/>
 </ui>

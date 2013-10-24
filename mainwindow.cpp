@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget* parent)
 , DisplayMode("action_Default")
 , ToolBarItem("action_mapview_m0")
 , teleportW(new TeleportWidget)
+, texturepW(new TexturePicker)
 {
     ui->setupUi(this);
 
@@ -63,10 +64,11 @@ MainWindow::MainWindow(QWidget* parent)
 
     connect(this, SIGNAL(setDisplayMode(int)), mapView, SLOT(setDisplayMode(int)));
 
-    // tools - settings, teleport, reset camera
-    connect(ui->action_Settings,     SIGNAL(triggered()), this,    SLOT(showSettings()));
-    connect(ui->actionTeleport,      SIGNAL(triggered()), this,    SLOT(showTeleport()));
-    connect(ui->action_Reset_camera, SIGNAL(triggered()), mapView, SLOT(resetCamera()));
+    // tools - texture picker, settings, teleport, reset camera
+    connect(ui->action_Texture_Picker, SIGNAL(triggered()), this,    SLOT(showTexturePicker()));
+    connect(ui->action_Settings,       SIGNAL(triggered()), this,    SLOT(showSettings()));
+    connect(ui->actionTeleport,        SIGNAL(triggered()), this,    SLOT(showTeleport()));
+    connect(ui->action_Reset_camera,   SIGNAL(triggered()), mapView, SLOT(resetCamera()));
 
     connect(teleportW, SIGNAL(TeleportTo(QVector3D*)), mapView, SLOT(setCameraPosition(QVector3D*)));
 
@@ -258,6 +260,11 @@ void MainWindow::showTeleport()
 void MainWindow::showSettings()
 {
     addDockWindow("Settings", settingsW);
+}
+
+void MainWindow::showTexturePicker()
+{
+    addDockWindow("Texture Picker", texturepW);
 }
 
 void MainWindow::showAbout()

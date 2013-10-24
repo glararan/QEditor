@@ -12,6 +12,7 @@
 #include "ui/qdslider.h"
 #include "ui/teleportwidget.h"
 #include "ui/mapview_settings.h"
+#include "ui/texturepicker.h"
 
 #include "world.h"
 #include "mapview.h"
@@ -37,9 +38,9 @@ private:
     QString DisplayMode;
     QString ToolBarItem;
 
-    TeleportWidget* teleportW;
-
+    TeleportWidget*   teleportW;
     MapView_Settings* settingsW;
+    TexturePicker*    texturepW;
 
     void addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area = Qt::RightDockWidgetArea);
 
@@ -101,6 +102,7 @@ private slots:
 
     void showTeleport();
     void showSettings();
+    void showTexturePicker();
     void showAbout();
 };
 
