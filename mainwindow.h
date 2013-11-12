@@ -13,6 +13,7 @@
 #include "ui/teleportwidget.h"
 #include "ui/mapview_settings.h"
 #include "ui/texturepicker.h"
+#include "ui/startup.h"
 
 #include "world.h"
 #include "mapview.h"
@@ -43,6 +44,13 @@ private:
     TexturePicker*    texturepW;
 
     void addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area = Qt::RightDockWidgetArea);
+
+    template<class T>
+    void deleteObject(T object)
+    {
+        if(object != NULL)
+            delete object;
+    }
 
     // Editing mode = 1
     QDSlider* t_radius;
@@ -82,6 +90,8 @@ private:
     void hideToolbarActions();
 
     //
+    StartUp* startUp;
+
     World*   world;
     MapView* mapView;
 
@@ -104,6 +114,10 @@ private slots:
     void showSettings();
     void showTexturePicker();
     void showAbout();
+
+    void openWorld(ProjectFileData projectData);
+
+    void createMemoryProject(NewProjectData projectData);
 };
 
 #endif // MAINWINDOW_H

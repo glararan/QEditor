@@ -1,6 +1,7 @@
 #include "mapview.h"
 #include "camera.h"
 #include "mathhelper.h"
+#include "qeditor.h"
 
 #include <QKeyEvent>
 #include <QOpenGLContext>
@@ -19,9 +20,9 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , camera_zoom(25.0f)
 , aspectRatio(static_cast<float>(width()) / static_cast<float>(height()))
 , nearPlane(0.1f)
-, farPlane(256.0f)
+, farPlane(app().getSetting("environmentDistance", 256.0f).toFloat())
 , speed(44.7f) // in m/s. Equivalent to 100 miles/hour)
-, speed_mult(1.0f)
+, speed_mult(app().getSetting("speedMultiplier", 1.0f).toFloat())
 , screenSpaceErrorLevel(12.0f)
 , modelMatrix()
 , time(0.0f)
@@ -245,10 +246,6 @@ void MapView::update(float t)
         terrain_pos = getWorldCoordinates(mouse_position.x(), mouse_position.y());
     }
 
-    /// Terrain brush
-    if(eMode == Terrain || eMode == Texturing)
-        world->getBrush()->setBrush(shaping_brush, shaping_radius, world->getBrush()->Color(), shaping_radius_multiplier);
-
     // Change terrain
     if(leftButtonPressed)
     {
@@ -283,6 +280,8 @@ void MapView::update(float t)
             }
         }
     }
+
+    world->update(t);
 
     // Update status bar
     QString sbMessage = "Initialized!";
@@ -391,6 +390,10 @@ void MapView::SpeedMultiplier(float multiplier)
 
     if(speed_mult > 10.0f)
         speed_mult = 10.0f;
+
+    app().setSetting("speedMultiplier", speed_mult);
+
+    world->getBrush()->setMultiplier(speed_mult);
 }
 
 void MapView::setSpeedMultiplier(float value)
@@ -494,11 +497,15 @@ void MapView::setShapingSpeed(double speed)
 void MapView::setShapingRadius(double radius)
 {
     shaping_radius = static_cast<float>(radius);
+
+    world->getBrush()->setRadius(shaping_radius);
 }
 
 void MapView::setShapingBrush(int brush)
 {
     shaping_brush = brush;
+
+    world->getBrush()->setBrush(shaping_brush);
 }
 
 void MapView::setShapingBrushType(int type)
@@ -514,11 +521,15 @@ void MapView::setTerrainMode(int mode)
 void MapView::setBrushColor(QColor* color)
 {
     world->getBrush()->setColor(*color);
+
+    app().setSetting("brushColor", *color);
 }
 
 void MapView::setEnvionmentDistance(float value)
 {
     farPlane = value;
+
+    app().setSetting("environmentDistance", farPlane);
 
     QOpenGLShaderProgramPtr shader = world->material->shader();
 

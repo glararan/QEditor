@@ -1,11 +1,6 @@
 #include "texturepicker.h"
 #include "ui_texturepicker.h"
 
-#include <QPixmap>
-
-#include <QDebug>
-#include <QMessageBox>
-
 TexturePicker::TexturePicker(QWidget* parent)
 : QDialog(parent)
 , ui(new Ui::TexturePicker)

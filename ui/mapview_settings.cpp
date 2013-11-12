@@ -1,14 +1,20 @@
 #include "mapview_settings.h"
 #include "ui_mapview_settings.h"
 
-MapView_Settings::MapView_Settings(QColor brushColor, QWidget* parent)
+#include "qeditor.h"
+
+MapView_Settings::MapView_Settings(QWidget* parent)
 : QDialog(parent)
 , ui(new Ui::MapView_Settings)
-, cacheBrushColor(brushColor)
+, cacheBrushColor(app().getSetting("brushColor", QColor(0, 255, 0)).value<QColor>())
 {
     ui->setupUi(this);
 
     initializeComponents();
+
+    setBrushColor(cacheBrushColor);
+
+    ui->EDistanceSlider->setValue(app().getSetting("environmentDistanceSlider", 1).toInt());
 
     connect(ui->brushColorButton, SIGNAL(clicked()), this, SLOT(showColorDialog()));
 
@@ -28,6 +34,7 @@ MapView_Settings::~MapView_Settings()
 void MapView_Settings::initializeComponents()
 {
     colorDialog = new QColorDialog();
+    colorDialog->setCurrentColor(cacheBrushColor);
 }
 
 void MapView_Settings::showColorDialog()
@@ -53,4 +60,6 @@ void MapView_Settings::setBrushToCacheColor()
 void MapView_Settings::setEnvironmentDistance(int posVal)
 {
     emit setEnvironmentDistance(posVal * 256.0f);
+
+    app().setSetting("environmentDistanceSlider", posVal);
 }

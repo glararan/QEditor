@@ -5,7 +5,25 @@
 
 #include <QImage>
 
-MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile* file, int x, int y)
+MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
+: world(mWorld)
+, terrainData(tile->terrainMapData.data())
+, terrainSampler(tile->terrainSampler.data())
+, chunkX(x)
+, chunkY(y)
+, baseX(chunkIndex() / CHUNKS * MAP_WIDTH / CHUNKS)
+, baseY(chunkIndex() % CHUNKS * MAP_WIDTH / CHUNKS)
+{
+    mapData = new float[CHUNK_ARRAY_SIZE];
+
+    // fill empty terrain
+    for(int i = 0; i < CHUNK_ARRAY_SIZE; ++i)
+        mapData[i] = 0.0f;
+
+    terrainData->updateImage(mapData, chunkIndex(), CHUNK_ARRAY_SIZE);
+}
+
+MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // File based MapChunk
 : world(mWorld)
 , terrainData(tile->terrainMapData.data())
 , terrainSampler(tile->terrainSampler.data())
@@ -15,25 +33,17 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile* file, int x, int y)
 , baseY(chunkIndex() % CHUNKS * MAP_WIDTH / CHUNKS)
 {
     /// Todo load from file
-
-    /*QFile file("map01.map");
-
-    if(file.exists() && file.open(QIODevice::ReadOnly))
-    {
-        QDataStream data(&file);
-        data.setVersion(QDataStream::Qt_5_0);
-        data.setFloatingPointPrecision(QDataStream::SinglePrecision);
-
-        for(int i = 0; i < 1024 * 1024 * 4; ++i)
-            data >> mapData[i];
-    }
+    if(file.isOpen())
+        mapData = tile->getHeader().mcin->entries[chunkIndex()].mcnk->heightOffset->height;
     else
-    {*/
-        for(int i = 0; i < CHUNK_ARRAY_SIZE; ++i) // !!!!!!!! generování terenu
-            mapData[i] = 0.1f * (qrand() % 5);
-    //}
+    {
+        mapData = new float[CHUNK_ARRAY_SIZE];
 
-    terrainData->updateImage(mapData, chunkIndex(), CHUNK_ARRAY_SIZE); // přepsání textury s novými daty
+        for(int i = 0; i < CHUNK_ARRAY_SIZE; ++i)
+            mapData[i] = 0.0f;
+    }
+
+    terrainData->updateImage(mapData, chunkIndex(), CHUNK_ARRAY_SIZE);
 
     //tile->terrainMapData->updateImage(mapData, chunkIndex, CHUNK_ARRAY_SIZE);
 
@@ -82,6 +92,8 @@ MapChunk::~MapChunk()
 {
     for(int i = 0; i < CHUNK_ARRAY_SIZE; ++i)
         mapData[i] = 0;
+
+    delete mapData;
 }
 
 void MapChunk::test()
@@ -485,4 +497,19 @@ int MapChunk::horizToHMapSize(float position)
 float MapChunk::HMapSizeToHoriz(int position)
 {
     return static_cast<float>(position) / static_cast<float>(MAP_WIDTH) * TILESIZE;
+}
+
+void MapChunk::save(MCNK* chunk)
+{
+    chunk->areaID  = 0;
+    chunk->doodads = 0;
+    chunk->flags   = 0;
+    chunk->indexX  = chunkX;
+    chunk->indexY  = chunkY;
+    chunk->layers  = 0;
+
+    chunk->heightOffset = new MCVT;
+
+    for(int i = 0; i < CHUNK_ARRAY_SIZE; i++)
+        chunk->heightOffset->height[i] = mapData[i];
 }

@@ -15,7 +15,7 @@ class MapView_Settings : public QDialog
     Q_OBJECT
     
 public:
-    explicit MapView_Settings(QColor brushColor, QWidget* parent = 0);
+    explicit MapView_Settings(QWidget* parent = 0);
     ~MapView_Settings();
     
 private:

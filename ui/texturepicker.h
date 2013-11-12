@@ -5,12 +5,9 @@
 
 #include "tableview.h"
 
-#include <QStandardItemModel>
-#include <QStyledItemDelegate>
 #include <QVector>
 #include <QPair>
 #include <QImage>
-#include <QPainter>
 #include <QGridLayout>
 
 namespace Ui
@@ -38,16 +35,12 @@ private:
 
     TextureWell* textureWell;
 
-    QStandardItemModel* tableModel;
-
     QSize textureIconSize;
     QSize textureIconMargin;
 
     int columns;
 
     QVector<QPair<QImage, QString>> textures;
-
-    void showTextures();
 };
 
 #endif // TEXTUREPICKER_H

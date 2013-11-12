@@ -1,10 +1,8 @@
-#include <QApplication>
 #include <QtDebug>
 #include <QFile>
 #include <QTextStream>
-#include <QTime>
 
-#include "mainwindow.h"
+#include "qeditor.h"
 
 void LogHandler(QtMsgType type, const QMessageLogContext& context, const QString& message)
 {
@@ -57,14 +55,9 @@ void LogInitialize()
 
 int main(int argc, char* argv[])
 {
-    QApplication app(argc, argv);
-
     LogInitialize();
 
-    qsrand((uint)QTime::currentTime().msec());
+    QEditor application(argc, argv);
 
-    MainWindow mw;
-    mw.showMaximized();
-
-    return app.exec();
+    return application.exec();
 }

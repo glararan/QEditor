@@ -10,12 +10,15 @@
 class MapTile
 {
 public:
+    MapTile(World* mWorld, const QString& mapFile, int x, int y);
     MapTile(World* mWorld, int x, int y, const QString& mapFile);
     ~MapTile();
 
     int coordX, coordY;
 
     MapChunk* getChunk(int x, int y);
+
+    const MapHeader& getHeader() const { return tileHeader; }
 
     void draw(const float& distance, const QVector3D& camera);
 
@@ -41,6 +44,8 @@ private:
 
     SamplerPtr      terrainSampler;
     TextureArrayPtr terrainMapData;
+
+    MapHeader tileHeader;
 
     friend class MapChunk;
 };

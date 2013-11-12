@@ -1,11 +1,15 @@
 #include "world.h"
 #include "maptile.h"
 #include "mathhelper.h"
+#include "qeditor.h"
 
-World::World(const QString& map_name)
+#include <QMessageBox>
+#include <QDir>
+
+World::World(const ProjectFileData& projectFile)
 : camera(0)
-, mapName(map_name)
-, brush(new Brush())
+, projectData(projectFile)
+, brush(new Brush(1, 10.0f, app().getSetting("brushColor", QColor(0, 255, 0)).value<QColor>(), 5.3f))
 , sunTheta(30.0f)
 , eDisplay(TexturedAndLit)
 , eDisplaySubroutines(DisplayModeCount)
@@ -63,6 +67,40 @@ void World::initialize(QOpenGLContext* context)
     QOpenGLShaderProgramPtr shader = material->shader();
     shader->bind();
 
+    /// water
+    /*SamplerPtr tilingSampler(new Sampler);
+    tilingSampler->create();
+    tilingSampler->setMinificationFilter(GL_LINEAR_MIPMAP_LINEAR);
+    GLfuncs->glSamplerParameterf(tilingSampler->samplerId(), GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
+    tilingSampler->setMagnificationFilter(GL_LINEAR);
+    tilingSampler->setWrapMode(Sampler::DirectionS, GL_REPEAT);
+    tilingSampler->setWrapMode(Sampler::DirectionT, GL_REPEAT);
+
+    QImage waterReflection("waterReflection.png");
+    GLfuncs->glActiveTexture(GL_TEXTURE4);
+
+    TexturePtr waterReflectionTexture(new Texture);
+    waterReflectionTexture->create();
+    waterReflectionTexture->bind();
+    waterReflectionTexture->initializeToEmpty(QSize(1024, 1024));
+    //waterReflectionTexture->setImage(waterReflection);
+    waterReflectionTexture->generateMipMaps();
+    material->setTextureUnitConfiguration(4, waterReflectionTexture, tilingSampler, QByteArrayLiteral("waterReflection"));
+
+    QImage waterNoise("waterNoise.png");
+    GLfuncs->glActiveTexture(GL_TEXTURE5);
+
+    TexturePtr waterNoiseTexture(new Texture);
+    waterNoiseTexture->create();
+    waterNoiseTexture->bind();
+    waterNoiseTexture->setImage(waterNoise);
+    waterNoiseTexture->generateMipMaps();
+    material->setTextureUnitConfiguration(5, waterNoiseTexture, tilingSampler, QByteArrayLiteral("waterNoise"));
+
+    shader->setUniformValue("waterNoiseTile", 10.0f);
+    shader->setUniformValue("waterNoiseFactor", 0.1f);
+    shader->setUniformValue("waterShininess", 50.0f);*/
+
     // Get subroutine indices
     for(int i = 0; i < DisplayModeCount; ++i)
         eDisplaySubroutines[i] = GLfuncs->glGetSubroutineIndex(shader->programId(), GL_FRAGMENT_SHADER, eDisplayNames.at(i).toLatin1());
@@ -70,15 +108,22 @@ void World::initialize(QOpenGLContext* context)
     for(int x = 0; x < TILES; ++x)
     {
         for(int y = 0; y < TILES; ++y)
-            mapTiles[x][y].tile = NULL;
-    }
+        {
+            int index = y * TILES + x;
 
-    // todo dynamic...
-    loadTile(1, 1);
+            if(projectData.maps[index].exists == 0)
+                mapTiles[x][y].tile = NULL;
+            else
+                loadTile(x, y);
+        }
+    }
 }
 
 void World::update(float dt)
 {
+    QOpenGLShaderProgramPtr shader = material->shader();
+    shader->setUniformValue("waterTime", dt);
+
     // load tiles around
 }
 
@@ -149,7 +194,7 @@ bool World::tileLoaded(int x, int y) const
     return hasTile(x, y) && mapTiles[x][y].tile;
 }
 
-MapTile* World::loadTile(int x, int y)
+MapTile* World::loadTile(int x, int y, bool fileExists)
 {
     if(!hasTile(x, y))
         return NULL;
@@ -157,14 +202,31 @@ MapTile* World::loadTile(int x, int y)
     if(tileLoaded(x, y))
         return mapTiles[x][y].tile;
 
-    const QString filename(QString("%1_%2_%3.map").arg(mapName).arg(x).arg(y));
+    const QString filename(QString("%1_%2_%3.qem").arg(projectData.mapName).arg(x).arg(y));
 
-    // todo
-    // check file in archive
-    // load from archive
-    mapTiles[x][y].tile = new MapTile(this, x, y, filename);
+    if(fileExists)
+    {
+        // todo
+        // check file in archive
+        // load from archive
+        mapTiles[x][y].tile = new MapTile(this, x, y, filename);
+    }
+    else
+        mapTiles[x][y].tile = new MapTile(this, filename, x, y);
 
     return mapTiles[x][y].tile;
+}
+
+void World::loadNewProjectMapTilesIntoMemory(bool** mapCoords)
+{
+    for(int x = 0; x < TILES; ++x)
+    {
+        for(int y = 0; y < TILES; ++y)
+        {
+            if(mapCoords[x][y])
+                loadTile(x, y, false);
+        }
+    }
 }
 
 void World::changeTerrain(float x, float z, float change, int brush_type)
@@ -246,14 +308,132 @@ void World::paintTerrain()
 
 void World::save()
 {
+    QFile projectFile(QDir(projectData.projectRootDir).filePath(projectData.projectFile + ".qep"));
+
+    bool rewrite = false;
+
+    QVector<QPair<int, int>> tileContainer;
+
+    if(!projectFile.exists())
+        rewrite = true;
+    else
+    {
+        if(!projectFile.open(QIODevice::ReadOnly))
+        {
+            qCritical(QString("We couldn't save project %1, because we can't open him.").arg(projectData.projectName).toLatin1().constData());
+
+            return;
+        }
+
+        QDataStream data(&projectFile);
+        data.setVersion(QDataStream::Qt_5_0);
+
+        data >> projectData;
+
+        for(int i = 0; i < (int)projectData.mapsCount; ++i)
+            tileContainer.append(qMakePair<int, int>(projectData.maps[i].x, projectData.maps[i].y));
+    }
+
+    if(projectFile.exists() && (projectData.version < PROJECT_VERSION || projectData.version > PROJECT_VERSION))
+    {
+        QMessageBox msg;
+
+        if(projectData.version < PROJECT_VERSION)
+        {
+            msg.setWindowTitle(QObject::tr("Save"));
+            msg.setIcon(QMessageBox::Warning);
+            msg.setText(QObject::tr("Your project file is older, you have to upgrade your project file to save current work!"));
+            msg.setInformativeText(QObject::tr("Warning: You not be able to open this project in older version of QEditor!"));
+            msg.setDefaultButton(QMessageBox::Save);
+            msg.setStandardButtons(QMessageBox::Save | QMessageBox::Cancel);
+
+            int result = msg.exec();
+
+            if(result != QMessageBox::Save)
+                return;
+        }
+        else
+        {
+            msg.setWindowTitle("Error");
+            msg.setIcon(QMessageBox::Critical);
+            msg.setText(QObject::tr("Your project file is newer, you cannot use older version of QEditor to edit!"));
+
+            msg.exec();
+
+            return;
+        }
+    }
+
     for(int x = 0; x < TILES; ++x)
     {
         for(int y = 0; y < TILES; ++y)
         {
             if(tileLoaded(x, y))
+            {
+                bool found = false;
+
+                for(int i = 0; i < tileContainer.count(); ++i)
+                {
+                    if(tileContainer.at(i).first == x && tileContainer.at(i).second == y)
+                    {
+                        found = true;
+
+                        break;
+                    }
+                }
+
+                if(!found)
+                {
+                    rewrite = true;
+
+                    tileContainer.append(qMakePair<int, int>(x, y));
+                }
+
                 mapTiles[x][y].tile->saveTile();
+            }
         }
     }
+
+    if(rewrite)
+    {
+        projectFile.close();
+
+        if(!projectFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        {
+            qCritical(QString("We couldn't save project %1, because we can't open him.").arg(projectData.projectName).toLatin1().constData());
+
+            return;
+        }
+
+        projectData.version   = PROJECT_VERSION;
+        projectData.mapsCount = tileContainer.count();
+
+        for(int i = 0; i < TILES * TILES; ++i)
+        {
+            projectData.maps[i].exists = 0;
+            projectData.maps[i].x      = -1;
+            projectData.maps[i].y      = -1;
+        }
+
+        for(int i = 0; i < tileContainer.count(); ++i)
+        {
+            int index = tileContainer.at(i).second * TILES + tileContainer.at(i).first;
+
+            projectData.maps[index].exists = 1;
+
+            projectData.maps[index].x = tileContainer.at(i).first;
+            projectData.maps[index].y = tileContainer.at(i).second;
+        }
+
+        QDataStream data(&projectFile);
+        data.setVersion(QDataStream::Qt_5_0);
+
+        data << projectData;
+
+        projectFile.flush();
+    }
+
+    projectFile.close();
 }
 
 void World::setCamera(Camera* cam)
@@ -305,4 +485,92 @@ void World::test()
                 mapTiles[x][y].tile->test();
         }
     }
+}
+
+/// Map header data streams
+QDataStream& operator<<(QDataStream& dataStream, const MapHeader& mapHeader)
+{
+    dataStream << mapHeader.version;
+
+    for(int i = 0; i < CHUNKS * CHUNKS; ++i)
+    {
+        dataStream << mapHeader.mcin->entries[i].size
+                   << mapHeader.mcin->entries[i].mcnk->flags
+                   << mapHeader.mcin->entries[i].mcnk->indexX
+                   << mapHeader.mcin->entries[i].mcnk->indexY
+                   << mapHeader.mcin->entries[i].mcnk->layers
+                   << mapHeader.mcin->entries[i].mcnk->doodads
+                   << mapHeader.mcin->entries[i].mcnk->areaID;
+
+        for(int j = 0; j < CHUNK_ARRAY_SIZE; ++j)
+            dataStream << mapHeader.mcin->entries[i].mcnk->heightOffset->height[j];
+    }
+
+    return dataStream;
+}
+
+QDataStream& operator>>(QDataStream& dataStream, MapHeader& mapHeader)
+{
+    dataStream >> mapHeader.version;
+
+    mapHeader.mcin = new MCIN;
+
+    for(int i = 0; i < CHUNKS * CHUNKS; ++i)
+    {
+        mapHeader.mcin->entries[i].mcnk = new MCNK;
+
+        dataStream >> mapHeader.mcin->entries[i].size
+                   >> mapHeader.mcin->entries[i].mcnk->flags
+                   >> mapHeader.mcin->entries[i].mcnk->indexX
+                   >> mapHeader.mcin->entries[i].mcnk->indexY
+                   >> mapHeader.mcin->entries[i].mcnk->layers
+                   >> mapHeader.mcin->entries[i].mcnk->doodads
+                   >> mapHeader.mcin->entries[i].mcnk->areaID;
+
+        mapHeader.mcin->entries[i].mcnk->heightOffset = new MCVT;
+
+        for(int j = 0; j < CHUNK_ARRAY_SIZE; ++j)
+            dataStream >> mapHeader.mcin->entries[i].mcnk->heightOffset->height[j];
+    }
+
+    return dataStream;
+}
+
+/// Project Data
+QDataStream& operator<<(QDataStream& dataStream, const ProjectFileData& projectData)
+{
+    dataStream << projectData.version
+               << projectData.projectFile
+               << projectData.projectRootDir
+               << projectData.projectName
+               << projectData.mapName
+               << projectData.mapsCount;
+
+    for(int i = 0; i < TILES * TILES; ++i)
+    {
+        dataStream << projectData.maps[i].exists
+                   << projectData.maps[i].x
+                   << projectData.maps[i].y;
+    }
+
+    return dataStream;
+}
+
+QDataStream& operator>>(QDataStream& dataStream, ProjectFileData& projectData)
+{
+    dataStream >> projectData.version
+               >> projectData.projectFile
+               >> projectData.projectRootDir
+               >> projectData.projectName
+               >> projectData.mapName
+               >> projectData.mapsCount;
+
+    for(int i = 0; i < TILES * TILES; ++i)
+    {
+        dataStream >> projectData.maps[i].exists
+                   >> projectData.maps[i].x
+                   >> projectData.maps[i].y;
+    }
+
+    return dataStream;
 }

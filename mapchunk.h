@@ -17,7 +17,8 @@
 class MapChunk
 {
 public:
-    MapChunk(World* mWorld, MapTile* tile, QFile* file, int x, int y);
+    MapChunk(World* mWorld, MapTile* tile, int x, int y);
+    MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y);
     ~MapChunk();
 
     bool isInVisibleRange(const float& distance, const QVector3D& camera) const;
@@ -37,6 +38,8 @@ public:
 
     const QVector2D getBases() const;
 
+    void save(MCNK* chunk);
+
     void test();
 
 private:
@@ -48,10 +51,10 @@ private:
     int chunkX, chunkY;
     int baseX, baseY;
 
-    float mapData[CHUNK_ARRAY_SIZE];
-
     int horizToHMapSize(float position);
     float HMapSizeToHoriz(int position);
+
+    float* mapData;
 };
 
 #endif // MAPCHUNK_H

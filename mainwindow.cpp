@@ -10,21 +10,103 @@ MainWindow::MainWindow(QWidget* parent)
 , ui(new Ui::MainWindow)
 , DisplayMode("action_Default")
 , ToolBarItem("action_mapview_m0")
-, teleportW(new TeleportWidget)
-, texturepW(new TexturePicker)
+, teleportW(NULL)
+, settingsW(NULL)
+, texturepW(NULL)
+, t_radius(NULL)
+, t_speed(NULL)
+, t_brush(NULL)
+, t_brush_circle(NULL)
+, t_brush_square(NULL)
+, t_terrain_mode(NULL)
+, t_brush_type(NULL)
+, t_terrain_mode_label(NULL)
+, t_brush_label(NULL)
+, t_brush_type_label(NULL)
+, t_radius_label(NULL)
+, t_radius_value_label(NULL)
+, t_speed_label(NULL)
+, t_speed_value_label(NULL)
+, world(NULL)
+, mapView(NULL)
 {
     ui->setupUi(this);
 
+    // Initialize startup widget
+    startUp = new StartUp();
+
+    setCentralWidget(startUp);
+
+    connect(startUp, SIGNAL(createMemoryProject(NewProjectData)), this, SLOT(createMemoryProject(NewProjectData)));
+    connect(startUp, SIGNAL(openProject(ProjectFileData)),        this, SLOT(openWorld(ProjectFileData)));
+
+    /// menu bar
+    // file
+    connect(ui->action_New,  SIGNAL(triggered()), startUp, SLOT(showNewProject()));
+    connect(ui->action_Load, SIGNAL(triggered()), startUp, SLOT(showOpenProject()));
+    connect(ui->action_Exit, SIGNAL(triggered()), this,    SLOT(close()));
+
+    // help - about
+    connect(ui->action_About, SIGNAL(triggered()), this, SLOT(showAbout()));
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+
+    delete teleportW;
+    delete settingsW;
+    delete texturepW;
+
+    deleteObject(t_radius);
+    deleteObject(t_speed);
+
+    deleteObject(t_brush);
+
+    deleteObject(t_brush_circle);
+    deleteObject(t_brush_square);
+
+    deleteObject(t_terrain_mode);
+    deleteObject(t_brush_type);
+
+    deleteObject(t_terrain_mode_label);
+
+    deleteObject(t_brush_label);
+    deleteObject(t_brush_type_label);
+
+    deleteObject(t_radius_label);
+    deleteObject(t_radius_value_label);
+    deleteObject(t_speed_label);
+    deleteObject(t_speed_value_label);
+
+    qDebug() << "destroyed UI in MainWindow";
+
+    deleteObject(startUp);
+
+    deleteObject(world);
+    deleteObject(mapView);
+
+    qDebug() << "MainWindow was destroyed!";
+}
+
+void MainWindow::openWorld(ProjectFileData projectData)
+{
+    // menu dialogs constructors
+    teleportW = new TeleportWidget();
+    settingsW = new MapView_Settings();
+    texturepW = new TexturePicker();
+
     // world constructor
-    world = new World("test");
+    world = new World(projectData);
 
     // map view constructor
     mapView = new MapView(world, this);
 
     setCentralWidget(mapView);
 
-    // settings constructor
-    settingsW = new MapView_Settings(world->getBrush()->Color());
+    delete startUp;
+
+    startUp = NULL;
 
     // init modes
     initMode();
@@ -36,7 +118,6 @@ MainWindow::MainWindow(QWidget* parent)
     /// menu bar
     // file
     connect(ui->action_Save, SIGNAL(triggered()), mapView, SLOT(save()));
-    connect(ui->action_Exit, SIGNAL(triggered()), this, SLOT(close()));
 
     // tools - speed multiplier
     connect(ui->actionSpeed_0  , SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
@@ -78,9 +159,6 @@ MainWindow::MainWindow(QWidget* parent)
     // tools - test
     connect(ui->action_Test, SIGNAL(triggered()), mapView, SLOT(doTest()));
 
-    // help - about
-    connect(ui->action_About, SIGNAL(triggered()), this, SLOT(showAbout()));
-
     /// toolbar
     connect(ui->action_mapview_m0, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
     connect(ui->action_mapview_m1, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
@@ -101,40 +179,36 @@ MainWindow::MainWindow(QWidget* parent)
     connect(t_speed,  SIGNAL(valueChanged(double)), mapView, SLOT(setShapingSpeed(double)));
 }
 
-MainWindow::~MainWindow()
+void MainWindow::createMemoryProject(NewProjectData projectData)
 {
-    delete ui;
+    ProjectFileData projectFile;
+    projectFile.projectFile    = projectData.projectFile;
+    projectFile.projectRootDir = projectData.projectDir;
+    projectFile.projectName    = projectData.projectName;
+    projectFile.mapName        = projectData.mapName;
+    projectFile.mapsCount      = 0;
 
-    delete teleportW;
-    delete settingsW;
+    for(int x = 0; x < TILES; ++x)
+    {
+        for(int y = 0; y < TILES; ++y)
+        {
+            int index = y * TILES + x;
 
-    delete t_radius;
-    delete t_speed;
+            projectFile.maps[index].exists = 0;
 
-    delete t_brush;
+            projectFile.maps[index].x = -1;
+            projectFile.maps[index].y = -1;
+        }
+    }
 
-    delete t_brush_circle;
-    delete t_brush_square;
+    qDebug() << projectData.projectFile;
+    qDebug() << projectData.projectDir;
+    qDebug() << projectData.projectName;
+    qDebug() << projectData.mapName;
 
-    delete t_terrain_mode;
-    delete t_brush_type;
+    openWorld(projectFile);
 
-    delete t_terrain_mode_label;
-
-    delete t_brush_label;
-    delete t_brush_type_label;
-
-    delete t_radius_label;
-    delete t_radius_value_label;
-    delete t_speed_label;
-    delete t_speed_value_label;
-
-    qDebug() << "destroyed UI in MainWindow";
-
-    delete world;
-    delete mapView;
-
-    qDebug() << "MainWindow was destroyed!";
+    world->loadNewProjectMapTilesIntoMemory(projectData.mapCoords);
 }
 
 QString MainWindow::getActionName(QObject* object) const

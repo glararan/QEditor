@@ -30,7 +30,10 @@ SOURCES  += main.cpp \
     brush.cpp \
     ui/about.cpp \
     ui/texturepicker.cpp \
-    ui/tableview.cpp
+    ui/tableview.cpp \
+    qeditor.cpp \
+    ui/startup.cpp \
+    ui/newproject.cpp
 
 HEADERS  += \
     mainwindow.h \
@@ -46,7 +49,11 @@ HEADERS  += \
     brush.h \
     ui/about.h \
     ui/texturepicker.h \
-    ui/tableview.h
+    ui/tableview.h \
+    qeditor.h \
+    ui/startup.h \
+    ui/newproject.h \
+    globalheader.h
 
 RESOURCES += \
     qeditor.qrc
@@ -64,7 +71,8 @@ FORMS += \
     ui/teleportwidget.ui \
     ui/mapview_settings.ui \
     ui/about.ui \
-    ui/texturepicker.ui
+    ui/texturepicker.ui \
+    ui/startup.ui
 
 unix|win32: LIBS += -L$$PWD/ -lquazip
 

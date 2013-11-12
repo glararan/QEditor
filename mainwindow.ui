@@ -93,6 +93,8 @@
     <addaction name="separator"/>
     <addaction name="action_Save"/>
     <addaction name="separator"/>
+    <addaction name="action_Backup_Maps"/>
+    <addaction name="separator"/>
     <addaction name="action_Exit"/>
    </widget>
    <widget class="QMenu" name="menuTools">
@@ -151,8 +153,14 @@
     </property>
     <addaction name="action_About"/>
    </widget>
+   <widget class="QMenu" name="menu_Project">
+    <property name="title">
+     <string>&amp;Project</string>
+    </property>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menu_Project"/>
    <addaction name="menuTools"/>
    <addaction name="menu_Help"/>
   </widget>
@@ -419,6 +427,11 @@
   <action name="action_Texture_Picker">
    <property name="text">
     <string>Texture &amp;Picker</string>
+   </property>
+  </action>
+  <action name="action_Backup_Maps">
+   <property name="text">
+    <string>&amp;Backup Maps</string>
    </property>
   </action>
  </widget>

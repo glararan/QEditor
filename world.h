@@ -6,6 +6,7 @@
 #include <QStringList>
 
 #include "mapheaders.h"
+#include "globalheader.h"
 #include "camera.h"
 #include "brush.h"
 
@@ -26,7 +27,7 @@ private:
 class World
 {
 public:
-    explicit World(const QString& map_name);
+    explicit World(const ProjectFileData& projectFile);
     ~World();
 
     void initialize(QOpenGLContext* context);
@@ -35,6 +36,8 @@ public:
     void draw(QMatrix4x4 modelMatrix, float triangles, QVector2D mousePosition, bool drawBrush = false);
 
     bool hasTile(int pX, int pY) const;
+
+    void loadNewProjectMapTilesIntoMemory(bool** mapCoords);
 
     enum eDisplayMode
     {
@@ -71,6 +74,8 @@ public:
 
     const GLuint& getDisplaySubroutines() const { return eDisplaySubroutines[eDisplay]; }
 
+    const ProjectFileData getProjectData() const { return projectData; }
+
     void setCamera(Camera* cam);
 
     MaterialPtr material;
@@ -84,11 +89,9 @@ private:
 
     Brush* brush;
 
-    QString mapName;
-
     bool tileLoaded(int x, int y) const;
 
-    MapTile* loadTile(int x, int y);
+    MapTile* loadTile(int x, int y, bool fileExists = true);
 
     MapTiles mapTiles[TILES][TILES];
 
@@ -100,6 +103,8 @@ private:
     QVector<GLuint> eDisplaySubroutines;
 
     QOpenGLFunctions_4_2_Core* GLfuncs;
+
+    ProjectFileData projectData;
 };
 
 #endif // WORLD_H

@@ -54,6 +54,8 @@ uniform float horizontalScale = 10.0;
 
 uniform vec2 viewportSize;
 
+uniform sampler2DArray heightMap;
+
 in wireFrameVertex
 {
     noperspective vec3 edgeDistance;
@@ -320,6 +322,78 @@ vec4 shadeHidden()
     return vec4(0);
 }
 
+/// water
+/*uniform float waterNoiseTile   = 10.0;
+uniform float waterNoiseFactor = 0.1;
+uniform float waterTime        = 0.5;
+uniform float waterShininess   = 50.0;
+
+uniform sampler2D waterReflection;
+uniform sampler2D waterNoise;*/
+
+float fresnel(vec3 incident, vec3 normal, float bias, float power)
+{
+    float scale = 1.0 - bias;
+
+    return bias + pow(1.0 - dot(incident, normal), power) * scale;
+}
+
+/*float shadowMapping(vec4 vertexFromLightView)
+{
+    float shadow = 0.0;
+
+    float ortho[2];
+    ortho[0] = 20.0;
+    ortho[1] = 100.0;
+
+    if(length(pixToEye) <= 140.0)
+    {
+        bool ok = false;
+
+        int id = 0;
+
+        vec3 pixPosInDepthMap;
+
+        for(int i = 0; i < 2; i++)
+        {
+            if(!ok)
+            {
+                pixPosInDepthMap = vec3(vertexFromLightView.xy / ortho[i], vertexFromLightView.z) / vertexFromLightView.w;
+                pixPosInDepthMap = (pixPosInDepthMap + 1.0) * 0.5;
+
+                if(pixPosInDepthMap.x >= 0.0 && pixPosInDepthMap.y >= 0.0 && pixPosInDepthMap.x <= 1.0 && pixPosInDepthMap.y <= 1.0)
+                {
+                    id = i;
+                    ok = true;
+                }
+            }
+        }
+
+        if(ok)
+        {
+            vec4 depthMapColor = vec4(0.0, 0.0, 0.0, 1.0);
+
+            if(id == 0)
+                depthMapColor = shadow2D(depthMapFromLight0, pixPosInDepthMap);
+            else
+                depthMapColor = shadow2D(depthMapFromLight1, pixPosInDepthMap);
+
+            if((depthMapColor.z + Z_TEST_SIGMA) < pixPosInDepthMap.z)
+                shadow = clamp((pixPosInDepthMap.z - depthMapColor.z) * 10.0, 0.0, 1.0);
+            else
+                shadow = 1.0;
+
+            shadow = clamp(shadow, 0.0, 1.0);
+        }
+        else
+            shadow = 1.0;
+    }
+    else
+        shadow = 1.0;
+
+    return shadow;
+}*/
+
 void main()
 {
     // Compute fragment color depending upon selected shading mode
@@ -350,14 +424,67 @@ void main()
     // Borders
     if(brush == 1)
     {
+        // vec3 coords = ...;
+        // ivec3 count = textureSize(sampler, 0);
+        // count.z = layer count;
+        // coords.z = layer
+
+        ivec3 count = textureSize(heightMap, 0);
+
         float lineWidth = 0.1;
 
         float maxVal = 1.0 - (lineWidth / horizontalScale);
         float minVal = lineWidth / horizontalScale;
 
+        float base = 1.0 / sqrt(count.z);
+
+        for(int i = 0; i < count.z; i++)
+        {
+            int indexX = i / floatBitsToInt(sqrt(count.z));
+            int indexY = i % floatBitsToInt(sqrt(count.z));
+
+            float chunkMinX = base * indexX - (minVal / 2);
+            float chunkMaxX = base * indexX + (minVal / 2);
+
+            float chunkMinY = base * indexY - (minVal / 2);
+            float chunkMaxY = base * indexY + (minVal / 2);
+
+            if(texCoords.x <= chunkMaxX && texCoords.x >= chunkMinX || texCoords.y <= chunkMaxY && texCoords.y >= chunkMinY)
+                outColor = vec4(0.0, 1.0, 0.0, 1.0);
+        }
+
         if(texCoords.x > maxVal || texCoords.y > maxVal || texCoords.x < minVal || texCoords.y < minVal)
             outColor = vec4(1.0, 0.0, 0.0, 1.0);
     }
+
+    // Water
+    /*if(brush == 1)
+    {
+        vec2 uvNormal0 = texCoords.xy * waterNoiseTile;
+        uvNormal0.x += waterTime * 0.01;
+        uvNormal0.y += waterTime * 0.01;
+
+        vec2 uvNormal1 = texCoords.xy * waterNoiseTile;
+        uvNormal1.x -= waterTime * 0.01;
+        uvNormal1.y += waterTime * 0.01;
+
+        vec3 normal0 = texture2D(waterNoise, uvNormal0).rgb * 2.0 - 1.0;
+        vec3 normal1 = texture2D(waterNoise, uvNormal1).rgb * 2.0 - 1.0;
+
+        vec3 normalF = normalize(normal0 + normal1); // == worldNormal or normal
+
+        vec2 uvReflection = vec2(fragCoord.x / viewportSize.x, fragCoord.y / viewportSize.y);
+
+        vec2 uvFinal = uvReflection.xy + waterNoiseFactor * normalF.xy;
+
+        outColor += texture2D(waterReflection, uvFinal);
+
+        float shadow = shadowMapping();
+        shadow = shadow * 0.5 + 0.5;
+
+        outColor *= shadow;
+        outColor.a = fresnel(V, N, 0.5, 2.0);
+    }*/
 
     fragColor = outColor;
 }
