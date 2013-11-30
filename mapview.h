@@ -125,6 +125,8 @@ private:
 
     QTime m_Utime;
 
+    int fps;
+
     // mouse
     bool leftButtonPressed, rightButtonPressed;
 
@@ -175,6 +177,8 @@ signals:
     void updateShapingSpeed(double speed);
     void updateShapingRadius(double radius);
     void updateShapingBrush(int brush);
+
+    void initialized();
 };
 
 #endif // MAPVIEW_H

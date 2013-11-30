@@ -12,7 +12,6 @@ World::World(const ProjectFileData& projectFile)
 , brush(new Brush(1, 10.0f, app().getSetting("brushColor", QColor(0, 255, 0)).value<QColor>(), 5.3f))
 , sunTheta(30.0f)
 , eDisplay(TexturedAndLit)
-, eDisplaySubroutines(DisplayModeCount)
 , GLfuncs(0)
 {
     eDisplayNames << QStringLiteral("shadeSimpleWireFrame")
@@ -40,6 +39,11 @@ World::~World()
     }
 }
 
+void World::deleteMe()
+{
+    delete this;
+}
+
 void World::initialize(QOpenGLContext* context)
 {
     GLfuncs = context->versionFunctions<QOpenGLFunctions_4_2_Core>();
@@ -58,52 +62,7 @@ void World::initialize(QOpenGLContext* context)
 
     // prepare Shaders
     material = MaterialPtr(new Material);
-    material->setShaders(":/shaders/qeditor.vert",
-                         ":/shaders/qeditor.tcs",
-                         ":/shaders/qeditor.tes",
-                         ":/shaders/qeditor.geom",
-                         ":/shaders/qeditor.frag");
-
-    QOpenGLShaderProgramPtr shader = material->shader();
-    shader->bind();
-
-    /// water
-    /*SamplerPtr tilingSampler(new Sampler);
-    tilingSampler->create();
-    tilingSampler->setMinificationFilter(GL_LINEAR_MIPMAP_LINEAR);
-    GLfuncs->glSamplerParameterf(tilingSampler->samplerId(), GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
-    tilingSampler->setMagnificationFilter(GL_LINEAR);
-    tilingSampler->setWrapMode(Sampler::DirectionS, GL_REPEAT);
-    tilingSampler->setWrapMode(Sampler::DirectionT, GL_REPEAT);
-
-    QImage waterReflection("waterReflection.png");
-    GLfuncs->glActiveTexture(GL_TEXTURE4);
-
-    TexturePtr waterReflectionTexture(new Texture);
-    waterReflectionTexture->create();
-    waterReflectionTexture->bind();
-    waterReflectionTexture->initializeToEmpty(QSize(1024, 1024));
-    //waterReflectionTexture->setImage(waterReflection);
-    waterReflectionTexture->generateMipMaps();
-    material->setTextureUnitConfiguration(4, waterReflectionTexture, tilingSampler, QByteArrayLiteral("waterReflection"));
-
-    QImage waterNoise("waterNoise.png");
-    GLfuncs->glActiveTexture(GL_TEXTURE5);
-
-    TexturePtr waterNoiseTexture(new Texture);
-    waterNoiseTexture->create();
-    waterNoiseTexture->bind();
-    waterNoiseTexture->setImage(waterNoise);
-    waterNoiseTexture->generateMipMaps();
-    material->setTextureUnitConfiguration(5, waterNoiseTexture, tilingSampler, QByteArrayLiteral("waterNoise"));
-
-    shader->setUniformValue("waterNoiseTile", 10.0f);
-    shader->setUniformValue("waterNoiseFactor", 0.1f);
-    shader->setUniformValue("waterShininess", 50.0f);*/
-
-    // Get subroutine indices
-    for(int i = 0; i < DisplayModeCount; ++i)
-        eDisplaySubroutines[i] = GLfuncs->glGetSubroutineIndex(shader->programId(), GL_FRAGMENT_SHADER, eDisplayNames.at(i).toLatin1());
+    material->setShaders(":/shaders/qeditor_world.vert", ":/shaders/qeditor_world.frag");
 
     for(int x = 0; x < TILES; ++x)
     {
@@ -121,62 +80,70 @@ void World::initialize(QOpenGLContext* context)
 
 void World::update(float dt)
 {
-    QOpenGLShaderProgramPtr shader = material->shader();
-    shader->setUniformValue("waterTime", dt);
+    /*QOpenGLShaderProgramPtr shader = material->shader();
+    shader->setUniformValue("waterTime", dt);*/
 
     // load tiles around
 }
 
 void World::draw(QMatrix4x4 modelMatrix, float triangles, QVector2D mousePosition, bool drawBrush)
 {
-    material->bind();
-
-    QOpenGLShaderProgramPtr shader = material->shader();
-    shader->bind();
-
-    // Set the horizontal and vertical scales applied in the tess eval shader
-    shader->setUniformValue("horizontalScale"      , TILESIZE);
-    shader->setUniformValue("pixelsPerTriangleEdge", triangles);
-
-    // Pass in the usual transformation matrices
-    QMatrix4x4 viewMatrix        = camera->viewMatrix();
-    QMatrix4x4 modelViewMatrix   = viewMatrix * modelMatrix;
-    QMatrix3x3 worldNormalMatrix = modelMatrix.normalMatrix();
-    QMatrix3x3 normalMatrix      = modelViewMatrix.normalMatrix();
-    QMatrix4x4 mvp               = camera->projectionMatrix() * modelViewMatrix;
-
-    shader->setUniformValue("modelMatrix"      , modelMatrix);
-    shader->setUniformValue("modelViewMatrix"  , modelViewMatrix);
-    shader->setUniformValue("worldNormalMatrix", worldNormalMatrix);
-    shader->setUniformValue("normalMatrix"     , normalMatrix);
-    shader->setUniformValue("mvp"              , mvp);
-
-    // Set the lighting parameters
-    QVector4D worldLightDirection(sinf(sunTheta * MathHelper::degreesToRadians(1.0f)), cosf(sunTheta * MathHelper::degreesToRadians(1.0f)), 0.0f, 0.0f);
-    QMatrix4x4 worldToEyeNormal(normalMatrix);
-
-    QVector4D lightDirection = worldToEyeNormal * worldLightDirection;
-
-    shader->setUniformValue("light.position" , lightDirection);
-    shader->setUniformValue("light.intensity", QVector3D(1.0f, 1.0f, 1.0f));
-
-    // Set the material properties
-    shader->setUniformValue("material.Ka", QVector3D(0.1f, 0.1f, 0.1f));
-    shader->setUniformValue("material.Kd", QVector3D(1.0f, 1.0f, 1.0f));
-    shader->setUniformValue("material.Ks", QVector3D(0.3f, 0.3f, 0.3f));
-    shader->setUniformValue("material.shininess", 10.0f);
-
-    if(drawBrush)
-        brush->draw(shader, mousePosition);
-
     for(int x = 0; x < TILES; ++x)
     {
         for(int y = 0; y < TILES; ++y)
         {
             if(tileLoaded(x, y))
+            {
+                for(int tx = 0; tx < CHUNKS; ++tx)
+                {
+                    for(int ty = 0; ty < CHUNKS; ++ty)
+                    {
+                        QOpenGLShaderProgramPtr shader = mapTiles[x][y].tile->getChunk(tx, ty)->getShader();
+                        shader->bind();
+
+                        // Set the horizontal and vertical scales applied in the tess eval shader
+                        shader->setUniformValue("horizontalScale"      , CHUNKSIZE);
+                        shader->setUniformValue("pixelsPerTriangleEdge", triangles);
+
+                        // Pass in the usual transformation matrices
+                        QMatrix4x4 viewMatrix        = camera->viewMatrix();
+                        QMatrix4x4 modelViewMatrix   = viewMatrix * modelMatrix;
+                        QMatrix3x3 worldNormalMatrix = modelMatrix.normalMatrix();
+                        QMatrix3x3 normalMatrix      = modelViewMatrix.normalMatrix();
+                        QMatrix4x4 mvp               = camera->projectionMatrix() * modelViewMatrix;
+
+                        shader->setUniformValue("modelMatrix"      , modelMatrix);
+                        shader->setUniformValue("modelViewMatrix"  , modelViewMatrix);
+                        shader->setUniformValue("worldNormalMatrix", worldNormalMatrix);
+                        shader->setUniformValue("normalMatrix"     , normalMatrix);
+                        shader->setUniformValue("mvp"              , mvp);
+
+                        // Set the lighting parameters
+                        QVector4D worldLightDirection(sinf(sunTheta * MathHelper::degreesToRadians(1.0f)), cosf(sunTheta * MathHelper::degreesToRadians(1.0f)), 0.0f, 0.0f);
+                        QMatrix4x4 worldToEyeNormal(normalMatrix);
+
+                        QVector4D lightDirection = worldToEyeNormal * worldLightDirection;
+
+                        shader->setUniformValue("light.position" , lightDirection);
+                        shader->setUniformValue("light.intensity", QVector3D(1.0f, 1.0f, 1.0f));
+
+                        // Set the material properties
+                        shader->setUniformValue("material.Ka", QVector3D(0.1f, 0.1f, 0.1f));
+                        shader->setUniformValue("material.Kd", QVector3D(1.0f, 1.0f, 1.0f));
+                        shader->setUniformValue("material.Ks", QVector3D(0.3f, 0.3f, 0.3f));
+                        shader->setUniformValue("material.shininess", 10.0f);
+
+                        if(drawBrush)
+                            brush->draw(shader, mousePosition);
+                    }
+                }
+
                 mapTiles[x][y].tile->draw(MAP_DRAW_DISTANCE, camera->position());
+            }
         }
     }
+
+    //material->bind();
 }
 
 inline bool okTile(int x, int y)
@@ -304,6 +271,97 @@ void World::blurTerrain(float x, float z, float change, int brush_type)
 void World::paintTerrain()
 {
     return;
+}
+
+void World::setChunkShaderUniform(const char* name, const QVector2D& value)
+{
+    for(int x = 0; x < TILES; ++x)
+    {
+        for(int y = 0; y < TILES; ++y)
+        {
+            if(tileLoaded(x, y))
+            {
+                for(int x2 = 0; x2 < CHUNKS; ++x2)
+                {
+                    for(int y2 = 0; y2 < CHUNKS; ++y2)
+                    {
+                        QOpenGLShaderProgramPtr shader = mapTiles[x][y].tile->getChunk(x2, y2)->getShader();
+                        shader->bind();
+
+                        shader->setUniformValue(name, value);
+                    }
+                }
+            }
+        }
+    }
+}
+void World::setChunkShaderUniform(const char* name, const QVector4D& value)
+{
+    for(int x = 0; x < TILES; ++x)
+    {
+        for(int y = 0; y < TILES; ++y)
+        {
+            if(tileLoaded(x, y))
+            {
+                for(int x2 = 0; x2 < CHUNKS; ++x2)
+                {
+                    for(int y2 = 0; y2 < CHUNKS; ++y2)
+                    {
+                        QOpenGLShaderProgramPtr shader = mapTiles[x][y].tile->getChunk(x2, y2)->getShader();
+                        shader->bind();
+
+                        shader->setUniformValue(name, value);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void World::setChunkShaderUniform(const char* name, const QMatrix4x4& value)
+{
+    for(int x = 0; x < TILES; ++x)
+    {
+        for(int y = 0; y < TILES; ++y)
+        {
+            if(tileLoaded(x, y))
+            {
+                for(int x2 = 0; x2 < CHUNKS; ++x2)
+                {
+                    for(int y2 = 0; y2 < CHUNKS; ++y2)
+                    {
+                        QOpenGLShaderProgramPtr shader = mapTiles[x][y].tile->getChunk(x2, y2)->getShader();
+                        shader->bind();
+
+                        shader->setUniformValue(name, value);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void World::setChunkShaderUniform(const char* name, float value)
+{
+    for(int x = 0; x < TILES; ++x)
+    {
+        for(int y = 0; y < TILES; ++y)
+        {
+            if(tileLoaded(x, y))
+            {
+                for(int x2 = 0; x2 < CHUNKS; ++x2)
+                {
+                    for(int y2 = 0; y2 < CHUNKS; ++y2)
+                    {
+                        QOpenGLShaderProgramPtr shader = mapTiles[x][y].tile->getChunk(x2, y2)->getShader();
+                        shader->bind();
+
+                        shader->setUniformValue(name, value);
+                    }
+                }
+            }
+        }
+    }
 }
 
 void World::save()
@@ -445,13 +503,10 @@ void World::setDisplayMode(int displayMode)
 {
     if(displayMode == SimpleWireFrame || displayMode == WorldHeight || displayMode == WorldTexturedWireframed)
     {
-        QOpenGLShaderProgramPtr shader = material->shader();
-        shader->bind();
-
         if(displayMode == WorldTexturedWireframed)
-            shader->setUniformValue("line.width", 0.5f);
+            setChunkShaderUniform("line.width", 0.5f);
         else
-            shader->setUniformValue("line.width", 0.2f);
+            setChunkShaderUniform("line.width", 0.2f);
     }
 
     switch(displayMode)

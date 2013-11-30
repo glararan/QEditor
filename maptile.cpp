@@ -7,70 +7,14 @@ MapTile::MapTile(World* mWorld, const QString& mapFile, int x, int y) // Cache M
 : coordX(x)
 , coordY(y)
 , fileName(mapFile)
-, patchBuffer(QOpenGLBuffer::VertexBuffer)
-, patchCount(0)
-, positionData(0)
 , terrainSampler(new Sampler)
-, terrainMapData(new TextureArray(MAP_WIDTH, MAP_HEIGHT, CHUNKS * CHUNKS))
 , world(mWorld) // todo objects
 {
-    // Create a Vertex Buffers
-    const int maxTessellationLevel     = 64;
-    const int trianglesPerHeightSample = 10;
-
-    const int xDivisions = trianglesPerHeightSample * MAP_WIDTH  / maxTessellationLevel;
-    const int zDivisions = trianglesPerHeightSample * MAP_HEIGHT / maxTessellationLevel;
-
-    patchCount = xDivisions * zDivisions;
-
-    positionData.resize(2 * patchCount); // 2 floats per vertex
-
-    qDebug() << "Total number of patches for mapchunk =" << patchCount;
-
-    const float dx = 1.0f / static_cast<float>(xDivisions);
-    const float dz = 1.0f / static_cast<float>(zDivisions);
-
-    for(int j = 0; j < 2 * zDivisions; j += 2)
-    {
-        float z = static_cast<float>(j) * dz * 0.5;
-
-        for(int i = 0; i < 2 * xDivisions; i += 2)
-        {
-            float x         = static_cast<float>(i) * dx * 0.5;
-            const int index = xDivisions * j + i;
-
-            positionData[index]     = x;
-            positionData[index + 1] = z;
-        }
-    }
-
-    patchBuffer.create();
-    patchBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    patchBuffer.bind();
-    patchBuffer.allocate(positionData.data(), positionData.size() * sizeof(float));
-    patchBuffer.release();
-
-    // Create a VAO for this "object"
-    vao.create();
-    {
-        QOpenGLVertexArrayObject::Binder binder(&vao);
-        QOpenGLShaderProgramPtr shader = world->material->shader();
-
-        shader->bind();
-        patchBuffer.bind();
-
-        shader->enableAttributeArray("vertexPosition");
-        shader->setAttributeBuffer("vertexPosition", GL_FLOAT, 0, 2);
-    }
-
     for(int x = 0; x < CHUNKS; ++x)
     {
         for(int y = 0; y < CHUNKS; ++y)
             mapChunks[x][y] = NULL;
     }
-
-    terrainMapData->create();
-    terrainMapData->bind(true);
 
     terrainSampler->create();
     terrainSampler->setMinificationFilter(GL_LINEAR);
@@ -82,112 +26,21 @@ MapTile::MapTile(World* mWorld, const QString& mapFile, int x, int y) // Cache M
     for(int i = 0; i < CHUNKS * CHUNKS; ++i)
     {
         mapChunks[i / CHUNKS][i % CHUNKS] = new MapChunk(world, this, i / CHUNKS, i % CHUNKS);
-        qDebug() << "chunk["<< i / CHUNKS << ", " << i % CHUNKS << "]: " << i << " bases: " << mapChunks[i / CHUNKS][i % CHUNKS]->getBases();
+
+        qDebug() << QString("chunk[%1, %2]: %3 bases: [%4, %5]").arg(i / CHUNKS).arg(i % CHUNKS).arg(i).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().x()).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().y());
     }
-
-    world->material->setTextureArrayUnitConfiguration(0, terrainMapData, terrainSampler, QByteArrayLiteral("heightMap"));
-
-    /// in future in mapchunks each own 8 custom textures
-    // Textures
-    SamplerPtr tilingSampler(new Sampler);
-    tilingSampler->create();
-    tilingSampler->setMinificationFilter(GL_LINEAR_MIPMAP_LINEAR);
-    world->getGLFunctions()->glSamplerParameterf(tilingSampler->samplerId(), GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
-    tilingSampler->setMagnificationFilter(GL_LINEAR);
-    tilingSampler->setWrapMode(Sampler::DirectionS, GL_REPEAT);
-    tilingSampler->setWrapMode(Sampler::DirectionT, GL_REPEAT);
-
-    QImage grassImage("grass.png");
-    world->getGLFunctions()->glActiveTexture(GL_TEXTURE1);
-
-    TexturePtr grassTexture(new Texture);
-    grassTexture->create();
-    grassTexture->bind();
-    grassTexture->setImage(grassImage);
-    grassTexture->generateMipMaps();
-    world->material->setTextureUnitConfiguration(1, grassTexture, tilingSampler, QByteArrayLiteral("grassTexture"));
-
-    QImage rockImage("rock.png");
-    world->getGLFunctions()->glActiveTexture(GL_TEXTURE2);
-
-    TexturePtr rockTexture(new Texture);
-    rockTexture->create();
-    rockTexture->bind();
-    rockTexture->setImage(rockImage);
-    rockTexture->generateMipMaps();
-    world->material->setTextureUnitConfiguration(2, rockTexture, tilingSampler, QByteArrayLiteral("rockTexture"));
-
-    QImage snowImage("snowrocks.png");
-    world->getGLFunctions()->glActiveTexture(GL_TEXTURE3);
-
-    TexturePtr snowTexture(new Texture);
-    snowTexture->create();
-    snowTexture->bind();
-    snowTexture->setImage(snowImage);
-    snowTexture->generateMipMaps();
-    world->material->setTextureUnitConfiguration(3, snowTexture, tilingSampler, QByteArrayLiteral("snowTexture"));
 }
 
 MapTile::MapTile(World* mWorld, int x, int y, const QString& mapFile) // File based MapTile
 : coordX(x)
 , coordY(y)
 , fileName(mapFile)
-, patchBuffer(QOpenGLBuffer::VertexBuffer)
-, patchCount(0)
-, positionData(0)
 , terrainSampler(new Sampler)
-, terrainMapData(new TextureArray(MAP_WIDTH, MAP_HEIGHT, CHUNKS * CHUNKS))
+, waterReflection(new QOpenGLFramebufferObject(QSize(MAP_WIDTH / 2, MAP_HEIGHT / 2)))
+, depthMap( new QOpenGLFramebufferObject(QSize(MAP_WIDTH * 2, MAP_HEIGHT * 2)))
+, depthMap2(new QOpenGLFramebufferObject(QSize(MAP_WIDTH * 2, MAP_HEIGHT * 2)))
 , world(mWorld) // todo objects
 {
-    // Create a Vertex Buffers
-    const int maxTessellationLevel     = 64;
-    const int trianglesPerHeightSample = 10;
-
-    const int xDivisions = trianglesPerHeightSample * MAP_WIDTH  / maxTessellationLevel;
-    const int zDivisions = trianglesPerHeightSample * MAP_HEIGHT / maxTessellationLevel;
-
-    patchCount = xDivisions * zDivisions;
-
-    positionData.resize(2 * patchCount); // 2 floats per vertex
-
-    qDebug() << "Total number of patches for mapchunk =" << patchCount;
-
-    const float dx = 1.0f / static_cast<float>(xDivisions);
-    const float dz = 1.0f / static_cast<float>(zDivisions);
-
-    for(int j = 0; j < 2 * zDivisions; j += 2)
-    {
-        float z = static_cast<float>(j) * dz * 0.5;
-
-        for(int i = 0; i < 2 * xDivisions; i += 2)
-        {
-            float x         = static_cast<float>(i) * dx * 0.5;
-            const int index = xDivisions * j + i;
-
-            positionData[index]     = x;
-            positionData[index + 1] = z;
-        }
-    }
-
-    patchBuffer.create();
-    patchBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    patchBuffer.bind();
-    patchBuffer.allocate(positionData.data(), positionData.size() * sizeof(float));
-    patchBuffer.release();
-
-    // Create a VAO for this "object"
-    vao.create();
-    {
-        QOpenGLVertexArrayObject::Binder binder(&vao);
-        QOpenGLShaderProgramPtr shader = world->material->shader();
-
-        shader->bind();
-        patchBuffer.bind();
-
-        shader->enableAttributeArray("vertexPosition");
-        shader->setAttributeBuffer("vertexPosition", GL_FLOAT, 0, 2);
-    }
-
     for(int x = 0; x < CHUNKS; ++x)
     {
         for(int y = 0; y < CHUNKS; ++y)
@@ -206,9 +59,6 @@ MapTile::MapTile(World* mWorld, int x, int y, const QString& mapFile) // File ba
         dataStream >> tileHeader;
     }
 
-    terrainMapData->create();
-    terrainMapData->bind(true);
-
     terrainSampler->create();
     terrainSampler->setMinificationFilter(GL_LINEAR);
     terrainSampler->setMagnificationFilter(GL_LINEAR);
@@ -220,98 +70,110 @@ MapTile::MapTile(World* mWorld, int x, int y, const QString& mapFile) // File ba
     {
         mapChunks[i / CHUNKS][i % CHUNKS] = new MapChunk(world, this, file, i / CHUNKS, i % CHUNKS);
 
-        qDebug() << "chunk["<< i / CHUNKS << ", " << i % CHUNKS << "]: " << i << " bases: " << mapChunks[i / CHUNKS][i % CHUNKS]->getBases();
+        qDebug() << QString("chunk[%1, %2]: %3 bases: [%4, %5]").arg(i / CHUNKS).arg(i % CHUNKS).arg(i).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().x()).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().y());
     }
 
-    world->material->setTextureArrayUnitConfiguration(0, terrainMapData, terrainSampler, QByteArrayLiteral("heightMap"));
-
-    /// in future in mapchunks each own 8 custom textures
-    // Textures
-    SamplerPtr tilingSampler(new Sampler);
-    tilingSampler->create();
-    tilingSampler->setMinificationFilter(GL_LINEAR_MIPMAP_LINEAR);
-    world->getGLFunctions()->glSamplerParameterf(tilingSampler->samplerId(), GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
-    tilingSampler->setMagnificationFilter(GL_LINEAR);
-    tilingSampler->setWrapMode(Sampler::DirectionS, GL_REPEAT);
-    tilingSampler->setWrapMode(Sampler::DirectionT, GL_REPEAT);
-
-    QImage grassImage("grass.png");
-    world->getGLFunctions()->glActiveTexture(GL_TEXTURE1);
-
-    TexturePtr grassTexture(new Texture);
-    grassTexture->create();
-    grassTexture->bind();
-    grassTexture->setImage(grassImage);
-    grassTexture->generateMipMaps();
-    world->material->setTextureUnitConfiguration(1, grassTexture, tilingSampler, QByteArrayLiteral("grassTexture"));
-
-    QImage rockImage("rock.png");
-    world->getGLFunctions()->glActiveTexture(GL_TEXTURE2);
-
-    TexturePtr rockTexture(new Texture);
-    rockTexture->create();
-    rockTexture->bind();
-    rockTexture->setImage(rockImage);
-    rockTexture->generateMipMaps();
-    world->material->setTextureUnitConfiguration(2, rockTexture, tilingSampler, QByteArrayLiteral("rockTexture"));
-
-    QImage snowImage("snowrocks.png");
-    world->getGLFunctions()->glActiveTexture(GL_TEXTURE3);
-
-    TexturePtr snowTexture(new Texture);
-    snowTexture->create();
-    snowTexture->bind();
-    snowTexture->setImage(snowImage);
-    snowTexture->generateMipMaps();
-    world->material->setTextureUnitConfiguration(3, snowTexture, tilingSampler, QByteArrayLiteral("snowTexture"));
-
     file.close();
+
+    /// water
+    /*QOpenGLFramebufferObjectFormat frameBufferFormat;
+    frameBufferFormat.setSamples(4);
+    frameBufferFormat.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+
+    waterReflection->setAttachment(frameBufferFormat);
+
+    frameBufferFormat.setAttachment(QOpenGLFramebufferObject::Depth);
+
+    depthMap->setAttachment(frameBufferFormat);
+    depthMap->setAttachment(frameBufferFormat);
+
+    world->material->setFramebufferUnitConfiguration(4, waterReflection, tilingSampler, QByteArrayLiteral("waterReflection"));
+    world->material->setFramebufferUnitConfiguration(6, depthMap,        tilingSampler, QByteArrayLiteral("depthMap"));
+    world->material->setFramebufferUnitConfiguration(7, depthMap2,       tilingSampler, QByteArrayLiteral("depthMap2"));
+
+    QImage waterNoise("waterNoise.png");
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + 5);
+
+    TexturePtr waterNoiseTexture(new Texture);
+    waterNoiseTexture->create();
+    waterNoiseTexture->bind();
+    waterNoiseTexture->setImage(waterNoise);
+    waterNoiseTexture->generateMipMaps();
+    world->material->setTextureUnitConfiguration(5, waterNoiseTexture, tilingSampler, QByteArrayLiteral("waterNoise"));
+
+    QOpenGLShaderProgramPtr shader = world->material->shader();
+
+    shader->setUniformValue("waterMapSize",     QVector2D(MAP_WIDTH / 2, MAP_HEIGHT / 2));
+    shader->setUniformValue("waterNoiseTile",   10.0f);
+    shader->setUniformValue("waterNoiseFactor", 0.1f);
+    shader->setUniformValue("waterShininess",   50.0f);
+    shader->setUniformValue("waterHeight",      0.0f);*/
 }
 
 MapTile::~MapTile()
 {
-    qDebug() << "Unloading tile: " << coordX << ":" << coordY;
-
-    patchBuffer.destroy();
-    vao.destroy();
+    qDebug() << "Unloading tile:" << QVector2D(coordX, coordY);
 
     terrainSampler->destroy();
-    terrainMapData->destroy();
 
-    for(int i = 0; i < CHUNKS; ++i)
+    for(int x = 0; x < CHUNKS; ++x)
     {
-        for(int j = 0; j < CHUNKS; ++j)
-            mapChunks[i][j] = NULL;
+        for(int y = 0; y < CHUNKS; ++y)
+        {
+            if(mapChunks[x][y])
+            {
+                //delete mapChunks[x][y]; // !!! Memory leaks! Can be caused by World or by QSharedPointer
+
+                mapChunks[x][y] = NULL;
+            }
+        }
     }
 }
 
 void MapTile::draw(const float& distance, const QVector3D& camera)
 {
-    QOpenGLShaderProgramPtr shader = world->material->shader();
-    shader->bind();
-
-    // Set the fragment shader display mode subroutine
-    world->getGLFunctions()->glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &world->getDisplaySubroutines());
-
-    if(world->displayMode() != world->Hidden)
+    for(int x = 0; x < CHUNKS; ++x)
     {
-        // Render the quad as a patch
+        for(int y = 0; y < CHUNKS; ++y)
         {
-            QOpenGLVertexArrayObject::Binder binder(&vao);
-            shader->setPatchVertexCount(1);
+            if(mapChunks[x][y]->isInVisibleRange(distance, camera))
+            {
+                const Broadcast* broadcast;
 
-            world->getGLFunctions()->glDrawArrays(GL_PATCHES, 0, patchCount);
+                if((broadcast = mapChunks[x][y]->getBroadcast()) != NULL && broadcast->isBroadcasting())
+                {
+                    MapChunk* chunk;
+
+                    if((chunk = getChunk(x, y - 1)) != NULL && broadcast->getTopData().count() > 0)
+                        chunk->setBorderHeight(broadcast->getTopData(), MapChunkBorder::Top);
+
+                    if((chunk = getChunk(x + 1, y)) != NULL && broadcast->getRightData().count() > 0)
+                        chunk->setBorderHeight(broadcast->getRightData(), MapChunkBorder::Right);
+
+                    if((chunk = getChunk(x, y + 1)) != NULL && broadcast->getBottomData().count() > 0)
+                        chunk->setBorderHeight(broadcast->getBottomData(), MapChunkBorder::Bottom);
+
+                    if((chunk = getChunk(x - 1, y)) != NULL && broadcast->getLeftData().count() > 0)
+                        chunk->setBorderHeight(broadcast->getLeftData(), MapChunkBorder::Left);
+                }
+
+                mapChunks[x][y]->draw();
+            }
         }
     }
 
-    for(int i = 0; i < CHUNKS; ++i)
-    {
-        for(int j = 0; j < CHUNKS; ++j)
-        {
-            if(mapChunks[i][j]->isInVisibleRange(distance, camera))
-                mapChunks[i][j]->draw();
-        }
-    }
+    /// water
+    /*world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + 4);
+    world->getGLFunctions()->glEnable(GL_TEXTURE_2D);
+    waterReflection->bind();
+
+    int wrID = world->getGLFunctions()->glGetUniformLocation(shader->programId(), "waterReflection");
+
+    shader->setUniformValue(wrID, 4);
+
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + 4);
+    waterReflection->release();
+    world->getGLFunctions()->glDisable(GL_TEXTURE_2D);*/
 }
 
 MapChunk* MapTile::getChunk(int x, int y)
@@ -380,15 +242,10 @@ void MapTile::test()
     //mapChunks[0][0]->test();
     //mapChunks[1][1]->test();
 
-    terrainMapData->bind();
+    QVector<QPair<int, float>> data;
 
-    for(int i = MAP_WIDTH / CHUNKS * 0; i < MAP_WIDTH / CHUNKS * 1; ++i)
-    {
-        for(int j = MAP_HEIGHT / CHUNKS * 0; j < MAP_HEIGHT / CHUNKS * 1; ++j)
-            terrainMapData->updatePixel(3.0f, QVector2D(i, j));
-    }
+    for(int i = 0; i < MAP_HEIGHT / CHUNKS; ++i)
+        data.append(qMakePair<int, float>(i, mapChunks[0][0]->getHeight(MAP_WIDTH / CHUNKS - 1, i)));
 
-    //terrainMapData->update();
-
-    world->material->setTextureArrayUnitConfiguration(0, terrainMapData, terrainSampler, QByteArrayLiteral("heightMap"));
+    mapChunks[1][0]->setBorderHeight(data, MapChunkBorder::Right);
 }

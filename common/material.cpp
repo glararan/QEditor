@@ -10,6 +10,7 @@ Material::Material() : m_shader(new QOpenGLShaderProgram)
     if(!m_funcs)
     {
         qWarning() << "Requires multi-texturing support";
+
         return;
     }
 
@@ -147,6 +148,20 @@ void Material::setTextureArrayUnitConfiguration(GLuint unit, TextureArrayPtr tex
     m_arraySamplerUniforms.insert(unit, uniformName);
 }
 
+void Material::setFramebufferUnitConfiguration(GLuint unit, FrameBufferPtr frameBuffer, SamplerPtr sampler)
+{
+    FramebufferUnitConfiguration config(frameBuffer, sampler);
+
+    m_FramebufferUnitConfigs.insert(unit, config);
+}
+
+void Material::setFramebufferUnitConfiguration(GLuint unit, FrameBufferPtr frameBuffer, SamplerPtr sampler, const QByteArray& uniformName)
+{
+    setFramebufferUnitConfiguration(unit, frameBuffer, sampler);
+
+    m_FramebufferSamplerUniforms.insert(unit, uniformName);
+}
+
 TextureUnitConfiguration Material::textureUnitConfiguration(GLuint unit) const
 {
     return m_unitConfigs.value(unit, TextureUnitConfiguration());
@@ -155,4 +170,45 @@ TextureUnitConfiguration Material::textureUnitConfiguration(GLuint unit) const
 TextureArrayUnitConfiguration Material::textureArrayUnitConfiguration(GLuint unit) const
 {
     return m_arrayUnitConfigs.value(unit, TextureArrayUnitConfiguration());
+}
+
+FramebufferUnitConfiguration Material::frameBufferUnitConfiguration(GLuint unit) const
+{
+    return m_FramebufferUnitConfigs.value(unit, FramebufferUnitConfiguration());
+}
+
+/// Chunk Material
+ChunkMaterial::ChunkMaterial() : Material()
+{
+}
+
+ChunkMaterial::~ChunkMaterial()
+{
+    m_shader->release();
+}
+
+void ChunkMaterial::bind()
+{
+    m_shader->bind();
+
+    foreach(const GLuint unit, m_unitConfigs.keys())
+    {
+        const TextureUnitConfiguration& config = m_unitConfigs.value(unit);
+
+        // Bind the texture
+        m_funcs->glActiveTexture(GL_TEXTURE0 + unit);
+        config.texture()->bind();
+
+        // Bind the sampler
+        config.sampler()->bind(unit);
+
+        // Associate with sampler uniform in shader (if we know the name or location)
+        if(m_samplerUniforms.contains(unit))
+            m_shader->setUniformValue(m_samplerUniforms.value(unit).constData(), unit);
+    }
+}
+
+void ChunkMaterial::link()
+{
+    m_funcs->glLinkProgram(m_shader->programId());
 }

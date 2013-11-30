@@ -92,6 +92,7 @@
     <addaction name="action_Load"/>
     <addaction name="separator"/>
     <addaction name="action_Save"/>
+    <addaction name="action_Close_Project"/>
     <addaction name="separator"/>
     <addaction name="action_Backup_Maps"/>
     <addaction name="separator"/>
@@ -157,6 +158,7 @@
     <property name="title">
      <string>&amp;Project</string>
     </property>
+    <addaction name="action_Project_Settings"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -432,6 +434,16 @@
   <action name="action_Backup_Maps">
    <property name="text">
     <string>&amp;Backup Maps</string>
+   </property>
+  </action>
+  <action name="action_Close_Project">
+   <property name="text">
+    <string>&amp;Close Project</string>
+   </property>
+  </action>
+  <action name="action_Project_Settings">
+   <property name="text">
+    <string>&amp;Settings</string>
    </property>
   </action>
  </widget>

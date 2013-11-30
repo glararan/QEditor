@@ -151,8 +151,6 @@ void MapGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent* e)
     e->accept();
 
     pressed = true;
-
-    //emit mouseIsPressed();
 }
 
 void MapGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* e)

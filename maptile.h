@@ -7,6 +7,9 @@
 
 #include "texturearray.h"
 
+#include <QOpenGLFramebufferObjectFormat>
+#include <QOpenGLFramebufferObject>
+
 class MapTile
 {
 public:
@@ -35,17 +38,14 @@ private:
 
     World* world;
 
-    QOpenGLVertexArrayObject vao;
-    QOpenGLBuffer            patchBuffer;
-
-    QVector<float> positionData;
-
-    int patchCount;
-
-    SamplerPtr      terrainSampler;
-    TextureArrayPtr terrainMapData;
+    SamplerPtr terrainSampler;
 
     MapHeader tileHeader;
+
+    /// water
+    FrameBufferPtr waterReflection;
+    FrameBufferPtr depthMap;
+    FrameBufferPtr depthMap2;
 
     friend class MapChunk;
 };

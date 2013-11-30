@@ -29,6 +29,7 @@ MainWindow::MainWindow(QWidget* parent)
 , t_speed_value_label(NULL)
 , world(NULL)
 , mapView(NULL)
+, mapCoords(NULL)
 {
     ui->setupUi(this);
 
@@ -83,8 +84,18 @@ MainWindow::~MainWindow()
 
     deleteObject(startUp);
 
-    deleteObject(world);
+    if(world)
+        world->deleteMe();
+
     deleteObject(mapView);
+
+    if(mapCoords)
+    {
+        for(int i = 0; i < TILES; ++i)
+            delete[] mapCoords[i];
+
+        delete[] mapCoords;
+    }
 
     qDebug() << "MainWindow was destroyed!";
 }
@@ -188,6 +199,8 @@ void MainWindow::createMemoryProject(NewProjectData projectData)
     projectFile.mapName        = projectData.mapName;
     projectFile.mapsCount      = 0;
 
+    mapCoords = projectData.mapCoords;
+
     for(int x = 0; x < TILES; ++x)
     {
         for(int y = 0; y < TILES; ++y)
@@ -208,7 +221,12 @@ void MainWindow::createMemoryProject(NewProjectData projectData)
 
     openWorld(projectFile);
 
-    world->loadNewProjectMapTilesIntoMemory(projectData.mapCoords);
+    connect(mapView, SIGNAL(initialized()), this, SLOT(loadNewProjectMapTilesIntoMemory()));
+}
+
+void MainWindow::loadNewProjectMapTilesIntoMemory()
+{
+    world->loadNewProjectMapTilesIntoMemory(mapCoords);
 }
 
 QString MainWindow::getActionName(QObject* object) const

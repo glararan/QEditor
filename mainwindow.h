@@ -95,6 +95,8 @@ private:
     World*   world;
     MapView* mapView;
 
+    bool** mapCoords;
+
 signals:
     void setSpeedMultiplier(float multiplier);
     void setDisplayMode(int mode);
@@ -118,6 +120,8 @@ private slots:
     void openWorld(ProjectFileData projectData);
 
     void createMemoryProject(NewProjectData projectData);
+
+    void loadNewProjectMapTilesIntoMemory();
 };
 
 #endif // MAINWINDOW_H

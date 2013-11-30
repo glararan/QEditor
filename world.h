@@ -28,8 +28,8 @@ class World
 {
 public:
     explicit World(const ProjectFileData& projectFile);
-    ~World();
 
+    void deleteMe();
     void initialize(QOpenGLContext* context);
 
     void update(float dt);
@@ -57,6 +57,8 @@ public:
     void setDisplayMode(int displayMode);
     eDisplayMode displayMode() const { return eDisplay; }
 
+    QString displayName(int index) const { return eDisplayNames.at(index); }
+
     // Sun position
     void setSunAngle(float sunAngle) { sunTheta = sunAngle; qDebug() << sunTheta; }
     float sunAngle() const           { return sunTheta; }
@@ -71,18 +73,24 @@ public:
 
     QOpenGLFunctions_4_2_Core* getGLFunctions() { return GLfuncs; }
     Brush*                     getBrush()       { return brush; }
-
-    const GLuint& getDisplaySubroutines() const { return eDisplaySubroutines[eDisplay]; }
+    Camera*                    getCamera()      { return camera; }
 
     const ProjectFileData getProjectData() const { return projectData; }
 
     void setCamera(Camera* cam);
+
+    void setChunkShaderUniform(const char* name, const QVector2D& value);
+    void setChunkShaderUniform(const char* name, const QVector4D& value);
+    void setChunkShaderUniform(const char* name, const QMatrix4x4& value);
+    void setChunkShaderUniform(const char* name, float value);
 
     MaterialPtr material;
 
     void test();
 
 private:
+    ~World();
+
     float time;
 
     Camera* camera;
@@ -100,11 +108,12 @@ private:
 
     eDisplayMode    eDisplay;
     QStringList     eDisplayNames;
-    QVector<GLuint> eDisplaySubroutines;
 
     QOpenGLFunctions_4_2_Core* GLfuncs;
 
     ProjectFileData projectData;
+
+    QOpenGLFramebufferObject* fbo;
 };
 
 #endif // WORLD_H

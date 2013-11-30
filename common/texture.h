@@ -19,6 +19,7 @@ public:
     };
 
     Texture(TextureType Type = Texture2D);
+    Texture(const int Width, const int Height, TextureType Type = Texture2D);
     ~Texture();
 
     TextureType Type() const { return type; }
@@ -38,12 +39,22 @@ public:
                       int width, int height, int borderWidth,
                       GLenum format, GLenum type, const void* data);
 
+    void updatePixel(const GLfloat value, QVector2D offset, bool bind = false);
+
+    void setImageAlpha(void* pixelArray);
+    void getImageAlpha(void* pixelArray);
+
+    void toTexture(QSize size);
+
     void generateMipMaps();
 
 private:
     TextureType type;
 
     GLuint textureId;
+
+    int width;
+    int height;
 
     QOpenGLFunctions_4_2_Core* GLfuncs;
 };

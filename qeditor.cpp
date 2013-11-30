@@ -16,6 +16,20 @@ QEditor::QEditor(int& argc, char** argv)
 
     qsrand((uint)QTime::currentTime().msec());
 
+    qDebug() << "Compiler C++ version:" << __cplusplus;
+
+#if (defined(ENVIRONMENT64))
+    qDebug() << "Target architecture: 64-bit";
+#else
+    qDebug() << "Target architecture: 32-bit";
+#endif
+
+#if (defined(_MSC_BUILD) && defined(_MSC_FULL_VER) && defined(_MSC_VER))
+    qDebug() << "MSVC build:" << _MSC_BUILD;
+    qDebug() << "MSVC full_ver:" << _MSC_FULL_VER;
+    qDebug() << "MSVC ver:" << _MSC_VER;
+#endif
+
     mainWindow = new MainWindow();
     mainWindow->showMaximized();
 }

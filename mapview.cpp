@@ -19,7 +19,7 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , tiltAngle(0.0f)
 , camera_zoom(25.0f)
 , aspectRatio(static_cast<float>(width()) / static_cast<float>(height()))
-, nearPlane(0.1f)
+, nearPlane(0.01f)
 , farPlane(app().getSetting("environmentDistance", 256.0f).toFloat())
 , speed(44.7f) // in m/s. Equivalent to 100 miles/hour)
 , speed_mult(app().getSetting("speedMultiplier", 1.0f).toFloat())
@@ -27,6 +27,7 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , modelMatrix()
 , time(0.0f)
 , m_metersToUnits(4 * MathHelper::PI() / speed) // 500 units == 10 km => 0.05 units/m
+, fps(0)
 , leftButtonPressed(false)
 , rightButtonPressed(false)
 , mouse_position(QPoint(0, 0))
@@ -65,6 +66,7 @@ MapView::MapView(World* mWorld, QWidget* parent)
     // Assign camera to World
     world->setCamera(camera);
 
+    AddStatusBarMessage("FPS: "             , &fps           , "int");
     AddStatusBarMessage("speed multiplier: ", &speed_mult    , "float");
     AddStatusBarMessage("camera: "          , &camera->pos() , "QVector3D_xzy");
     AddStatusBarMessage("zoom: "            , &camera_zoom   , "float");
@@ -104,18 +106,9 @@ void MapView::initializeGL()
 
     glClearColor(0.65f, 0.77f, 1.0f, 1.0f);
 
-    // Set the wireframe line properties
-    QOpenGLShaderProgramPtr shader = world->material->shader();
-    shader->bind();
-    shader->setUniformValue("line.width", 0.2f);
-    shader->setUniformValue("line.color", QVector4D(0.17f, 0.50f, 1.0f, 1.0f)); // blue
-
-    // Set the fog parameters
-    shader->setUniformValue("fog.color"      , QVector4D(0.65f, 0.77f, 1.0f, 1.0f));
-    shader->setUniformValue("fog.minDistance", farPlane / 2);
-    shader->setUniformValue("fog.maxDistance", farPlane - 32.0f);
-
     m_Utime.start();
+
+    emit initialized();
 }
 
 void MapView::update(float t)
@@ -125,6 +118,9 @@ void MapView::update(float t)
     // Store the time
     const float dt = t - time;
     time           = t;
+
+    // FPS
+    fps = 1000.0f / (dt * 1000.0f);
 
     // Update the camera position and orientation
     Camera::CameraTranslationOption option = viewCenterFixed ? Camera::DontTranslateViewCenter : Camera::TranslateViewCenter;
@@ -374,11 +370,10 @@ void MapView::resizeGL(int w, int h)
     viewportMatrix.setColumn(3, QVector4D(w2, h2, 0.0f, 1.0f));
 
     // We need the viewport size to calculate tessellation levels
-    QOpenGLShaderProgramPtr shader = world->material->shader();
-    shader->setUniformValue("viewportSize", viewportSize);
+    world->setChunkShaderUniform("viewportSize", viewportSize);
 
     // The geometry shader also needs the viewport matrix
-    shader->setUniformValue("viewportMatrix", viewportMatrix);
+    world->setChunkShaderUniform("viewportMatrix", viewportMatrix);
 }
 
 void MapView::SpeedMultiplier(float multiplier)
@@ -531,10 +526,8 @@ void MapView::setEnvionmentDistance(float value)
 
     app().setSetting("environmentDistance", farPlane);
 
-    QOpenGLShaderProgramPtr shader = world->material->shader();
-
-    shader->setUniformValue("fog.minDistance", farPlane / 2);
-    shader->setUniformValue("fog.maxDistance", farPlane - 32.0f);
+    world->setChunkShaderUniform("fog.minDistance", farPlane / 2);
+    world->setChunkShaderUniform("fog.maxDistance", farPlane - 32.0f);
 
     camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 }

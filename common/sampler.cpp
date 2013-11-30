@@ -14,6 +14,7 @@ Sampler::~Sampler()
 void Sampler::create()
 {
     QOpenGLContext* context = QOpenGLContext::currentContext();
+
     Q_ASSERT(context);
 
     m_funcs = context->versionFunctions<QOpenGLFunctions_3_3_Core>();

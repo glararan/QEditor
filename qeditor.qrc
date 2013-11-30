@@ -12,6 +12,8 @@
         <file alias="square_icon">square.png</file>
         <file alias="brush_icon">brush.png</file>
         <file alias="app_icon">icon.png</file>
+        <file>shaders/qeditor_world.frag</file>
+        <file>shaders/qeditor_world.vert</file>
     </qresource>
     <qresource prefix="/textures">
         <file>grass.png</file>

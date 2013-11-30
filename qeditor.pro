@@ -2,6 +2,8 @@ include(common/common.pri)
 
 QT += core gui widgets
 
+CONFIG += c++11
+
 #CONFIG += console
 
 #DEFINES -= QT_NO_WARNING_OUTPUT QT_NO_DEBUG_OUTPUT
@@ -64,7 +66,9 @@ OTHER_FILES += \
     shaders/qeditor.geom \
     shaders/qeditor.tcs \
     shaders/qeditor.tes \
-    shaders/qeditor.vert
+    shaders/qeditor.vert \
+    shaders/qeditor_world.frag \
+    shaders/qeditor_world.vert
 
 FORMS += \
     mainwindow.ui \

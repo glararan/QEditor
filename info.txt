@@ -25,12 +25,12 @@ Heightmap:
 
 /// Todo list
 General:
-    1. Vymyslet vytváření mapy (64x64 plocha, kde se nakliká na jaké souřadnici budou?)
-    2. Save (dodělat save z QListu kde budou soubory)
+    1. Save (dodělat save z QListu kde budou soubory)
 
-MapView:
+MapChunk:
     1. editace terenu shift + ctrl se nahradí v toolbaru, shift = zvýšení, ctrl = snížení
     2. kreslení textur
+    3. flatten tool uhel a směr
 
 List pro funkce:
     Rozdělit MapView na třídy MapView[pouze ukazovat data], World[spravování objektů], Map(?)[spravování heightmapy a alphamap],
@@ -69,3 +69,18 @@ x = s = r
 y = t = g
 z = b = ?
 w = a = q
+
+        // vec3 coords = ...;
+        // ivec3 count = textureSize(sampler, 0);
+        // count.z = layer count;
+        // coords.z = layer
+
+
+Lag Troubleshooter:
+1) Texture data types
+    ex: GL_FLOAT width = 10, height = 10 data != width * height, data = width * height * sizeof(float)
+
+2) Black terrain
+    ex: Give to shader data when map is not yet initialized
+    ex2: if you have shader data outside MapChunk and its not necessary, do it in MapChunk like fog init.
+    ex3: use shader->bind() everywhere!

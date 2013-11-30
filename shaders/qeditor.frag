@@ -1,20 +1,23 @@
 #version 400
 
+layout (location = 0) out vec4 fragColor;
+
 subroutine vec4 ShaderModelType();
 subroutine uniform ShaderModelType shaderModel;
+
+uniform struct FogInfo
+{
+    vec4 color;
+
+    float minDistance;
+    float maxDistance;
+} fog;
 
 uniform struct LineInfo
 {
   float width;
   vec4 color;
 } line;
-
-uniform struct FogInfo
-{
-    vec4 color;
-    float minDistance;
-    float maxDistance;
-} fog;
 
 uniform struct LightInfo
 {
@@ -50,11 +53,14 @@ uniform float brushRadius     = 10;
 uniform float brushMultiplier = 5.33333;
 uniform vec4  brushColor      = vec4(0, 1, 0, 1);
 
-uniform float horizontalScale = 10.0;
+uniform float horizontalScale = 533.33333;
 
 uniform vec2 viewportSize;
 
-uniform sampler2DArray heightMap;
+uniform sampler2D heightMap;
+
+uniform float baseX = 0.0f;
+uniform float baseY = 0.0f;
 
 in wireFrameVertex
 {
@@ -65,8 +71,6 @@ in wireFrameVertex
     vec3 normal;
     vec2 texCoords;
 };
-
-layout (location = 0) out vec4 fragColor;
 
 // Helper functions
 vec4 linearGradient(const in float t)
@@ -397,20 +401,30 @@ float fresnel(vec3 incident, vec3 normal, float bias, float power)
 void main()
 {
     // Compute fragment color depending upon selected shading mode
-    vec4 c = shaderModel();
+    vec4 outColor = shaderModel();
 
-    // Blend with fog color
     float dist      = abs(position.z);
-    float fogFactor = (fog.maxDistance - dist) / (fog.maxDistance - fog.minDistance);
+    float fogFactor = clamp((fog.maxDistance - dist) / (fog.maxDistance - fog.minDistance), 0.0, 1.0);
 
-    fogFactor = clamp(fogFactor, 0.0, 1.0);
-    vec4 outColor = mix(fog.color, c, fogFactor);
+    outColor = mix(fog.color, outColor, fogFactor);
+
+    // Borders
+    if(brush == 1)
+    {
+        float lineWidth = 0.05;
+
+        float maxVal = 1.0 - (lineWidth / horizontalScale);
+        float minVal = lineWidth / horizontalScale;
+
+        if(texCoords.x > maxVal || texCoords.y > maxVal || texCoords.x < minVal || texCoords.y < minVal)
+            outColor = mix(fog.color, vec4(1.0, 0.0, 0.0, 1.0), fogFactor);
+    }
 
     // Terrain brush
     if(brush == 1)
     {
-        float dx = texCoords.x * horizontalScale - cursorPos.x;
-        float dy = texCoords.y * horizontalScale - cursorPos.y;
+        float dx = texCoords.x * horizontalScale - cursorPos.x + baseX;
+        float dy = texCoords.y * horizontalScale - cursorPos.y + baseY;
 
         float bDist = sqrt(dx * dx + dy * dy) * (brushMultiplier);
 
@@ -419,42 +433,6 @@ void main()
             float str = max(0, mix(-1.5, 0.5, bDist / brushRadius));
             outColor += brushColor * str;
         }
-    }
-
-    // Borders
-    if(brush == 1)
-    {
-        // vec3 coords = ...;
-        // ivec3 count = textureSize(sampler, 0);
-        // count.z = layer count;
-        // coords.z = layer
-
-        ivec3 count = textureSize(heightMap, 0);
-
-        float lineWidth = 0.1;
-
-        float maxVal = 1.0 - (lineWidth / horizontalScale);
-        float minVal = lineWidth / horizontalScale;
-
-        float base = 1.0 / sqrt(count.z);
-
-        for(int i = 0; i < count.z; i++)
-        {
-            int indexX = i / floatBitsToInt(sqrt(count.z));
-            int indexY = i % floatBitsToInt(sqrt(count.z));
-
-            float chunkMinX = base * indexX - (minVal / 2);
-            float chunkMaxX = base * indexX + (minVal / 2);
-
-            float chunkMinY = base * indexY - (minVal / 2);
-            float chunkMaxY = base * indexY + (minVal / 2);
-
-            if(texCoords.x <= chunkMaxX && texCoords.x >= chunkMinX || texCoords.y <= chunkMaxY && texCoords.y >= chunkMinY)
-                outColor = vec4(0.0, 1.0, 0.0, 1.0);
-        }
-
-        if(texCoords.x > maxVal || texCoords.y > maxVal || texCoords.x < minVal || texCoords.y < minVal)
-            outColor = vec4(1.0, 0.0, 0.0, 1.0);
     }
 
     // Water
