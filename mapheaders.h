@@ -85,12 +85,92 @@ struct ProjectFileData
 };
 
 // Data streams operators
-/// Map Header
-QDataStream& operator<<(QDataStream& dataStream, const MapHeader& mapHeader);
-QDataStream& operator>>(QDataStream& dataStream, MapHeader& mapHeader);
+/// Map header data streams
+inline QDataStream& operator<<(QDataStream& dataStream, const MapHeader& mapHeader)
+{
+    dataStream << mapHeader.version;
+
+    for(int i = 0; i < CHUNKS * CHUNKS; ++i)
+    {
+        dataStream << mapHeader.mcin->entries[i].size
+                   << mapHeader.mcin->entries[i].mcnk->flags
+                   << mapHeader.mcin->entries[i].mcnk->indexX
+                   << mapHeader.mcin->entries[i].mcnk->indexY
+                   << mapHeader.mcin->entries[i].mcnk->layers
+                   << mapHeader.mcin->entries[i].mcnk->doodads
+                   << mapHeader.mcin->entries[i].mcnk->areaID;
+
+        for(int j = 0; j < CHUNK_ARRAY_SIZE; ++j)
+            dataStream << mapHeader.mcin->entries[i].mcnk->heightOffset->height[j];
+    }
+
+    return dataStream;
+}
+
+inline QDataStream& operator>>(QDataStream& dataStream, MapHeader& mapHeader)
+{
+    dataStream >> mapHeader.version;
+
+    mapHeader.mcin = new MCIN;
+
+    for(int i = 0; i < CHUNKS * CHUNKS; ++i)
+    {
+        mapHeader.mcin->entries[i].mcnk = new MCNK;
+
+        dataStream >> mapHeader.mcin->entries[i].size
+                   >> mapHeader.mcin->entries[i].mcnk->flags
+                   >> mapHeader.mcin->entries[i].mcnk->indexX
+                   >> mapHeader.mcin->entries[i].mcnk->indexY
+                   >> mapHeader.mcin->entries[i].mcnk->layers
+                   >> mapHeader.mcin->entries[i].mcnk->doodads
+                   >> mapHeader.mcin->entries[i].mcnk->areaID;
+
+        mapHeader.mcin->entries[i].mcnk->heightOffset = new MCVT;
+
+        for(int j = 0; j < CHUNK_ARRAY_SIZE; ++j)
+            dataStream >> mapHeader.mcin->entries[i].mcnk->heightOffset->height[j];
+    }
+
+    return dataStream;
+}
 
 /// Project Data
-QDataStream& operator<<(QDataStream& dataStream, const ProjectFileData& projectData);
-QDataStream& operator>>(QDataStream& dataStream, ProjectFileData& projectData);
+inline QDataStream& operator<<(QDataStream& dataStream, const ProjectFileData& projectData)
+{
+    dataStream << projectData.version
+               << projectData.projectFile
+               << projectData.projectRootDir
+               << projectData.projectName
+               << projectData.mapName
+               << projectData.mapsCount;
+
+    for(int i = 0; i < TILES * TILES; ++i)
+    {
+        dataStream << projectData.maps[i].exists
+                   << projectData.maps[i].x
+                   << projectData.maps[i].y;
+    }
+
+    return dataStream;
+}
+
+inline QDataStream& operator>>(QDataStream& dataStream, ProjectFileData& projectData)
+{
+    dataStream >> projectData.version
+               >> projectData.projectFile
+               >> projectData.projectRootDir
+               >> projectData.projectName
+               >> projectData.mapName
+               >> projectData.mapsCount;
+
+    for(int i = 0; i < TILES * TILES; ++i)
+    {
+        dataStream >> projectData.maps[i].exists
+                   >> projectData.maps[i].x
+                   >> projectData.maps[i].y;
+    }
+
+    return dataStream;
+}
 
 #endif // MAPHEADERS_H

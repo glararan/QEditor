@@ -84,7 +84,7 @@
      <height>21</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuFile">
+   <widget class="QMenu" name="menu_File">
     <property name="title">
      <string>&amp;File</string>
     </property>
@@ -98,7 +98,7 @@
     <addaction name="separator"/>
     <addaction name="action_Exit"/>
    </widget>
-   <widget class="QMenu" name="menuTools">
+   <widget class="QMenu" name="menu_Tools">
     <property name="title">
      <string>Tools</string>
     </property>
@@ -106,15 +106,15 @@
      <property name="title">
       <string>&amp;Speed Multiplier</string>
      </property>
-     <addaction name="actionSpeed_0"/>
-     <addaction name="actionSpeed_1"/>
-     <addaction name="actionSpeed_3"/>
-     <addaction name="actionSpeed_5"/>
-     <addaction name="actionSpeed_7"/>
-     <addaction name="actionSpeed_10"/>
+     <addaction name="action_Speed_0"/>
+     <addaction name="action_Speed_1"/>
+     <addaction name="action_Speed_3"/>
+     <addaction name="action_Speed_5"/>
+     <addaction name="action_Speed_7"/>
+     <addaction name="action_Speed_10"/>
      <addaction name="separator"/>
-     <addaction name="actionSpeed_0_1"/>
-     <addaction name="actionSpeed_0_2"/>
+     <addaction name="action_Speed_0_1"/>
+     <addaction name="action_Speed_0_2"/>
     </widget>
     <widget class="QMenu" name="menu_Display_Mode">
      <property name="title">
@@ -124,24 +124,26 @@
      <addaction name="action_Terrain_Wireframe"/>
      <addaction name="action_Wireframe"/>
      <addaction name="action_Grass"/>
-     <addaction name="actionGrass_Rock"/>
-     <addaction name="actionGrass_Rock_Snow"/>
-     <addaction name="actionWireframe_Height"/>
+     <addaction name="action_Grass_Rock"/>
+     <addaction name="action_Grass_Rock_Snow"/>
+     <addaction name="action_Wireframe_Height"/>
      <addaction name="action_Colored"/>
      <addaction name="action_Light_and_Shadow"/>
-     <addaction name="actionH_idden"/>
+     <addaction name="action_Hidden"/>
     </widget>
     <addaction name="menu_Speed_Multiplier"/>
     <addaction name="menu_Display_Mode"/>
     <addaction name="separator"/>
+    <addaction name="action_Show_Chunk_lines"/>
+    <addaction name="separator"/>
     <addaction name="action_Texture_Picker"/>
     <addaction name="action_Settings"/>
-    <addaction name="actionTeleport"/>
+    <addaction name="action_Teleport"/>
     <addaction name="action_Reset_camera"/>
     <addaction name="separator"/>
     <addaction name="action_Test"/>
    </widget>
-   <widget class="QMenu" name="menuEdit">
+   <widget class="QMenu" name="menu_Edit">
     <property name="title">
      <string>Edit</string>
     </property>
@@ -155,15 +157,28 @@
     <addaction name="action_About"/>
    </widget>
    <widget class="QMenu" name="menu_Project">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="acceptDrops">
+     <bool>true</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="tearOffEnabled">
+     <bool>false</bool>
+    </property>
     <property name="title">
      <string>&amp;Project</string>
     </property>
     <addaction name="action_Project_Settings"/>
+    <addaction name="action_Project_Maps"/>
    </widget>
-   <addaction name="menuFile"/>
-   <addaction name="menuEdit"/>
+   <addaction name="menu_File"/>
+   <addaction name="menu_Edit"/>
    <addaction name="menu_Project"/>
-   <addaction name="menuTools"/>
+   <addaction name="menu_Tools"/>
    <addaction name="menu_Help"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -187,37 +202,37 @@
     <string>Nástroj upravování objektů</string>
    </property>
   </action>
-  <action name="actionSpeed_0">
+  <action name="action_Speed_0">
    <property name="text">
     <string>Speed &amp;0</string>
    </property>
   </action>
-  <action name="actionSpeed_1">
+  <action name="action_Speed_1">
    <property name="text">
     <string>Speed &amp;1</string>
    </property>
   </action>
-  <action name="actionSpeed_3">
+  <action name="action_Speed_3">
    <property name="text">
     <string>Speed &amp;3</string>
    </property>
   </action>
-  <action name="actionSpeed_5">
+  <action name="action_Speed_5">
    <property name="text">
     <string>Speed &amp;5</string>
    </property>
   </action>
-  <action name="actionSpeed_7">
+  <action name="action_Speed_7">
    <property name="text">
     <string>Speed &amp;7</string>
    </property>
   </action>
-  <action name="actionSpeed_10">
+  <action name="action_Speed_10">
    <property name="text">
     <string>Speed &amp;10</string>
    </property>
   </action>
-  <action name="actionSpeed_0_1">
+  <action name="action_Speed_0_1">
    <property name="text">
     <string>Speed +0.1</string>
    </property>
@@ -225,7 +240,7 @@
     <string>+</string>
    </property>
   </action>
-  <action name="actionSpeed_0_2">
+  <action name="action_Speed_0_2">
    <property name="text">
     <string>Speed -0.1</string>
    </property>
@@ -297,7 +312,7 @@
     <string>F4</string>
    </property>
   </action>
-  <action name="actionGrass_Rock">
+  <action name="action_Grass_Rock">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -308,7 +323,7 @@
     <string>F5</string>
    </property>
   </action>
-  <action name="actionGrass_Rock_Snow">
+  <action name="action_Grass_Rock_Snow">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -319,7 +334,7 @@
     <string>F6</string>
    </property>
   </action>
-  <action name="actionWireframe_Height">
+  <action name="action_Wireframe_Height">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -352,7 +367,7 @@
     <string>F9</string>
    </property>
   </action>
-  <action name="actionH_idden">
+  <action name="action_Hidden">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -363,7 +378,7 @@
     <string>F10</string>
    </property>
   </action>
-  <action name="actionTeleport">
+  <action name="action_Teleport">
    <property name="text">
     <string>Teleport</string>
    </property>
@@ -442,8 +457,27 @@
    </property>
   </action>
   <action name="action_Project_Settings">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>&amp;Settings</string>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="action_Project_Maps">
+   <property name="text">
+    <string>Maps</string>
+   </property>
+  </action>
+  <action name="action_Show_Chunk_lines">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Show &amp;Chunk lines</string>
    </property>
   </action>
  </widget>

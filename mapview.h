@@ -164,6 +164,10 @@ public slots:
     void setTerrainMode(int mode);
     void setBrushColor(QColor* color);
     void setEnvionmentDistance(float value);
+    void setTextureScaleOption_(int option);
+    void setTextureScaleFar(float value);
+    void setTextureScaleNear(float value);
+    void setTurnChunkLines(bool on);
 
     void resetCamera();
 

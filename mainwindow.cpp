@@ -2,6 +2,9 @@
 #include "ui_mainwindow.h"
 
 #include "ui/about.h"
+#include "ui/project_settings.h"
+
+#include "qeditor.h"
 
 #include <QAction>
 
@@ -42,6 +45,11 @@ MainWindow::MainWindow(QWidget* parent)
     connect(startUp, SIGNAL(openProject(ProjectFileData)),        this, SLOT(openWorld(ProjectFileData)));
 
     /// menu bar
+    ui->menu_Project->menuAction()->setVisible(false);
+    ui->menu_Tools->menuAction()->setVisible(false);
+
+    ui->action_Show_Chunk_lines->setChecked(app().getSetting("chunkLines", false).toBool());
+
     // file
     connect(ui->action_New,  SIGNAL(triggered()), startUp, SLOT(showNewProject()));
     connect(ui->action_Load, SIGNAL(triggered()), startUp, SLOT(showOpenProject()));
@@ -80,7 +88,7 @@ MainWindow::~MainWindow()
     deleteObject(t_speed_label);
     deleteObject(t_speed_value_label);
 
-    qDebug() << "destroyed UI in MainWindow";
+    qDebug() << "UI in MainWindow was destroyed!";
 
     deleteObject(startUp);
 
@@ -119,6 +127,11 @@ void MainWindow::openWorld(ProjectFileData projectData)
 
     startUp = NULL;
 
+    setCursor(Qt::ArrowCursor);
+
+    ui->menu_Project->menuAction()->setVisible(true);
+    ui->menu_Tools->menuAction()->setVisible(true);
+
     // init modes
     initMode();
 
@@ -130,15 +143,18 @@ void MainWindow::openWorld(ProjectFileData projectData)
     // file
     connect(ui->action_Save, SIGNAL(triggered()), mapView, SLOT(save()));
 
+    // project - settings
+    connect(ui->action_Project_Settings, SIGNAL(triggered()), this, SLOT(showProjectSettings()));
+
     // tools - speed multiplier
-    connect(ui->actionSpeed_0  , SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
-    connect(ui->actionSpeed_1  , SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
-    connect(ui->actionSpeed_3  , SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
-    connect(ui->actionSpeed_5  , SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
-    connect(ui->actionSpeed_7  , SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
-    connect(ui->actionSpeed_10 , SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
-    connect(ui->actionSpeed_0_1, SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
-    connect(ui->actionSpeed_0_2, SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
+    connect(ui->action_Speed_0  , SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
+    connect(ui->action_Speed_1  , SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
+    connect(ui->action_Speed_3  , SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
+    connect(ui->action_Speed_5  , SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
+    connect(ui->action_Speed_7  , SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
+    connect(ui->action_Speed_10 , SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
+    connect(ui->action_Speed_0_1, SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
+    connect(ui->action_Speed_0_2, SIGNAL(triggered()), this, SLOT(setSpeedMultiplier()));
 
     connect(this, SIGNAL(setSpeedMultiplier(float)), mapView, SLOT(setSpeedMultiplier(float)));
 
@@ -147,25 +163,31 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(ui->action_Terrain_Wireframe, SIGNAL(triggered()), this, SLOT(setDisplayMode()));
     connect(ui->action_Wireframe        , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
     connect(ui->action_Grass            , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
-    connect(ui->actionGrass_Rock        , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
-    connect(ui->actionGrass_Rock_Snow   , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
-    connect(ui->actionWireframe_Height  , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
+    connect(ui->action_Grass_Rock       , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
+    connect(ui->action_Grass_Rock_Snow  , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
+    connect(ui->action_Wireframe_Height , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
     connect(ui->action_Colored          , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
     connect(ui->action_Light_and_Shadow , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
-    connect(ui->actionH_idden           , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
+    connect(ui->action_Hidden           , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
 
     connect(this, SIGNAL(setDisplayMode(int)), mapView, SLOT(setDisplayMode(int)));
+
+    // tools - show chunk lines
+    connect(ui->action_Show_Chunk_lines, SIGNAL(toggled(bool)), mapView, SLOT(setTurnChunkLines(bool)));
 
     // tools - texture picker, settings, teleport, reset camera
     connect(ui->action_Texture_Picker, SIGNAL(triggered()), this,    SLOT(showTexturePicker()));
     connect(ui->action_Settings,       SIGNAL(triggered()), this,    SLOT(showSettings()));
-    connect(ui->actionTeleport,        SIGNAL(triggered()), this,    SLOT(showTeleport()));
+    connect(ui->action_Teleport,       SIGNAL(triggered()), this,    SLOT(showTeleport()));
     connect(ui->action_Reset_camera,   SIGNAL(triggered()), mapView, SLOT(resetCamera()));
 
     connect(teleportW, SIGNAL(TeleportTo(QVector3D*)), mapView, SLOT(setCameraPosition(QVector3D*)));
 
     connect(settingsW, SIGNAL(setColorOfBrush(QColor*)),      mapView, SLOT(setBrushColor(QColor*)));
     connect(settingsW, SIGNAL(setEnvironmentDistance(float)), mapView, SLOT(setEnvionmentDistance(float)));
+    connect(settingsW, SIGNAL(setTextureScaleOption(int)),    mapView, SLOT(setTextureScaleOption_(int)));
+    connect(settingsW, SIGNAL(setTextureScaleFar(float)),     mapView, SLOT(setTextureScaleFar(float)));
+    connect(settingsW, SIGNAL(setTextureScaleNear(float)),    mapView, SLOT(setTextureScaleNear(float)));
 
     // tools - test
     connect(ui->action_Test, SIGNAL(triggered()), mapView, SLOT(doTest()));
@@ -240,21 +262,21 @@ void MainWindow::setSpeedMultiplier()
 
     QString sName = getActionName(this->sender());
 
-    if(sName == "actionSpeed_0")
+    if(sName == "action_Speed_0")
         multiplier = 0.0f;
-    else if(sName == "actionSpeed_1")
+    else if(sName == "action_Speed_1")
         multiplier = 1.0f;
-    else if(sName == "actionSpeed_3")
+    else if(sName == "action_Speed_3")
         multiplier = 3.0f;
-    else if(sName == "actionSpeed_5")
+    else if(sName == "action_Speed_5")
         multiplier = 5.0f;
-    else if(sName == "actionSpeed_7")
+    else if(sName == "action_Speed_7")
         multiplier = 7.0f;
-    else if(sName == "actionSpeed_10")
+    else if(sName == "action_Speed_10")
         multiplier = 10.0f;
-    else if(sName == "actionSpeed_0_1")
+    else if(sName == "action_Speed_0_1")
         multiplier = 0.1f;
-    else if(sName == "actionSpeed_0_2")
+    else if(sName == "action_Speed_0_2")
         multiplier = -0.1f;
 
     emit setSpeedMultiplier(multiplier);
@@ -289,17 +311,17 @@ void MainWindow::setDisplayMode()
         emit setDisplayMode(0);
     else if(dName == "action_Grass")
         emit setDisplayMode(3);
-    else if(dName == "actionGrass_Rock")
+    else if(dName == "action_Grass_Rock")
         emit setDisplayMode(4);
-    else if(dName == "actionGrass_Rock_Snow")
+    else if(dName == "action_Grass_Rock_Snow")
         emit setDisplayMode(5);
-    else if(dName == "actionWireframe_Height")
+    else if(dName == "action_Wireframe_Height")
         emit setDisplayMode(1);
     else if(dName == "action_Colored")
         emit setDisplayMode(2);
     else if(dName == "action_Light_and_Shadow")
         emit setDisplayMode(6);
-    else if(dName == "actionH_idden")
+    else if(dName == "action_Hidden")
         emit setDisplayMode(9);
 }
 
@@ -363,6 +385,17 @@ void MainWindow::showAbout()
 {
     About* about = new About();
     about->exec();
+}
+
+void MainWindow::showProjectSettings()
+{
+    ProjectFileData data = world->getProjectData();
+
+    Project_Settings* projectSettings = new Project_Settings(data);
+
+    connect(projectSettings, SIGNAL(projectDataChanged(ProjectFileData&)), this, SLOT(setProjectData(ProjectFileData&)));
+
+    projectSettings->exec();
 }
 
 void MainWindow::addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area)
@@ -524,6 +557,11 @@ void MainWindow::setTerrain_Mode(int index)
     }
 
     emit setTerrainMode(index);
+}
+
+void MainWindow::setProjectData(ProjectFileData& data)
+{
+    world->setProjectData(data);
 }
 
 void MainWindow::addToolbarAction(QWidget* widget, QList<QString>& parentList)

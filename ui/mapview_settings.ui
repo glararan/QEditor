@@ -57,23 +57,6 @@
        </property>
       </spacer>
      </item>
-     <item row="0" column="1">
-      <widget class="QPushButton" name="brushColorButton">
-       <property name="toolTip">
-        <string>Choose brush color</string>
-       </property>
-       <property name="text">
-        <string>Choose</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>Brush color:</string>
-       </property>
-      </widget>
-     </item>
      <item row="1" column="1" colspan="2">
       <widget class="QSlider" name="EDistanceSlider">
        <property name="minimum">
@@ -99,6 +82,54 @@
        </property>
        <property name="invertedControls">
         <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QPushButton" name="brushColorButton">
+       <property name="toolTip">
+        <string>Choose brush color</string>
+       </property>
+       <property name="text">
+        <string>Choose</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Brush color:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Texture scale options:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Texture scale far:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>Texture scale near:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1" colspan="2">
+      <widget class="QComboBox" name="textureScaleOptions">
+       <property name="currentText">
+        <string/>
+       </property>
+       <property name="currentIndex">
+        <number>-1</number>
        </property>
       </widget>
      </item>

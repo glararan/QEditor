@@ -9,8 +9,10 @@
 #include "globalheader.h"
 #include "camera.h"
 #include "brush.h"
+#include "texturemanager.h"
 
 class MapTile;
+class TextureManager;
 
 class MapTiles
 {
@@ -71,18 +73,21 @@ public:
 
     void save();
 
-    QOpenGLFunctions_4_2_Core* getGLFunctions() { return GLfuncs; }
-    Brush*                     getBrush()       { return brush; }
-    Camera*                    getCamera()      { return camera; }
+    QOpenGLFunctions_4_2_Core* getGLFunctions()    { return GLfuncs; }
+    Brush*                     getBrush()          { return brush; }
+    Camera*                    getCamera()         { return camera; }
+    TextureManager*            getTextureManager() { return textureManager; }
 
     const ProjectFileData getProjectData() const { return projectData; }
 
     void setCamera(Camera* cam);
+    void setProjectData(ProjectFileData& data);
 
     void setChunkShaderUniform(const char* name, const QVector2D& value);
     void setChunkShaderUniform(const char* name, const QVector4D& value);
     void setChunkShaderUniform(const char* name, const QMatrix4x4& value);
     void setChunkShaderUniform(const char* name, float value);
+    void setChunkShaderUniform(const char* name, int value);
 
     MaterialPtr material;
 
@@ -93,9 +98,9 @@ private:
 
     float time;
 
-    Camera* camera;
-
-    Brush* brush;
+    Camera*         camera;
+    Brush*          brush;
+    TextureManager* textureManager;
 
     bool tileLoaded(int x, int y) const;
 
@@ -112,8 +117,6 @@ private:
     QOpenGLFunctions_4_2_Core* GLfuncs;
 
     ProjectFileData projectData;
-
-    QOpenGLFramebufferObject* fbo;
 };
 
 #endif // WORLD_H

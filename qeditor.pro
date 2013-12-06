@@ -35,7 +35,8 @@ SOURCES  += main.cpp \
     ui/tableview.cpp \
     qeditor.cpp \
     ui/startup.cpp \
-    ui/newproject.cpp
+    ui/newproject.cpp \
+    ui/project_settings.cpp
 
 HEADERS  += \
     mainwindow.h \
@@ -55,7 +56,8 @@ HEADERS  += \
     qeditor.h \
     ui/startup.h \
     ui/newproject.h \
-    globalheader.h
+    globalheader.h \
+    ui/project_settings.h
 
 RESOURCES += \
     qeditor.qrc
@@ -76,7 +78,8 @@ FORMS += \
     ui/mapview_settings.ui \
     ui/about.ui \
     ui/texturepicker.ui \
-    ui/startup.ui
+    ui/startup.ui \
+    ui/project_settings.ui
 
 unix|win32: LIBS += -L$$PWD/ -lquazip
 

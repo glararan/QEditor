@@ -532,6 +532,34 @@ void MapView::setEnvionmentDistance(float value)
     camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 }
 
+void MapView::setTextureScaleOption_(int option)
+{
+    app().setSetting("textureScaleOption", option);
+
+    world->setChunkShaderUniform("textureScaleOption", option);
+}
+
+void MapView::setTextureScaleFar(float value)
+{
+    app().setSetting("textureScaleFar", value);
+
+    world->setChunkShaderUniform("textureScaleFar", value);
+}
+
+void MapView::setTextureScaleNear(float value)
+{
+    app().setSetting("textureScaleNear", value);
+
+    world->setChunkShaderUniform("textureScaleNear", value);
+}
+
+void MapView::setTurnChunkLines(bool on)
+{
+    app().setSetting("chunkLines", on);
+
+    world->setChunkShaderUniform("chunkLines", on);
+}
+
 void MapView::save()
 {
     world->save();

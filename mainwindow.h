@@ -112,10 +112,13 @@ private slots:
 
     void setTerrain_Mode(int index);
 
+    void setProjectData(ProjectFileData& data);
+
     void showTeleport();
     void showSettings();
     void showTexturePicker();
     void showAbout();
+    void showProjectSettings();
 
     void openWorld(ProjectFileData projectData);
 

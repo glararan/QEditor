@@ -75,12 +75,14 @@ public:
 
     void draw();
 
+    /// Terrain
     bool changeTerrain(float x , float z, float change         , float radius, int brush, int brush_type);
     bool flattenTerrain(float x, float z, float y, float change, float radius, int brush, int brush_type);
     bool blurTerrain(float x   , float z, float change         , float radius, int brush, int brush_type);
 
     bool paintTerrain();
 
+    /// Get
     const float getHeight(const float& x, const float& y) const;
     const float getHeight(const int& x, const int& y) const;
     const float getMapData(const int& index) const;
@@ -93,15 +95,18 @@ public:
 
     QOpenGLShaderProgramPtr getShader() const { return chunkMaterial->shader(); }
 
-    void save(MCNK* chunk);
-
+    /// Set
     void setBorderHeight(const QVector<QPair<int, float>> data, MapChunkBorder border);
+
+    /// ...
+    void save(MCNK* chunk);
 
     void test();
 
 private:
     World* world;
 
+    /// Terrain
     QOpenGLVertexArrayObject vao;
     QOpenGLBuffer            patchBuffer;
 
@@ -109,11 +114,15 @@ private:
 
     int patchCount;
 
-    ChunkMaterialPtr chunkMaterial;
+    ChunkMaterial* chunkMaterial;
 
     TexturePtr terrainData;
     SamplerPtr terrainSampler;
 
+    float* mapData;
+    /// ----------------------------------
+
+    /// Chunk data
     QVector<GLuint> displaySubroutines;
 
     int chunkX, chunkY;
@@ -122,13 +131,12 @@ private:
     float chunkBaseX, chunkBaseY;
 
     Broadcast* broadcast;
+    /// ----------------------------------
 
     int horizToHMapSize(float position);
     float HMapSizeToHoriz(int position);
 
     void broadcastBorderHeight(QVector<QPair<int, float>> data, MapChunkBorder border);
-
-    float* mapData;
 
     void initialize();
 };

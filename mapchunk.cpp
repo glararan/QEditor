@@ -22,53 +22,33 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 , chunkBaseX((tile->coordX * TILESIZE) + baseX)
 , chunkBaseY((tile->coordY * TILESIZE) + baseY)
 {
-    chunkMaterial = ChunkMaterialPtr(new ChunkMaterial);
+    chunkMaterial = new ChunkMaterial();
     chunkMaterial->setShaders(":/shaders/qeditor.vert",
                               ":/shaders/qeditor.tcs",
                               ":/shaders/qeditor.tes",
                               ":/shaders/qeditor.geom",
                               ":/shaders/qeditor.frag");
 
-    SamplerPtr tilingSampler(new Sampler);
-    tilingSampler->create();
-    tilingSampler->setMinificationFilter(GL_LINEAR_MIPMAP_LINEAR);
-    world->getGLFunctions()->glSamplerParameterf(tilingSampler->samplerId(), GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
-    tilingSampler->setMagnificationFilter(GL_LINEAR);
-    tilingSampler->setWrapMode(Sampler::DirectionS, GL_REPEAT);
-    tilingSampler->setWrapMode(Sampler::DirectionT, GL_REPEAT);
-
-    QImage grassImage("grass.png");
     world->getGLFunctions()->glActiveTexture(GL_TEXTURE1);
 
-    TexturePtr grassTexture(new Texture);
-    grassTexture->create();
-    grassTexture->bind();
-    grassTexture->setImage(grassImage);
-    grassTexture->generateMipMaps();
+    if(!world->getTextureManager()->hasTexture("grassTexture", ""))
+        world->getTextureManager()->loadTexture("grassTexture", "grass.png");
 
-    chunkMaterial->setTextureUnitConfiguration(1, grassTexture, tilingSampler, QByteArrayLiteral("grassTexture"));
+    chunkMaterial->setTextureUnitConfiguration(1, world->getTextureManager()->getTexture("grassTexture"), world->getTextureManager()->getSampler(), QByteArrayLiteral("grassTexture"));
 
-    QImage rockImage("rock.png");
     world->getGLFunctions()->glActiveTexture(GL_TEXTURE2);
 
-    TexturePtr rockTexture(new Texture);
-    rockTexture->create();
-    rockTexture->bind();
-    rockTexture->setImage(rockImage);
-    rockTexture->generateMipMaps();
+    if(!world->getTextureManager()->hasTexture("rockTexture", ""))
+        world->getTextureManager()->loadTexture("rockTexture", "rock.png");
 
-    chunkMaterial->setTextureUnitConfiguration(2, rockTexture, tilingSampler, QByteArrayLiteral("rockTexture"));
+    chunkMaterial->setTextureUnitConfiguration(2, world->getTextureManager()->getTexture("rockTexture"), world->getTextureManager()->getSampler(), QByteArrayLiteral("rockTexture"));
 
-    QImage snowImage("snowrocks.png");
     world->getGLFunctions()->glActiveTexture(GL_TEXTURE3);
 
-    TexturePtr snowTexture(new Texture);
-    snowTexture->create();
-    snowTexture->bind();
-    snowTexture->setImage(snowImage);
-    snowTexture->generateMipMaps();
+    if(!world->getTextureManager()->hasTexture("snowTexture", ""))
+        world->getTextureManager()->loadTexture("snowTexture", "snowrocks.png");
 
-    chunkMaterial->setTextureUnitConfiguration(3, snowTexture, tilingSampler, QByteArrayLiteral("snowTexture"));
+    chunkMaterial->setTextureUnitConfiguration(3, world->getTextureManager()->getTexture("snowTexture"), world->getTextureManager()->getSampler(), QByteArrayLiteral("snowTexture"));
 
     world->getGLFunctions()->glActiveTexture(GL_TEXTURE0);
 
@@ -103,7 +83,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
 , chunkBaseX((tile->coordX * TILESIZE) + baseX)
 , chunkBaseY((tile->coordY * TILESIZE) + baseY)
 {
-    chunkMaterial = ChunkMaterialPtr(new ChunkMaterial);
+    chunkMaterial = new ChunkMaterial();
     chunkMaterial->setShaders(":/shaders/qeditor.vert",
                               ":/shaders/qeditor.tcs",
                               ":/shaders/qeditor.tes",
@@ -111,47 +91,27 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
                               ":/shaders/qeditor.frag");
     //chunkMaterial->link();
 
-    /// Textures
-    SamplerPtr tilingSampler(new Sampler);
-    tilingSampler->create();
-    tilingSampler->setMinificationFilter(GL_LINEAR_MIPMAP_LINEAR);
-    world->getGLFunctions()->glSamplerParameterf(tilingSampler->samplerId(), GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
-    tilingSampler->setMagnificationFilter(GL_LINEAR);
-    tilingSampler->setWrapMode(Sampler::DirectionS, GL_REPEAT);
-    tilingSampler->setWrapMode(Sampler::DirectionT, GL_REPEAT);
-
-    QImage grassImage("grass.png");
+    /// Textures // todo dynamic from mapfile
     world->getGLFunctions()->glActiveTexture(GL_TEXTURE1);
 
-    TexturePtr grassTexture(new Texture);
-    grassTexture->create();
-    grassTexture->bind();
-    grassTexture->setImage(grassImage);
-    grassTexture->generateMipMaps();
+    if(!world->getTextureManager()->hasTexture("grassTexture", ""))
+        world->getTextureManager()->loadTexture("grassTexture", "grass.png");
 
-    chunkMaterial->setTextureUnitConfiguration(1, grassTexture, tilingSampler, QByteArrayLiteral("grassTexture"));
+    chunkMaterial->setTextureUnitConfiguration(1, world->getTextureManager()->getTexture("grassTexture"), world->getTextureManager()->getSampler(), QByteArrayLiteral("grassTexture"));
 
-    QImage rockImage("rock.png");
     world->getGLFunctions()->glActiveTexture(GL_TEXTURE2);
 
-    TexturePtr rockTexture(new Texture);
-    rockTexture->create();
-    rockTexture->bind();
-    rockTexture->setImage(rockImage);
-    rockTexture->generateMipMaps();
+    if(!world->getTextureManager()->hasTexture("rockTexture", ""))
+        world->getTextureManager()->loadTexture("rockTexture", "rock.png");
 
-    chunkMaterial->setTextureUnitConfiguration(2, rockTexture, tilingSampler, QByteArrayLiteral("rockTexture"));
+    chunkMaterial->setTextureUnitConfiguration(2, world->getTextureManager()->getTexture("rockTexture"), world->getTextureManager()->getSampler(), QByteArrayLiteral("rockTexture"));
 
-    QImage snowImage("snowrocks.png");
     world->getGLFunctions()->glActiveTexture(GL_TEXTURE3);
 
-    TexturePtr snowTexture(new Texture);
-    snowTexture->create();
-    snowTexture->bind();
-    snowTexture->setImage(snowImage);
-    snowTexture->generateMipMaps();
+    if(!world->getTextureManager()->hasTexture("snowTexture", ""))
+        world->getTextureManager()->loadTexture("snowTexture", "snowrocks.png");
 
-    chunkMaterial->setTextureUnitConfiguration(3, snowTexture, tilingSampler, QByteArrayLiteral("snowTexture"));
+    chunkMaterial->setTextureUnitConfiguration(3, world->getTextureManager()->getTexture("snowTexture"), world->getTextureManager()->getSampler(), QByteArrayLiteral("snowTexture"));
 
     world->getGLFunctions()->glActiveTexture(GL_TEXTURE0);
 
@@ -251,8 +211,18 @@ void MapChunk::initialize()
 
     shader2->setUniformValue("line.width", 0.2f);
     shader2->setUniformValue("line.color", QVector4D(0.17f, 0.50f, 1.0f, 1.0f)); // blue
+
     shader2->setUniformValue("baseX", chunkBaseX);
     shader2->setUniformValue("baseY", chunkBaseY);
+
+    shader2->setUniformValue("chunkX", chunkX);
+    shader2->setUniformValue("chunkY", chunkY);
+
+    shader2->setUniformValue("chunkLines", app().getSetting("chunkLines", false).toBool());
+
+    shader2->setUniformValue("textureScaleOption", app().getSetting("textureScaleOption", 0).toInt());
+    shader2->setUniformValue("textureScaleFar",    app().getSetting("textureScaleFar",    0.4f).toFloat());
+    shader2->setUniformValue("textureScaleNear",   app().getSetting("textureScaleNear",   0.4f).toFloat());
 
     // Set the fog parameters
     shader2->setUniformValue("fog.color"      , QVector4D(0.65f, 0.77f, 1.0f, 1.0f));
@@ -332,8 +302,6 @@ const float MapChunk::getMapData(const int& index) const
 
 const int MapChunk::chunkIndex() const
 {
-    // (Y * X_MAX) + X
-    //return ((chunkY % CHUNKS) * CHUNKS) + (chunkX / CHUNKS);
     return (chunkY * CHUNKS) + chunkX;
 }
 
@@ -414,7 +382,7 @@ bool MapChunk::changeTerrain(float x, float z, float change, float radius, int b
                                     }
                                     break;
 
-                                case 4: // ...
+                                case 4: // Flat + Smooth
                                     {
                                         float changeFormula = change * ((dist / radius) * (dist / radius) + dist / radius + 1.0f);
 

@@ -112,7 +112,7 @@ MapTile::MapTile(World* mWorld, int x, int y, const QString& mapFile) // File ba
 
 MapTile::~MapTile()
 {
-    qDebug() << "Unloading tile:" << QVector2D(coordX, coordY);
+    qDebug() << "Unloading tile:" << coordX << coordY;
 
     terrainSampler->destroy();
 
@@ -122,7 +122,7 @@ MapTile::~MapTile()
         {
             if(mapChunks[x][y])
             {
-                //delete mapChunks[x][y]; // !!! Memory leaks! Can be caused by World or by QSharedPointer
+                delete mapChunks[x][y];
 
                 mapChunks[x][y] = NULL;
             }

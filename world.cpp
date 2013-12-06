@@ -1,7 +1,12 @@
 #include "world.h"
+
 #include "maptile.h"
 #include "mathhelper.h"
 #include "qeditor.h"
+#include "texturemanager.h"
+
+// Recent projects
+#include "ui/startup.h"
 
 #include <QMessageBox>
 #include <QDir>
@@ -10,6 +15,7 @@ World::World(const ProjectFileData& projectFile)
 : camera(0)
 , projectData(projectFile)
 , brush(new Brush(1, 10.0f, app().getSetting("brushColor", QColor(0, 255, 0)).value<QColor>(), 5.3f))
+, textureManager(NULL)
 , sunTheta(30.0f)
 , eDisplay(TexturedAndLit)
 , GLfuncs(0)
@@ -27,7 +33,7 @@ World::World(const ProjectFileData& projectFile)
 }
 
 World::~World()
-{
+{    
     for(int x = 0; x < TILES; ++x)
     {
         for(int y = 0; y < TILES; ++y)
@@ -37,6 +43,8 @@ World::~World()
             mapTiles[x][y].tile = NULL;
         }
     }
+
+    delete textureManager;
 }
 
 void World::deleteMe()
@@ -59,6 +67,9 @@ void World::initialize(QOpenGLContext* context)
     qDebug() << "OpenGL Version: " << QString::fromLocal8Bit((char*)GLfuncs->glGetString(GL_VERSION));
     qDebug() << "OpenGL Vendor:"   << QString::fromLocal8Bit((char*)GLfuncs->glGetString(GL_VENDOR));
     qDebug() << "OpenGL Rendered:" << QString::fromLocal8Bit((char*)GLfuncs->glGetString(GL_RENDERER));
+
+    // initialize texture manager
+    textureManager = new TextureManager(this, app().getSetting("antialiasing", 1.0f).toFloat());
 
     // prepare Shaders
     material = MaterialPtr(new Material);
@@ -364,6 +375,29 @@ void World::setChunkShaderUniform(const char* name, float value)
     }
 }
 
+void World::setChunkShaderUniform(const char* name, int value)
+{
+    for(int x = 0; x < TILES; ++x)
+    {
+        for(int y = 0; y < TILES; ++y)
+        {
+            if(tileLoaded(x, y))
+            {
+                for(int x2 = 0; x2 < CHUNKS; ++x2)
+                {
+                    for(int y2 = 0; y2 < CHUNKS; ++y2)
+                    {
+                        QOpenGLShaderProgramPtr shader = mapTiles[x][y].tile->getChunk(x2, y2)->getShader();
+                        shader->bind();
+
+                        shader->setUniformValue(name, value);
+                    }
+                }
+            }
+        }
+    }
+}
+
 void World::save()
 {
     QFile projectFile(QDir(projectData.projectRootDir).filePath(projectData.projectFile + ".qep"));
@@ -489,6 +523,13 @@ void World::save()
         data << projectData;
 
         projectFile.flush();
+
+        RecentProject recentProject;
+        recentProject.projectName = projectData.projectName;
+        recentProject.projectPath = projectData.projectRootDir;
+        recentProject.projectFile = projectData.projectFile;
+
+        StartUp::addRecentProject(recentProject);
     }
 
     projectFile.close();
@@ -497,6 +538,11 @@ void World::save()
 void World::setCamera(Camera* cam)
 {
     camera = cam;
+}
+
+void World::setProjectData(ProjectFileData& data)
+{
+    projectData = data;
 }
 
 void World::setDisplayMode(int displayMode)
@@ -540,92 +586,4 @@ void World::test()
                 mapTiles[x][y].tile->test();
         }
     }
-}
-
-/// Map header data streams
-QDataStream& operator<<(QDataStream& dataStream, const MapHeader& mapHeader)
-{
-    dataStream << mapHeader.version;
-
-    for(int i = 0; i < CHUNKS * CHUNKS; ++i)
-    {
-        dataStream << mapHeader.mcin->entries[i].size
-                   << mapHeader.mcin->entries[i].mcnk->flags
-                   << mapHeader.mcin->entries[i].mcnk->indexX
-                   << mapHeader.mcin->entries[i].mcnk->indexY
-                   << mapHeader.mcin->entries[i].mcnk->layers
-                   << mapHeader.mcin->entries[i].mcnk->doodads
-                   << mapHeader.mcin->entries[i].mcnk->areaID;
-
-        for(int j = 0; j < CHUNK_ARRAY_SIZE; ++j)
-            dataStream << mapHeader.mcin->entries[i].mcnk->heightOffset->height[j];
-    }
-
-    return dataStream;
-}
-
-QDataStream& operator>>(QDataStream& dataStream, MapHeader& mapHeader)
-{
-    dataStream >> mapHeader.version;
-
-    mapHeader.mcin = new MCIN;
-
-    for(int i = 0; i < CHUNKS * CHUNKS; ++i)
-    {
-        mapHeader.mcin->entries[i].mcnk = new MCNK;
-
-        dataStream >> mapHeader.mcin->entries[i].size
-                   >> mapHeader.mcin->entries[i].mcnk->flags
-                   >> mapHeader.mcin->entries[i].mcnk->indexX
-                   >> mapHeader.mcin->entries[i].mcnk->indexY
-                   >> mapHeader.mcin->entries[i].mcnk->layers
-                   >> mapHeader.mcin->entries[i].mcnk->doodads
-                   >> mapHeader.mcin->entries[i].mcnk->areaID;
-
-        mapHeader.mcin->entries[i].mcnk->heightOffset = new MCVT;
-
-        for(int j = 0; j < CHUNK_ARRAY_SIZE; ++j)
-            dataStream >> mapHeader.mcin->entries[i].mcnk->heightOffset->height[j];
-    }
-
-    return dataStream;
-}
-
-/// Project Data
-QDataStream& operator<<(QDataStream& dataStream, const ProjectFileData& projectData)
-{
-    dataStream << projectData.version
-               << projectData.projectFile
-               << projectData.projectRootDir
-               << projectData.projectName
-               << projectData.mapName
-               << projectData.mapsCount;
-
-    for(int i = 0; i < TILES * TILES; ++i)
-    {
-        dataStream << projectData.maps[i].exists
-                   << projectData.maps[i].x
-                   << projectData.maps[i].y;
-    }
-
-    return dataStream;
-}
-
-QDataStream& operator>>(QDataStream& dataStream, ProjectFileData& projectData)
-{
-    dataStream >> projectData.version
-               >> projectData.projectFile
-               >> projectData.projectRootDir
-               >> projectData.projectName
-               >> projectData.mapName
-               >> projectData.mapsCount;
-
-    for(int i = 0; i < TILES * TILES; ++i)
-    {
-        dataStream >> projectData.maps[i].exists
-                   >> projectData.maps[i].x
-                   >> projectData.maps[i].y;
-    }
-
-    return dataStream;
 }

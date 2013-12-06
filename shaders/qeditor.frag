@@ -62,6 +62,16 @@ uniform sampler2D heightMap;
 uniform float baseX = 0.0f;
 uniform float baseY = 0.0f;
 
+uniform int chunkX = 0;
+uniform int chunkY = 0;
+
+uniform int textureScaleOption = 0;
+
+uniform float textureScaleFar  = 0.4;
+uniform float textureScaleNear = 0.4;
+
+uniform bool chunkLines = false;
+
 in wireFrameVertex
 {
     noperspective vec3 edgeDistance;
@@ -160,10 +170,28 @@ float textureDistanceBlendFactor()
     return (dist - 30.0) / (30.0 - 5.0) / brushMultiplier;
 }
 
+// divide = +size, multiply = -size
 void nearAndFarTexCoords(out vec2 uvNear, out vec2 uvFar)
 {
     uvNear = texCoords * 100.0;
     uvFar  = texCoords * 10.0;
+
+    /// Not sure if AMD supports switch cases on all drivers => IFs
+    // multiply near
+    if(textureScaleOption == 0 || textureScaleOption == 3)
+        uvNear *= textureScaleNear;
+
+    // multiply far
+    if(textureScaleOption == 0 || textureScaleOption == 2)
+        uvFar *= textureScaleFar;
+
+    // divide near
+    if(textureScaleOption == 1 || textureScaleOption == 2)
+        uvNear /= textureScaleNear;
+
+    // divide far
+    if(textureScaleOption == 1 || textureScaleOption == 3)
+        uvFar /= textureScaleFar;
 }
 
 // ShaderModelType Subroutines
@@ -409,15 +437,33 @@ void main()
     outColor = mix(fog.color, outColor, fogFactor);
 
     // Borders
-    if(brush == 1)
+    if(chunkLines)
     {
-        float lineWidth = 0.05;
+        float lineWidthMin = 0.02;
+        float lineWidthMax = 0.07;
+
+        float lineWidth = mix(lineWidthMin, lineWidthMax, textureDistanceBlendFactor());
 
         float maxVal = 1.0 - (lineWidth / horizontalScale);
         float minVal = lineWidth / horizontalScale;
 
         if(texCoords.x > maxVal || texCoords.y > maxVal || texCoords.x < minVal || texCoords.y < minVal)
             outColor = mix(fog.color, vec4(1.0, 0.0, 0.0, 1.0), fogFactor);
+
+        if(chunkX == 0 || chunkX == 3 || chunkY == 0 || chunkY == 3)
+        {
+            if(chunkX == 0 && texCoords.x < minVal)
+                outColor = mix(fog.color, vec4(0.0, 1.0, 0.0, 1.0), fogFactor);
+
+            if(chunkX == 3 && texCoords.x > maxVal)
+                outColor = mix(fog.color, vec4(0.0, 1.0, 0.0, 1.0), fogFactor);
+
+            if(chunkY == 0 && texCoords.y < minVal)
+                outColor = mix(fog.color, vec4(0.0, 1.0, 0.0, 1.0), fogFactor);
+
+            if(chunkY == 3 && texCoords.y > maxVal)
+                outColor = mix(fog.color, vec4(0.0, 1.0, 0.0, 1.0), fogFactor);
+        }
     }
 
     // Terrain brush
