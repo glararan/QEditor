@@ -95,6 +95,7 @@ public:
 
 private:
     ~World();
+    void createNeighbours();
 
     float time;
 

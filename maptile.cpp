@@ -138,25 +138,6 @@ void MapTile::draw(const float& distance, const QVector3D& camera)
         {
             if(mapChunks[x][y]->isInVisibleRange(distance, camera))
             {
-                const Broadcast* broadcast;
-
-                if((broadcast = mapChunks[x][y]->getBroadcast()) != NULL && broadcast->isBroadcasting())
-                {
-                    MapChunk* chunk;
-
-                    if((chunk = getChunk(x, y - 1)) != NULL && broadcast->getTopData().count() > 0)
-                        chunk->setBorderHeight(broadcast->getTopData(), MapChunkBorder::Top);
-
-                    if((chunk = getChunk(x + 1, y)) != NULL && broadcast->getRightData().count() > 0)
-                        chunk->setBorderHeight(broadcast->getRightData(), MapChunkBorder::Right);
-
-                    if((chunk = getChunk(x, y + 1)) != NULL && broadcast->getBottomData().count() > 0)
-                        chunk->setBorderHeight(broadcast->getBottomData(), MapChunkBorder::Bottom);
-
-                    if((chunk = getChunk(x - 1, y)) != NULL && broadcast->getLeftData().count() > 0)
-                        chunk->setBorderHeight(broadcast->getLeftData(), MapChunkBorder::Left);
-                }
-
                 mapChunks[x][y]->draw();
             }
         }
@@ -241,11 +222,4 @@ void MapTile::test()
 {
     //mapChunks[0][0]->test();
     //mapChunks[1][1]->test();
-
-    QVector<QPair<int, float>> data;
-
-    for(int i = 0; i < MAP_HEIGHT / CHUNKS; ++i)
-        data.append(qMakePair<int, float>(i, mapChunks[0][0]->getHeight(MAP_WIDTH / CHUNKS - 1, i)));
-
-    mapChunks[1][0]->setBorderHeight(data, MapChunkBorder::Right);
 }

@@ -14,13 +14,14 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 , terrainSampler(tile->terrainSampler.data())
 , terrainData(new Texture(MAP_WIDTH / CHUNKS, MAP_HEIGHT / CHUNKS))
 , displaySubroutines(world->DisplayModeCount)
-, broadcast(NULL)
 , chunkX(x)
 , chunkY(y)
 , baseX(chunkX * CHUNKSIZE)
 , baseY(chunkY * CHUNKSIZE)
 , chunkBaseX((tile->coordX * TILESIZE) + baseX)
 , chunkBaseY((tile->coordY * TILESIZE) + baseY)
+, leftNeighbour(0)
+, bottomNeighbour(0)
 {
     chunkMaterial = new ChunkMaterial();
     chunkMaterial->setShaders(":/shaders/qeditor.vert",
@@ -75,13 +76,14 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
 , terrainSampler(tile->terrainSampler.data())
 , terrainData(new Texture(MAP_WIDTH / CHUNKS, MAP_HEIGHT / CHUNKS))
 , displaySubroutines(world->DisplayModeCount)
-, broadcast(NULL)
 , chunkX(x)
 , chunkY(y)
 , baseX(chunkX * CHUNKSIZE)
 , baseY(chunkY * CHUNKSIZE)
 , chunkBaseX((tile->coordX * TILESIZE) + baseX)
 , chunkBaseY((tile->coordY * TILESIZE) + baseY)
+, leftNeighbour(0)
+, bottomNeighbour(0)
 {
     chunkMaterial = new ChunkMaterial();
     chunkMaterial->setShaders(":/shaders/qeditor.vert",
@@ -145,9 +147,6 @@ MapChunk::~MapChunk()
 
     patchBuffer.destroy();
     vao.destroy();
-
-    if(broadcast != NULL)
-        delete broadcast;
 }
 
 void MapChunk::initialize()
@@ -245,8 +244,6 @@ void MapChunk::test()
 
 void MapChunk::draw()
 {
-    if(broadcast != NULL && broadcast->isBroadcasting())
-        broadcast->stop();
 
     chunkMaterial->bind();
 
@@ -411,41 +408,32 @@ bool MapChunk::changeTerrain(float x, float z, float change, float radius, int b
 
     if(changed)
     {
-        QVector<QPair<int, float>> broadcastTop;
-        QVector<QPair<int, float>> broadcastRight;
-        QVector<QPair<int, float>> broadcastBottom;
-        QVector<QPair<int, float>> broadcastLeft;
+        QVector<QPair<int, float>> horizontalData;
+        QVector<QPair<int, float>> verticalData;
 
         terrainData->bind();
 
         for(int i = 0; i < changing.count(); ++i)
         {
             if(changing.value(i).second.y() == 0)
-                broadcastTop.append(QPair<int, float>(changing.value(i).second.x(), changing.value(i).first));
-
-            if(changing.value(i).second.x() == MAP_WIDTH / CHUNKS - 1)
-                broadcastRight.append(QPair<int, float>(changing.value(i).second.y(), changing.value(i).first));
-
-            if(changing.value(i).second.y() == MAP_HEIGHT / CHUNKS - 1)
-                broadcastBottom.append(QPair<int, float>(changing.value(i).second.x(), changing.value(i).first));
+                horizontalData.append(QPair<int, float>(changing.value(i).second.x(), changing.value(i).first));
 
             if(changing.value(i).second.x() == 0)
-                broadcastLeft.append(QPair<int, float>(changing.value(i).second.y(), changing.value(i).first));
+                verticalData.append(QPair<int, float>(changing.value(i).second.y(), changing.value(i).first));
 
             terrainData->updatePixel(changing.value(i).first, changing.value(i).second);
         }
 
         chunkMaterial->setTextureUnitConfiguration(0, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
 
-        bool broadcasting = false;
-
-        if(broadcastTop.count() > 0 || broadcastRight.count() > 0 || broadcastBottom.count() > 0 || broadcastLeft.count() > 0)
-            broadcasting = true;
-
-        if(!broadcasting)
-            broadcast = new Broadcast();
-        else
-            broadcast = new Broadcast(broadcastTop, broadcastRight, broadcastBottom, broadcastLeft);
+        if(bottomNeighbour && !horizontalData.isEmpty())
+        {
+            bottomNeighbour->setBorder(MapChunk::HORIZONTAL,horizontalData);
+        }
+        if(leftNeighbour && !verticalData.isEmpty())
+        {
+            leftNeighbour->setBorder(MapChunk::VERTICAL,verticalData);
+        }
     }
 
     return changed;
@@ -536,41 +524,32 @@ bool MapChunk::flattenTerrain(float x, float z, float y, float change, float rad
 
     if(changed)
     {
-        QVector<QPair<int, float>> broadcastTop;
-        QVector<QPair<int, float>> broadcastRight;
-        QVector<QPair<int, float>> broadcastBottom;
-        QVector<QPair<int, float>> broadcastLeft;
+        QVector<QPair<int, float>> horizontalData;
+        QVector<QPair<int, float>> verticalData;
 
         terrainData->bind();
 
         for(int i = 0; i < changing.count(); ++i)
         {
             if(changing.value(i).second.y() == 0)
-                broadcastTop.append(QPair<int, float>(changing.value(i).second.x(), changing.value(i).first));
-
-            if(changing.value(i).second.x() == MAP_WIDTH / CHUNKS - 1)
-                broadcastRight.append(QPair<int, float>(changing.value(i).second.y(), changing.value(i).first));
-
-            if(changing.value(i).second.y() == MAP_HEIGHT / CHUNKS - 1)
-                broadcastBottom.append(QPair<int, float>(changing.value(i).second.x(), changing.value(i).first));
+                horizontalData.append(QPair<int, float>(changing.value(i).second.x(), changing.value(i).first));
 
             if(changing.value(i).second.x() == 0)
-                broadcastLeft.append(QPair<int, float>(changing.value(i).second.y(), changing.value(i).first));
+                verticalData.append(QPair<int, float>(changing.value(i).second.y(), changing.value(i).first));
 
             terrainData->updatePixel(changing.value(i).first, changing.value(i).second);
         }
 
         chunkMaterial->setTextureUnitConfiguration(0, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
 
-        bool broadcasting = false;
-
-        if(broadcastTop.count() > 0 || broadcastRight.count() > 0 || broadcastBottom.count() > 0 || broadcastLeft.count() > 0)
-            broadcasting = true;
-
-        if(!broadcasting)
-            broadcast = new Broadcast();
-        else
-            broadcast = new Broadcast(broadcastTop, broadcastRight, broadcastBottom, broadcastLeft);
+        if(bottomNeighbour && !horizontalData.isEmpty())
+        {
+            bottomNeighbour->setBorder(MapChunk::HORIZONTAL,horizontalData);
+        }
+        if(leftNeighbour && !verticalData.isEmpty())
+        {
+            leftNeighbour->setBorder(MapChunk::VERTICAL,verticalData);
+        }
     }
 
     return changed;
@@ -706,41 +685,32 @@ bool MapChunk::blurTerrain(float x, float z, float change, float radius, int bru
 
     if(changed)
     {
-        QVector<QPair<int, float>> broadcastTop;
-        QVector<QPair<int, float>> broadcastRight;
-        QVector<QPair<int, float>> broadcastBottom;
-        QVector<QPair<int, float>> broadcastLeft;
+        QVector<QPair<int, float>> horizontalData;
+        QVector<QPair<int, float>> verticalData;
 
         terrainData->bind();
 
         for(int i = 0; i < changing.count(); ++i)
         {
             if(changing.value(i).second.y() == 0)
-                broadcastTop.append(QPair<int, float>(changing.value(i).second.x(), changing.value(i).first));
-
-            if(changing.value(i).second.x() == MAP_WIDTH / CHUNKS - 1)
-                broadcastRight.append(QPair<int, float>(changing.value(i).second.y(), changing.value(i).first));
-
-            if(changing.value(i).second.y() == MAP_HEIGHT / CHUNKS - 1)
-                broadcastBottom.append(QPair<int, float>(changing.value(i).second.x(), changing.value(i).first));
+                horizontalData.append(QPair<int, float>(changing.value(i).second.x(), changing.value(i).first));
 
             if(changing.value(i).second.x() == 0)
-                broadcastLeft.append(QPair<int, float>(changing.value(i).second.y(), changing.value(i).first));
+                verticalData.append(QPair<int, float>(changing.value(i).second.y(), changing.value(i).first));
 
             terrainData->updatePixel(changing.value(i).first, changing.value(i).second);
         }
 
         chunkMaterial->setTextureUnitConfiguration(0, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
 
-        bool broadcasting = false;
-
-        if(broadcastTop.count() > 0 || broadcastRight.count() > 0 || broadcastBottom.count() > 0 || broadcastLeft.count() > 0)
-            broadcasting = true;
-
-        if(!broadcasting)
-            broadcast = new Broadcast();
-        else
-            broadcast = new Broadcast(broadcastTop, broadcastRight, broadcastBottom, broadcastLeft);
+        if(bottomNeighbour && !horizontalData.isEmpty())
+        {
+            bottomNeighbour->setBorder(MapChunk::HORIZONTAL,horizontalData);
+        }
+        if(leftNeighbour && !verticalData.isEmpty())
+        {
+            leftNeighbour->setBorder(MapChunk::VERTICAL,verticalData);
+        }
     }
 
     return changed;
@@ -761,102 +731,42 @@ float MapChunk::HMapSizeToHoriz(int position)
     return static_cast<float>(position) / static_cast<float>(MAP_WIDTH) * TILESIZE;
 }
 
-void MapChunk::setBorderHeight(const QVector<QPair<int, float>> data, MapChunkBorder border)
+void MapChunk::setBorder(MapChunk::Border border, QVector<QPair<int, float> > &data)
 {
-    QPair<int, float> datas;
+    terrainData->bind();
 
-    switch(border)
+    if(border == HORIZONTAL)
     {
-        case MapChunkBorder::Top:
-            {
-                if(data.count() > 1)
-                {
-                    terrainData->bind();
+        for(int i = 0; i < data.count(); ++i)
+        {
+            terrainData->updatePixel(data.at(i).second, QVector2D(data.at(i).first,MAP_HEIGHT / CHUNKS - 1));
 
-                    foreach(datas, data)
-                    {
-                        terrainData->updatePixel(datas.second, QVector2D(datas.first, MAP_HEIGHT / CHUNKS - 1));
-
-                        mapData[((MAP_HEIGHT / CHUNKS - 1) * MAP_HEIGHT / CHUNKS) + datas.first] = datas.second;
-                    }
-                }
-                else
-                {
-                    terrainData->updatePixel(data[0].second, QVector2D(data[0].first, MAP_HEIGHT / CHUNKS - 1), true);
-
-                    mapData[((MAP_HEIGHT / CHUNKS - 1) * MAP_HEIGHT / CHUNKS) + data[0].first] = data[0].second;
-                }
-            }
-            break;
-
-        case MapChunkBorder::Right:
-            {
-                if(data.count() > 1)
-                {
-                    terrainData->bind();
-
-                    foreach(datas, data)
-                    {
-                        terrainData->updatePixel(datas.second, QVector2D(0, datas.first));
-
-                        mapData[((datas.first * MAP_HEIGHT / CHUNKS) + 0) * sizeof(float)] = datas.second;
-                    }
-                }
-                else
-                {
-                    terrainData->updatePixel(data[0].second, QVector2D(0, data[0].first), true);
-
-                    mapData[((data[0].first * MAP_HEIGHT / CHUNKS) + 0) * sizeof(float)] = data[0].second;
-                }
-            }
-            break;
-
-        case MapChunkBorder::Bottom:
-            {
-                if(data.count() > 1)
-                {
-                    terrainData->bind();
-
-                    foreach(datas, data)
-                    {
-                        terrainData->updatePixel(datas.second, QVector2D(datas.first, 0));
-
-                        mapData[(0 * MAP_HEIGHT / CHUNKS) + datas.first] = datas.second;
-                    }
-                }
-                else
-                {
-                    terrainData->updatePixel(data[0].second, QVector2D(data[0].first, 0), true);
-
-                    mapData[(0 * MAP_HEIGHT / CHUNKS) + data[0].first] = data[0].second;
-                }
-            }
-            break;
-
-        case MapChunkBorder::Left:
-            {
-                if(data.count() > 1)
-                {
-                    terrainData->bind();
-
-                    foreach(datas, data)
-                    {
-                        terrainData->updatePixel(datas.second, QVector2D(MAP_WIDTH / CHUNKS - 1, datas.first));
-
-                        mapData[(datas.first * MAP_HEIGHT / CHUNKS) + ((MAP_WIDTH / CHUNKS) - 1)] = datas.second;
-                    }
-                }
-                else
-                {
-                    terrainData->updatePixel(data[0].second, QVector2D(MAP_WIDTH / CHUNKS - 1, data[0].first), true);
-
-                    mapData[(data[0].first * MAP_HEIGHT / CHUNKS) + ((MAP_WIDTH / CHUNKS) - 1)] = data[0].second;
-                }
-            }
-            break;
+            int index = (((MAP_HEIGHT / CHUNKS - 1) * (MAP_WIDTH / CHUNKS)) + data.at(i).first) * sizeof(float);
+            mapData[index] = data.at(i).second;
+            //mapData[data.at(i).first * sizeof(float)][(MAP_HEIGHT / CHUNKS - 1) * sizeof(float)] = data.at(i).second;
+        }
     }
+    else if(border == VERTICAL)
+    {
+        for(int i = 0; i < data.count(); ++i)
+        {
+            terrainData->updatePixel(data.at(i).second, QVector2D(MAP_HEIGHT / CHUNKS - 1,data.at(i).first));
 
-    chunkMaterial->setTextureUnitConfiguration(0, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
+            int index = ((data.at(i).first * (MAP_WIDTH / CHUNKS)) + (MAP_HEIGHT / CHUNKS - 1)) * sizeof(float);
+            mapData[index] = data.at(i).second;
+            //mapData[(MAP_HEIGHT / CHUNKS - 1) * sizeof(float)][data.at(i).first * sizeof(float)] = data.at(i).second;
+        }
+    }
+}
+
+void MapChunk::setBottomNeighbour(MapChunk *bottomNeighbour)
+{
+    this->bottomNeighbour = bottomNeighbour;
+}
+
+void MapChunk::setLeftNeighbour(MapChunk *leftNeighbour)
+{
+    this->leftNeighbour = leftNeighbour;
 }
 
 void MapChunk::save(MCNK* chunk)

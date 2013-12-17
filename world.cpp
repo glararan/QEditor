@@ -47,6 +47,30 @@ World::~World()
     delete textureManager;
 }
 
+void World::createNeighbours()
+{
+    for(int x = 0; x < TILES; ++x)
+    {
+        for(int y = 0; y < TILES; ++y)
+        {
+            if(tileLoaded(x, y))
+            {
+                for(int tx = 0; tx < CHUNKS; ++tx)
+                {
+                    for(int ty = 0; ty < CHUNKS; ++ty)
+                    {
+                        if(ty != 0)
+                            mapTiles[x][y].tile->getChunk(tx,ty)->setBottomNeighbour(mapTiles[x][y].tile->getChunk(tx,ty-1));
+
+                        if(tx != 0)
+                            mapTiles[x][y].tile->getChunk(tx,ty)->setLeftNeighbour(mapTiles[x][y].tile->getChunk(tx-1,ty));
+                    }
+                }
+            }
+        }
+    }
+}
+
 void World::deleteMe()
 {
     delete this;
@@ -87,6 +111,7 @@ void World::initialize(QOpenGLContext* context)
                 loadTile(x, y);
         }
     }
+    this->createNeighbours();
 }
 
 void World::update(float dt)

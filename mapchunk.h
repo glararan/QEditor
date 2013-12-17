@@ -23,50 +23,15 @@ enum MapChunkBorder
     Left   = 3
 };
 
-class Broadcast
-{
-public:
-    Broadcast() : broadcastHeight(false)
-    {
-    }
-
-    Broadcast(QVector<QPair<int, float>> top, QVector<QPair<int, float>> right, QVector<QPair<int, float>> bot, QVector<QPair<int, float>> left)
-    : broadcastHeight(true)
-    , topData(top)
-    , rightData(right)
-    , bottomData(bot)
-    , leftData(left)
-    {
-    }
-
-    ~Broadcast()
-    {
-    }
-
-    const bool isBroadcasting() const { return broadcastHeight; }
-
-    const QVector<QPair<int, float>>& getTopData() const    { return topData; }
-    const QVector<QPair<int, float>>& getRightData() const  { return rightData; }
-    const QVector<QPair<int, float>>& getBottomData() const { return bottomData; }
-    const QVector<QPair<int, float>>& getLeftData() const   { return leftData; }
-
-    void stop()
-    {
-        broadcastHeight = false;
-    }
-
-private:
-    QVector<QPair<int, float>> topData;
-    QVector<QPair<int, float>> rightData;
-    QVector<QPair<int, float>> bottomData;
-    QVector<QPair<int, float>> leftData;
-
-    bool broadcastHeight;
-};
-
 class MapChunk
 {
 public:
+    enum Border
+    {
+        HORIZONTAL,
+        VERTICAL
+    };
+
     MapChunk(World* mWorld, MapTile* tile, int x, int y);
     MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y);
     ~MapChunk();
@@ -74,6 +39,10 @@ public:
     bool isInVisibleRange(const float& distance, const QVector3D& camera) const;
 
     void draw();
+
+    //Neighbours
+    void setBottomNeighbour(MapChunk *bottomNeighbour);
+    void setLeftNeighbour(MapChunk *leftNeighbour);
 
     /// Terrain
     bool changeTerrain(float x , float z, float change         , float radius, int brush, int brush_type);
@@ -91,12 +60,11 @@ public:
 
     const QVector2D  getBases() const                     { return QVector2D(baseX, baseY); }
     const GLuint&    getDisplaySubroutines() const        { return displaySubroutines[world->displayMode()]; }
-    const Broadcast* getBroadcast() const                 { return broadcast; }
 
     QOpenGLShaderProgramPtr getShader() const { return chunkMaterial->shader(); }
 
     /// Set
-    void setBorderHeight(const QVector<QPair<int, float>> data, MapChunkBorder border);
+    void setBorder(MapChunk::Border border, QVector<QPair<int, float> > &data);
 
     /// ...
     void save(MCNK* chunk);
@@ -105,6 +73,8 @@ public:
 
 private:
     World* world;
+    MapChunk *bottomNeighbour;
+    MapChunk *leftNeighbour;
 
     /// Terrain
     QOpenGLVertexArrayObject vao;
@@ -130,7 +100,6 @@ private:
     float baseX, baseY;
     float chunkBaseX, chunkBaseY;
 
-    Broadcast* broadcast;
     /// ----------------------------------
 
     int horizToHMapSize(float position);
