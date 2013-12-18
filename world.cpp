@@ -62,14 +62,24 @@ void World::createNeighbours()
                         if(ty != 0)
                             mapTiles[x][y].tile->getChunk(tx,ty)->setBottomNeighbour(mapTiles[x][y].tile->getChunk(tx,ty-1));
                         else if(y != 0)
-                            mapTiles[x][y].tile->getChunk(tx,ty)->setBottomNeighbour(mapTiles[x][y-1].tile->getChunk(tx,CHUNKS-1));
+                        {
+                            if(tileLoaded(x,y-1))
+                                mapTiles[x][y].tile->getChunk(tx,ty)->setBottomNeighbour(mapTiles[x][y-1].tile->getChunk(tx,CHUNKS-1));
+                            else
+                                mapTiles[x][y].tile->getChunk(tx,ty)->setBottomNeighbour(0);
+                        }
                         else
                             mapTiles[x][y].tile->getChunk(tx,ty)->setBottomNeighbour(0);
 
                         if(tx != 0)
                             mapTiles[x][y].tile->getChunk(tx,ty)->setLeftNeighbour(mapTiles[x][y].tile->getChunk(tx-1,ty));
                         else if(x != 0)
-                            mapTiles[x][y].tile->getChunk(tx,ty)->setLeftNeighbour(mapTiles[x-1][y].tile->getChunk(CHUNKS-1,ty));
+                        {
+                            if(tileLoaded(x-1,y))
+                                mapTiles[x][y].tile->getChunk(tx,ty)->setLeftNeighbour(mapTiles[x-1][y].tile->getChunk(CHUNKS-1,ty));
+                            else
+                                mapTiles[x][y].tile->getChunk(tx,ty)->setLeftNeighbour(0);
+                        }
                         else
                             mapTiles[x][y].tile->getChunk(tx,ty)->setLeftNeighbour(0);
                     }
