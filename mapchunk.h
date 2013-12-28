@@ -15,55 +15,6 @@
 #include "material.h"
 #include "world.h"
 
-enum MapChunkBorder
-{
-    Top    = 0,
-    Right  = 1,
-    Bottom = 2,
-    Left   = 3
-};
-
-class Broadcast
-{
-public:
-    Broadcast() : broadcastHeight(false)
-    {
-    }
-
-    Broadcast(QVector<QPair<int, float>> top, QVector<QPair<int, float>> right, QVector<QPair<int, float>> bot, QVector<QPair<int, float>> left)
-    : broadcastHeight(true)
-    , topData(top)
-    , rightData(right)
-    , bottomData(bot)
-    , leftData(left)
-    {
-    }
-
-    ~Broadcast()
-    {
-    }
-
-    const bool isBroadcasting() const { return broadcastHeight; }
-
-    const QVector<QPair<int, float>>& getTopData() const    { return topData; }
-    const QVector<QPair<int, float>>& getRightData() const  { return rightData; }
-    const QVector<QPair<int, float>>& getBottomData() const { return bottomData; }
-    const QVector<QPair<int, float>>& getLeftData() const   { return leftData; }
-
-    void stop()
-    {
-        broadcastHeight = false;
-    }
-
-private:
-    QVector<QPair<int, float>> topData;
-    QVector<QPair<int, float>> rightData;
-    QVector<QPair<int, float>> bottomData;
-    QVector<QPair<int, float>> leftData;
-
-    bool broadcastHeight;
-};
-
 class MapChunk
 {
 public:
@@ -76,11 +27,11 @@ public:
     void draw();
 
     /// Terrain
-    bool changeTerrain(float x , float z, float change         , float radius, int brush, int brush_type);
-    bool flattenTerrain(float x, float z, float y, float change, float radius, int brush, int brush_type);
-    bool blurTerrain(float x   , float z, float change         , float radius, int brush, int brush_type);
+    bool changeTerrain(float x , float z, float change         , const Brush* brush);
+    bool flattenTerrain(float x, float z, float y, float change, const Brush* brush);
+    bool blurTerrain(float x   , float z, float change         , const Brush* brush);
 
-    bool paintTerrain();
+    bool paintTerrain(float x, float z, float flow, const Brush* brush, TexturePtr texture);
 
     /// Get
     const float getHeight(const float& x, const float& y) const;
@@ -91,12 +42,32 @@ public:
 
     const QVector2D  getBases() const                     { return QVector2D(baseX, baseY); }
     const GLuint&    getDisplaySubroutines() const        { return displaySubroutines[world->displayMode()]; }
-    const Broadcast* getBroadcast() const                 { return broadcast; }
+
+    TexturePtr getTexture(int index) const
+    {
+        if(index >= MAX_TEXTURES)
+            return TexturePtr(new Texture());
+
+        return textures[index];
+    }
 
     QOpenGLShaderProgramPtr getShader() const { return chunkMaterial->shader(); }
 
+    //
+    void moveAlphaMap(int index, bool up);
+    void deleteAlphaMap(int index);
+
     /// Set
-    void setBorderHeight(const QVector<QPair<int, float>> data, MapChunkBorder border);
+    enum Border
+    {
+        Horizontal = 0,
+        Vertical   = 1
+    };
+
+    void setBorder(Border border, const QVector<QPair<int, float>>& data);
+
+    void setBottomNeighbour(MapChunk* chunk);
+    void setLeftNeighbour(MapChunk* chunk);
 
     /// ...
     void save(MCNK* chunk);
@@ -119,6 +90,11 @@ private:
     TexturePtr terrainData;
     SamplerPtr terrainSampler;
 
+    TexturePtr textures[MAX_TEXTURES];
+    TexturePtr alphaMaps[ALPHAMAPS];
+
+    unsigned char* alphaMapsData[ALPHAMAPS];
+
     float* mapData;
     /// ----------------------------------
 
@@ -130,13 +106,13 @@ private:
     float baseX, baseY;
     float chunkBaseX, chunkBaseY;
 
-    Broadcast* broadcast;
+    // Neighbour
+    MapChunk* bottomNeighbour;
+    MapChunk* leftNeighbour;
     /// ----------------------------------
 
     int horizToHMapSize(float position);
     float HMapSizeToHoriz(int position);
-
-    void broadcastBorderHeight(QVector<QPair<int, float>> data, MapChunkBorder border);
 
     void initialize();
 };

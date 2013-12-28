@@ -123,9 +123,9 @@
      <addaction name="action_Default"/>
      <addaction name="action_Terrain_Wireframe"/>
      <addaction name="action_Wireframe"/>
-     <addaction name="action_Grass"/>
-     <addaction name="action_Grass_Rock"/>
-     <addaction name="action_Grass_Rock_Snow"/>
+     <addaction name="action_BaseLayer"/>
+     <addaction name="action_Base_Layer1"/>
+     <addaction name="action_Base_Layer1_Layer2"/>
      <addaction name="action_Wireframe_Height"/>
      <addaction name="action_Colored"/>
      <addaction name="action_Light_and_Shadow"/>
@@ -301,34 +301,34 @@
     <string>F3</string>
    </property>
   </action>
-  <action name="action_Grass">
+  <action name="action_BaseLayer">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>&amp;Grass</string>
+    <string>&amp;Base Layer</string>
    </property>
    <property name="shortcut">
     <string>F4</string>
    </property>
   </action>
-  <action name="action_Grass_Rock">
+  <action name="action_Base_Layer1">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Grass + &amp;Rock</string>
+    <string>Base + Layer 1</string>
    </property>
    <property name="shortcut">
     <string>F5</string>
    </property>
   </action>
-  <action name="action_Grass_Rock_Snow">
+  <action name="action_Base_Layer1_Layer2">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Grass + Rock + &amp;Snow</string>
+    <string>Base + Layer 2 + Layer 3</string>
    </property>
    <property name="shortcut">
     <string>F6</string>

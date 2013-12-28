@@ -14,18 +14,19 @@
 World::World(const ProjectFileData& projectFile)
 : camera(0)
 , projectData(projectFile)
-, brush(new Brush(1, 10.0f, app().getSetting("brushColor", QColor(0, 255, 0)).value<QColor>(), 5.3f))
+, brush(new Brush(Brush::Types(), 8.0f, 10.0f, app().getSetting("brushColor", QColor(0, 255, 0)).value<QColor>(), 5.3f))
 , textureManager(NULL)
 , sunTheta(30.0f)
+, alphaMapSize(MAP_WIDTH / CHUNKS)
 , eDisplay(TexturedAndLit)
 , GLfuncs(0)
 {
     eDisplayNames << QStringLiteral("shadeSimpleWireFrame")
                   << QStringLiteral("shadeWorldHeight")
                   << QStringLiteral("shadeWorldNormal")
-                  << QStringLiteral("shadeGrass")
-                  << QStringLiteral("shadeGrassAndRocks")
-                  << QStringLiteral("shadeGrassRocksAndSnow")
+                  << QStringLiteral("shaderBaseLayer")
+                  << QStringLiteral("shadeBaseAndLayer1")
+                  << QStringLiteral("shadeBaseLayer1AndLayer2")
                   << QStringLiteral("shadeLightingFactors")
                   << QStringLiteral("shadeTexturedAndLit")
                   << QStringLiteral("shadeWorldTexturedWireframed")
@@ -58,7 +59,7 @@ void World::initialize(QOpenGLContext* context)
 
     if(!GLfuncs)
     {
-        qFatal("Requires OpenGL >= 4.2");
+        qFatal(QObject::tr("Requires OpenGL >= 4.2").toLatin1().data());
         exit(1);
     }
 
@@ -87,6 +88,8 @@ void World::initialize(QOpenGLContext* context)
                 loadTile(x, y);
         }
     }
+
+    createNeighbours();
 }
 
 void World::update(float dt)
@@ -94,7 +97,7 @@ void World::update(float dt)
     /*QOpenGLShaderProgramPtr shader = material->shader();
     shader->setUniformValue("waterTime", dt);*/
 
-    // load tiles around
+    // load tiles around + load neighbours
 }
 
 void World::draw(QMatrix4x4 modelMatrix, float triangles, QVector2D mousePosition, bool drawBrush)
@@ -205,9 +208,11 @@ void World::loadNewProjectMapTilesIntoMemory(bool** mapCoords)
                 loadTile(x, y, false);
         }
     }
+
+    createNeighbours();
 }
 
-void World::changeTerrain(float x, float z, float change, int brush_type)
+void World::changeTerrain(float x, float z, float change)
 {
     for(int tx = 0; tx < TILES; ++tx)
     {
@@ -219,7 +224,7 @@ void World::changeTerrain(float x, float z, float change, int brush_type)
                 {
                     for(int cy = 0; cy < CHUNKS; ++cy)
                     {
-                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->changeTerrain(x, z, change, brush->Radius(), brush->Type(), brush_type))
+                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->changeTerrain(x, z, change, brush))
                         {
                             // push changed chunks
                             // set changed i, j
@@ -231,7 +236,7 @@ void World::changeTerrain(float x, float z, float change, int brush_type)
     }
 }
 
-void World::flattenTerrain(float x, float z, float y, float change, int brush_type)
+void World::flattenTerrain(float x, float z, float y, float change)
 {
     for(int tx = 0; tx < TILES; ++tx)
     {
@@ -243,7 +248,7 @@ void World::flattenTerrain(float x, float z, float y, float change, int brush_ty
                 {
                     for(int cy = 0; cy < CHUNKS; ++cy)
                     {
-                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->flattenTerrain(x, z, y, change, brush->Radius(), brush->Type(), brush_type))
+                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->flattenTerrain(x, z, y, change, brush))
                         {
                             // push changed chunks
                             // set changed i, j
@@ -255,7 +260,7 @@ void World::flattenTerrain(float x, float z, float y, float change, int brush_ty
     }
 }
 
-void World::blurTerrain(float x, float z, float change, int brush_type)
+void World::blurTerrain(float x, float z, float change)
 {
     for(int tx = 0; tx < TILES; ++tx)
     {
@@ -267,7 +272,7 @@ void World::blurTerrain(float x, float z, float change, int brush_type)
                 {
                     for(int cy = 0; cy < CHUNKS; ++cy)
                     {
-                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->blurTerrain(x, z, change, brush->Radius(), brush->Type(), brush_type))
+                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->blurTerrain(x, z, change, brush))
                         {
                             // push changed chunks
                             // set changed i, j
@@ -279,9 +284,49 @@ void World::blurTerrain(float x, float z, float change, int brush_type)
     }
 }
 
-void World::paintTerrain()
+void World::paintTerrain(float x, float z, float flow)
 {
-    return;
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
+                for(int cx = 0; cx < CHUNKS; ++cx)
+                {
+                    for(int cy = 0; cy < CHUNKS; ++cy)
+                    {
+                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->paintTerrain(x, z, flow, brush, textureManager->getSelectedTexture()))
+                        {
+                            // push changed chunks
+                            // set changed i, j
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+MapChunk* World::getMapChunkAt(const QVector3D& position) const
+{
+    int tx = floor(position.x() / TILESIZE);
+    int ty = floor(position.z() / TILESIZE);
+
+    if(!tileLoaded(tx, ty))
+        return NULL;
+
+    int cx = floor((position.x() - TILESIZE * tx) / CHUNKSIZE);
+    int cy = floor((position.z() - TILESIZE * ty) / CHUNKSIZE);
+
+    if(cx >= CHUNKS || cy >= CHUNKS)
+    {
+        qDebug() << QObject::tr("getMapChunkAt cx or cy is wrong calculated!");
+
+        return NULL;
+    }
+
+    return mapTiles[tx][ty].tile->getChunk(cx, cy);
 }
 
 void World::setChunkShaderUniform(const char* name, const QVector2D& value)
@@ -412,7 +457,7 @@ void World::save()
     {
         if(!projectFile.open(QIODevice::ReadOnly))
         {
-            qCritical(QString("We couldn't save project %1, because we can't open him.").arg(projectData.projectName).toLatin1().constData());
+            qCritical(QString(QObject::tr("We couldn't save project %1, because we can't open him.")).arg(projectData.projectName).toLatin1().constData());
 
             return;
         }
@@ -492,7 +537,7 @@ void World::save()
 
         if(!projectFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
         {
-            qCritical(QString("We couldn't save project %1, because we can't open him.").arg(projectData.projectName).toLatin1().constData());
+            qCritical(QString(QObject::tr("We couldn't save project %1, because we can't open him.")).arg(projectData.projectName).toLatin1().constData());
 
             return;
         }
@@ -573,6 +618,48 @@ void World::setDisplayMode(int displayMode)
         default:
             eDisplay = TexturedAndLit;
             break;
+    }
+}
+
+void World::createNeighbours()
+{
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
+                for(int cx = 0; cx < CHUNKS; ++cx)
+                {
+                    for(int cy = 0; cy < CHUNKS; ++cy)
+                    {
+                        if(cy != 0)
+                            mapTiles[tx][ty].tile->getChunk(cx, cy)->setBottomNeighbour(mapTiles[tx][ty].tile->getChunk(cx, cy - 1));
+                        else if(ty != 0)
+                        {
+                            if(tileLoaded(tx, ty - 1))
+                                mapTiles[tx][ty].tile->getChunk(cx, cy)->setBottomNeighbour(mapTiles[tx][ty - 1].tile->getChunk(cx, CHUNKS - 1));
+                            else
+                                mapTiles[tx][ty].tile->getChunk(cx, cy)->setBottomNeighbour(0);
+                        }
+                        else
+                            mapTiles[tx][ty].tile->getChunk(cx, cy)->setBottomNeighbour(0);
+
+                        if(cx != 0)
+                            mapTiles[tx][ty].tile->getChunk(cx, cy)->setLeftNeighbour(mapTiles[tx][ty].tile->getChunk(cx - 1, cy));
+                        else if(tx != 0)
+                        {
+                            if(tileLoaded(tx - 1, ty))
+                                mapTiles[tx][ty].tile->getChunk(cx, cy)->setLeftNeighbour(mapTiles[tx - 1][ty].tile->getChunk(CHUNKS - 1, cy));
+                            else
+                                mapTiles[tx][ty].tile->getChunk(cx, cy)->setLeftNeighbour(0);
+                        }
+                        else
+                            mapTiles[tx][ty].tile->getChunk(cx, cy)->setLeftNeighbour(0);
+                    }
+                }
+            }
+        }
     }
 }
 

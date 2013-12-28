@@ -196,7 +196,7 @@ ProjectMapPage::ProjectMapPage(QWidget* parent) : QWizardPage(parent)
     mapGScene = new MapGraphicsScene();
 
     mapGView->setScene(mapGScene);
-    mapGView->setFixedSize(TILES * sqrt((double)TILES) + 5, TILES * sqrt((double)TILES) + 5);
+    mapGView->setFixedSize(TILES * sqrt(MathHelper::toDouble(TILES)) + 5, TILES * sqrt(MathHelper::toDouble(TILES)) + 5);
     mapGView->setMouseTracking(true);
 
     applyBrush();
@@ -247,8 +247,8 @@ void ProjectMapPage::uncheckAllBoxs()
 
 void ProjectMapPage::refreshGPS(int x, int y)
 {
-    cursorPosX = x / sqrt((double)TILES);
-    cursorPosY = y / sqrt((double)TILES);
+    cursorPosX = x / sqrt(MathHelper::toDouble(TILES));
+    cursorPosY = y / sqrt(MathHelper::toDouble(TILES));
 
     if(cursorPosX < TILES && cursorPosX >= 0 && cursorPosY < TILES && cursorPosY >= 0)
         gps->setText(QString("X: %1, Y: %2").arg(cursorPosX).arg(cursorPosY));
@@ -271,7 +271,7 @@ void ProjectMapPage::applyBrush()
     {
         for(int y = 0; y < TILES; ++y)
         {
-            QRect tile(x * sqrt((double)TILES), y * sqrt((double)TILES), sqrt((double)TILES), sqrt((double)TILES));
+            QRect tile(x * sqrt(MathHelper::toDouble(TILES)), y * sqrt(MathHelper::toDouble(TILES)), sqrt(MathHelper::toDouble(TILES)), sqrt(MathHelper::toDouble(TILES)));
 
             if(mapCoords[x][y])
                 mapGScene->addRect(tile, pen, brushSelected);

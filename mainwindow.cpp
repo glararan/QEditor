@@ -88,7 +88,7 @@ MainWindow::~MainWindow()
     deleteObject(t_speed_label);
     deleteObject(t_speed_value_label);
 
-    qDebug() << "UI in MainWindow was destroyed!";
+    qDebug() << tr("UI in MainWindow was destroyed!");
 
     deleteObject(startUp);
 
@@ -105,16 +105,11 @@ MainWindow::~MainWindow()
         delete[] mapCoords;
     }
 
-    qDebug() << "MainWindow was destroyed!";
+    qDebug() << tr("MainWindow was destroyed!");
 }
 
 void MainWindow::openWorld(ProjectFileData projectData)
 {
-    // menu dialogs constructors
-    teleportW = new TeleportWidget();
-    settingsW = new MapView_Settings();
-    texturepW = new TexturePicker();
-
     // world constructor
     world = new World(projectData);
 
@@ -132,12 +127,21 @@ void MainWindow::openWorld(ProjectFileData projectData)
     ui->menu_Project->menuAction()->setVisible(true);
     ui->menu_Tools->menuAction()->setVisible(true);
 
+    // menu dialogs constructors
+    teleportW = new TeleportWidget();
+    settingsW = new MapView_Settings();
+    texturepW = new TexturePicker();
+
+    // post initialize world sub widgets
+    connect(mapView, SIGNAL(initialized()), this, SLOT(postInitializeSubWorldWidgets()));
+
     // init modes
     initMode();
 
     /// map view
-    connect(mapView, SIGNAL(statusBar(QString)), ui->statusbar, SLOT(showMessage(QString)));
-    connect(mapView, SIGNAL(updateShapingRadius(double)), this, SLOT(setShapingRadius(double)));
+    connect(mapView, SIGNAL(statusBar(QString)),          ui->statusbar, SLOT(showMessage(QString)));
+    connect(mapView, SIGNAL(updateShapingRadius(double)), this,          SLOT(setShapingRadius(double)));
+    connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)), texturepW,     SLOT(setChunk(MapChunk*)));
 
     /// menu bar
     // file
@@ -159,16 +163,16 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(this, SIGNAL(setSpeedMultiplier(float)), mapView, SLOT(setSpeedMultiplier(float)));
 
     // tools - display mode
-    connect(ui->action_Default          , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
-    connect(ui->action_Terrain_Wireframe, SIGNAL(triggered()), this, SLOT(setDisplayMode()));
-    connect(ui->action_Wireframe        , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
-    connect(ui->action_Grass            , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
-    connect(ui->action_Grass_Rock       , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
-    connect(ui->action_Grass_Rock_Snow  , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
-    connect(ui->action_Wireframe_Height , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
-    connect(ui->action_Colored          , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
-    connect(ui->action_Light_and_Shadow , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
-    connect(ui->action_Hidden           , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
+    connect(ui->action_Default           , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
+    connect(ui->action_Terrain_Wireframe , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
+    connect(ui->action_Wireframe         , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
+    connect(ui->action_BaseLayer         , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
+    connect(ui->action_Base_Layer1       , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
+    connect(ui->action_Base_Layer1_Layer2, SIGNAL(triggered()), this, SLOT(setDisplayMode()));
+    connect(ui->action_Wireframe_Height  , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
+    connect(ui->action_Colored           , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
+    connect(ui->action_Light_and_Shadow  , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
+    connect(ui->action_Hidden            , SIGNAL(triggered()), this, SLOT(setDisplayMode()));
 
     connect(this, SIGNAL(setDisplayMode(int)), mapView, SLOT(setDisplayMode(int)));
 
@@ -207,9 +211,16 @@ void MainWindow::openWorld(ProjectFileData projectData)
 
     connect(t_radius, SIGNAL(valueChanged(double)), t_radius_value_label, SLOT(setNum(double)));
     connect(t_speed,  SIGNAL(valueChanged(double)), t_speed_value_label,  SLOT(setNum(double)));
+    connect(t_flow,   SIGNAL(valueChanged(double)), t_flow_value_label,   SLOT(setNum(double)));
 
     connect(t_radius, SIGNAL(valueChanged(double)), mapView, SLOT(setShapingRadius(double)));
     connect(t_speed,  SIGNAL(valueChanged(double)), mapView, SLOT(setShapingSpeed(double)));
+    connect(t_flow,   SIGNAL(valueChanged(double)), mapView, SLOT(setTexturingFlow(double)));
+}
+
+void MainWindow::postInitializeSubWorldWidgets()
+{
+    texturepW->initialize(world->getTextureManager());
 }
 
 void MainWindow::createMemoryProject(NewProjectData projectData)
@@ -309,11 +320,11 @@ void MainWindow::setDisplayMode()
         emit setDisplayMode(8);
     else if(dName == "action_Wireframe")
         emit setDisplayMode(0);
-    else if(dName == "action_Grass")
+    else if(dName == "action_BaseLayer")
         emit setDisplayMode(3);
-    else if(dName == "action_Grass_Rock")
+    else if(dName == "action_Base_Layer1")
         emit setDisplayMode(4);
-    else if(dName == "action_Grass_Rock_Snow")
+    else if(dName == "action_Base_Layer1_Layer2")
         emit setDisplayMode(5);
     else if(dName == "action_Wireframe_Height")
         emit setDisplayMode(1);
@@ -368,17 +379,17 @@ void MainWindow::setToolBarItem()
 
 void MainWindow::showTeleport()
 {
-    addDockWindow("Teleport", teleportW);
+    addDockWindow(tr("Teleport"), teleportW);
 }
 
 void MainWindow::showSettings()
 {
-    addDockWindow("Settings", settingsW);
+    addDockWindow(tr("Settings"), settingsW);
 }
 
 void MainWindow::showTexturePicker()
 {
-    addDockWindow("Texture Picker", texturepW);
+    addDockWindow(tr("Texture Picker"), texturepW);
 }
 
 void MainWindow::showAbout()
@@ -400,6 +411,16 @@ void MainWindow::showProjectSettings()
 
 void MainWindow::addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area)
 {
+    // Check if is already in any dock
+    QList<QDockWidget*> dWidgets = findChildren<QDockWidget*>();
+
+    foreach(QDockWidget* dWidget, dWidgets)
+    {
+        if(dWidget->widget() == widget)
+            return;
+    }
+
+    // Add
     QDockWidget* dockWidget = new QDockWidget(title);
     dockWidget->setWidget(widget);
     dockWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
@@ -422,11 +443,18 @@ void MainWindow::initMode()
     t_speed->setMaximumWidth(this->width() / 3);
     t_speed->setObjectName("t_speed");
 
+    t_flow = new QDSlider();
+    t_flow->setMinimum(0.1);
+    t_flow->setMaximum(1.0);
+    t_flow->setValue(0.5);
+    t_flow->setMaximumWidth(this->width() / 3);
+    t_flow->setObjectName("t_flow");
+
     t_brush = new QButtonGroup();
     t_brush->setObjectName("t_brush");
 
     t_brush_circle = new QPushButton(QIcon(":/circle_icon"), "");
-    t_brush_circle->setToolTip("Circle Brush");
+    t_brush_circle->setToolTip(tr("Circle Brush"));
     t_brush_circle->setCheckable(true);
     t_brush_circle->setChecked(true);
     t_brush_circle->setIconSize(QSize(24, 24));
@@ -434,44 +462,46 @@ void MainWindow::initMode()
     t_brush->addButton(t_brush_circle);
 
     t_brush_square = new QPushButton(QIcon(":/square_icon"), "");
-    t_brush_square->setToolTip("Square Brush");
+    t_brush_square->setToolTip(tr("Square Brush"));
     t_brush_square->setCheckable(true);
     t_brush_square->setIconSize(QSize(24, 24));
     t_brush_square->setObjectName("t_brush_square");
     t_brush->addButton(t_brush_square);
 
     t_terrain_mode = new QComboBox();
-    t_terrain_mode->setToolTip("Select terrain mode");
+    t_terrain_mode->setToolTip(tr("Select terrain mode"));
     t_terrain_mode->setObjectName("t_terrain_mode");
-    t_terrain_mode->addItem("Shaping"  , 0);
-    t_terrain_mode->addItem("Smoothing", 1);
+    t_terrain_mode->addItem(tr("Shaping")  , 0);
+    t_terrain_mode->addItem(tr("Smoothing"), 1);
 
-    t_terrain_mode_0.append(qMakePair<QString, QVariant>("Linear"  , 1));
-    t_terrain_mode_0.append(qMakePair<QString, QVariant>("Flat"    , 2));
-    t_terrain_mode_0.append(qMakePair<QString, QVariant>("Smooth"  , 3));
-    t_terrain_mode_0.append(qMakePair<QString, QVariant>("Unknown1", 4));
-    t_terrain_mode_0.append(qMakePair<QString, QVariant>("Unknown2", 5));
+    t_terrain_mode_0.append(qMakePair<QString, QVariant>(tr("Linear")  , 1));
+    t_terrain_mode_0.append(qMakePair<QString, QVariant>(tr("Flat")    , 2));
+    t_terrain_mode_0.append(qMakePair<QString, QVariant>(tr("Smooth")  , 3));
+    t_terrain_mode_0.append(qMakePair<QString, QVariant>(tr("Unknown1"), 4));
+    t_terrain_mode_0.append(qMakePair<QString, QVariant>(tr("Unknown2"), 5));
 
-    t_terrain_mode_1.append(qMakePair<QString, QVariant>("Linear"  , 1));
-    t_terrain_mode_1.append(qMakePair<QString, QVariant>("Flat"    , 2));
-    t_terrain_mode_1.append(qMakePair<QString, QVariant>("Smooth"  , 3));
+    t_terrain_mode_1.append(qMakePair<QString, QVariant>(tr("Linear")  , 1));
+    t_terrain_mode_1.append(qMakePair<QString, QVariant>(tr("Flat")    , 2));
+    t_terrain_mode_1.append(qMakePair<QString, QVariant>(tr("Smooth")  , 3));
 
     t_brush_type = new QComboBox();
-    t_brush_type->setToolTip("Select brush type");
+    t_brush_type->setToolTip(tr("Select brush type"));
     t_brush_type->setObjectName("t_brush_type");
 
     for(int i = 0; i < t_terrain_mode_0.count(); ++i)
         t_brush_type->addItem(t_terrain_mode_0.at(i).first, t_terrain_mode_0.at(i).second);
 
-    t_terrain_mode_label = new QLabel("Mode:");
+    t_terrain_mode_label = new QLabel(tr("Mode:"));
 
-    t_brush_label      = new QLabel("Brushes:");
-    t_brush_type_label = new QLabel("Brush type:");
+    t_brush_label      = new QLabel(tr("Brushes:"));
+    t_brush_type_label = new QLabel(tr("Brush type:"));
 
-    t_radius_label       = new QLabel("Radius:");
+    t_radius_label       = new QLabel(tr("Radius:"));
     t_radius_value_label = new QLabel(QString("%1").arg(t_radius->value()));
-    t_speed_label        = new QLabel("Speed:");
+    t_speed_label        = new QLabel(tr("Speed:"));
     t_speed_value_label  = new QLabel(QString("%1").arg(t_speed->value()));
+    t_flow_label         = new QLabel(tr("Flow:"));
+    t_flow_value_label   = new QLabel(QString("%1").arg(t_flow->value()));
 
     t_terrain_mode_label->setObjectName("t_terrain_mode_label");
     t_brush_label->setObjectName("t_brush_label");
@@ -480,6 +510,8 @@ void MainWindow::initMode()
     t_radius_value_label->setObjectName("t_radius_value_label");
     t_speed_label->setObjectName("t_speed_label");
     t_speed_value_label->setObjectName("t_speed_value_label");
+    t_flow_label->setObjectName("t_flow_label");
+    t_flow_value_label->setObjectName("t_flow_value_label");
 
     t_terrain_mode_label->setStyleSheet("margin:-3px 5px 0 0;");
 
@@ -488,14 +520,15 @@ void MainWindow::initMode()
 
     t_radius_label->setStyleSheet("margin:-3px 5px 0 20px;");
     t_speed_label->setStyleSheet("margin:-3px 5px 0 20px;");
+    t_flow_label->setStyleSheet("margin:-3px 5px 0 20px;");
 
     t_radius_value_label->setStyleSheet("margin:-3px 0 0 5px;");
     t_speed_value_label->setStyleSheet("margin:-3px 0 0 5px;");
+    t_flow_value_label->setStyleSheet("margin:-3px 0 0 5px;");
 
     /// mode1
     addToolbarAction(t_brush_label       , mode1Actions);
     addToolbarAction(t_brush_circle      , mode1Actions);
-    addToolbarAction(t_brush_square      , mode1Actions);
     addToolbarAction(t_brush_square      , mode1Actions);
     addToolbarAction(t_terrain_mode_label, mode1Actions);
     addToolbarAction(t_terrain_mode      , mode1Actions);
@@ -507,6 +540,17 @@ void MainWindow::initMode()
     addToolbarAction(t_speed_label       , mode1Actions);
     addToolbarAction(t_speed             , mode1Actions);
     addToolbarAction(t_speed_value_label , mode1Actions);
+
+    /// mode2
+    addToolbarAction(t_brush_label       , mode2Actions);
+    addToolbarAction(t_brush_circle      , mode2Actions);
+    addToolbarAction(t_brush_square      , mode2Actions);
+    addToolbarAction(t_radius_label      , mode2Actions);
+    addToolbarAction(t_radius            , mode2Actions);
+    addToolbarAction(t_radius_value_label, mode2Actions);
+    addToolbarAction(t_flow_label        , mode2Actions);
+    addToolbarAction(t_flow              , mode2Actions);
+    addToolbarAction(t_flow_value_label  , mode2Actions);
 
     hideToolbarActions();
 }
@@ -566,8 +610,23 @@ void MainWindow::setProjectData(ProjectFileData& data)
 
 void MainWindow::addToolbarAction(QWidget* widget, QList<QString>& parentList)
 {
-    ui->toolbar3->addWidget(widget);
-    ui->toolbar3->actions().last()->setObjectName(widget->objectName());
+    bool isThere = false;
+
+    foreach(QAction* action, ui->toolbar3->actions())
+    {
+        if(ui->toolbar3->widgetForAction(action) == widget)
+        {
+            isThere = true;
+
+            break;
+        }
+    }
+
+    if(!isThere)
+    {
+        ui->toolbar3->addWidget(widget);
+        ui->toolbar3->actions().last()->setObjectName(widget->objectName());
+    }
 
     parentList.append(widget->objectName());
 }

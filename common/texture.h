@@ -2,61 +2,38 @@
 #define TEXTURE_H
 
 #include <qopengl.h>
+#include <QOpenGLTexture>
 #include <QSharedPointer>
 
 class QImage;
 class QOpenGLFunctions_4_2_Core;
 
-class Texture
+class Texture : public QOpenGLTexture
 {
 public:
-    enum TextureType
-    {
-        Texture1D      = GL_TEXTURE_1D,
-        Texture2D      = GL_TEXTURE_2D,
-        Texture3D      = GL_TEXTURE_3D,
-        TextureCubeMap = GL_TEXTURE_CUBE_MAP
-    };
-
-    Texture(TextureType Type = Texture2D);
-    Texture(const int Width, const int Height, TextureType Type = Texture2D);
+    Texture();
+    Texture(Target target, QString path = QString());
+    Texture(const QImage& image, MipMapGeneration genMipMaps = GenerateMipMaps, QString path = QString());
+    Texture(const QImage& image, QString path, MipMapGeneration genMipMaps = GenerateMipMaps);
     ~Texture();
 
-    TextureType Type() const { return type; }
+    const QString getPath() const { return filePath; }
 
-    void create();
-    void destroy();
-    void bind();
-    void release();
+    const bool isNull() const      { return !isCreated(); }
+    const bool isPathEmpty() const { return filePath.isEmpty(); }
 
-    GLuint textureID() const { return textureId; }
+    void setHeight(const GLfloat data, QVector2D offset, bool bindTexture = false);
+    void setHeightmap(void* data);
 
-    void initializeToEmpty(const QSize& size);
+    void setAlpha(const unsigned char data, QVector2D offset, bool bindTexture = false);
+    void setAlphamap(void* data);
 
-    void setImage(const QImage& image);
-    void setCubeMapImage(GLenum face, const QImage& image);
-    void setRawData2D(GLenum target, int mipmapLevel, GLenum internalFormat,
-                      int width, int height, int borderWidth,
-                      GLenum format, GLenum type, const void* data);
-
-    void updatePixel(const GLfloat value, QVector2D offset, bool bind = false);
-
-    void setImageAlpha(void* pixelArray);
-    void getImageAlpha(void* pixelArray);
-
-    void toTexture(QSize size);
-
-    void generateMipMaps();
+    const QImage getImage();
 
 private:
-    TextureType type;
-
-    GLuint textureId;
-
-    int width;
-    int height;
-
     QOpenGLFunctions_4_2_Core* GLfuncs;
+
+    QString filePath;
 };
 
 typedef QSharedPointer<Texture> TexturePtr;

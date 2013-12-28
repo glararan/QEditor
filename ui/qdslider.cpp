@@ -1,5 +1,7 @@
 #include "qdslider.h"
 
+#include "mathhelper.h"
+
 QDSlider::QDSlider(int decimals, QWidget* parent) : QSlider(parent)
 {
     setOrientation(Qt::Horizontal);
@@ -17,7 +19,7 @@ QDSlider::QDSlider(int decimals, QWidget* parent) : QSlider(parent)
 
 void QDSlider::intToDouble(int value)
 {
-    double val = static_cast<double>(value);
+    double val = MathHelper::toDouble(value);
     val /= multiplier;
 
     emit valueChanged(val);

@@ -86,11 +86,12 @@ private:
 
     /// Terrain parameters
     float shaping_speed;
-    float shaping_radius;
-    float shaping_radius_multiplier;
-    int   shaping_brush;
     int   shaping_brush_type;
 
+    /// Texturing parameters
+    float texturing_flow;
+
+    /// Global parameters
     QOpenGLContext* GLcontext;
 
     Camera* camera;
@@ -161,6 +162,7 @@ public slots:
     void setShapingRadius(double radius);
     void setShapingBrush(int brush);
     void setShapingBrushType(int type);
+    void setTexturingFlow(double flow);
     void setTerrainMode(int mode);
     void setBrushColor(QColor* color);
     void setEnvionmentDistance(float value);
@@ -181,6 +183,8 @@ signals:
     void updateShapingSpeed(double speed);
     void updateShapingRadius(double radius);
     void updateShapingBrush(int brush);
+
+    void selectedMapChunk(MapChunk* chunk);
 
     void initialized();
 };

@@ -26,28 +26,31 @@ StartUp::StartUp(QWidget* parent)
     {
         RecentProject project = proj.value<RecentProject>();
 
-        QLabel* label  = new QLabel(QString("<html>"
-                                            "   <head>"
-                                            "       <style type=text/css>"
-                                            "           a       {padding-bottom:10px;}"
-                                            "           a:link  {text-decoration:none;list-style-type:circle;}"
-                                            "           a:hover {text-decoration:underline;}"
+        QLabel* label = new QLabel(QString("<html>"
+                                           "   <head>"
+                                           "       <style type=text/css>"
+                                           "           a       {color:rgb(0, 128, 255);text-decoration:none;}"
+                                           "           a:hover {text-decoration:underline;}" // Qt doesn't support :hover
 
-                                            "           span    {color:gray;}"
-                                            "       </style>"
-                                            "   </head>"
-                                            "   <body>"
-                                            "       <a href='%1'>%2<br><span>%1</span></<a>"
-                                            "   </body>"
-                                            "</html>"
-                                           ).arg(project.projectPath + "/" + project.projectFile + ".qep").arg(project.projectName));
+                                           "           span    {color:gray;}"
+                                           "       </style>"
+                                           "   </head>"
+                                           "   <body>"
+                                           "       <ul><li><a href='%1'>%2<br><span>%1</span></<a><br></li></ul>"
+                                           "   </body>"
+                                           "</html>"
+                                          ).arg(project.projectPath + "/" + project.projectFile + ".qep").arg(project.projectName));
+
+        label->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
 
         connect(label, SIGNAL(linkActivated(QString)), this, SLOT(openRecentProject(QString)));
 
-        ui->gridLayout_2->addWidget(label, 6 + projIndex, 0, 1, 3);
-
-        ++projIndex;
+        ui->verticalLayout_6->addWidget(label, projIndex++);
     }
+
+    ui->verticalLayout_6->addStretch(++projIndex);
+
+    setMargins(width());
 
     // buttons
     connect(ui->pushButton,   SIGNAL(clicked()), this, SLOT(showNewProject()));
@@ -160,4 +163,20 @@ void StartUp::addRecentProject(RecentProject& recentProject)
     recentProjects.insert(0, QVariant::fromValue(recentProject));
 
     app().setSetting("recentProjects", recentProjects);
+}
+
+void StartUp::resize(int w, int h)
+{
+    setMargins(w);
+}
+
+void StartUp::setMargins(int width)
+{
+    int top, right, bottom, left;
+
+    ui->gridLayout->getContentsMargins(&left, &top, &right, &bottom);
+
+    right = left = MathHelper::toInt(MathHelper::toDouble(width) / 100.0 * 50.0);
+
+    ui->gridLayout->setContentsMargins(left, top, right, bottom);
 }

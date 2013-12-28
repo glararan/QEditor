@@ -18,7 +18,7 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , panAngle(0.0f)
 , tiltAngle(0.0f)
 , camera_zoom(25.0f)
-, aspectRatio(static_cast<float>(width()) / static_cast<float>(height()))
+, aspectRatio(MathHelper::toFloat(width()) / MathHelper::toFloat(height()))
 , nearPlane(0.01f)
 , farPlane(app().getSetting("environmentDistance", 256.0f).toFloat())
 , speed(44.7f) // in m/s. Equivalent to 100 miles/hour)
@@ -33,10 +33,8 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , mouse_position(QPoint(0, 0))
 , terrain_pos()
 , shaping_speed(1.0f)
-, shaping_radius(10.0f)
-, shaping_radius_multiplier(5.33333f)
-, shaping_brush(1)
 , shaping_brush_type(1)
+, texturing_flow(0.5f)
 , shiftDown(false)
 , ctrlDown(false)
 , altDown(false)
@@ -236,7 +234,7 @@ void MapView::update(float t)
         camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 
     /// mouse on terrain
-    if(eMode == Terrain)
+    if(eMode == Terrain || eMode == Texturing)
     {
         // getWorldCoordinates can be used to spawn object in middle of screen
         terrain_pos = getWorldCoordinates(mouse_position.x(), mouse_position.y());
@@ -252,13 +250,13 @@ void MapView::update(float t)
             if(eMode == Terrain)
             {
                 if(eTerrain == Shaping)
-                    world->changeTerrain(position.x(), position.z(), 7.5f * dt * shaping_speed, shaping_brush_type);
+                    world->changeTerrain(position.x(), position.z(), 7.5f * dt * shaping_speed);
                 else if(eTerrain == Smoothing)
-                    world->flattenTerrain(position.x(), position.z(), position.y(), pow(0.2f, dt) * shaping_speed, shaping_brush_type);
+                    world->flattenTerrain(position.x(), position.z(), position.y(), pow(0.2f, dt) * shaping_speed);
             }
             else if(eMode == Texturing)
             {
-                world->paintTerrain();
+                world->paintTerrain(position.x(), position.z(), texturing_flow);
             }
         }
         else if(ctrlDown)
@@ -266,21 +264,26 @@ void MapView::update(float t)
             if(eMode == Terrain)
             {
                 if(eTerrain == Shaping)
-                    world->changeTerrain(position.x(), position.z(), -7.5f * dt * shaping_speed, shaping_brush_type);
+                    world->changeTerrain(position.x(), position.z(), -7.5f * dt * shaping_speed);
                 else if(eTerrain == Smoothing)
-                    world->blurTerrain(position.x(), position.z(), pow(0.2f, dt) * shaping_speed, shaping_brush_type);
+                    world->blurTerrain(position.x(), position.z(), pow(0.2f, dt) * shaping_speed);
             }
             else if(eMode == Texturing)
             {
-                world->paintTerrain();
+                world->paintTerrain(position.x(), position.z(), texturing_flow);
             }
         }
+
+        // Select mapChunk
+        // Todo make own action in toolbar, cause little laggy when converting toImage
+        if(altDown)
+            emit selectedMapChunk(world->getMapChunkAt(position));
     }
 
     world->update(t);
 
     // Update status bar
-    QString sbMessage = "Initialized!";
+    QString sbMessage = tr("Initialized!");
 
     if(sbMessageList.count() > 0)
     {
@@ -355,7 +358,7 @@ void MapView::resizeGL(int w, int h)
     viewportSize = QVector2D(float(w), float(h));
 
     // Update the projection matrix
-    aspectRatio = static_cast<float>(w) / static_cast<float>(h);
+    aspectRatio = MathHelper::toFloat(w) / MathHelper::toFloat(h);
 
     camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 
@@ -466,7 +469,7 @@ QVector3D MapView::getWorldCoordinates(float mouseX, float mouseY)
     float posZ;
     float posY = viewportSize.y() - mouseY - 1.0f;
 
-    world->getGLFunctions()->glReadPixels((int)mouseX, (int)posY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
+    world->getGLFunctions()->glReadPixels(MathHelper::toInt(mouseX), MathHelper::toInt(posY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
 
     QVector4D clickedPointOnScreen(mouseX, posY, 2.0f * posZ - 1.0f, 1.0f);
     QVector4D clickedPointIn3DOrgn = inverted * clickedPointOnScreen;
@@ -486,26 +489,40 @@ void MapView::resetCamera()
 
 void MapView::setShapingSpeed(double speed)
 {
-    shaping_speed = static_cast<float>(speed);
+    shaping_speed = MathHelper::toFloat(speed);
 }
 
 void MapView::setShapingRadius(double radius)
 {
-    shaping_radius = static_cast<float>(radius);
-
-    world->getBrush()->setRadius(shaping_radius);
+    world->getBrush()->setOuterRadius(MathHelper::toFloat(radius));
+    world->getBrush()->setInnerRadius(MathHelper::toFloat(10.0f));
+    // Todo inner radius
+    //world->getBrush()->setRadius(MathHelper::toFloat(radius));
 }
 
 void MapView::setShapingBrush(int brush)
 {
-    shaping_brush = brush;
-
-    world->getBrush()->setBrush(shaping_brush);
+    world->getBrush()->BrushTypes().setShaping((Brush::ShapingType::Formula)brush);
 }
 
 void MapView::setShapingBrushType(int type)
 {
-    shaping_brush_type = type + 1;
+    switch(eTerrain)
+    {
+        case Shaping:
+        default:
+            world->getBrush()->BrushTypes().setShaping((Brush::ShapingType::Formula)type);
+            break;
+
+        case Smoothing:
+            world->getBrush()->BrushTypes().setSmoothing((Brush::SmoothingType::Formula)type);
+            break;
+    }
+}
+
+void MapView::setTexturingFlow(double flow)
+{
+    texturing_flow = flow;
 }
 
 void MapView::setTerrainMode(int mode)
@@ -756,7 +773,7 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
     }
     else if(leftButtonPressed && altDown)
     {
-        if(eMode == Terrain)
+        if(eMode == Terrain || eMode == Texturing)
             updateShapingRadius(dx);
     }
 
@@ -770,7 +787,7 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
 void MapView::wheelEvent(QWheelEvent* e)
 {
     if(!shiftDown && !altDown && !ctrlDown)
-        dynamicZoom.push_back(-(static_cast<float>(e->delta()) / 240));
+        dynamicZoom.push_back(-(MathHelper::toFloat(e->delta()) / 240));
 
     QGLWidget::wheelEvent(e);
 }

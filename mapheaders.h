@@ -10,7 +10,7 @@ static const int CHUNKS = 4;
 
 static const float TILESIZE  = 533.33333f;
 static const float CHUNKSIZE = TILESIZE / CHUNKS;
-static const float UNITSIZE  = CHUNKSIZE / ((float)CHUNKS / 2);
+static const float UNITSIZE  = CHUNKSIZE / (MathHelper::toFloat(CHUNKS) / 2);
 
 static const double CHUNK_DIAMETER = sqrt(pow(CHUNKSIZE, 2) + pow(CHUNKSIZE, 2));
 
@@ -19,7 +19,11 @@ static const float MAP_DRAW_DISTANCE = 1000.0f;
 static const int MAP_WIDTH  = 1024;
 static const int MAP_HEIGHT = 1024;
 
-static const int CHUNK_ARRAY_SIZE = MAP_WIDTH / CHUNKS * MAP_HEIGHT / CHUNKS * sizeof(float);
+static const int CHUNK_ARRAY_SIZE    = MAP_WIDTH / CHUNKS * MAP_HEIGHT / CHUNKS * sizeof(float);
+static const int CHUNK_ARRAY_UB_SIZE = CHUNK_ARRAY_SIZE / sizeof(float); // Unsigned byte array size
+
+static const int MAX_TEXTURES = 4;
+static const int ALPHAMAPS    = MAX_TEXTURES - 1;
 
 struct MCVT
 {

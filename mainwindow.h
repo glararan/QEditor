@@ -78,7 +78,12 @@ private:
     QList<QPair<QString, QVariant>> t_terrain_mode_1;
 
     // Editing mode = 2
+    QDSlider* t_flow;
 
+    QLabel* t_flow_label;
+    QLabel* t_flow_value_label;
+
+    //
     QList<QString> mode0Actions;
     QList<QString> mode1Actions;
     QList<QString> mode2Actions;
@@ -121,6 +126,7 @@ private slots:
     void showProjectSettings();
 
     void openWorld(ProjectFileData projectData);
+    void postInitializeSubWorldWidgets();
 
     void createMemoryProject(NewProjectData projectData);
 

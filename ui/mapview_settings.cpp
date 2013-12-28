@@ -100,14 +100,14 @@ void MapView_Settings::setTextureScaleOpt(int option)
 
 void MapView_Settings::setTextureScaleFar(double scale)
 {
-    emit setTextureScaleFar(static_cast<float>(scale));
+    emit setTextureScaleFar(MathHelper::toFloat(scale));
 
     app().setSetting("textureScaleFarSlider", scale);
 }
 
 void MapView_Settings::setTextureScaleNear(double scale)
 {
-    emit setTextureScaleNear(static_cast<float>(scale));
+    emit setTextureScaleNear(MathHelper::toFloat(scale));
 
     app().setSetting("textureScaleNearSlider", scale);
 }

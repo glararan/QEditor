@@ -76,11 +76,26 @@ w = a = q
         // coords.z = layer
 
 
+C++ standards:
+    1) static_cast<int>(foo) // C++ cast
+       (int)foo              // C cast !WRONG!
+
+    2) header.h
+       class Class; // instead of include "class.h", include inside of .cpp
+
+    3) (not c++ standard, its memory standard)
+        for(qInt8 i = 0; i < ca 200; ++i) // correct, using 8-bit instead of 32-bit, also quaranteed all platforms 8-bit
+        for(int i = 0; i < ca 200; ++i)   // wrong, ungaranteed 32-bit on all platforms => we should use qInt32
+
+
 Lag Troubleshooter:
 1) Texture data types
     ex: GL_FLOAT width = 10, height = 10 data != width * height, data = width * height * sizeof(float)
 
-2) Black terrain
+2) Black terrain & laggs
     ex: Give to shader data when map is not yet initialized
     ex2: if you have shader data outside MapChunk and its not necessary, do it in MapChunk like fog init.
     ex3: use shader->bind() everywhere!
+
+3) Black terrain
+    ex: rly bad using QOpenGLTexture for loading texture :)

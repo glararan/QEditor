@@ -46,9 +46,9 @@ QEditor developers: glararan(Lukáš Veteška), netix
 QEditor sub-apps developers: Martin Hruška, Jindřich Jadrný.
 QEditor tutorial videos: Daniel Franěk
 
-Powered by Qt 5.1.1 &amp; OpenGL 4.2.
+Powered by Qt 5.2 &amp; OpenGL 4.2.
 
-Version: PRE-ALPHA 0.2</string>
+Version: PRE-ALPHA 0.3</string>
        </property>
       </widget>
      </item>

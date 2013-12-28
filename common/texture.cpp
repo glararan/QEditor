@@ -8,24 +8,20 @@
 
 #include <QDebug>
 
-Texture::Texture(TextureType type) : type(type), textureId(0), GLfuncs(0)
+Texture::Texture()
+: QOpenGLTexture(QOpenGLTexture::Target1D)
 {
+    QOpenGLContext* context = QOpenGLContext::currentContext();
+
+    Q_ASSERT(context);
+
+    GLfuncs = context->versionFunctions<QOpenGLFunctions_4_2_Core>();
+    GLfuncs->initializeOpenGLFunctions();
 }
 
-Texture::Texture(const int Width, const int Height, TextureType Type)
-: type(Type)
-, textureId(0)
-, width(Width)
-, height(Height)
-, GLfuncs(0)
-{
-}
-
-Texture::~Texture()
-{
-}
-
-void Texture::create()
+Texture::Texture(Target target, QString path)
+: QOpenGLTexture(target)
+, filePath(path)
 {
     QOpenGLContext* context = QOpenGLContext::currentContext();
 
@@ -34,106 +30,87 @@ void Texture::create()
     GLfuncs = context->versionFunctions<QOpenGLFunctions_4_2_Core>();
     GLfuncs->initializeOpenGLFunctions();
 
-    GLfuncs->glGenTextures(1, &textureId);
+    create();
+    bind();
 }
 
-void Texture::destroy()
+Texture::Texture(const QImage& image, MipMapGeneration genMipMaps, QString path)
+: QOpenGLTexture(image, genMipMaps)
+, filePath(path)
 {
-    if(textureId)
-    {
-        GLfuncs->glDeleteTextures(1, &textureId);
+    QOpenGLContext* context = QOpenGLContext::currentContext();
 
-        textureId = 0;
-    }
+    Q_ASSERT(context);
+
+    GLfuncs = context->versionFunctions<QOpenGLFunctions_4_2_Core>();
+    GLfuncs->initializeOpenGLFunctions();
 }
 
-void Texture::bind()
+Texture::Texture(const QImage& image, QString path, MipMapGeneration genMipMaps)
+: QOpenGLTexture(image, genMipMaps)
+, filePath(path)
 {
-    GLfuncs->glBindTexture(type, textureId);
+    QOpenGLContext* context = QOpenGLContext::currentContext();
+
+    Q_ASSERT(context);
+
+    GLfuncs = context->versionFunctions<QOpenGLFunctions_4_2_Core>();
+    GLfuncs->initializeOpenGLFunctions();
 }
 
-void Texture::release()
+Texture::~Texture()
 {
-    GLfuncs->glBindTexture(type, 0);
+    //destroy();
+    //QOpenGLTexture::~QOpenGLTexture();
 }
 
-void Texture::initializeToEmpty(const QSize& size)
+void Texture::setHeight(const GLfloat data, QVector2D offset, bool bindTexture)
 {
-    Q_ASSERT(size.isValid());
-    Q_ASSERT(type == Texture2D);
+    if(bindTexture)
+        bind();
 
-    setRawData2D(type, 0, GL_RGBA, size.width(), size.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    GLfuncs->glTexSubImage2D(GL_TEXTURE_2D, 0, offset.x(), offset.y(), 1, 1, GL_RGBA, GL_FLOAT, &data);
 }
 
-void Texture::setImage(const QImage& image)
+void Texture::setHeightmap(void* data)
 {
-    Q_ASSERT(type == Texture2D);
-
-    QImage glImage = QGLWidget::convertToGLFormat(image);
-    setRawData2D(type, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+    GLfuncs->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width(), height(), 0, GL_RGBA, GL_FLOAT, data);
 }
 
-void Texture::setCubeMapImage(GLenum face, const QImage& image)
+void Texture::setAlpha(const unsigned char data, QVector2D offset, bool bindTexture)
 {
-    Q_ASSERT(type == TextureCubeMap);
+    if(bindTexture)
+        bind();
 
-    QImage glImage = QGLWidget::convertToGLFormat(image);
-    setRawData2D(face, 0, GL_RGBA8, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+    GLfuncs->glTexSubImage2D(GL_TEXTURE_2D, 0, offset.x(), offset.y(), 1, 1, GL_RED, GL_UNSIGNED_BYTE, &data);
 }
 
-void Texture::setRawData2D(GLenum target, int mipmapLevel, GLenum internalFormat,
-                           int width, int height, int borderWidth,
-                           GLenum format, GLenum type, const void* data)
+void Texture::setAlphamap(void* data)
 {
-    GLfuncs->glTexImage2D(target, mipmapLevel, internalFormat, width, height, borderWidth, format, type, data);
+    GLfuncs->glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width(), height(), 0, GL_RED, GL_UNSIGNED_BYTE, data);
 }
 
-void Texture::updatePixel(const GLfloat value, QVector2D offset, bool bind)
+const QImage Texture::getImage()
 {
-    Q_ASSERT(type == Texture2D);
+    int width, height;
 
-    if(bind)
-        GLfuncs->glBindTexture(type, textureId);
+    bind();
 
-    if(offset.x() > width)
-    {
-        qFatal(QString("offset is not alowed, because is larger than width! offset: %1 width: %2").arg(offset.x()).arg(width).toStdString().c_str());
+    GLfuncs->glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH,  &width);
+    GLfuncs->glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
 
-        return;
-    }
+    if(width <= 0 || height <= 0)
+        return QImage();
 
-    if(offset.y() > height)
-    {
-        qFatal(QString("offset is not alowed, because is larger than height! offset: %1 height: %2").arg(offset.x()).arg(height).toStdString().c_str());
+    GLint bytes = width * height * 4;
 
-        return;
-    }
+    unsigned char* data = (unsigned char*)malloc(bytes);
 
-    GLfuncs->glTexSubImage2D(type, 0, offset.x(), offset.y(), 1, 1, GL_RGBA, GL_FLOAT, &value);
-}
+    GLfuncs->glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
-void Texture::setImageAlpha(void* pixelArray)
-{
-    Q_ASSERT(type == Texture2D);
+    QImage img = QImage(data, width, height, QImage::Format_RGBA8888);
 
-    setRawData2D(type, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, pixelArray);
-}
+    //free(data); // ! investigate memory leaks if this is commented => uncommented => crash cause QImage using data as pointer
 
-void Texture::getImageAlpha(void* pixelArray)
-{
-    Q_ASSERT(type == Texture2D);
-
-    GLfuncs->glGetTexImage(type, 0, GL_RGBA, GL_FLOAT, pixelArray);
-}
-
-void Texture::toTexture(QSize size)
-{
-    Q_ASSERT(type == Texture2D);
-
-    GLfuncs->glCopyTexImage2D(type, 0, GL_LUMINANCE, 0, 0, size.width(), size.height(), 0);
-}
-
-void Texture::generateMipMaps()
-{
-    GLfuncs->glGenerateMipmap(type);
+    return img;
 }
