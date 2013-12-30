@@ -2,9 +2,9 @@
 
 #include "mathhelper.h"
 
-Brush::Brush(Types BrushTypes, float InnerRadius, float OuterRadius, QColor Color, float Multiplier, Shapes Shape)
+Brush::Brush(Types BrushTypes, float InnerRadius, float OuterRadius, QColor OuterColor, QColor InnerColor, float Multiplier, Shapes Shape)
 {
-    setBrush(BrushTypes, InnerRadius, OuterRadius, Color, Multiplier, Shape);
+    setBrush(BrushTypes, InnerRadius, OuterRadius, OuterColor, InnerColor, Multiplier, Shape);
 }
 
 Brush::~Brush()
@@ -12,7 +12,8 @@ Brush::~Brush()
     innerRadius = 0;
     outerRadius = 0;
     multiplier  = 0;
-    color       = QVector4D(0, 0, 0, 0);
+    outerColor  = QVector4D(0, 0, 0, 0);
+    innerColor  = QVector4D(0, 0, 0, 0);
     shape       = Circle;
 }
 
@@ -23,7 +24,8 @@ void Brush::draw(QOpenGLShaderProgramPtr shader, QVector2D terrain_pos)
     shader->setUniformValue("brushInnerRadius"     , innerRadius);
     shader->setUniformValue("brushOuterRadius"     , outerRadius);
     shader->setUniformValue("brushRadiusMultiplier", multiplier);
-    shader->setUniformValue("brushColor"           , color);
+    shader->setUniformValue("outerBrushColor"      , outerColor);
+    shader->setUniformValue("innerBrushColor"      , innerColor);
 }
 
 void Brush::setBrush(const Types BrushTypes)
@@ -37,66 +39,110 @@ void Brush::setBrush(const Types BrushTypes, const float InnerRadius, const floa
     setRadius(InnerRadius, OuterRadius);
 }
 
-void Brush::setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QVector4D Color)
+void Brush::setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QVector4D OuterColor)
 {
     setBrush(BrushTypes, InnerRadius, OuterRadius);
-    setColor(Color);
+    setOuterColor(OuterColor);
 }
 
-void Brush::setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QColor Color)
+void Brush::setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QColor OuterColor)
 {
     setBrush(BrushTypes, InnerRadius, OuterRadius);
-    setColor(QVector4D(Color.redF(), Color.greenF(), Color.blueF(), Color.alphaF()));
+    setOuterColor(QVector4D(OuterColor.redF(), OuterColor.greenF(), OuterColor.blueF(), OuterColor.alphaF()));
 }
 
-void Brush::setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QVector4D Color, const float Multiplier)
+void Brush::setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QVector4D OuterColor, const QVector4D InnerColor)
 {
-    setBrush(BrushTypes, InnerRadius, OuterRadius, Color);
+    setBrush(BrushTypes, InnerRadius, OuterRadius, OuterColor);
+    setInnerColor(InnerColor);
+}
+
+void Brush::setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QColor OuterColor, const QColor InnerColor)
+{
+    setBrush(BrushTypes, InnerRadius, OuterRadius, OuterColor);
+    setInnerColor(QVector4D(InnerColor.redF(), InnerColor.greenF(), InnerColor.blueF(), InnerColor.alphaF()));
+}
+
+void Brush::setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QVector4D OuterColor, const QVector4D InnerColor, const float Multiplier)
+{
+    setBrush(BrushTypes, InnerRadius, OuterRadius, OuterColor, InnerColor);
     setMultiplier(Multiplier);
 }
 
-void Brush::setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QColor Color, const float Multiplier)
+void Brush::setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QColor OuterColor, const QColor InnerColor, const float Multiplier)
 {
-    setBrush(BrushTypes, InnerRadius, OuterRadius, Color);
+    setBrush(BrushTypes, InnerRadius, OuterRadius, OuterColor, InnerColor);
     setMultiplier(Multiplier);
 }
 
-void Brush::setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QVector4D Color, const float Multiplier, const Shapes Shape)
+void Brush::setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QVector4D OuterColor, const QVector4D InnerColor, const float Multiplier, const Shapes Shape)
 {
-    setBrush(BrushTypes, InnerRadius, OuterRadius, Color, Multiplier);
+    setBrush(BrushTypes, InnerRadius, OuterRadius, OuterColor, InnerColor, Multiplier);
     setShape(Shape);
 }
 
-void Brush::setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QColor Color, const float Multiplier, const Shapes Shape)
+void Brush::setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QColor OuterColor, const QColor InnerColor, const float Multiplier, const Shapes Shape)
 {
-    setBrush(BrushTypes, InnerRadius, OuterRadius, Color, Multiplier);
+    setBrush(BrushTypes, InnerRadius, OuterRadius, OuterColor, InnerColor, Multiplier);
     setShape(Shape);
 }
 
 void Brush::setRadius(const float InnerRadius, const float OuterRadius)
 {
-    innerRadius = InnerRadius;
     outerRadius = OuterRadius;
+
+    if(outerRadius < InnerRadius)
+        innerRadius = outerRadius;
+    else
+        innerRadius = InnerRadius;
 }
 
 void Brush::setInnerRadius(const float InnerRadius)
 {
-    innerRadius = InnerRadius;
+    if(outerRadius < InnerRadius)
+        innerRadius = outerRadius;
+    else
+        innerRadius = InnerRadius;
 }
 
 void Brush::setOuterRadius(const float OuterRadius)
 {
     outerRadius = OuterRadius;
+
+    if(outerRadius < innerRadius)
+        innerRadius = outerRadius;
 }
 
-void Brush::setColor(const QVector4D Color)
+void Brush::setColor(const QVector4D InnerColor, const QVector4D OuterColor)
 {
-    color = Color;
+    innerColor = InnerColor;
+    outerColor = OuterColor;
 }
 
-void Brush::setColor(const QColor& Color)
+void Brush::setColor(const QColor& InnerColor, const QColor& OuterColor)
 {
-    color = QVector4D(Color.redF(), Color.greenF(), Color.blueF(), Color.alphaF());
+    innerColor = QVector4D(InnerColor.redF(), InnerColor.greenF(), InnerColor.blueF(), InnerColor.alphaF());
+    outerColor = QVector4D(OuterColor.redF(), OuterColor.greenF(), OuterColor.blueF(), OuterColor.alphaF());
+}
+
+void Brush::setInnerColor(const QVector4D Color)
+{
+    innerColor = Color;
+}
+
+void Brush::setInnerColor(const QColor& Color)
+{
+    innerColor = QVector4D(Color.redF(), Color.greenF(), Color.blueF(), Color.alphaF());
+}
+
+void Brush::setOuterColor(const QVector4D Color)
+{
+    outerColor = Color;
+}
+
+void Brush::setOuterColor(const QColor& Color)
+{
+    outerColor = QVector4D(Color.redF(), Color.greenF(), Color.blueF(), Color.alphaF());
 }
 
 void Brush::setMultiplier(const float Multiplier)

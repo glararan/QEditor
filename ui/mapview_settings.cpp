@@ -6,7 +6,9 @@
 MapView_Settings::MapView_Settings(QWidget* parent)
 : QDialog(parent)
 , ui(new Ui::MapView_Settings)
-, cacheBrushColor(app().getSetting("brushColor", QColor(0, 255, 0)).value<QColor>())
+, brushColorType(Outer)
+, cacheOuterBrushColor(app().getSetting("outerBrushColor", QColor(0, 255, 0)).value<QColor>())
+, cacheInnerBrushColor(app().getSetting("innerBrushColor", QColor(0, 255, 0)).value<QColor>())
 , textureScaleFarSlider(new QDSlider())
 , textureScaleNearSlider(new QDSlider())
 {
@@ -15,7 +17,7 @@ MapView_Settings::MapView_Settings(QWidget* parent)
     initializeComponents();
 
     // Brush color
-    setBrushColor(cacheBrushColor);
+    setBrushColor(cacheOuterBrushColor);
 
     // Environment Distance
     ui->EDistanceSlider->setValue(app().getSetting("environmentDistanceSlider", 1).toInt());
@@ -35,11 +37,12 @@ MapView_Settings::MapView_Settings(QWidget* parent)
     textureScaleNearSlider->setMaximum(0.9);
     textureScaleNearSlider->setValue(app().getSetting("textureScaleNearSlider", 0.4).toDouble());
 
-    ui->gridLayout->addWidget(textureScaleFarSlider,  3, 1, 1, 2);
-    ui->gridLayout->addWidget(textureScaleNearSlider, 4, 1, 1, 2);
+    ui->gridLayout->addWidget(textureScaleFarSlider,  4, 1, 1, 2);
+    ui->gridLayout->addWidget(textureScaleNearSlider, 5, 1, 1, 2);
 
     // connects
-    connect(ui->brushColorButton, SIGNAL(clicked()), this, SLOT(showColorDialog()));
+    connect(ui->outerBrushColorButton, SIGNAL(clicked()), this, SLOT(showColorDialog()));
+    connect(ui->innerBrushColorButton, SIGNAL(clicked()), this, SLOT(showColorDialog()));
 
     connect(colorDialog, SIGNAL(colorSelected(QColor)),       this, SLOT(setCacheColor(QColor)));
     connect(colorDialog, SIGNAL(colorSelected(QColor)),       this, SLOT(setBrushColor(QColor)));
@@ -61,27 +64,60 @@ MapView_Settings::~MapView_Settings()
 void MapView_Settings::initializeComponents()
 {
     colorDialog = new QColorDialog();
-    colorDialog->setCurrentColor(cacheBrushColor);
+    colorDialog->setCurrentColor(cacheOuterBrushColor);
 }
 
 void MapView_Settings::showColorDialog()
 {
+    QString name = qobject_cast<QPushButton*>(this->sender())->objectName();
+
+    if(name == "outerBrushColorButton")
+    {
+        brushColorType = Outer;
+
+        colorDialog->setCurrentColor(cacheOuterBrushColor);
+    }
+    else
+    {
+        brushColorType = Inner;
+
+        colorDialog->setCurrentColor(cacheInnerBrushColor);
+    }
+
     colorDialog->show();
 }
 
 void MapView_Settings::setCacheColor(QColor color)
 {
-    cacheBrushColor = color;
+    switch(brushColorType)
+    {
+        case Outer:
+            cacheOuterBrushColor = color;
+            break;
+
+        case Inner:
+            cacheInnerBrushColor = color;
+            break;
+    }
 }
 
 void MapView_Settings::setBrushColor(QColor color)
 {
-    emit setColorOfBrush(&color);
+    emit setColorOfBrush(&color, brushColorType == Outer ? true : false);
 }
 
 void MapView_Settings::setBrushToCacheColor()
 {
-    emit setColorOfBrush(&cacheBrushColor);
+    switch(brushColorType)
+    {
+        case Outer:
+            emit setColorOfBrush(&cacheOuterBrushColor, true);
+            break;
+
+        case Inner:
+            emit setColorOfBrush(&cacheInnerBrushColor, false);
+            break;
+    }
 }
 
 void MapView_Settings::setEnvironmentDistance(int posVal)

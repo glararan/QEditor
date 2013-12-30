@@ -167,6 +167,8 @@ void StartUp::addRecentProject(RecentProject& recentProject)
 
 void StartUp::resize(int w, int h)
 {
+    Q_UNUSED(h);
+
     setMargins(w);
 }
 

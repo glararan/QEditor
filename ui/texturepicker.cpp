@@ -78,6 +78,9 @@ void TexturePicker::selectedTexture(int row, int cell)
 
 void TexturePicker::setChunk(MapChunk* chunk)
 {
+    if(mapChunk == chunk)
+        return;
+
     mapChunk = chunk;
 
     if(mapChunk == NULL)

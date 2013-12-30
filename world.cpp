@@ -14,8 +14,11 @@
 World::World(const ProjectFileData& projectFile)
 : camera(0)
 , projectData(projectFile)
-, brush(new Brush(Brush::Types(), 8.0f, 10.0f, app().getSetting("brushColor", QColor(0, 255, 0)).value<QColor>(), 5.3f))
+, brush(new Brush(Brush::Types(), 3.0f, 10.0f, app().getSetting("outerBrushColor", QColor(0, 255, 0)).value<QColor>(), app().getSetting("innerBrushColor", QColor(0, 255, 0)).value<QColor>(), 5.3f))
 , textureManager(NULL)
+, highlightChunk(NULL)
+, terrainMaximumHeight(0.0f)
+, terrainMaximumState(false)
 , sunTheta(30.0f)
 , alphaMapSize(MAP_WIDTH / CHUNKS)
 , eDisplay(TexturedAndLit)
@@ -69,6 +72,8 @@ void World::initialize(QOpenGLContext* context)
     qDebug() << "OpenGL Vendor:"   << QString::fromLocal8Bit((char*)GLfuncs->glGetString(GL_VENDOR));
     qDebug() << "OpenGL Rendered:" << QString::fromLocal8Bit((char*)GLfuncs->glGetString(GL_RENDERER));
 
+    app().setGraphics(QString::fromLocal8Bit((char*)GLfuncs->glGetString(GL_VENDOR)));
+
     // initialize texture manager
     textureManager = new TextureManager(this, app().getSetting("antialiasing", 1.0f).toFloat());
 
@@ -94,6 +99,8 @@ void World::initialize(QOpenGLContext* context)
 
 void World::update(float dt)
 {
+    Q_UNUSED(dt);
+
     /*QOpenGLShaderProgramPtr shader = material->shader();
     shader->setUniformValue("waterTime", dt);*/
 
@@ -305,6 +312,44 @@ void World::paintTerrain(float x, float z, float flow)
                 }
             }
         }
+    }
+}
+
+void World::highlightMapChunkAt(const QVector3D& position)
+{
+    int tx = floor(position.x() / TILESIZE);
+    int ty = floor(position.z() / TILESIZE);
+
+    if(!tileLoaded(tx, ty))
+        return;
+
+    int cx = floor((position.x() - TILESIZE * tx) / CHUNKSIZE);
+    int cy = floor((position.z() - TILESIZE * ty) / CHUNKSIZE);
+
+    if(cx >= CHUNKS || cy >= CHUNKS)
+    {
+        qDebug() << QObject::tr("highlightMapChunkAt cx or cy is wrong calculated!");
+
+        return;
+    }
+
+    if(highlightChunk == mapTiles[tx][ty].tile->getChunk(cx, cy))
+        return;
+
+    if(highlightChunk != NULL)
+        highlightChunk->setHighlight(false);
+
+    highlightChunk = mapTiles[tx][ty].tile->getChunk(cx, cy);
+    highlightChunk->setHighlight(true);
+}
+
+void World::unHighlight()
+{
+    if(highlightChunk != NULL)
+    {
+        highlightChunk->setHighlight(false);
+
+        highlightChunk = NULL;
     }
 }
 
@@ -588,6 +633,16 @@ void World::setCamera(Camera* cam)
 void World::setProjectData(ProjectFileData& data)
 {
     projectData = data;
+}
+
+void World::setTerrainMaximumHeight(float value)
+{
+    terrainMaximumHeight = value;
+}
+
+void World::setTerrainMaximumState(bool state)
+{
+    terrainMaximumState = state;
 }
 
 void World::setDisplayMode(int displayMode)

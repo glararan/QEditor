@@ -93,3 +93,8 @@ const float MathHelper::lerp(const float v0, const float v1, const float t)
 {
     return v0 + (v1 - v0) * t;
 }
+
+const bool MathHelper::isNaN(const float value)
+{
+    return value != value;
+}

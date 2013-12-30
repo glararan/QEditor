@@ -25,12 +25,16 @@ Heightmap:
 
 /// Todo list
 General:
-    1. Save (dodělat save z QListu kde budou soubory)
+    1. Save (dodělat save z QListu kde budou soubory) ??? Až v alfě ???
+    2. složkování do Alfy
+    3. ALFA
 
 MapChunk:
-    1. editace terenu shift + ctrl se nahradí v toolbaru, shift = zvýšení, ctrl = snížení
-    2. kreslení textur
+    1. editace terenu shift + ctrl se nahradí v toolbaru, shift = zvýšení, ctrl = snížení !!! až v alfě !!!
+    2. vertex shading
     3. flatten tool uhel a směr
+    4. voda
+    5. ALFA
 
 List pro funkce:
     Rozdělit MapView na třídy MapView[pouze ukazovat data], World[spravování objektů], Map(?)[spravování heightmapy a alphamap],

@@ -72,6 +72,9 @@ public:
 
     void paintTerrain(float x, float z, float flow);
 
+    void highlightMapChunkAt(const QVector3D& position);
+    void unHighlight();
+
     void save();
 
     QOpenGLFunctions_4_2_Core* getGLFunctions()    { return GLfuncs; }
@@ -81,11 +84,16 @@ public:
 
     const ProjectFileData getProjectData() const { return projectData; }
     const int getAlphamapSize() const            { return alphaMapSize; }
+    const float getTerrainMaximumHeight() const  { return terrainMaximumHeight; }
+    const bool getTerrainMaximumState() const    { return terrainMaximumState; }
 
     MapChunk* getMapChunkAt(const QVector3D& position) const;
 
     void setCamera(Camera* cam);
     void setProjectData(ProjectFileData& data);
+
+    void setTerrainMaximumHeight(float value);
+    void setTerrainMaximumState(bool state);
 
     void setChunkShaderUniform(const char* name, const QVector2D& value);
     void setChunkShaderUniform(const char* name, const QVector4D& value);
@@ -105,12 +113,16 @@ private:
     Camera*         camera;
     Brush*          brush;
     TextureManager* textureManager;
+    MapChunk*       highlightChunk;
 
     bool tileLoaded(int x, int y) const;
 
     MapTile* loadTile(int x, int y, bool fileExists = true);
 
     MapTiles mapTiles[TILES][TILES];
+
+    float terrainMaximumHeight;
+    bool  terrainMaximumState;
 
     // Angle of sun. 0 is directly overhead, 90 to the East, -90 to the West
     float sunTheta;

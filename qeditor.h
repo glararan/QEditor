@@ -24,6 +24,15 @@
     #endif
 #endif
 
+// Define graphics vendors + current graphics
+#ifndef AMD_VENDOR
+    #define AMD_VENDOR "ATI Technologies Inc."
+#endif
+
+#ifndef NVIDIA_VENDOR
+    #define NVIDIA_VENDOR "NVIDIA Corporation"
+#endif
+
 class QEditor : public QApplication
 {
     Q_OBJECT
@@ -33,13 +42,17 @@ public:
     ~QEditor();
 
     QVariant getSetting(const QString& key, const QVariant& value = QVariant()) const;
+    QString  getGraphics() const;
 
     void setSetting(const QString& key, const QVariant& value);
+    void setGraphics(const QString& graphicsVendor);
 
 private:
     QSettings* settings;
 
     MainWindow* mainWindow;
+
+    QString graphics;
 
 signals:
 

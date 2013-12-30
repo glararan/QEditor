@@ -234,10 +234,18 @@ void MapView::update(float t)
         camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 
     /// mouse on terrain
-    if(eMode == Terrain || eMode == Texturing)
+    // getWorldCoordinates can be used to spawn object in middle of screen
+    terrain_pos = getWorldCoordinates(mouse_position.x(), mouse_position.y());
+
+    // highlight and select chunk
+    if(eMode == Objects && altDown)
     {
-        // getWorldCoordinates can be used to spawn object in middle of screen
-        terrain_pos = getWorldCoordinates(mouse_position.x(), mouse_position.y());
+        const QVector3D& position(terrain_pos);
+
+        world->highlightMapChunkAt(position);
+
+        if(leftButtonPressed)
+            emit selectedMapChunk(world->getMapChunkAt(position));
     }
 
     // Change terrain
@@ -273,11 +281,6 @@ void MapView::update(float t)
                 world->paintTerrain(position.x(), position.z(), texturing_flow);
             }
         }
-
-        // Select mapChunk
-        // Todo make own action in toolbar, cause little laggy when converting toImage
-        if(altDown)
-            emit selectedMapChunk(world->getMapChunkAt(position));
     }
 
     world->update(t);
@@ -492,12 +495,17 @@ void MapView::setShapingSpeed(double speed)
     shaping_speed = MathHelper::toFloat(speed);
 }
 
-void MapView::setShapingRadius(double radius)
+void MapView::setShapingOuterRadius(double radius)
 {
     world->getBrush()->setOuterRadius(MathHelper::toFloat(radius));
-    world->getBrush()->setInnerRadius(MathHelper::toFloat(10.0f));
+
     // Todo inner radius
     //world->getBrush()->setRadius(MathHelper::toFloat(radius));
+}
+
+void MapView::setShapingInnerRadius(double radius)
+{
+    world->getBrush()->setInnerRadius(MathHelper::toFloat(radius));
 }
 
 void MapView::setShapingBrush(int brush)
@@ -525,16 +533,36 @@ void MapView::setTexturingFlow(double flow)
     texturing_flow = flow;
 }
 
+void MapView::setTerrainMaximumHeight(double value)
+{
+    world->setTerrainMaximumHeight(MathHelper::toFloat(value));
+}
+
 void MapView::setTerrainMode(int mode)
 {
     eTerrain = (eTerrainMode)mode;
 }
 
-void MapView::setBrushColor(QColor* color)
+void MapView::setBrushColor(QColor* color, bool outer)
 {
-    world->getBrush()->setColor(*color);
+    switch(outer)
+    {
+        case true:
+            {
+                world->getBrush()->setOuterColor(*color);
 
-    app().setSetting("brushColor", *color);
+                app().setSetting("outerBrushColor", *color);
+            }
+            break;
+
+        case false:
+            {
+                world->getBrush()->setInnerColor(*color);
+
+                app().setSetting("innerBrushColor", *color);
+            }
+            break;
+    }
 }
 
 void MapView::setEnvionmentDistance(float value)
@@ -714,7 +742,11 @@ void MapView::keyReleaseEvent(QKeyEvent* e)
             break;
 
         case Qt::Key_Alt:
-            altDown = false;
+            {
+                altDown = false;
+
+                world->unHighlight();
+            }
             break;
 
         default:
@@ -774,7 +806,7 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
     else if(leftButtonPressed && altDown)
     {
         if(eMode == Terrain || eMode == Texturing)
-            updateShapingRadius(dx);
+            updateShapingOuterRadius(dx);
     }
 
     prevMousePos = mousePos;

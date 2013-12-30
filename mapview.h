@@ -159,12 +159,14 @@ public slots:
     void setModeEditing(int option);
     void setCameraPosition(QVector3D* position);
     void setShapingSpeed(double speed);
-    void setShapingRadius(double radius);
+    void setShapingOuterRadius(double radius);
+    void setShapingInnerRadius(double radius);
     void setShapingBrush(int brush);
     void setShapingBrushType(int type);
     void setTexturingFlow(double flow);
+    void setTerrainMaximumHeight(double value);
     void setTerrainMode(int mode);
-    void setBrushColor(QColor* color);
+    void setBrushColor(QColor* color, bool outer);
     void setEnvionmentDistance(float value);
     void setTextureScaleOption_(int option);
     void setTextureScaleFar(float value);
@@ -181,7 +183,8 @@ signals:
     void statusBar(QString message);
 
     void updateShapingSpeed(double speed);
-    void updateShapingRadius(double radius);
+    void updateShapingOuterRadius(double radius);
+    void updateShapingInnerRadius(double radius);
     void updateShapingBrush(int brush);
 
     void selectedMapChunk(MapChunk* chunk);

@@ -8,6 +8,8 @@
 
 #include <QAction>
 
+#include <limits>
+
 MainWindow::MainWindow(QWidget* parent)
 : QMainWindow(parent)
 , ui(new Ui::MainWindow)
@@ -16,20 +18,28 @@ MainWindow::MainWindow(QWidget* parent)
 , teleportW(NULL)
 , settingsW(NULL)
 , texturepW(NULL)
-, t_radius(NULL)
+, t_outer_radius(NULL)
+, t_inner_radius(NULL)
 , t_speed(NULL)
+, t_flow(NULL)
 , t_brush(NULL)
 , t_brush_circle(NULL)
 , t_brush_square(NULL)
 , t_terrain_mode(NULL)
 , t_brush_type(NULL)
+, t_terrain_maxHeight(NULL)
+, t_terrain_maximum_height(NULL)
 , t_terrain_mode_label(NULL)
 , t_brush_label(NULL)
 , t_brush_type_label(NULL)
-, t_radius_label(NULL)
-, t_radius_value_label(NULL)
+, t_outer_radius_label(NULL)
+, t_outer_radius_value_label(NULL)
+, t_inner_radius_label(NULL)
+, t_inner_radius_value_label(NULL)
 , t_speed_label(NULL)
 , t_speed_value_label(NULL)
+, t_flow_label(NULL)
+, t_flow_value_label(NULL)
 , world(NULL)
 , mapView(NULL)
 , mapCoords(NULL)
@@ -67,8 +77,10 @@ MainWindow::~MainWindow()
     delete settingsW;
     delete texturepW;
 
-    deleteObject(t_radius);
+    deleteObject(t_outer_radius);
+    deleteObject(t_inner_radius);
     deleteObject(t_speed);
+    deleteObject(t_flow);
 
     deleteObject(t_brush);
 
@@ -78,15 +90,22 @@ MainWindow::~MainWindow()
     deleteObject(t_terrain_mode);
     deleteObject(t_brush_type);
 
+    deleteObject(t_terrain_maxHeight);
+    deleteObject(t_terrain_maximum_height);
+
     deleteObject(t_terrain_mode_label);
 
     deleteObject(t_brush_label);
     deleteObject(t_brush_type_label);
 
-    deleteObject(t_radius_label);
-    deleteObject(t_radius_value_label);
+    deleteObject(t_outer_radius_label);
+    deleteObject(t_outer_radius_value_label);
+    deleteObject(t_inner_radius_label);
+    deleteObject(t_inner_radius_value_label);
     deleteObject(t_speed_label);
     deleteObject(t_speed_value_label);
+    deleteObject(t_flow_label);
+    deleteObject(t_flow_value_label);
 
     qDebug() << tr("UI in MainWindow was destroyed!");
 
@@ -139,9 +158,10 @@ void MainWindow::openWorld(ProjectFileData projectData)
     initMode();
 
     /// map view
-    connect(mapView, SIGNAL(statusBar(QString)),          ui->statusbar, SLOT(showMessage(QString)));
-    connect(mapView, SIGNAL(updateShapingRadius(double)), this,          SLOT(setShapingRadius(double)));
-    connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)), texturepW,     SLOT(setChunk(MapChunk*)));
+    connect(mapView, SIGNAL(statusBar(QString)),               ui->statusbar, SLOT(showMessage(QString)));
+    connect(mapView, SIGNAL(updateShapingOuterRadius(double)), this,          SLOT(setShapingOuterRadius(double)));
+    connect(mapView, SIGNAL(updateShapingInnerRadius(double)), this,          SLOT(setShapingInnerRadius(double)));
+    connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)),      texturepW,     SLOT(setChunk(MapChunk*)));
 
     /// menu bar
     // file
@@ -187,7 +207,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
 
     connect(teleportW, SIGNAL(TeleportTo(QVector3D*)), mapView, SLOT(setCameraPosition(QVector3D*)));
 
-    connect(settingsW, SIGNAL(setColorOfBrush(QColor*)),      mapView, SLOT(setBrushColor(QColor*)));
+    connect(settingsW, SIGNAL(setColorOfBrush(QColor*, bool)),mapView, SLOT(setBrushColor(QColor*, bool)));
     connect(settingsW, SIGNAL(setEnvironmentDistance(float)), mapView, SLOT(setEnvionmentDistance(float)));
     connect(settingsW, SIGNAL(setTextureScaleOption(int)),    mapView, SLOT(setTextureScaleOption_(int)));
     connect(settingsW, SIGNAL(setTextureScaleFar(float)),     mapView, SLOT(setTextureScaleFar(float)));
@@ -209,13 +229,19 @@ void MainWindow::openWorld(ProjectFileData projectData)
 
     connect(t_brush_type  , SIGNAL(currentIndexChanged(int)), mapView, SLOT(setShapingBrushType(int)));
 
-    connect(t_radius, SIGNAL(valueChanged(double)), t_radius_value_label, SLOT(setNum(double)));
-    connect(t_speed,  SIGNAL(valueChanged(double)), t_speed_value_label,  SLOT(setNum(double)));
-    connect(t_flow,   SIGNAL(valueChanged(double)), t_flow_value_label,   SLOT(setNum(double)));
+    connect(t_terrain_maxHeight,      SIGNAL(stateChanged(int)),    this,    SLOT(setTerrainMaximumHeightState(int)));
+    connect(t_terrain_maximum_height, SIGNAL(valueChanged(double)), mapView, SLOT(setTerrainMaximumHeight(double)));
 
-    connect(t_radius, SIGNAL(valueChanged(double)), mapView, SLOT(setShapingRadius(double)));
-    connect(t_speed,  SIGNAL(valueChanged(double)), mapView, SLOT(setShapingSpeed(double)));
-    connect(t_flow,   SIGNAL(valueChanged(double)), mapView, SLOT(setTexturingFlow(double)));
+    connect(t_outer_radius, SIGNAL(valueChanged(double)), t_outer_radius_value_label, SLOT(setNum(double)));
+    connect(t_inner_radius, SIGNAL(valueChanged(double)), t_inner_radius_value_label, SLOT(setNum(double)));
+    connect(t_speed,        SIGNAL(valueChanged(double)), t_speed_value_label,        SLOT(setNum(double)));
+    connect(t_flow,         SIGNAL(valueChanged(double)), t_flow_value_label,         SLOT(setNum(double)));
+
+    connect(t_outer_radius, SIGNAL(valueChanged(double)), mapView, SLOT(setShapingOuterRadius(double)));
+    connect(t_outer_radius, SIGNAL(valueChanged(double)), this,    SLOT(setShapingInnerRadiusMaximumValue(double)));
+    connect(t_inner_radius, SIGNAL(valueChanged(double)), mapView, SLOT(setShapingInnerRadius(double)));
+    connect(t_speed,        SIGNAL(valueChanged(double)), mapView, SLOT(setShapingSpeed(double)));
+    connect(t_flow,         SIGNAL(valueChanged(double)), mapView, SLOT(setTexturingFlow(double)));
 }
 
 void MainWindow::postInitializeSubWorldWidgets()
@@ -430,12 +456,19 @@ void MainWindow::addDockWindow(const QString& title, QWidget* widget, Qt::DockWi
 
 void MainWindow::initMode()
 {
-    t_radius = new QDSlider();
-    t_radius->setMinimum(3.0);
-    t_radius->setMaximum(100.0);
-    t_radius->setValue(10.0);
-    t_radius->setMaximumWidth(this->width() / 3);
-    t_radius->setObjectName("t_radius");
+    t_outer_radius = new QDSlider();
+    t_outer_radius->setMinimum(3.0);
+    t_outer_radius->setMaximum(100.0);
+    t_outer_radius->setValue(10.0);
+    t_outer_radius->setMaximumWidth(this->width() / 3);
+    t_outer_radius->setObjectName("t_outer_radius");
+
+    t_inner_radius = new QDSlider();
+    t_inner_radius->setMinimum(3.0);
+    t_inner_radius->setMaximum(10.0);
+    t_inner_radius->setValue(3.0);
+    t_inner_radius->setMaximumWidth(this->width() / 3);
+    t_inner_radius->setObjectName("t_inner_radius");
 
     t_speed = new QDSlider();
     t_speed->setMaximum(10.0);
@@ -491,23 +524,38 @@ void MainWindow::initMode()
     for(int i = 0; i < t_terrain_mode_0.count(); ++i)
         t_brush_type->addItem(t_terrain_mode_0.at(i).first, t_terrain_mode_0.at(i).second);
 
+    t_terrain_maxHeight = new QCheckBox(tr("Maximum height:"));
+    t_terrain_maxHeight->setObjectName("t_terrain_maxHeight");
+    t_terrain_maxHeight->setStyleSheet("margin:-3px 5px 0 0;");
+
+    t_terrain_maximum_height = new QDoubleSpinBox();
+    t_terrain_maximum_height->setDecimals(2);
+    t_terrain_maximum_height->setMinimum(MathHelper::toDouble(std::numeric_limits<float>::min()));
+    t_terrain_maximum_height->setMaximum(MathHelper::toDouble(std::numeric_limits<float>::max()));
+    t_terrain_maximum_height->setObjectName("t_terrain_maximum_height");
+    t_terrain_maximum_height->setEnabled(false);
+
     t_terrain_mode_label = new QLabel(tr("Mode:"));
 
     t_brush_label      = new QLabel(tr("Brushes:"));
     t_brush_type_label = new QLabel(tr("Brush type:"));
 
-    t_radius_label       = new QLabel(tr("Radius:"));
-    t_radius_value_label = new QLabel(QString("%1").arg(t_radius->value()));
-    t_speed_label        = new QLabel(tr("Speed:"));
-    t_speed_value_label  = new QLabel(QString("%1").arg(t_speed->value()));
-    t_flow_label         = new QLabel(tr("Flow:"));
-    t_flow_value_label   = new QLabel(QString("%1").arg(t_flow->value()));
+    t_outer_radius_label       = new QLabel(tr("Outer radius:"));
+    t_outer_radius_value_label = new QLabel(QString("%1").arg(t_outer_radius->value()));
+    t_inner_radius_label       = new QLabel(tr("Inner radius:"));
+    t_inner_radius_value_label = new QLabel(QString("%1").arg(t_inner_radius->value()));
+    t_speed_label              = new QLabel(tr("Speed:"));
+    t_speed_value_label        = new QLabel(QString("%1").arg(t_speed->value()));
+    t_flow_label               = new QLabel(tr("Flow:"));
+    t_flow_value_label         = new QLabel(QString("%1").arg(t_flow->value()));
 
     t_terrain_mode_label->setObjectName("t_terrain_mode_label");
     t_brush_label->setObjectName("t_brush_label");
     t_brush_type_label->setObjectName("t_brush_type_label");
-    t_radius_label->setObjectName("t_radius_label");
-    t_radius_value_label->setObjectName("t_radius_value_label");
+    t_outer_radius_label->setObjectName("t_outer_radius_label");
+    t_outer_radius_value_label->setObjectName("t_outer_radius_value_label");
+    t_inner_radius_label->setObjectName("t_inner_radius_label");
+    t_inner_radius_value_label->setObjectName("t_inner_radius_value_label");
     t_speed_label->setObjectName("t_speed_label");
     t_speed_value_label->setObjectName("t_speed_value_label");
     t_flow_label->setObjectName("t_flow_label");
@@ -518,39 +566,49 @@ void MainWindow::initMode()
     t_brush_label->setStyleSheet("margin:-3px 5px 0 0;");
     t_brush_type_label->setStyleSheet("margin:-3px 5px 0 0;");
 
-    t_radius_label->setStyleSheet("margin:-3px 5px 0 20px;");
+    t_outer_radius_label->setStyleSheet("margin:-3px 5px 0 20px;");
+    t_inner_radius_label->setStyleSheet("margin:-3px 5px 0 20px;");
     t_speed_label->setStyleSheet("margin:-3px 5px 0 20px;");
     t_flow_label->setStyleSheet("margin:-3px 5px 0 20px;");
 
-    t_radius_value_label->setStyleSheet("margin:-3px 0 0 5px;");
+    t_outer_radius_value_label->setStyleSheet("margin:-3px 0 0 5px;");
+    t_inner_radius_value_label->setStyleSheet("margin:-3px 0 0 5px;");
     t_speed_value_label->setStyleSheet("margin:-3px 0 0 5px;");
     t_flow_value_label->setStyleSheet("margin:-3px 0 0 5px;");
 
     /// mode1
-    addToolbarAction(t_brush_label       , mode1Actions);
-    addToolbarAction(t_brush_circle      , mode1Actions);
-    addToolbarAction(t_brush_square      , mode1Actions);
-    addToolbarAction(t_terrain_mode_label, mode1Actions);
-    addToolbarAction(t_terrain_mode      , mode1Actions);
-    addToolbarAction(t_brush_type_label  , mode1Actions);
-    addToolbarAction(t_brush_type        , mode1Actions);
-    addToolbarAction(t_radius_label      , mode1Actions);
-    addToolbarAction(t_radius            , mode1Actions);
-    addToolbarAction(t_radius_value_label, mode1Actions);
-    addToolbarAction(t_speed_label       , mode1Actions);
-    addToolbarAction(t_speed             , mode1Actions);
-    addToolbarAction(t_speed_value_label , mode1Actions);
+    addToolbarAction(t_brush_label             , mode1Actions);
+    addToolbarAction(t_brush_circle            , mode1Actions);
+    addToolbarAction(t_brush_square            , mode1Actions);
+    addToolbarAction(t_terrain_mode_label      , mode1Actions);
+    addToolbarAction(t_terrain_mode            , mode1Actions);
+    addToolbarAction(t_brush_type_label        , mode1Actions);
+    addToolbarAction(t_brush_type              , mode1Actions);
+    addToolbarAction(t_outer_radius_label      , mode1Actions);
+    addToolbarAction(t_outer_radius            , mode1Actions);
+    addToolbarAction(t_outer_radius_value_label, mode1Actions);
+    addToolbarAction(t_inner_radius_label      , mode1Actions);
+    addToolbarAction(t_inner_radius            , mode1Actions);
+    addToolbarAction(t_inner_radius_value_label, mode1Actions);
+    addToolbarAction(t_speed_label             , mode1Actions);
+    addToolbarAction(t_speed                   , mode1Actions);
+    addToolbarAction(t_speed_value_label       , mode1Actions);
+    addToolbarAction(t_terrain_maxHeight       , mode1Actions);
+    addToolbarAction(t_terrain_maximum_height  , mode1Actions);
 
     /// mode2
-    addToolbarAction(t_brush_label       , mode2Actions);
-    addToolbarAction(t_brush_circle      , mode2Actions);
-    addToolbarAction(t_brush_square      , mode2Actions);
-    addToolbarAction(t_radius_label      , mode2Actions);
-    addToolbarAction(t_radius            , mode2Actions);
-    addToolbarAction(t_radius_value_label, mode2Actions);
-    addToolbarAction(t_flow_label        , mode2Actions);
-    addToolbarAction(t_flow              , mode2Actions);
-    addToolbarAction(t_flow_value_label  , mode2Actions);
+    addToolbarAction(t_brush_label             , mode2Actions);
+    addToolbarAction(t_brush_circle            , mode2Actions);
+    addToolbarAction(t_brush_square            , mode2Actions);
+    addToolbarAction(t_outer_radius_label      , mode2Actions);
+    addToolbarAction(t_outer_radius            , mode2Actions);
+    addToolbarAction(t_outer_radius_value_label, mode2Actions);
+    addToolbarAction(t_inner_radius_label      , mode2Actions);
+    addToolbarAction(t_inner_radius            , mode2Actions);
+    addToolbarAction(t_inner_radius_value_label, mode2Actions);
+    addToolbarAction(t_flow_label              , mode2Actions);
+    addToolbarAction(t_flow                    , mode2Actions);
+    addToolbarAction(t_flow_value_label        , mode2Actions);
 
     hideToolbarActions();
 }
@@ -571,9 +629,49 @@ void MainWindow::showMode(QList<QString>& parentList)
     }
 }
 
-void MainWindow::setShapingRadius(double value)
+void MainWindow::setTerrainMaximumHeightState(int state)
 {
-    t_radius->setValue(t_radius->value() + value);
+    switch(state)
+    {
+        case 0:
+        default:
+            {
+                t_terrain_maximum_height->setEnabled(false);
+
+                world->setTerrainMaximumState(false);
+            }
+            break;
+
+        case 2:
+            {
+                t_terrain_maximum_height->setEnabled(true);
+
+                world->setTerrainMaximumState(true);
+            }
+            break;
+    }
+}
+
+void MainWindow::setShapingOuterRadius(double value)
+{
+    t_outer_radius->setValue(t_outer_radius->value() + value);
+
+    t_inner_radius->setMaximum(t_outer_radius->value());
+
+    if(t_inner_radius->value() > t_outer_radius->value())
+        t_inner_radius->setValue(t_outer_radius->value());
+}
+
+void MainWindow::setShapingInnerRadius(double value)
+{
+    t_inner_radius->setValue(t_inner_radius->value() + value);
+}
+
+void MainWindow::setShapingInnerRadiusMaximumValue(double maximum)
+{
+    Q_UNUSED(maximum);
+
+    t_inner_radius->setMaximum(t_outer_radius->value());
 }
 
 void MainWindow::setTerrain_Mode(int index)

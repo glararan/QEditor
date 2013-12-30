@@ -1,12 +1,12 @@
 #include "texture.h"
 
+#include "qeditor.h"
+
 #include <QImage>
 #include <QGLWidget>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions_4_2_Core>
 #include <QVector2D>
-
-#include <QDebug>
 
 Texture::Texture()
 : QOpenGLTexture(QOpenGLTexture::Target1D)
@@ -44,6 +44,18 @@ Texture::Texture(const QImage& image, MipMapGeneration genMipMaps, QString path)
 
     GLfuncs = context->versionFunctions<QOpenGLFunctions_4_2_Core>();
     GLfuncs->initializeOpenGLFunctions();
+
+    if(app().getGraphics() == AMD_VENDOR)
+    {
+        bind();
+
+        QImage glImage = QGLWidget::convertToGLFormat(image);
+
+        GLfuncs->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+
+        if(genMipMaps == GenerateMipMaps)
+            generateMipMaps();
+    }
 }
 
 Texture::Texture(const QImage& image, QString path, MipMapGeneration genMipMaps)
@@ -56,6 +68,18 @@ Texture::Texture(const QImage& image, QString path, MipMapGeneration genMipMaps)
 
     GLfuncs = context->versionFunctions<QOpenGLFunctions_4_2_Core>();
     GLfuncs->initializeOpenGLFunctions();
+
+    if(app().getGraphics() == AMD_VENDOR)
+    {
+        bind();
+
+        QImage glImage = QGLWidget::convertToGLFormat(image);
+
+        GLfuncs->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+
+        if(genMipMaps == GenerateMipMaps)
+            generateMipMaps();
+    }
 }
 
 Texture::~Texture()

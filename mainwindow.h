@@ -7,6 +7,8 @@
 #include <QButtonGroup>
 #include <QPushButton>
 #include <QComboBox>
+#include <QCheckBox>
+#include <QDoubleSpinBox>
 #include <QLabel>
 
 #include "ui/qdslider.h"
@@ -53,7 +55,8 @@ private:
     }
 
     // Editing mode = 1
-    QDSlider* t_radius;
+    QDSlider* t_outer_radius;
+    QDSlider* t_inner_radius;
     QDSlider* t_speed;
 
     QButtonGroup* t_brush;
@@ -64,13 +67,19 @@ private:
     QComboBox* t_terrain_mode;
     QComboBox* t_brush_type;
 
+    QCheckBox* t_terrain_maxHeight;
+
+    QDoubleSpinBox* t_terrain_maximum_height;
+
     QLabel* t_terrain_mode_label;
 
     QLabel* t_brush_label;
     QLabel* t_brush_type_label;
 
-    QLabel* t_radius_label;
-    QLabel* t_radius_value_label;
+    QLabel* t_outer_radius_label;
+    QLabel* t_outer_radius_value_label;
+    QLabel* t_inner_radius_label;
+    QLabel* t_inner_radius_value_label;
     QLabel* t_speed_label;
     QLabel* t_speed_value_label;
 
@@ -113,7 +122,11 @@ private slots:
     void setDisplayMode();
     void setToolBarItem();
 
-    void setShapingRadius(double value);
+    void setTerrainMaximumHeightState(int state);
+
+    void setShapingOuterRadius(double value);
+    void setShapingInnerRadius(double value);
+    void setShapingInnerRadiusMaximumValue(double maximum);
 
     void setTerrain_Mode(int index);
 

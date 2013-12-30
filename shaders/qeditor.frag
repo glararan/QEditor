@@ -57,7 +57,8 @@ uniform vec2  cursorPos        = vec2(0, 0);
 uniform float brushInnerRadius = 8;
 uniform float brushOuterRadius = 10;
 uniform float brushMultiplier  = 5.33333;
-uniform vec4  brushColor       = vec4(0, 1, 0, 1);
+uniform vec4  outerBrushColor  = vec4(0, 1, 0, 1);
+uniform vec4  innerBrushColor  = vec4(0, 1, 0, 1);
 
 uniform float horizontalScale = 533.33333;
 
@@ -77,6 +78,7 @@ uniform float textureScaleFar  = 0.4;
 uniform float textureScaleNear = 0.4;
 
 uniform bool chunkLines = false;
+uniform bool highlight  = false;
 
 in wireFrameVertex
 {
@@ -463,6 +465,28 @@ float fresnel(vec3 incident, vec3 normal, float bias, float power)
     return shadow;
 }*/
 
+vec4 ApplyCircle(vec4 colorIn, vec4 brushColor, vec2 distVec, float mouseDist, float maxRadius)
+{
+    if((maxRadius - mouseDist) > (maxRadius * 0.01f))
+        return colorIn;
+
+    distVec = normalize(distVec);
+
+    float angle = atan(distVec.y, distVec.x);
+
+    if(angle < 0)
+        angle += 3.1415926535897932384626433832795 * 2;
+
+    angle = (angle * 180.0f) / 3.1415926535897932384626433832795;
+
+    float resid = int(angle) % 30;
+
+    if(resid < 20)
+        colorIn += brushColor;
+
+    return colorIn;
+}
+
 void main()
 {
     // Compute fragment color depending upon selected shading mode
@@ -504,19 +528,39 @@ void main()
     }
 
     // Terrain brush
-    if(brush == 0)
+    /*if(brush == 0)
     {
         float dx = texCoords.x * horizontalScale - cursorPos.x + baseX;
         float dy = texCoords.y * horizontalScale - cursorPos.y + baseY;
 
-        float bDist = sqrt(dx * dx + dy * dy) * (brushMultiplier);
+        float bDist = sqrt(dx * dx + dy * dy) * brushMultiplier;
 
         if(bDist < brushOuterRadius)
         {
             float str = max(0, mix(-1.5, 0.5, bDist / brushOuterRadius));
             outColor += brushColor * str;
         }
+    }*/
+
+    // Terrain brush v2
+    if(brush == 0)
+    {
+        float dx = texCoords.x * horizontalScale - cursorPos.x + baseX;
+        float dy = texCoords.y * horizontalScale - cursorPos.y + baseY;
+
+        float bDist = sqrt(dx * dx + dy * dy) * brushMultiplier;
+
+        if(bDist < brushOuterRadius)
+        {
+            outColor = ApplyCircle(outColor, outerBrushColor, vec2(dx, dy), bDist, brushOuterRadius);
+
+            if(bDist < brushInnerRadius)
+                outColor = ApplyCircle(outColor, innerBrushColor, vec2(dx, dy), bDist, brushInnerRadius);
+        }
     }
+
+    if(highlight)
+        outColor += vec4(0.1, 0.1, 0.1, 1.0);
 
     // Water
     /*if(brush == 1)

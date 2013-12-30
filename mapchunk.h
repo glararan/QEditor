@@ -40,8 +40,9 @@ public:
 
     const int chunkIndex() const;
 
-    const QVector2D  getBases() const                     { return QVector2D(baseX, baseY); }
-    const GLuint&    getDisplaySubroutines() const        { return displaySubroutines[world->displayMode()]; }
+    const QVector2D  getBases() const              { return QVector2D(baseX, baseY); }
+    const GLuint&    getDisplaySubroutines() const { return displaySubroutines[world->displayMode()]; }
+    const bool       getHighlight() const          { return highlight; }
 
     TexturePtr getTexture(int index) const
     {
@@ -68,6 +69,8 @@ public:
 
     void setBottomNeighbour(MapChunk* chunk);
     void setLeftNeighbour(MapChunk* chunk);
+
+    void setHighlight(bool on);
 
     /// ...
     void save(MCNK* chunk);
@@ -105,6 +108,8 @@ private:
 
     float baseX, baseY;
     float chunkBaseX, chunkBaseY;
+
+    bool highlight;
 
     // Neighbour
     MapChunk* bottomNeighbour;

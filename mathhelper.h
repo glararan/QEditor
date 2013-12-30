@@ -32,6 +32,8 @@ public:
 
     static const float lerp(const float v0, const float v1, const float t);
 
+    static const bool isNaN(const float value);
+
 private:
     MathHelper();
 };

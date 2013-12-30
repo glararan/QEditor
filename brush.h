@@ -84,25 +84,32 @@ public:
     // # iSharpness = 0.75f
     // # oSharpness = 0.8f
 
-    Brush(Types BrushTypes = Types(), float InnerRadius = 8.0f, float OuterRadius = 10.0f, QColor Color = QColor::fromRgbF(0.0f, 1.0f, 0.0f, 1.0f), float Multiplier = 1.0f, Shapes Shape = Circle);
+    Brush(Types BrushTypes = Types(), float InnerRadius = 8.0f, float OuterRadius = 10.0f, QColor OuterColor = QColor::fromRgbF(0.0f, 1.0f, 0.0f, 1.0f),
+          QColor InnerColor = QColor::fromRgbF(0.0f, 1.0f, 0.0f, 1.0f), float Multiplier = 1.0f, Shapes Shape = Circle);
     ~Brush();
 
     void draw(QOpenGLShaderProgramPtr shader, QVector2D terrain_pos);
 
     void setBrush(const Types BrushTypes);
     void setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius);
-    void setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QVector4D Color);
-    void setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QColor Color);
-    void setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QVector4D Color, const float Multiplier);
-    void setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QColor Color, const float Multiplier);
-    void setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QVector4D Color, const float Multiplier, const Shapes Shape);
-    void setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QColor Color, const float Multiplier, const Shapes Shape);
+    void setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QVector4D OuterColor);
+    void setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QColor OuterColor);
+    void setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QVector4D OuterColor, const QVector4D InnerColor);
+    void setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QColor OuterColor, const QColor InnerColor);
+    void setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QVector4D OuterColor, const QVector4D InnerColor, const float Multiplier);
+    void setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QColor OuterColor, const QColor InnerColor, const float Multiplier);
+    void setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QVector4D OuterColor, const QVector4D InnerColor, const float Multiplier, const Shapes Shape);
+    void setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius, const QColor OuterColor, const QColor InnerColor, const float Multiplier, const Shapes Shape);
 
     void setRadius(const float InnerRadius, const float OuterRadius);
     void setInnerRadius(const float InnerRadius);
     void setOuterRadius(const float OuterRadius);
-    void setColor(const QVector4D Color);
-    void setColor(const QColor& Color);
+    void setColor(const QVector4D InnerColor, const QVector4D OuterColor);
+    void setColor(const QColor& InnerColor, const QColor& OuterColor);
+    void setInnerColor(const QVector4D Color);
+    void setInnerColor(const QColor& Color);
+    void setOuterColor(const QVector4D Color);
+    void setOuterColor(const QColor& Color);
     void setMultiplier(const float Multiplier);
     void setShape(const Shapes Shape);
 
@@ -116,8 +123,11 @@ public:
     float OuterRadius() const { return outerRadius / multiplier; }
     float Multiplier() const  { return multiplier; }
 
-    QVector4D ColorVect() const { return color; }
-    QColor    Color() const     { return QColor::fromRgbF(color.x(), color.y(), color.z(), color.w()); }
+    QVector4D InnerColorVect() const { return innerColor; }
+    QColor    InnerColor() const     { return QColor::fromRgbF(innerColor.x(), innerColor.y(), innerColor.z(), innerColor.w()); }
+
+    QVector4D OuterColorVect() const { return outerColor; }
+    QColor    OuterColor() const     { return QColor::fromRgbF(outerColor.x(), outerColor.y(), outerColor.z(), outerColor.w()); }
 
     Shapes Shape() const { return shape; }
 
@@ -128,7 +138,8 @@ private:
     float outerRadius;
     float multiplier;
 
-    QVector4D color;
+    QVector4D innerColor;
+    QVector4D outerColor;
 
     Shapes shape;
 };
