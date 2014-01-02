@@ -27,7 +27,7 @@ MapTile::MapTile(World* mWorld, const QString& mapFile, int x, int y) // Cache M
     {
         mapChunks[i / CHUNKS][i % CHUNKS] = new MapChunk(world, this, i / CHUNKS, i % CHUNKS);
 
-        qDebug() << QString("chunk[%1, %2]: %3 bases: [%4, %5]").arg(i / CHUNKS).arg(i % CHUNKS).arg(i).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().x()).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().y());
+        qDebug() << QString(QObject::tr("chunk[%1, %2]: %3 bases: [%4, %5]")).arg(i / CHUNKS).arg(i % CHUNKS).arg(i).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().x()).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().y());
     }
 }
 
@@ -50,7 +50,7 @@ MapTile::MapTile(World* mWorld, int x, int y, const QString& mapFile) // File ba
     QFile file(QDir(world->getProjectData().projectRootDir + "/maps").filePath(fileName));
 
     if(file.exists() && !file.open(QIODevice::ReadOnly))
-        qCritical(QString("Can't open file %1, map will be generated for tile %2_%3!").arg(file.fileName()).arg(coordX).arg(coordY).toLatin1().constData());
+        qCritical(QString(QObject::tr("Can't open file %1, map will be generated for tile %2_%3!")).arg(file.fileName()).arg(coordX).arg(coordY).toLatin1().constData());
     else
     {
         QDataStream dataStream(&file);
@@ -70,7 +70,7 @@ MapTile::MapTile(World* mWorld, int x, int y, const QString& mapFile) // File ba
     {
         mapChunks[i / CHUNKS][i % CHUNKS] = new MapChunk(world, this, file, i / CHUNKS, i % CHUNKS);
 
-        qDebug() << QString("chunk[%1, %2]: %3 bases: [%4, %5]").arg(i / CHUNKS).arg(i % CHUNKS).arg(i).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().x()).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().y());
+        qDebug() << QString(QObject::tr("chunk[%1, %2]: %3 bases: [%4, %5]")).arg(i / CHUNKS).arg(i % CHUNKS).arg(i).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().x()).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().y());
     }
 
     file.close();
@@ -112,7 +112,7 @@ MapTile::MapTile(World* mWorld, int x, int y, const QString& mapFile) // File ba
 
 MapTile::~MapTile()
 {
-    qDebug() << "Unloading tile:" << coordX << coordY;
+    qDebug() << QObject::tr("Unloading tile:") << coordX << coordY;
 
     terrainSampler->destroy();
 
@@ -137,9 +137,7 @@ void MapTile::draw(const float& distance, const QVector3D& camera)
         for(int y = 0; y < CHUNKS; ++y)
         {
             if(mapChunks[x][y]->isInVisibleRange(distance, camera))
-            {
                 mapChunks[x][y]->draw();
-            }
         }
     }
 
@@ -178,7 +176,7 @@ void MapTile::saveTile()
     {
         if(!QDir(world->getProjectData().projectRootDir).mkdir("maps"))
         {
-            qCritical("Couldn't create maps folder");
+            qCritical(QObject::tr("Couldn't create maps folder").toLatin1().data());
 
             return;
         }
@@ -186,7 +184,7 @@ void MapTile::saveTile()
 
     if(!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
     {
-        qCritical(QString("Could not open %1 to be written").arg(fileName).toLatin1().constData());
+        qCritical(QString(QObject::tr("Could not open %1 to be written")).arg(fileName).toLatin1().constData());
 
         return;
     }
@@ -215,7 +213,7 @@ void MapTile::saveTile()
     file.flush();
     file.close();
 
-    qDebug() << "Successfully written to " << fileName;
+    qDebug() << QObject::tr("Successfully written to ") << fileName;
 }
 
 void MapTile::test()

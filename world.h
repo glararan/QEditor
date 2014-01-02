@@ -12,6 +12,7 @@
 #include "texturemanager.h"
 
 class MapTile;
+class MapChunk;
 class TextureManager;
 
 class MapTiles
@@ -65,11 +66,15 @@ public:
     void setSunAngle(float sunAngle) { sunTheta = sunAngle; qDebug() << sunTheta; }
     float sunAngle() const           { return sunTheta; }
 
-    void changeTerrain(float x, float z, float change, int brush_type);
-    void flattenTerrain(float x, float z, float y, float change, int brush_type);
-    void blurTerrain(float x, float z, float change, int brush_type);
+    void changeTerrain(float x, float z, float change);
+    void flattenTerrain(float x, float z, float y, float change);
+    void blurTerrain(float x, float z, float change);
 
-    void paintTerrain();
+    void paintTerrain(float x, float z, float flow);
+    void paintVertexShading(float x, float z, float flow, QColor& color);
+
+    void highlightMapChunkAt(const QVector3D& position);
+    void unHighlight();
 
     void save();
 
@@ -79,9 +84,17 @@ public:
     TextureManager*            getTextureManager() { return textureManager; }
 
     const ProjectFileData getProjectData() const { return projectData; }
+    const int getAlphamapSize() const            { return alphaMapSize; }
+    const float getTerrainMaximumHeight() const  { return terrainMaximumHeight; }
+    const bool getTerrainMaximumState() const    { return terrainMaximumState; }
+
+    MapChunk* getMapChunkAt(const QVector3D& position) const;
 
     void setCamera(Camera* cam);
     void setProjectData(ProjectFileData& data);
+
+    void setTerrainMaximumHeight(float value);
+    void setTerrainMaximumState(bool state);
 
     void setChunkShaderUniform(const char* name, const QVector2D& value);
     void setChunkShaderUniform(const char* name, const QVector4D& value);
@@ -95,13 +108,13 @@ public:
 
 private:
     ~World();
-    void createNeighbours();
 
     float time;
 
     Camera*         camera;
     Brush*          brush;
     TextureManager* textureManager;
+    MapChunk*       highlightChunk;
 
     bool tileLoaded(int x, int y) const;
 
@@ -109,8 +122,13 @@ private:
 
     MapTiles mapTiles[TILES][TILES];
 
+    float terrainMaximumHeight;
+    bool  terrainMaximumState;
+
     // Angle of sun. 0 is directly overhead, 90 to the East, -90 to the West
     float sunTheta;
+
+    int alphaMapSize;
 
     eDisplayMode    eDisplay;
     QStringList     eDisplayNames;
@@ -118,6 +136,9 @@ private:
     QOpenGLFunctions_4_2_Core* GLfuncs;
 
     ProjectFileData projectData;
+
+    //
+    void createNeighbours();
 };
 
 #endif // WORLD_H

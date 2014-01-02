@@ -25,12 +25,15 @@ Heightmap:
 
 /// Todo list
 General:
-    1. Save (dodělat save z QListu kde budou soubory)
+    1. Save (dodělat save z QListu kde budou soubory) ??? Až v alfě ???
+    2. složkování do Alfy
+    3. ALFA
 
 MapChunk:
-    1. editace terenu shift + ctrl se nahradí v toolbaru, shift = zvýšení, ctrl = snížení
-    2. kreslení textur
-    3. flatten tool uhel a směr
+    1. editace terenu shift + ctrl se nahradí v toolbaru, shift = zvýšení, ctrl = snížení !!! až v alfě !!!
+    2. flatten tool uhel a směr
+    3. voda
+    4. ALFA
 
 List pro funkce:
     Rozdělit MapView na třídy MapView[pouze ukazovat data], World[spravování objektů], Map(?)[spravování heightmapy a alphamap],
@@ -65,8 +68,8 @@ olistění
 
 GLSL:
 http://en.wikibooks.org/wiki/GLSL_Programming/Vector_and_Matrix_Operations
-x = s = r
-y = t = g
+x = r = s
+y = g = t
 z = b = ?
 w = a = q
 
@@ -76,11 +79,32 @@ w = a = q
         // coords.z = layer
 
 
+C++ standards:
+    1) static_cast<int>(foo) // C++ cast
+       (int)foo              // C cast !WRONG!
+
+    2) header.h
+       class Class; // instead of include "class.h", include inside of .cpp
+
+    3) (not c++ standard, its memory standard)
+        for(qInt8 i = 0; i < ca 200; ++i) // correct, using 8-bit instead of 32-bit, also quaranteed all platforms 8-bit
+        for(int i = 0; i < ca 200; ++i)   // wrong, ungaranteed 32-bit on all platforms => we should use qInt32
+
+    4) use switch if its possible
+        ex. for QString its not possible, also switch is faster than multiple statements
+
+
 Lag Troubleshooter:
 1) Texture data types
     ex: GL_FLOAT width = 10, height = 10 data != width * height, data = width * height * sizeof(float)
 
-2) Black terrain
+2) Black terrain & laggs
     ex: Give to shader data when map is not yet initialized
     ex2: if you have shader data outside MapChunk and its not necessary, do it in MapChunk like fog init.
     ex3: use shader->bind() everywhere!
+
+2.5) Terrain laggs
+    be carefull with glActiveTexture
+
+3) Black terrain
+    ex: rly bad using QOpenGLTexture for loading texture :)

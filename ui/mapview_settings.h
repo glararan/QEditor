@@ -24,9 +24,18 @@ private:
     Ui::MapView_Settings* ui;
 
     // Brush color
+    enum BrushColor
+    {
+        Inner = 0,
+        Outer = 1
+    };
+
+    BrushColor brushColorType;
+
     QColorDialog* colorDialog;
 
-    QColor cacheBrushColor;
+    QColor cacheOuterBrushColor;
+    QColor cacheInnerBrushColor;
 
     // Texture scale
     QDSlider* textureScaleFarSlider;
@@ -48,7 +57,7 @@ private slots:
     void setTextureScaleNear(double scale);
 
 signals:
-    void setColorOfBrush(QColor* color);
+    void setColorOfBrush(QColor* color, bool outer);
     void setEnvironmentDistance(float value);
     void setTextureScaleOption(int option);
     void setTextureScaleFar(float value);

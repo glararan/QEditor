@@ -122,7 +122,6 @@ private:
 
     int cursorPosX, cursorPosY;
 
-    //bool mapCoords[TILES][TILES];
     bool** mapCoords;
 };
 

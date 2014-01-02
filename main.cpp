@@ -13,20 +13,20 @@ void LogHandler(QtMsgType type, const QMessageLogContext& context, const QString
     switch(type)
     {
         case QtDebugMsg:
-            text = QString("Debug (%1:%2, %3): %4").arg(context.file).arg(context.line).arg(context.function).arg(lMessage.constData());
+            text = QString(QObject::tr("Debug (%1:%2, %3): %4")).arg(context.file).arg(context.line).arg(context.function).arg(lMessage.constData());
             break;
 
         case QtWarningMsg:
-            text = QString("Warning (%1:%2, %3): %4").arg(context.file).arg(context.line).arg(context.function).arg(lMessage.constData());
+            text = QString(QObject::tr("Warning (%1:%2, %3): %4")).arg(context.file).arg(context.line).arg(context.function).arg(lMessage.constData());
             break;
 
         case QtCriticalMsg:
-            text = QString("Critical (%1:%2, %3): %4").arg(context.file).arg(context.line).arg(context.function).arg(lMessage.constData());
+            text = QString(QObject::tr("Critical (%1:%2, %3): %4")).arg(context.file).arg(context.line).arg(context.function).arg(lMessage.constData());
             break;
 
         case QtFatalMsg:
             {
-                text = QString("Fatal (%1:%2, %3): %4").arg(context.file).arg(context.line).arg(context.function).arg(lMessage.constData());
+                text = QString(QObject::tr("Fatal (%1:%2, %3): %4")).arg(context.file).arg(context.line).arg(context.function).arg(lMessage.constData());
                 abort();
             }
             break;

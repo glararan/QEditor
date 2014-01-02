@@ -39,9 +39,10 @@ public:
 
     enum eEditingMode
     {
-        Objects   = 0,
-        Terrain   = 1,
-        Texturing = 2
+        Objects       = 0,
+        Terrain       = 1,
+        Texturing     = 2,
+        VertexShading = 3
     };
 
     void setEditingMode(eEditingMode editingMode) { eMode = editingMode; }
@@ -86,11 +87,15 @@ private:
 
     /// Terrain parameters
     float shaping_speed;
-    float shaping_radius;
-    float shaping_radius_multiplier;
-    int   shaping_brush;
     int   shaping_brush_type;
 
+    /// Texturing parameters
+    float texturing_flow;
+
+    // Vertex shading parameters
+    QColor vertexShadingColor;
+
+    /// Global parameters
     QOpenGLContext* GLcontext;
 
     Camera* camera;
@@ -157,12 +162,16 @@ public slots:
     void setDisplayMode(int mode);
     void setModeEditing(int option);
     void setCameraPosition(QVector3D* position);
-    void setShapingSpeed(double speed);
-    void setShapingRadius(double radius);
-    void setShapingBrush(int brush);
-    void setShapingBrushType(int type);
+    void setBrushSpeed(double speed);
+    void setBrushOuterRadius(double radius);
+    void setBrushInnerRadius(double radius);
+    void setBrush(int brush);
+    void setBrushType(int type);
+    void setTexturingFlow(double flow);
+    void setVertexShading(QColor color);
+    void setTerrainMaximumHeight(double value);
     void setTerrainMode(int mode);
-    void setBrushColor(QColor* color);
+    void setBrushColor(QColor* color, bool outer);
     void setEnvionmentDistance(float value);
     void setTextureScaleOption_(int option);
     void setTextureScaleFar(float value);
@@ -178,9 +187,12 @@ public slots:
 signals:
     void statusBar(QString message);
 
-    void updateShapingSpeed(double speed);
-    void updateShapingRadius(double radius);
-    void updateShapingBrush(int brush);
+    void updateBrushSpeed(double speed);
+    void updateBrushOuterRadius(double radius);
+    void updateBrushInnerRadius(double radius);
+    void updateBrush(int brush);
+
+    void selectedMapChunk(MapChunk* chunk);
 
     void initialized();
 };

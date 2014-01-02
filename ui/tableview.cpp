@@ -1,5 +1,7 @@
 #include "tableview.h"
 
+#include "mathhelper.h"
+
 #include <QPainter>
 #include <QPaintEvent>
 #include <QStyleOptionFrame>
@@ -152,8 +154,8 @@ void TexturesArray::mousePressEvent(QMouseEvent* e)
     // The current cell marker is set to the cell the mouse is pressed in
     QPoint pos = e->pos();
 
-    pos.setX(pos.x() - floor((double)pos.x() / (double)textureSize.width()) * textureMargin.width());
-    pos.setY(pos.y() - floor((double)pos.y() / (double)textureSize.height()) * textureMargin.height());
+    pos.setX(pos.x() - floor(MathHelper::toDouble(pos.x()) / MathHelper::toDouble(textureSize.width())) * textureMargin.width());
+    pos.setY(pos.y() - floor(MathHelper::toDouble(pos.y()) / MathHelper::toDouble(textureSize.height())) * textureMargin.height());
 
     setCurrent(rowAt(pos.y()), columnAt(pos.x()));
 }
@@ -171,8 +173,8 @@ bool TexturesArray::event(QEvent* e)
         QHelpEvent* help = static_cast<QHelpEvent*>(e);
 
         QPoint pos = help->pos();
-        pos.setX(pos.x() - floor((double)pos.x() / (double)textureSize.width()) * textureMargin.width());
-        pos.setY(pos.y() - floor((double)pos.y() / (double)textureSize.height()) * textureMargin.height());
+        pos.setX(pos.x() - floor(MathHelper::toDouble(pos.x()) / MathHelper::toDouble(textureSize.width())) * textureMargin.width());
+        pos.setY(pos.y() - floor(MathHelper::toDouble(pos.y()) / MathHelper::toDouble(textureSize.height())) * textureMargin.height());
 
         int cellIndex = columnAt(pos.x());
         int rowIndex  = rowAt(pos.y());

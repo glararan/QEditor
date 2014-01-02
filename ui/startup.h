@@ -57,12 +57,17 @@ private slots:
     void createProject(NewProjectData projectData);
     void openRecentProject(QString fileName);
 
+protected:
+    void resize(int w, int h);
+
 private:
     Ui::StartUp* ui;
 
     NewProject* newProject;
 
     void openProject(QString path);
+
+    void setMargins(int width);
 };
 
 inline QDataStream& operator<<(QDataStream& out, const RecentProject& recentProject)

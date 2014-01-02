@@ -33,9 +33,16 @@ uniform struct MaterialInfo
     float shininess; // Specular shininess exponent
 } material;
 
-uniform sampler2D grassTexture;
-uniform sampler2D rockTexture;
-uniform sampler2D snowTexture;
+uniform sampler2D baseTexture;
+uniform sampler2D layer1Texture;
+uniform sampler2D layer2Texture;
+//uniform sampler2D layer3Texture;
+
+uniform sampler2D layer1Alpha;
+uniform sampler2D layer2Alpha;
+//uniform sampler2D layer3Alpha;
+
+uniform sampler2D vertexShading;
 
 uniform float colorStop1 = 0.0;
 uniform float colorStop2 = 4.0;
@@ -47,11 +54,13 @@ uniform vec4 color2 = vec4(0.89, 0.68, 0.00, 1.00);
 uniform vec4 color3 = vec4(0.75, 0.00, 0.00, 1.00);
 uniform vec4 color4 = vec4(1.00, 1.00, 1.00, 1.00);
 
-uniform int   brush           = 0;
-uniform vec2  cursorPos       = vec2(0, 0);
-uniform float brushRadius     = 10;
-uniform float brushMultiplier = 5.33333;
-uniform vec4  brushColor      = vec4(0, 1, 0, 1);
+uniform int   brush            = 0;
+uniform vec2  cursorPos        = vec2(0, 0);
+uniform float brushInnerRadius = 8;
+uniform float brushOuterRadius = 10;
+uniform float brushMultiplier  = 5.33333;
+uniform vec4  outerBrushColor  = vec4(0, 1, 0, 1);
+uniform vec4  innerBrushColor  = vec4(0, 1, 0, 1);
 
 uniform float horizontalScale = 533.33333;
 
@@ -71,6 +80,7 @@ uniform float textureScaleFar  = 0.4;
 uniform float textureScaleNear = 0.4;
 
 uniform bool chunkLines = false;
+uniform bool highlight  = false;
 
 in wireFrameVertex
 {
@@ -218,7 +228,7 @@ vec4 shadeWorldNormal()
 }
 
 subroutine(ShaderModelType)
-vec4 shadeGrass()
+vec4 shaderBaseLayer()
 {
     vec2 uvNear, uvFar;
 
@@ -226,16 +236,16 @@ vec4 shadeGrass()
 
     float textureDistanceFactor = textureDistanceBlendFactor();
 
-    // Get grass texture color
-    vec4 grassNear  = texture(grassTexture, uvNear);
-    vec4 grassFar   = texture(grassTexture, texCoords);
-    vec4 grassColor = mix(grassNear, grassFar, textureDistanceFactor);
+    // Get base texture color
+    vec4 baseNear  = texture(baseTexture, uvNear);
+    vec4 baseFar   = texture(baseTexture, texCoords);
+    vec4 baseColor = mix(baseNear, baseFar, textureDistanceFactor);
 
-    return grassColor;
+    return mix(baseColor, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
 }
 
 subroutine(ShaderModelType)
-vec4 shadeGrassAndRocks()
+vec4 shadeBaseAndLayer1()
 {
     vec2 uvNear, uvFar;
 
@@ -243,24 +253,24 @@ vec4 shadeGrassAndRocks()
 
     float textureDistanceFactor = textureDistanceBlendFactor();
 
-    // Get grass texture color
-    vec4 grassNear  = texture(grassTexture, uvNear);
-    vec4 grassFar   = texture(grassTexture, texCoords);
-    vec4 grassColor = mix(grassNear, grassFar, textureDistanceFactor);
+    // Get base texture color
+    vec4 baseNear  = texture(baseTexture, uvNear);
+    vec4 baseFar   = texture(baseTexture, texCoords);
+    vec4 baseColor = mix(baseNear, baseFar, textureDistanceFactor);
 
-    // Get rock texture color
-    vec4 rockNear  = texture(rockTexture, uvNear);
-    vec4 rockFar   = texture(rockTexture, uvFar);
-    vec4 rockColor = mix(rockNear, rockFar, textureDistanceFactor);
+    // Get layer 1 texture color
+    vec4 layer1Near  = texture(layer1Texture, uvNear);
+    vec4 layer1Far   = texture(layer1Texture, uvFar);
+    vec4 layer1Color = mix(layer1Near, layer1Far, textureDistanceFactor);
 
-    // Blend rock and grass texture based upon the worldNormal vector
-    vec4 grassRockColor = mix(rockColor, grassColor, smoothstep(0.75, 0.95, clamp(worldNormal.y, 0.0, 1.0)));
+    // Blend layer 1 and base texture based upon alphamap
+    vec4 baseLayer1Color = mix(baseColor, layer1Color, texture(layer1Alpha, texCoords).r);
 
-    return grassRockColor;
+    return mix(baseLayer1Color, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
 }
 
 subroutine(ShaderModelType)
-vec4 shadeGrassRocksAndSnow()
+vec4 shadeBaseLayer1AndLayer2()
 {
     vec2 uvNear, uvFar;
 
@@ -268,27 +278,27 @@ vec4 shadeGrassRocksAndSnow()
 
     float textureDistanceFactor = textureDistanceBlendFactor();
 
-    // Get grass texture color
-    vec4 grassNear  = texture(grassTexture, uvNear);
-    vec4 grassFar   = texture(grassTexture, texCoords);
-    vec4 grassColor = mix(grassNear, grassFar, textureDistanceFactor);
+    // Get base texture color
+    vec4 baseNear  = texture(baseTexture, uvNear);
+    vec4 baseFar   = texture(baseTexture, texCoords);
+    vec4 baseColor = mix(baseNear, baseFar, textureDistanceFactor);
 
-    // Get rock texture color
-    vec4 rockNear  = texture(rockTexture, uvNear);
-    vec4 rockFar   = texture(rockTexture, uvFar);
-    vec4 rockColor = mix(rockNear, rockFar, textureDistanceFactor);
+    // Get layer 1 texture color
+    vec4 layer1Near  = texture(layer1Texture, uvNear);
+    vec4 layer1Far   = texture(layer1Texture, uvFar);
+    vec4 layer1Color = mix(layer1Near, layer1Far, textureDistanceFactor);
 
-    // Blend rock and grass texture based upon the worldNormal vector
-    vec4 grassRockColor = mix(rockColor, grassColor, smoothstep(0.75, 0.95, clamp(worldNormal.y, 0.0, 1.0)));
+    // Blend layer 1 and base texture based upon alphamap
+    vec4 baseAndLayer1Color = mix(baseColor, layer1Color, texture(layer1Alpha, texCoords).r);
 
-    // Now blend with snow based upon world height
-    vec4 snowNear  = texture(snowTexture, uvNear);
-    vec4 snowFar   = texture(snowTexture, 5.0 * uvFar);
-    vec4 snowColor = mix(snowNear, snowFar, textureDistanceFactor);
+    // Now blend with layer 2 based upon alphamap
+    vec4 layer2Near  = texture(layer2Texture, uvNear);
+    vec4 layer2Far   = texture(layer2Texture, 5.0 * uvFar);
+    vec4 layer2Color = mix(layer2Near, layer2Far, textureDistanceFactor);
 
-    vec4 diffuseColor = mix(grassRockColor, snowColor, smoothstep(10.0, 15.0, worldPosition.y));
+    vec4 diffuseColor = mix(baseAndLayer1Color, layer2Color, texture(layer2Alpha, texCoords).r);
 
-    return diffuseColor;
+    return mix(diffuseColor, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);;
 }
 
 subroutine(ShaderModelType)
@@ -312,25 +322,26 @@ vec4 shadeTexturedAndLit()
 
     float textureDistanceFactor = textureDistanceBlendFactor();
 
-    // Get grass texture color
-    vec4 grassNear  = texture(grassTexture, uvNear);
-    vec4 grassFar   = texture(grassTexture, texCoords);
-    vec4 grassColor = mix(grassNear, grassFar, textureDistanceFactor);
+    /// Get base texture color
+    vec4 baseNear  = texture(baseTexture, uvNear);
+    vec4 baseFar   = texture(baseTexture, texCoords);
+    vec4 baseColor = mix(baseNear, baseFar, textureDistanceFactor);
 
-    // Get rock texture color
-    vec4 rockNear  = texture(rockTexture, uvNear);
-    vec4 rockFar   = texture(rockTexture, uvFar);
-    vec4 rockColor = mix(rockNear, rockFar, textureDistanceFactor);
+    /// Get layer 1 texture color
+    vec4 layer1Near  = texture(layer1Texture, uvNear);
+    vec4 layer1Far   = texture(layer1Texture, uvFar);
+    vec4 layer1Color = mix(layer1Near, layer1Far, textureDistanceFactor);
 
-    // Blend rock and grass texture based upon the worldNormal vector
-    vec4 grassRockColor = mix(rockColor, grassColor, smoothstep(0.75, 0.95, clamp(worldNormal.y, 0.0, 1.0)));
+    /// Get layer 2 texture color
+    vec4 layer2Near  = texture(layer2Texture, uvNear);
+    vec4 layer2Far   = texture(layer2Texture, 5.0 * uvFar);
+    vec4 layer2Color = mix(layer2Near, layer2Far, textureDistanceFactor);
 
-    // Now blend with snow based upon world height
-    vec4 snowNear  = texture(snowTexture, uvNear);
-    vec4 snowFar   = texture(snowTexture, 5.0 * uvFar);
-    vec4 snowColor = mix(snowNear, snowFar, textureDistanceFactor);
+    /// Blend layer 1 and base texture based upon alphamap
+    vec4 baseAndLayer1Color = mix(baseColor, layer1Color, texture(layer1Alpha, texCoords).r);
 
-    vec4 diffuseColor = mix(grassRockColor, snowColor, smoothstep(10.0, 15.0, worldPosition.y));
+    /// Now blend with layer 2 based upon alphamap
+    vec4 diffuseColor = mix(baseAndLayer1Color, layer2Color, texture(layer2Alpha, texCoords).r);
 
     // Calculate the lighting model, keeping the specular component separate
     vec3 ambientAndDiff, spec;
@@ -339,7 +350,7 @@ vec4 shadeTexturedAndLit()
 
     vec4 color = vec4(ambientAndDiff, 1.0) * diffuseColor + vec4(spec, 1.0);
 
-    return color;
+    return mix(color, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
 }
 
 subroutine(ShaderModelType)
@@ -426,6 +437,28 @@ float fresnel(vec3 incident, vec3 normal, float bias, float power)
     return shadow;
 }*/
 
+vec4 ApplyCircle(vec4 colorIn, vec4 brushColor, vec2 distVec, float mouseDist, float maxRadius)
+{
+    if((maxRadius - mouseDist) > (maxRadius * 0.01f))
+        return colorIn;
+
+    distVec = normalize(distVec);
+
+    float angle = atan(distVec.y, distVec.x);
+
+    if(angle < 0)
+        angle += 3.1415926535897932384626433832795 * 2;
+
+    angle = (angle * 180.0f) / 3.1415926535897932384626433832795;
+
+    float resid = int(angle) % 30;
+
+    if(resid < 20)
+        colorIn += brushColor;
+
+    return colorIn;
+}
+
 void main()
 {
     // Compute fragment color depending upon selected shading mode
@@ -467,19 +500,39 @@ void main()
     }
 
     // Terrain brush
-    if(brush == 1)
+    /*if(brush == 0)
     {
         float dx = texCoords.x * horizontalScale - cursorPos.x + baseX;
         float dy = texCoords.y * horizontalScale - cursorPos.y + baseY;
 
-        float bDist = sqrt(dx * dx + dy * dy) * (brushMultiplier);
+        float bDist = sqrt(dx * dx + dy * dy) * brushMultiplier;
 
-        if(bDist < brushRadius)
+        if(bDist < brushOuterRadius)
         {
-            float str = max(0, mix(-1.5, 0.5, bDist / brushRadius));
+            float str = max(0, mix(-1.5, 0.5, bDist / brushOuterRadius));
             outColor += brushColor * str;
         }
+    }*/
+
+    // Terrain brush v2
+    if(brush == 0)
+    {
+        float dx = texCoords.x * horizontalScale - cursorPos.x + baseX;
+        float dy = texCoords.y * horizontalScale - cursorPos.y + baseY;
+
+        float bDist = sqrt(dx * dx + dy * dy) * brushMultiplier;
+
+        if(bDist < brushOuterRadius)
+        {
+            outColor = ApplyCircle(outColor, outerBrushColor, vec2(dx, dy), bDist, brushOuterRadius);
+
+            if(bDist < brushInnerRadius)
+                outColor = ApplyCircle(outColor, innerBrushColor, vec2(dx, dy), bDist, brushInnerRadius);
+        }
     }
+
+    if(highlight)
+        outColor += vec4(0.1, 0.1, 0.1, 1.0);
 
     // Water
     /*if(brush == 1)

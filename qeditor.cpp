@@ -44,10 +44,20 @@ QVariant QEditor::getSetting(const QString& key, const QVariant& value) const
     return settings->value(key, value);
 }
 
+QString QEditor::getGraphics() const
+{
+    return graphics;
+}
+
 void QEditor::setSetting(const QString& key, const QVariant& value)
 {
     settings->setValue(key, value);
     settings->sync();
+}
+
+void QEditor::setGraphics(const QString& graphicsVendor)
+{
+    graphics = graphicsVendor;
 }
 
 QEditor& app()

@@ -7,6 +7,8 @@
 #include <QButtonGroup>
 #include <QPushButton>
 #include <QComboBox>
+#include <QCheckBox>
+#include <QDoubleSpinBox>
 #include <QLabel>
 
 #include "ui/qdslider.h"
@@ -53,7 +55,8 @@ private:
     }
 
     // Editing mode = 1
-    QDSlider* t_radius;
+    QDSlider* t_outer_radius;
+    QDSlider* t_inner_radius;
     QDSlider* t_speed;
 
     QButtonGroup* t_brush;
@@ -64,13 +67,19 @@ private:
     QComboBox* t_terrain_mode;
     QComboBox* t_brush_type;
 
+    QCheckBox* t_terrain_maxHeight;
+
+    QDoubleSpinBox* t_terrain_maximum_height;
+
     QLabel* t_terrain_mode_label;
 
     QLabel* t_brush_label;
     QLabel* t_brush_type_label;
 
-    QLabel* t_radius_label;
-    QLabel* t_radius_value_label;
+    QLabel* t_outer_radius_label;
+    QLabel* t_outer_radius_value_label;
+    QLabel* t_inner_radius_label;
+    QLabel* t_inner_radius_value_label;
     QLabel* t_speed_label;
     QLabel* t_speed_value_label;
 
@@ -78,10 +87,19 @@ private:
     QList<QPair<QString, QVariant>> t_terrain_mode_1;
 
     // Editing mode = 2
+    QDSlider* t_flow;
 
+    QLabel* t_flow_label;
+    QLabel* t_flow_value_label;
+
+    // Editing mode = 3
+    QColorDialog* colorW;
+
+    //
     QList<QString> mode0Actions;
     QList<QString> mode1Actions;
     QList<QString> mode2Actions;
+    QList<QString> mode3Actions;
 
     void initMode();
     void showMode(QList<QString>& parentList);
@@ -108,7 +126,11 @@ private slots:
     void setDisplayMode();
     void setToolBarItem();
 
-    void setShapingRadius(double value);
+    void setTerrainMaximumHeightState(int state);
+
+    void setBrushOuterRadius(double value);
+    void setBrushInnerRadius(double value);
+    void setBrushInnerRadiusMaximumValue(double maximum);
 
     void setTerrain_Mode(int index);
 
@@ -121,10 +143,13 @@ private slots:
     void showProjectSettings();
 
     void openWorld(ProjectFileData projectData);
+    void postInitializeSubWorldWidgets();
 
     void createMemoryProject(NewProjectData projectData);
 
     void loadNewProjectMapTilesIntoMemory();
+
+    void takeScreenshot();
 };
 
 #endif // MAINWINDOW_H

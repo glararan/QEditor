@@ -9,7 +9,7 @@ Material::Material() : m_shader(new QOpenGLShaderProgram)
 
     if(!m_funcs)
     {
-        qWarning() << "Requires multi-texturing support";
+        qWarning() << QObject::tr("Requires multi-texturing support");
 
         return;
     }
@@ -30,9 +30,12 @@ void Material::bind()
     {
         const TextureUnitConfiguration& config = m_unitConfigs.value(unit);
 
+        // Check the texture
+        if(config.texture()->isNull())
+            continue;
+
         // Bind the texture
-        m_funcs->glActiveTexture(GL_TEXTURE0 + unit);
-        config.texture()->bind();
+        config.texture()->bind(GL_TEXTURE0 + unit);
 
         // Bind the sampler
         config.sampler()->bind(unit);
@@ -194,6 +197,10 @@ void ChunkMaterial::bind()
     foreach(const GLuint unit, m_unitConfigs.keys())
     {
         const TextureUnitConfiguration& config = m_unitConfigs.value(unit);
+
+        // Check the texture
+        if(config.texture()->isNull())
+            continue;
 
         // Bind the texture
         m_funcs->glActiveTexture(GL_TEXTURE0 + unit);

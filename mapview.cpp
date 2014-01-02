@@ -18,7 +18,7 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , panAngle(0.0f)
 , tiltAngle(0.0f)
 , camera_zoom(25.0f)
-, aspectRatio(static_cast<float>(width()) / static_cast<float>(height()))
+, aspectRatio(MathHelper::toFloat(width()) / MathHelper::toFloat(height()))
 , nearPlane(0.01f)
 , farPlane(app().getSetting("environmentDistance", 256.0f).toFloat())
 , speed(44.7f) // in m/s. Equivalent to 100 miles/hour)
@@ -33,10 +33,9 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , mouse_position(QPoint(0, 0))
 , terrain_pos()
 , shaping_speed(1.0f)
-, shaping_radius(10.0f)
-, shaping_radius_multiplier(5.33333f)
-, shaping_brush(1)
 , shaping_brush_type(1)
+, texturing_flow(0.5f)
+, vertexShadingColor(QColor(255, 255, 255, 255))
 , shiftDown(false)
 , ctrlDown(false)
 , altDown(false)
@@ -236,10 +235,18 @@ void MapView::update(float t)
         camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 
     /// mouse on terrain
-    if(eMode == Terrain)
+    // getWorldCoordinates can be used to spawn object in middle of screen
+    terrain_pos = getWorldCoordinates(mouse_position.x(), mouse_position.y());
+
+    // highlight and select chunk
+    if(eMode == Objects && altDown)
     {
-        // getWorldCoordinates can be used to spawn object in middle of screen
-        terrain_pos = getWorldCoordinates(mouse_position.x(), mouse_position.y());
+        const QVector3D& position(terrain_pos);
+
+        world->highlightMapChunkAt(position);
+
+        if(leftButtonPressed)
+            emit selectedMapChunk(world->getMapChunkAt(position));
     }
 
     // Change terrain
@@ -249,30 +256,66 @@ void MapView::update(float t)
 
         if(shiftDown)
         {
-            if(eMode == Terrain)
+            switch(eMode)
             {
-                if(eTerrain == Shaping)
-                    world->changeTerrain(position.x(), position.z(), 7.5f * dt * shaping_speed, shaping_brush_type);
-                else if(eTerrain == Smoothing)
-                    world->flattenTerrain(position.x(), position.z(), position.y(), pow(0.2f, dt) * shaping_speed, shaping_brush_type);
-            }
-            else if(eMode == Texturing)
-            {
-                world->paintTerrain();
+                case Terrain:
+                    {
+                        switch(eTerrain)
+                        {
+                            case Shaping:
+                                world->changeTerrain(position.x(), position.z(), 7.5f * dt * shaping_speed);
+                                break;
+
+                            case Smoothing:
+                                world->flattenTerrain(position.x(), position.z(), position.y(), pow(0.2f, dt) * shaping_speed);
+                                break;
+                        }
+                    }
+                    break;
+
+                case Texturing:
+                    {
+                        world->paintTerrain(position.x(), position.z(), texturing_flow);
+                    }
+                    break;
+
+                case VertexShading:
+                    {
+                        world->paintVertexShading(position.x(), position.z(), texturing_flow, vertexShadingColor);
+                    }
+                    break;
             }
         }
         else if(ctrlDown)
         {
-            if(eMode == Terrain)
+            switch(eMode)
             {
-                if(eTerrain == Shaping)
-                    world->changeTerrain(position.x(), position.z(), -7.5f * dt * shaping_speed, shaping_brush_type);
-                else if(eTerrain == Smoothing)
-                    world->blurTerrain(position.x(), position.z(), pow(0.2f, dt) * shaping_speed, shaping_brush_type);
-            }
-            else if(eMode == Texturing)
-            {
-                world->paintTerrain();
+                case Terrain:
+                    {
+                        switch(eTerrain)
+                        {
+                            case Shaping:
+                                world->changeTerrain(position.x(), position.z(), -7.5f * dt * shaping_speed);
+                                break;
+
+                            case Smoothing:
+                                world->blurTerrain(position.x(), position.z(), pow(0.2f, dt) * shaping_speed);
+                                break;
+                        }
+                    }
+                    break;
+
+                case Texturing:
+                    {
+                        world->paintTerrain(position.x(), position.z(), texturing_flow);
+                    }
+                    break;
+
+                case VertexShading:
+                    {
+                        world->paintVertexShading(position.x(), position.z(), texturing_flow, vertexShadingColor);
+                    }
+                    break;
             }
         }
     }
@@ -280,7 +323,7 @@ void MapView::update(float t)
     world->update(t);
 
     // Update status bar
-    QString sbMessage = "Initialized!";
+    QString sbMessage = tr("Initialized!");
 
     if(sbMessageList.count() > 0)
     {
@@ -339,7 +382,7 @@ void MapView::paintGL()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if(eMode == Terrain || eMode == Texturing)
+    if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
         world->draw(modelMatrix, screenSpaceErrorLevel, QVector2D(terrain_pos.x(), terrain_pos.z()), true);
     else
         world->draw(modelMatrix, screenSpaceErrorLevel, QVector2D(terrain_pos.x(), terrain_pos.z()));
@@ -355,7 +398,7 @@ void MapView::resizeGL(int w, int h)
     viewportSize = QVector2D(float(w), float(h));
 
     // Update the projection matrix
-    aspectRatio = static_cast<float>(w) / static_cast<float>(h);
+    aspectRatio = MathHelper::toFloat(w) / MathHelper::toFloat(h);
 
     camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 
@@ -426,6 +469,7 @@ void MapView::setModeEditing(int option)
         case Objects:
         case Terrain:
         case Texturing:
+        case VertexShading:
             eMode = (eEditingMode)option;
             break;
 
@@ -466,7 +510,7 @@ QVector3D MapView::getWorldCoordinates(float mouseX, float mouseY)
     float posZ;
     float posY = viewportSize.y() - mouseY - 1.0f;
 
-    world->getGLFunctions()->glReadPixels((int)mouseX, (int)posY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
+    world->getGLFunctions()->glReadPixels(MathHelper::toInt(mouseX), MathHelper::toInt(posY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
 
     QVector4D clickedPointOnScreen(mouseX, posY, 2.0f * posZ - 1.0f, 1.0f);
     QVector4D clickedPointIn3DOrgn = inverted * clickedPointOnScreen;
@@ -484,28 +528,57 @@ void MapView::resetCamera()
     tiltAngle = 0.0f;
 }
 
-void MapView::setShapingSpeed(double speed)
+void MapView::setBrushSpeed(double speed)
 {
-    shaping_speed = static_cast<float>(speed);
+    shaping_speed = MathHelper::toFloat(speed);
 }
 
-void MapView::setShapingRadius(double radius)
+void MapView::setBrushOuterRadius(double radius)
 {
-    shaping_radius = static_cast<float>(radius);
+    world->getBrush()->setOuterRadius(MathHelper::toFloat(radius));
 
-    world->getBrush()->setRadius(shaping_radius);
+    // Todo inner radius
+    //world->getBrush()->setRadius(MathHelper::toFloat(radius));
 }
 
-void MapView::setShapingBrush(int brush)
+void MapView::setBrushInnerRadius(double radius)
 {
-    shaping_brush = brush;
-
-    world->getBrush()->setBrush(shaping_brush);
+    world->getBrush()->setInnerRadius(MathHelper::toFloat(radius));
 }
 
-void MapView::setShapingBrushType(int type)
+void MapView::setBrush(int brush)
 {
-    shaping_brush_type = type + 1;
+    world->getBrush()->BrushTypes().setShaping((Brush::ShapingType::Formula)brush);
+}
+
+void MapView::setBrushType(int type)
+{
+    switch(eTerrain)
+    {
+        case Shaping:
+        default:
+            world->getBrush()->BrushTypes().setShaping((Brush::ShapingType::Formula)type);
+            break;
+
+        case Smoothing:
+            world->getBrush()->BrushTypes().setSmoothing((Brush::SmoothingType::Formula)type);
+            break;
+    }
+}
+
+void MapView::setTexturingFlow(double flow)
+{
+    texturing_flow = flow;
+}
+
+void MapView::setVertexShading(QColor color)
+{
+    vertexShadingColor = color;
+}
+
+void MapView::setTerrainMaximumHeight(double value)
+{
+    world->setTerrainMaximumHeight(MathHelper::toFloat(value));
 }
 
 void MapView::setTerrainMode(int mode)
@@ -513,11 +586,26 @@ void MapView::setTerrainMode(int mode)
     eTerrain = (eTerrainMode)mode;
 }
 
-void MapView::setBrushColor(QColor* color)
+void MapView::setBrushColor(QColor* color, bool outer)
 {
-    world->getBrush()->setColor(*color);
+    switch(outer)
+    {
+        case true:
+            {
+                world->getBrush()->setOuterColor(*color);
 
-    app().setSetting("brushColor", *color);
+                app().setSetting("outerBrushColor", *color);
+            }
+            break;
+
+        case false:
+            {
+                world->getBrush()->setInnerColor(*color);
+
+                app().setSetting("innerBrushColor", *color);
+            }
+            break;
+    }
 }
 
 void MapView::setEnvionmentDistance(float value)
@@ -697,7 +785,11 @@ void MapView::keyReleaseEvent(QKeyEvent* e)
             break;
 
         case Qt::Key_Alt:
-            altDown = false;
+            {
+                altDown = false;
+
+                world->unHighlight();
+            }
             break;
 
         default:
@@ -756,8 +848,8 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
     }
     else if(leftButtonPressed && altDown)
     {
-        if(eMode == Terrain)
-            updateShapingRadius(dx);
+        if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+            updateBrushOuterRadius(dx);
     }
 
     prevMousePos = mousePos;
@@ -770,7 +862,7 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
 void MapView::wheelEvent(QWheelEvent* e)
 {
     if(!shiftDown && !altDown && !ctrlDown)
-        dynamicZoom.push_back(-(static_cast<float>(e->delta()) / 240));
+        dynamicZoom.push_back(-(MathHelper::toFloat(e->delta()) / 240));
 
     QGLWidget::wheelEvent(e);
 }

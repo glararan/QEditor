@@ -4,11 +4,14 @@
 #include <QDialog>
 
 #include "tableview.h"
+#include "texturemanager.h"
 
 #include <QVector>
 #include <QPair>
 #include <QImage>
-#include <QGridLayout>
+#include <QTableWidgetItem>
+
+class MapChunk;
 
 namespace Ui
 {
@@ -23,7 +26,7 @@ public:
     explicit TexturePicker(QWidget* parent = 0);
     ~TexturePicker();
 
-    const QImage getTexture() const;
+    void initialize(TextureManager* manager);
     
 protected:
     void resizeEvent(QResizeEvent* e);
@@ -31,9 +34,11 @@ protected:
 private:
     Ui::TexturePicker* ui;
 
-    QGridLayout* layout;
+    TextureManager* textureManager;
 
     TextureWell* textureWell;
+
+    MapChunk* mapChunk;
 
     QSize textureIconSize;
     QSize textureIconMargin;
@@ -41,6 +46,18 @@ private:
     int columns;
 
     QVector<QPair<QImage, QString>> textures;
+
+private slots:
+    void selectedTexture(int row, int cell);
+
+    void moveLayerUp();
+    void moveLayerDown();
+    void deleteLayer();
+
+    void handleLayerGUI(QTableWidgetItem* item);
+
+public slots:
+    void setChunk(MapChunk* chunk);
 };
 
 #endif // TEXTUREPICKER_H

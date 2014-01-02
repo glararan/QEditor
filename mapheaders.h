@@ -5,12 +5,13 @@
 
 class QDataStream;
 
+/// Static const data
 static const int TILES  = 64;
 static const int CHUNKS = 4;
 
 static const float TILESIZE  = 533.33333f;
 static const float CHUNKSIZE = TILESIZE / CHUNKS;
-static const float UNITSIZE  = CHUNKSIZE / ((float)CHUNKS / 2);
+static const float UNITSIZE  = CHUNKSIZE / 8.0f;
 
 static const double CHUNK_DIAMETER = sqrt(pow(CHUNKSIZE, 2) + pow(CHUNKSIZE, 2));
 
@@ -19,11 +20,36 @@ static const float MAP_DRAW_DISTANCE = 1000.0f;
 static const int MAP_WIDTH  = 1024;
 static const int MAP_HEIGHT = 1024;
 
-static const int CHUNK_ARRAY_SIZE = MAP_WIDTH / CHUNKS * MAP_HEIGHT / CHUNKS * sizeof(float);
+static const int CHUNK_ARRAY_SIZE    = MAP_WIDTH / CHUNKS * MAP_HEIGHT / CHUNKS * sizeof(float);
+static const int CHUNK_ARRAY_UC_SIZE = CHUNK_ARRAY_SIZE / sizeof(float); // Unsigned char array size
 
+static const int MAX_TEXTURES = 4;
+static const int ALPHAMAPS    = MAX_TEXTURES - 1;
+
+enum ShaderUnits
+{
+    Heightmap     = 0,
+    Texture1      = 1,
+    Texture2      = 2,
+    Texture3      = 3,
+    Texture4      = 4,
+    Alphamap1     = 5,
+    //Alphamap1     = 4,
+    //Texture4      = 5,
+    Alphamap2     = 6,
+    Alphamap3     = 7,
+    VertexShading = 8,
+};
+
+/// Structures
 struct MCVT
 {
-    float height[CHUNK_ARRAY_SIZE];
+    float height[CHUNK_ARRAY_UC_SIZE]; // chunk_array_size
+
+    quint8 alphaMaps[ALPHAMAPS][CHUNK_ARRAY_UC_SIZE]; // unsigned char
+    quint8 vertexShading[CHUNK_ARRAY_SIZE];
+
+    QString textures[MAX_TEXTURES];
 };
 
 struct MH2O
@@ -41,7 +67,7 @@ struct MCNK
     quint32 doodads;
     quint32 areaID;
 
-    MCVT* heightOffset;
+    MCVT* terrainOffset;
     //MH2O* liquidOffset;
 };
 
@@ -100,8 +126,23 @@ inline QDataStream& operator<<(QDataStream& dataStream, const MapHeader& mapHead
                    << mapHeader.mcin->entries[i].mcnk->doodads
                    << mapHeader.mcin->entries[i].mcnk->areaID;
 
+        for(int j = 0; j < CHUNK_ARRAY_UC_SIZE; ++j) // chunk_array_size
+            dataStream << mapHeader.mcin->entries[i].mcnk->terrainOffset->height[j];
+
+        // Alphamaps
+        for(int j = 0; j < ALPHAMAPS; ++j)
+        {
+            for(int k = 0; k < CHUNK_ARRAY_UC_SIZE; ++k)
+                dataStream << mapHeader.mcin->entries[i].mcnk->terrainOffset->alphaMaps[j][k];
+        }
+
+        // Vertex Shading
         for(int j = 0; j < CHUNK_ARRAY_SIZE; ++j)
-            dataStream << mapHeader.mcin->entries[i].mcnk->heightOffset->height[j];
+            dataStream << mapHeader.mcin->entries[i].mcnk->terrainOffset->vertexShading[j];
+
+        // Textures
+        for(int j = 0; j < MAX_TEXTURES; ++j)
+            dataStream << mapHeader.mcin->entries[i].mcnk->terrainOffset->textures[j];
     }
 
     return dataStream;
@@ -125,10 +166,25 @@ inline QDataStream& operator>>(QDataStream& dataStream, MapHeader& mapHeader)
                    >> mapHeader.mcin->entries[i].mcnk->doodads
                    >> mapHeader.mcin->entries[i].mcnk->areaID;
 
-        mapHeader.mcin->entries[i].mcnk->heightOffset = new MCVT;
+        mapHeader.mcin->entries[i].mcnk->terrainOffset = new MCVT;
 
+        for(int j = 0; j < CHUNK_ARRAY_UC_SIZE; ++j) // chunk_array_size
+            dataStream >> mapHeader.mcin->entries[i].mcnk->terrainOffset->height[j];
+
+        // Alphamaps
+        for(int j = 0; j < ALPHAMAPS; ++j)
+        {
+            for(int k = 0; k < CHUNK_ARRAY_UC_SIZE; ++k)
+                dataStream >> mapHeader.mcin->entries[i].mcnk->terrainOffset->alphaMaps[j][k];
+        }
+
+        // Vertex Shading
         for(int j = 0; j < CHUNK_ARRAY_SIZE; ++j)
-            dataStream >> mapHeader.mcin->entries[i].mcnk->heightOffset->height[j];
+            dataStream >> mapHeader.mcin->entries[i].mcnk->terrainOffset->vertexShading[j];
+
+        // Textures
+        for(int j = 0; j < MAX_TEXTURES; ++j)
+            dataStream >> mapHeader.mcin->entries[i].mcnk->terrainOffset->textures[j];
     }
 
     return dataStream;

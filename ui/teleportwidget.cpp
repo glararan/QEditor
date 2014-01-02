@@ -36,7 +36,7 @@ void TeleportWidget::bookmarksAdd()
         {
             QMessageBox msg;
             msg.setDefaultButton(QMessageBox::Ok);
-            msg.setText("Some field is empty!");
+            msg.setText(tr("Some field is empty!"));
             msg.setWindowTitle("Error");
             msg.exec();
 
@@ -49,7 +49,7 @@ void TeleportWidget::bookmarksAdd()
             {
                 QMessageBox msg;
                 msg.setDefaultButton(QMessageBox::Ok);
-                msg.setText("Some coordinate is not allowed to use!");
+                msg.setText(tr("Some coordinate is not allowed to use!"));
                 msg.setWindowTitle("Error");
                 msg.exec();
 
@@ -78,7 +78,7 @@ void TeleportWidget::bookmarksGo()
     {
         QMessageBox msg;
         msg.setDefaultButton(QMessageBox::Ok);
-        msg.setText("Selected item is empty!");
+        msg.setText(tr("Selected item is empty!"));
         msg.setWindowTitle("Error");
         msg.exec();
 
@@ -94,7 +94,7 @@ void TeleportWidget::bookmarksGo()
     {
         QMessageBox msg;
         msg.setDefaultButton(QMessageBox::Ok);
-        msg.setText("We don't localize this item!");
+        msg.setText(tr("We don't localize this item!"));
         msg.setWindowTitle("Error");
         msg.exec();
 
@@ -112,7 +112,7 @@ void TeleportWidget::bookmarksTeleport()
     {
         QMessageBox msg;
         msg.setDefaultButton(QMessageBox::Ok);
-        msg.setText("Coordinate X is empty!");
+        msg.setText(tr("Coordinate X is empty!"));
         msg.setWindowTitle("Error");
         msg.exec();
 
@@ -126,7 +126,7 @@ void TeleportWidget::bookmarksTeleport()
         {
             QMessageBox msg;
             msg.setDefaultButton(QMessageBox::Ok);
-            msg.setText("Coordinate X is not allowed to use!");
+            msg.setText(tr("Coordinate X is not allowed to use!"));
             msg.setWindowTitle("Error");
             msg.exec();
 
@@ -138,7 +138,7 @@ void TeleportWidget::bookmarksTeleport()
     {
         QMessageBox msg;
         msg.setDefaultButton(QMessageBox::Ok);
-        msg.setText("Coordinate Y is empty!");
+        msg.setText(tr("Coordinate Y is empty!"));
         msg.setWindowTitle("Error");
         msg.exec();
 
@@ -152,7 +152,7 @@ void TeleportWidget::bookmarksTeleport()
         {
             QMessageBox msg;
             msg.setDefaultButton(QMessageBox::Ok);
-            msg.setText("Coordinate Y is not allowed to use!");
+            msg.setText(tr("Coordinate Y is not allowed to use!"));
             msg.setWindowTitle("Error");
             msg.exec();
 
@@ -164,7 +164,7 @@ void TeleportWidget::bookmarksTeleport()
     {
         QMessageBox msg;
         msg.setDefaultButton(QMessageBox::Ok);
-        msg.setText("Coordinate Z is empty!");
+        msg.setText(tr("Coordinate Z is empty!"));
         msg.setWindowTitle("Error");
         msg.exec();
 
@@ -178,7 +178,7 @@ void TeleportWidget::bookmarksTeleport()
         {
             QMessageBox msg;
             msg.setDefaultButton(QMessageBox::Ok);
-            msg.setText("Coordinate Z is not allowed to use!");
+            msg.setText(tr("Coordinate Z is not allowed to use!"));
             msg.setWindowTitle("Error");
             msg.exec();
 
@@ -213,7 +213,7 @@ bool TeleportWidget::checkCoords(QString coords)
                     {
                         QMessageBox msg;
                         msg.setDefaultButton(QMessageBox::Ok);
-                        msg.setText("Coords contain more then 1 dot or comma!");
+                        msg.setText(tr("Coords contain more then 1 dot or comma!"));
                         msg.setWindowTitle("Error");
                         msg.exec();
 
@@ -242,7 +242,7 @@ void TeleportWidget::writeToBookmarks(QString name, QVector3D location)
     {
         QMessageBox msg;
         msg.setDefaultButton(QMessageBox::Ok);
-        msg.setText("In bookmarks list already exists location with this name!");
+        msg.setText(tr("In bookmarks list already exists location with this name!"));
         msg.setWindowTitle("Error");
         msg.exec();
 
@@ -312,34 +312,38 @@ bool TeleportWidget::readFromBookmarks(QString search, QVector3D& location)
 void TeleportWidget::loadBookmarks()
 {
     QFile file("bookmarks.txt");
-    file.open(QIODevice::ReadOnly);
 
-    QTextStream tStream(&file);
-
-    QString bookmarksAll = tStream.readAll();
-    QStringList bookmarksLines = bookmarksAll.split("\n");
-
-    file.close();
-
-    if(bookmarksLines.count() > 0)
+    if(file.exists() && file.open(QIODevice::ReadOnly))
     {
-        foreach(QString line, bookmarksLines)
+        QTextStream tStream(&file);
+
+        QString bookmarksAll = tStream.readAll();
+        QStringList bookmarksLines = bookmarksAll.split("\n");
+
+        file.close();
+
+        if(bookmarksLines.count() > 0)
         {
-            QStringList fields = line.split(" ");
-
-            if(line.length() <= 0 || fields.count() != 4)
-                continue;
-
-            for(int i = 1; i < fields.count(); i++)
+            foreach(QString line, bookmarksLines)
             {
-                if(fields[i].contains(","))
-                    fields[i] = fields[i].replace(",", ".");
+                QStringList fields = line.split(" ");
+
+                if(line.length() <= 0 || fields.count() != 4)
+                    continue;
+
+                for(int i = 1; i < fields.count(); i++)
+                {
+                    if(fields[i].contains(","))
+                        fields[i] = fields[i].replace(",", ".");
+                }
+
+                //                        x                    z                    y
+                QVector3D location(fields[1].toFloat(), fields[3].toFloat(), fields[2].toFloat());
+
+                ui->bookmarksList->addItem(fields[0], location);
             }
-
-            //                        x                    z                    y
-            QVector3D location(fields[1].toFloat(), fields[3].toFloat(), fields[2].toFloat());
-
-            ui->bookmarksList->addItem(fields[0], location);
         }
     }
+    else
+        qDebug() << tr("Bookmarks doesn't exists.");
 }

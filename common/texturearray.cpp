@@ -13,7 +13,7 @@ TextureArray::TextureArray(int textureWidth, int textureHeight, int layersCount,
 , width(textureWidth)
 , height(textureHeight)
 , layers(layersCount)
-, columns((int)sqrt((double)layersCount))
+, columns(MathHelper::toInt(sqrt(MathHelper::toDouble(layersCount))))
 , GLfuncs(0)
 {
     texels = new GLfloat[width * height * sizeof(float) * layers];
@@ -91,14 +91,14 @@ void TextureArray::updatePixel(const GLfloat value, QVector2D offset, bool bind)
 
     if(offset.x() > width)
     {
-        qFatal(QString("offset is not alowed, because is larger than width! offset: %1 width: %2").arg(offset.x()).arg(width).toStdString().c_str());
+        qFatal(QString(QObject::tr("offset is not alowed, because is larger than width! offset: %1 width: %2")).arg(offset.x()).arg(width).toStdString().c_str());
 
         return;
     }
 
     if(offset.y() > height)
     {
-        qFatal(QString("offset is not alowed, because is larger than height! offset: %1 height: %2").arg(offset.x()).arg(height).toStdString().c_str());
+        qFatal(QString(QObject::tr("offset is not alowed, because is larger than height! offset: %1 height: %2")).arg(offset.x()).arg(height).toStdString().c_str());
 
         return;
     }
@@ -116,7 +116,7 @@ void TextureArray::updateImage(const float* pixelArray, const int layer, const i
 
     if(arraySize != block)
     {
-        qFatal(QString("pixelArray is not same size as block size! pixelArray: %1 block: %2").arg(arraySize).arg(block).toStdString().c_str());
+        qFatal(QString(QObject::tr("pixelArray is not same size as block size! pixelArray: %1 block: %2")).arg(arraySize).arg(block).toStdString().c_str());
 
         return;
     }
