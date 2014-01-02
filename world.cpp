@@ -231,7 +231,7 @@ void World::changeTerrain(float x, float z, float change)
                 {
                     for(int cy = 0; cy < CHUNKS; ++cy)
                     {
-                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->changeTerrain(x, z, change, brush))
+                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->changeTerrain(x, z, change))
                         {
                             // push changed chunks
                             // set changed i, j
@@ -255,7 +255,7 @@ void World::flattenTerrain(float x, float z, float y, float change)
                 {
                     for(int cy = 0; cy < CHUNKS; ++cy)
                     {
-                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->flattenTerrain(x, z, y, change, brush))
+                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->flattenTerrain(x, z, y, change))
                         {
                             // push changed chunks
                             // set changed i, j
@@ -279,7 +279,7 @@ void World::blurTerrain(float x, float z, float change)
                 {
                     for(int cy = 0; cy < CHUNKS; ++cy)
                     {
-                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->blurTerrain(x, z, change, brush))
+                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->blurTerrain(x, z, change))
                         {
                             // push changed chunks
                             // set changed i, j
@@ -303,7 +303,31 @@ void World::paintTerrain(float x, float z, float flow)
                 {
                     for(int cy = 0; cy < CHUNKS; ++cy)
                     {
-                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->paintTerrain(x, z, flow, brush, textureManager->getSelectedTexture()))
+                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->paintTerrain(x, z, flow, textureManager->getSelectedTexture()))
+                        {
+                            // push changed chunks
+                            // set changed i, j
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void World::paintVertexShading(float x, float z, float flow, QColor& color)
+{
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
+                for(int cx = 0; cx < CHUNKS; ++cx)
+                {
+                    for(int cy = 0; cy < CHUNKS; ++cy)
+                    {
+                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->paintVertexShading(x, z, flow, color))
                         {
                             // push changed chunks
                             // set changed i, j

@@ -74,6 +74,42 @@ const unsigned char MathHelper::toUChar(const float value)
     return static_cast<unsigned char>(value);
 }
 
+const GLuint MathHelper::toGLuint(const int value)
+{
+    return static_cast<GLuint>(value);
+}
+
+const float MathHelper::closerTo(const unsigned char value1, const qreal value2, const float formula)
+{
+    if(toFloat(value1) == toRGB(value2))
+        return toFloat(value1);
+
+    if(toFloat(value1) > toRGB(value2))
+    {
+        if(toFloat(value1) - formula > toRGB(value2))
+            return toFloat(value1) - formula;
+        else
+            return toRGB(value2);
+    }
+    else
+    {
+        if(toFloat(value1) + formula < toRGB(value2))
+            return toFloat(value1) + formula;
+        else
+            return toRGB(value2);
+    }
+}
+
+const float MathHelper::toRGB(const qreal value)
+{
+    return static_cast<float>(value) * 255.0f;
+}
+
+const int MathHelper::toRGBInt(const qreal value)
+{
+    return static_cast<int>(value * 255.0f);
+}
+
 const int MathHelper::round(const int number, const int multiple)
 {
     if(multiple == 0)

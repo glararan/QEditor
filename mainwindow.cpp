@@ -7,6 +7,9 @@
 #include "qeditor.h"
 
 #include <QAction>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QDesktopServices>
 
 #include <limits>
 
@@ -18,6 +21,7 @@ MainWindow::MainWindow(QWidget* parent)
 , teleportW(NULL)
 , settingsW(NULL)
 , texturepW(NULL)
+, colorW(NULL)
 , t_outer_radius(NULL)
 , t_inner_radius(NULL)
 , t_speed(NULL)
@@ -67,6 +71,9 @@ MainWindow::MainWindow(QWidget* parent)
 
     // help - about
     connect(ui->action_About, SIGNAL(triggered()), this, SLOT(showAbout()));
+
+    // tools - screenshot
+    connect(ui->action_Screenshot, SIGNAL(triggered()), this, SLOT(takeScreenshot()));
 }
 
 MainWindow::~MainWindow()
@@ -76,6 +83,7 @@ MainWindow::~MainWindow()
     delete teleportW;
     delete settingsW;
     delete texturepW;
+    delete colorW;
 
     deleteObject(t_outer_radius);
     deleteObject(t_inner_radius);
@@ -158,10 +166,10 @@ void MainWindow::openWorld(ProjectFileData projectData)
     initMode();
 
     /// map view
-    connect(mapView, SIGNAL(statusBar(QString)),               ui->statusbar, SLOT(showMessage(QString)));
-    connect(mapView, SIGNAL(updateShapingOuterRadius(double)), this,          SLOT(setShapingOuterRadius(double)));
-    connect(mapView, SIGNAL(updateShapingInnerRadius(double)), this,          SLOT(setShapingInnerRadius(double)));
-    connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)),      texturepW,     SLOT(setChunk(MapChunk*)));
+    connect(mapView, SIGNAL(statusBar(QString)),             ui->statusbar, SLOT(showMessage(QString)));
+    connect(mapView, SIGNAL(updateBrushOuterRadius(double)), this,          SLOT(setBrushOuterRadius(double)));
+    connect(mapView, SIGNAL(updateBrushInnerRadius(double)), this,          SLOT(setBrushInnerRadius(double)));
+    connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)),    texturepW,     SLOT(setChunk(MapChunk*)));
 
     /// menu bar
     // file
@@ -220,6 +228,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(ui->action_mapview_m0, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
     connect(ui->action_mapview_m1, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
     connect(ui->action_mapview_m2, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
+    connect(ui->action_mapview_m3, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
 
     connect(this, SIGNAL(setModeEditing(int)), mapView, SLOT(setModeEditing(int)));
 
@@ -227,7 +236,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(t_terrain_mode, SIGNAL(currentIndexChanged(int)), this   , SLOT(setTerrain_Mode(int)));
     connect(this,           SIGNAL(setTerrainMode(int))     , mapView, SLOT(setTerrainMode(int)));
 
-    connect(t_brush_type  , SIGNAL(currentIndexChanged(int)), mapView, SLOT(setShapingBrushType(int)));
+    connect(t_brush_type  , SIGNAL(currentIndexChanged(int)), mapView, SLOT(setBrushType(int)));
 
     connect(t_terrain_maxHeight,      SIGNAL(stateChanged(int)),    this,    SLOT(setTerrainMaximumHeightState(int)));
     connect(t_terrain_maximum_height, SIGNAL(valueChanged(double)), mapView, SLOT(setTerrainMaximumHeight(double)));
@@ -237,11 +246,13 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(t_speed,        SIGNAL(valueChanged(double)), t_speed_value_label,        SLOT(setNum(double)));
     connect(t_flow,         SIGNAL(valueChanged(double)), t_flow_value_label,         SLOT(setNum(double)));
 
-    connect(t_outer_radius, SIGNAL(valueChanged(double)), mapView, SLOT(setShapingOuterRadius(double)));
-    connect(t_outer_radius, SIGNAL(valueChanged(double)), this,    SLOT(setShapingInnerRadiusMaximumValue(double)));
-    connect(t_inner_radius, SIGNAL(valueChanged(double)), mapView, SLOT(setShapingInnerRadius(double)));
-    connect(t_speed,        SIGNAL(valueChanged(double)), mapView, SLOT(setShapingSpeed(double)));
+    connect(t_outer_radius, SIGNAL(valueChanged(double)), mapView, SLOT(setBrushOuterRadius(double)));
+    connect(t_outer_radius, SIGNAL(valueChanged(double)), this,    SLOT(setBrushInnerRadiusMaximumValue(double)));
+    connect(t_inner_radius, SIGNAL(valueChanged(double)), mapView, SLOT(setBrushInnerRadius(double)));
+    connect(t_speed,        SIGNAL(valueChanged(double)), mapView, SLOT(setBrushSpeed(double)));
     connect(t_flow,         SIGNAL(valueChanged(double)), mapView, SLOT(setTexturingFlow(double)));
+
+    connect(colorW, SIGNAL(currentColorChanged(QColor)), mapView, SLOT(setVertexShading(QColor)));
 }
 
 void MainWindow::postInitializeSubWorldWidgets()
@@ -286,6 +297,31 @@ void MainWindow::createMemoryProject(NewProjectData projectData)
 void MainWindow::loadNewProjectMapTilesIntoMemory()
 {
     world->loadNewProjectMapTilesIntoMemory(mapCoords);
+}
+
+void MainWindow::takeScreenshot()
+{
+    QString path = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+
+    if(path == QString())
+        path == QDir::homePath();
+
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save screenshoot"), path, tr("Image (*.png *.jpg)"));
+
+    if(fileName == QString())
+        return;
+
+    if(!grab().toImage().save(fileName))
+    {
+        QMessageBox msg;
+        msg.setWindowTitle("Error");
+        msg.setIcon(QMessageBox::Critical);
+        msg.setText(tr("Problem with saving screenshot! Try it again."));
+
+        msg.exec();
+
+        return;
+    }
 }
 
 QString MainWindow::getActionName(QObject* object) const
@@ -400,6 +436,14 @@ void MainWindow::setToolBarItem()
         emit setModeEditing(2);
 
         showMode(mode2Actions);
+    }
+    else if(iName == "action_mapview_m3")
+    {
+        emit setModeEditing(3);
+
+        showMode(mode3Actions);
+
+        addDockWindow(tr("Vertex Shading"), colorW);
     }
 }
 
@@ -535,6 +579,11 @@ void MainWindow::initMode()
     t_terrain_maximum_height->setObjectName("t_terrain_maximum_height");
     t_terrain_maximum_height->setEnabled(false);
 
+    colorW = new QColorDialog();
+    colorW->setOption(QColorDialog::NoButtons);
+    colorW->setOption(QColorDialog::ShowAlphaChannel);
+    colorW->setOption(QColorDialog::DontUseNativeDialog);
+
     t_terrain_mode_label = new QLabel(tr("Mode:"));
 
     t_brush_label      = new QLabel(tr("Brushes:"));
@@ -610,6 +659,20 @@ void MainWindow::initMode()
     addToolbarAction(t_flow                    , mode2Actions);
     addToolbarAction(t_flow_value_label        , mode2Actions);
 
+    // mode3
+    addToolbarAction(t_brush_label             , mode3Actions);
+    addToolbarAction(t_brush_circle            , mode3Actions);
+    addToolbarAction(t_brush_square            , mode3Actions);
+    addToolbarAction(t_outer_radius_label      , mode3Actions);
+    addToolbarAction(t_outer_radius            , mode3Actions);
+    addToolbarAction(t_outer_radius_value_label, mode3Actions);
+    addToolbarAction(t_inner_radius_label      , mode3Actions);
+    addToolbarAction(t_inner_radius            , mode3Actions);
+    addToolbarAction(t_inner_radius_value_label, mode3Actions);
+    addToolbarAction(t_flow_label              , mode3Actions);
+    addToolbarAction(t_flow                    , mode3Actions);
+    addToolbarAction(t_flow_value_label        , mode3Actions);
+
     hideToolbarActions();
 }
 
@@ -652,7 +715,7 @@ void MainWindow::setTerrainMaximumHeightState(int state)
     }
 }
 
-void MainWindow::setShapingOuterRadius(double value)
+void MainWindow::setBrushOuterRadius(double value)
 {
     t_outer_radius->setValue(t_outer_radius->value() + value);
 
@@ -662,12 +725,12 @@ void MainWindow::setShapingOuterRadius(double value)
         t_inner_radius->setValue(t_outer_radius->value());
 }
 
-void MainWindow::setShapingInnerRadius(double value)
+void MainWindow::setBrushInnerRadius(double value)
 {
     t_inner_radius->setValue(t_inner_radius->value() + value);
 }
 
-void MainWindow::setShapingInnerRadiusMaximumValue(double maximum)
+void MainWindow::setBrushInnerRadiusMaximumValue(double maximum)
 {
     Q_UNUSED(maximum);
 

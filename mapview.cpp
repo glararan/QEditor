@@ -35,6 +35,7 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , shaping_speed(1.0f)
 , shaping_brush_type(1)
 , texturing_flow(0.5f)
+, vertexShadingColor(QColor(255, 255, 255, 255))
 , shiftDown(false)
 , ctrlDown(false)
 , altDown(false)
@@ -255,30 +256,66 @@ void MapView::update(float t)
 
         if(shiftDown)
         {
-            if(eMode == Terrain)
+            switch(eMode)
             {
-                if(eTerrain == Shaping)
-                    world->changeTerrain(position.x(), position.z(), 7.5f * dt * shaping_speed);
-                else if(eTerrain == Smoothing)
-                    world->flattenTerrain(position.x(), position.z(), position.y(), pow(0.2f, dt) * shaping_speed);
-            }
-            else if(eMode == Texturing)
-            {
-                world->paintTerrain(position.x(), position.z(), texturing_flow);
+                case Terrain:
+                    {
+                        switch(eTerrain)
+                        {
+                            case Shaping:
+                                world->changeTerrain(position.x(), position.z(), 7.5f * dt * shaping_speed);
+                                break;
+
+                            case Smoothing:
+                                world->flattenTerrain(position.x(), position.z(), position.y(), pow(0.2f, dt) * shaping_speed);
+                                break;
+                        }
+                    }
+                    break;
+
+                case Texturing:
+                    {
+                        world->paintTerrain(position.x(), position.z(), texturing_flow);
+                    }
+                    break;
+
+                case VertexShading:
+                    {
+                        world->paintVertexShading(position.x(), position.z(), texturing_flow, vertexShadingColor);
+                    }
+                    break;
             }
         }
         else if(ctrlDown)
         {
-            if(eMode == Terrain)
+            switch(eMode)
             {
-                if(eTerrain == Shaping)
-                    world->changeTerrain(position.x(), position.z(), -7.5f * dt * shaping_speed);
-                else if(eTerrain == Smoothing)
-                    world->blurTerrain(position.x(), position.z(), pow(0.2f, dt) * shaping_speed);
-            }
-            else if(eMode == Texturing)
-            {
-                world->paintTerrain(position.x(), position.z(), texturing_flow);
+                case Terrain:
+                    {
+                        switch(eTerrain)
+                        {
+                            case Shaping:
+                                world->changeTerrain(position.x(), position.z(), -7.5f * dt * shaping_speed);
+                                break;
+
+                            case Smoothing:
+                                world->blurTerrain(position.x(), position.z(), pow(0.2f, dt) * shaping_speed);
+                                break;
+                        }
+                    }
+                    break;
+
+                case Texturing:
+                    {
+                        world->paintTerrain(position.x(), position.z(), texturing_flow);
+                    }
+                    break;
+
+                case VertexShading:
+                    {
+                        world->paintVertexShading(position.x(), position.z(), texturing_flow, vertexShadingColor);
+                    }
+                    break;
             }
         }
     }
@@ -345,7 +382,7 @@ void MapView::paintGL()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if(eMode == Terrain || eMode == Texturing)
+    if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
         world->draw(modelMatrix, screenSpaceErrorLevel, QVector2D(terrain_pos.x(), terrain_pos.z()), true);
     else
         world->draw(modelMatrix, screenSpaceErrorLevel, QVector2D(terrain_pos.x(), terrain_pos.z()));
@@ -432,6 +469,7 @@ void MapView::setModeEditing(int option)
         case Objects:
         case Terrain:
         case Texturing:
+        case VertexShading:
             eMode = (eEditingMode)option;
             break;
 
@@ -490,12 +528,12 @@ void MapView::resetCamera()
     tiltAngle = 0.0f;
 }
 
-void MapView::setShapingSpeed(double speed)
+void MapView::setBrushSpeed(double speed)
 {
     shaping_speed = MathHelper::toFloat(speed);
 }
 
-void MapView::setShapingOuterRadius(double radius)
+void MapView::setBrushOuterRadius(double radius)
 {
     world->getBrush()->setOuterRadius(MathHelper::toFloat(radius));
 
@@ -503,17 +541,17 @@ void MapView::setShapingOuterRadius(double radius)
     //world->getBrush()->setRadius(MathHelper::toFloat(radius));
 }
 
-void MapView::setShapingInnerRadius(double radius)
+void MapView::setBrushInnerRadius(double radius)
 {
     world->getBrush()->setInnerRadius(MathHelper::toFloat(radius));
 }
 
-void MapView::setShapingBrush(int brush)
+void MapView::setBrush(int brush)
 {
     world->getBrush()->BrushTypes().setShaping((Brush::ShapingType::Formula)brush);
 }
 
-void MapView::setShapingBrushType(int type)
+void MapView::setBrushType(int type)
 {
     switch(eTerrain)
     {
@@ -531,6 +569,11 @@ void MapView::setShapingBrushType(int type)
 void MapView::setTexturingFlow(double flow)
 {
     texturing_flow = flow;
+}
+
+void MapView::setVertexShading(QColor color)
+{
+    vertexShadingColor = color;
 }
 
 void MapView::setTerrainMaximumHeight(double value)
@@ -805,8 +848,8 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
     }
     else if(leftButtonPressed && altDown)
     {
-        if(eMode == Terrain || eMode == Texturing)
-            updateShapingOuterRadius(dx);
+        if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+            updateBrushOuterRadius(dx);
     }
 
     prevMousePos = mousePos;

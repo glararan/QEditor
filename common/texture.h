@@ -28,6 +28,9 @@ public:
     void setAlpha(const unsigned char data, QVector2D offset, bool bindTexture = false);
     void setAlphamap(void* data);
 
+    void setVertexShade(void* data, QVector2D offset, bool bindTexture = false);
+    void setVertexShading(const void* data);
+
     const QImage getImage();
 
 private:

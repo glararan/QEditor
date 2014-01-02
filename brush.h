@@ -57,12 +57,15 @@ public:
         ShapingType::Formula   shaping;
         SmoothingType::Formula smoothing;
         TexturingType::Formula texturing;
+        TexturingType::Formula vertexShading;
 
-        Types(ShapingType::Formula shapingType = ShapingType::Linear, SmoothingType::Formula smoothingType = SmoothingType::Linear, TexturingType::Formula texturingType = TexturingType::Solid)
+        Types(ShapingType::Formula shapingType = ShapingType::Linear, SmoothingType::Formula smoothingType = SmoothingType::Linear,
+              TexturingType::Formula texturingType = TexturingType::Solid, TexturingType::Formula vertexShadingType = TexturingType::Solid)
         {
-            shaping   = shapingType;
-            smoothing = smoothingType;
-            texturing = texturingType;
+            shaping       = shapingType;
+            smoothing     = smoothingType;
+            texturing     = texturingType;
+            vertexShading = vertexShadingType;
         }
 
         void setShaping(ShapingType::Formula shapingType)
@@ -78,6 +81,11 @@ public:
         void setTexturing(TexturingType::Formula texturingType)
         {
             texturing = texturingType;
+        }
+
+        void setVertexShading(TexturingType::Formula vertexShadingType)
+        {
+            vertexShading = vertexShadingType;
         }
     };
 

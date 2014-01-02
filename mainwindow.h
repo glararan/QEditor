@@ -92,10 +92,14 @@ private:
     QLabel* t_flow_label;
     QLabel* t_flow_value_label;
 
+    // Editing mode = 3
+    QColorDialog* colorW;
+
     //
     QList<QString> mode0Actions;
     QList<QString> mode1Actions;
     QList<QString> mode2Actions;
+    QList<QString> mode3Actions;
 
     void initMode();
     void showMode(QList<QString>& parentList);
@@ -124,9 +128,9 @@ private slots:
 
     void setTerrainMaximumHeightState(int state);
 
-    void setShapingOuterRadius(double value);
-    void setShapingInnerRadius(double value);
-    void setShapingInnerRadiusMaximumValue(double maximum);
+    void setBrushOuterRadius(double value);
+    void setBrushInnerRadius(double value);
+    void setBrushInnerRadiusMaximumValue(double maximum);
 
     void setTerrain_Mode(int index);
 
@@ -144,6 +148,8 @@ private slots:
     void createMemoryProject(NewProjectData projectData);
 
     void loadNewProjectMapTilesIntoMemory();
+
+    void takeScreenshot();
 };
 
 #endif // MAINWINDOW_H

@@ -13,6 +13,7 @@
         <file alias="app_icon">icon.png</file>
         <file>shaders/qeditor_world.frag</file>
         <file>shaders/qeditor_world.vert</file>
+        <file alias="vertexshading_icon">vertexshading.png</file>
     </qresource>
     <qresource prefix="/textures">
         <file>grass.png</file>

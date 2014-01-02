@@ -30,6 +30,10 @@ void Material::bind()
     {
         const TextureUnitConfiguration& config = m_unitConfigs.value(unit);
 
+        // Check the texture
+        if(config.texture()->isNull())
+            continue;
+
         // Bind the texture
         config.texture()->bind(GL_TEXTURE0 + unit);
 
@@ -193,6 +197,10 @@ void ChunkMaterial::bind()
     foreach(const GLuint unit, m_unitConfigs.keys())
     {
         const TextureUnitConfiguration& config = m_unitConfigs.value(unit);
+
+        // Check the texture
+        if(config.texture()->isNull())
+            continue;
 
         // Bind the texture
         m_funcs->glActiveTexture(GL_TEXTURE0 + unit);

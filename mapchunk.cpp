@@ -17,6 +17,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 , positionData(NULL)
 , terrainSampler(tile->terrainSampler.data())
 , terrainData(new Texture(QOpenGLTexture::Target2D))
+, vertexShadingMap(NULL)
 , displaySubroutines(world->DisplayModeCount)
 , highlight(false)
 , bottomNeighbour(NULL)
@@ -51,22 +52,22 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
     textures[3] = TexturePtr(new Texture());
     //textures[3] = world->getTextureManager()->getTexture("grassTexture");
 
-    for(int i = 1; i < MAX_TEXTURES + 1; ++i) // GL_TEXTURE1+
+    for(int i = 0; i < MAX_TEXTURES; ++i)
     {
-        world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + static_cast<GLuint>(i));
+        world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture1 + ToGLuint(i));
 
-        QString uniformName = QString("layer%1Texture").arg(i - 1);
+        QString uniformName = QString("layer%1Texture").arg(i);
 
-        if(i == 1)
+        if(i == 0)
             uniformName = "baseTexture";
 
-        chunkMaterial->setTextureUnitConfiguration(i, textures[i - 1], world->getTextureManager()->getSampler(), uniformName.toLatin1());
+        chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1 + i, textures[i], world->getTextureManager()->getSampler(), uniformName.toLatin1());
     }
 
     /// Alphamaps
     for(int i = 0; i < ALPHAMAPS; ++i)
     {
-        world->getGLFunctions()->glActiveTexture(GL_TEXTURE4 + static_cast<GLuint>(i));
+        world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Alphamap1 + ToGLuint(i));
 
         alphaMapsData[i] = new unsigned char[CHUNK_ARRAY_UC_SIZE];
 
@@ -80,22 +81,33 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 
         QString alphaMapLayer = QString("layer%1Alpha").arg(i + 1);
 
-        chunkMaterial->setTextureUnitConfiguration(4 + i, alphaMaps[i], terrainSampler, alphaMapLayer.toLatin1());
+        chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Alphamap1 + i, alphaMaps[i], terrainSampler, alphaMapLayer.toLatin1());
     }
 
+    /// Vertex Shading
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::VertexShading);
+
+    vertexShadingData = new unsigned char[CHUNK_ARRAY_SIZE];
+
+    memset(vertexShadingData, 0, CHUNK_ARRAY_SIZE);
+
+    vertexShadingMap = TexturePtr(new Texture(QOpenGLTexture::Target2D));
+    vertexShadingMap->setSize(MAP_WIDTH / CHUNKS, MAP_HEIGHT / CHUNKS);
+    vertexShadingMap->setVertexShading(vertexShadingData);
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::VertexShading, vertexShadingMap, terrainSampler, "vertexShading");
+
     /// Terrain
-    mapData = new float[CHUNK_ARRAY_SIZE];
+    mapData = new float[CHUNK_ARRAY_UC_SIZE]; // chunk_array_size
 
-    // fill empty terrain
-    for(int i = 0; i < CHUNK_ARRAY_SIZE; ++i)
-        mapData[i] = 0.0f;
+    memset(mapData, 0, sizeof(float) * CHUNK_ARRAY_UC_SIZE);
 
-    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0);
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Heightmap);
 
     terrainData->setSize(MAP_WIDTH / CHUNKS, MAP_HEIGHT / CHUNKS);
     terrainData->setHeightmap(mapData);
 
-    chunkMaterial->setTextureUnitConfiguration(0, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
 
     initialize();
 }
@@ -107,6 +119,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
 , positionData(NULL)
 , terrainSampler(tile->terrainSampler.data())
 , terrainData(new Texture(QOpenGLTexture::Target2D))
+, vertexShadingMap(NULL)
 , displaySubroutines(world->DisplayModeCount)
 , highlight(false)
 , bottomNeighbour(NULL)
@@ -153,6 +166,9 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
         for(int i = 0; i < ALPHAMAPS; ++i)
             alphaMapsData[i] = tile->getHeader().mcin->entries[chunkIndex()].mcnk->terrainOffset->alphaMaps[i];
 
+        /// Load Vertex Shading
+        vertexShadingData = tile->getHeader().mcin->entries[chunkIndex()].mcnk->terrainOffset->vertexShading;
+
         /// Load Heightmap
         mapData = tile->getHeader().mcin->entries[chunkIndex()].mcnk->terrainOffset->height;
     }
@@ -183,30 +199,34 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
             memset(alphaMapsData[i], 0, CHUNK_ARRAY_UC_SIZE);
         }
 
-        /// Load Heightmap
-        mapData = new float[CHUNK_ARRAY_SIZE];
+        /// Load Vertex Shading
+        vertexShadingData = new unsigned char[CHUNK_ARRAY_SIZE];
 
-        for(int i = 0; i < CHUNK_ARRAY_SIZE; ++i)
-            mapData[i] = 0.0f;
+        memset(vertexShadingData, 0, CHUNK_ARRAY_SIZE);
+
+        /// Load Heightmap
+        mapData = new float[CHUNK_ARRAY_UC_SIZE]; // chunk_array_size
+
+        memset(mapData, 0, sizeof(float) * CHUNK_ARRAY_UC_SIZE);
     }
 
     /// Set Textures
-    for(int i = 1; i < MAX_TEXTURES + 1; ++i) // GL_TEXTURE1+
+    for(int i = 0; i < MAX_TEXTURES; ++i)
     {
-        world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + static_cast<GLuint>(i));
+        world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture1 + ToGLuint(i));
 
-        QString uniformName = QString("layer%1Texture").arg(i - 1);
+        QString uniformName = QString("layer%1Texture").arg(i);
 
-        if(i == 1)
+        if(i == 0)
             uniformName = "baseTexture";
 
-        chunkMaterial->setTextureUnitConfiguration(i, textures[i - 1], world->getTextureManager()->getSampler(), uniformName.toLatin1());
+        chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1 + i, textures[i], world->getTextureManager()->getSampler(), uniformName.toLatin1());
     }
 
     /// Set Alphamaps
     for(int i = 0; i < ALPHAMAPS; ++i)
     {
-        world->getGLFunctions()->glActiveTexture(GL_TEXTURE4 + static_cast<GLuint>(i));
+        world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Alphamap1 + ToGLuint(i));
 
         TexturePtr alphamap(new Texture(QOpenGLTexture::Target2D));
         alphamap->setSize(MAP_WIDTH / CHUNKS, MAP_HEIGHT / CHUNKS);
@@ -216,16 +236,25 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
 
         QString alphaMapLayer = QString("layer%1Alpha").arg(i + 1);
 
-        chunkMaterial->setTextureUnitConfiguration(4 + i, alphaMaps[i], terrainSampler, alphaMapLayer.toLatin1());
+        chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Alphamap1 + i, alphaMaps[i], terrainSampler, alphaMapLayer.toLatin1());
     }
 
+    /// Set Vertex Shading
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::VertexShading);
+
+    vertexShadingMap = TexturePtr(new Texture(QOpenGLTexture::Target2D));
+    vertexShadingMap->setSize(MAP_WIDTH / CHUNKS, MAP_HEIGHT / CHUNKS);
+    vertexShadingMap->setVertexShading(vertexShadingData);
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::VertexShading, vertexShadingMap, terrainSampler, "vertexShading");
+
     /// Set Terrain
-    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0);
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Heightmap);
 
     terrainData->setSize(MAP_WIDTH / CHUNKS, MAP_HEIGHT / CHUNKS);
     terrainData->setHeightmap(mapData);
 
-    chunkMaterial->setTextureUnitConfiguration(0, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
 
     initialize();
 }
@@ -235,6 +264,17 @@ MapChunk::~MapChunk()
     delete[] mapData;
 
     mapData = NULL;
+
+    /*delete[] vertexShadingData;
+
+    vertexShadingData = NULL;
+
+    for(int i = 0; i < ALPHAMAPS; ++i)
+    {
+        delete[] alphaMapsData[i];
+
+        alphaMapsData[i] = NULL;
+    }*/
 
     patchBuffer.destroy();
     vao.destroy();
@@ -392,9 +432,11 @@ const int MapChunk::chunkIndex() const
     return (chunkY * CHUNKS) + chunkX;
 }
 
-bool MapChunk::changeTerrain(float x, float z, float change, const Brush* brush)
+bool MapChunk::changeTerrain(float x, float z, float change)
 {    
     bool changed = false;
+
+    const Brush* brush = world->getBrush();
 
     float xdiff = baseX - x + CHUNKSIZE / 2;
     float ydiff = baseY - z + CHUNKSIZE / 2;
@@ -436,10 +478,8 @@ bool MapChunk::changeTerrain(float x, float z, float change, const Brush* brush)
 
                             int index = (Y * (MAP_WIDTH / CHUNKS)) + X;
 
-                            if(index < 0 || index >= CHUNK_ARRAY_SIZE || X < 0 || Y < 0 || X >= (MAP_WIDTH / CHUNKS) || Y >= (MAP_HEIGHT / CHUNKS))
+                            if(index < 0 || index >= CHUNK_ARRAY_UC_SIZE || X < 0 || Y < 0 || X >= (MAP_WIDTH / CHUNKS) || Y >= (MAP_HEIGHT / CHUNKS))
                                 continue;
-
-                            index *= sizeof(float);
 
                             if(world->getTerrainMaximumState() && mapData[index] >= world->getTerrainMaximumHeight())
                                 continue;
@@ -504,7 +544,7 @@ bool MapChunk::changeTerrain(float x, float z, float change, const Brush* brush)
             terrainData->setHeight(changing.value(i).first, changing.value(i).second);
         }
 
-        chunkMaterial->setTextureUnitConfiguration(0, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
+        chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
 
         if(bottomNeighbour && !horizontalData.isEmpty())
             bottomNeighbour->setBorder(Horizontal, horizontalData);
@@ -516,9 +556,11 @@ bool MapChunk::changeTerrain(float x, float z, float change, const Brush* brush)
     return changed;
 }
 
-bool MapChunk::flattenTerrain(float x, float z, float y, float change, const Brush* brush)
+bool MapChunk::flattenTerrain(float x, float z, float y, float change)
 {
     bool changed = false;
+
+    const Brush* brush = world->getBrush();
 
     float xdiff = baseX - x + CHUNKSIZE / 2;
     float ydiff = baseY - z + CHUNKSIZE / 2;
@@ -560,10 +602,8 @@ bool MapChunk::flattenTerrain(float x, float z, float y, float change, const Bru
 
                             int index = (Y * (MAP_WIDTH / CHUNKS)) + X;
 
-                            if(index < 0 || index >= CHUNK_ARRAY_SIZE || X < 0 || Y < 0 || X >= (MAP_WIDTH / CHUNKS) || Y >= (MAP_HEIGHT / CHUNKS))
+                            if(index < 0 || index >= CHUNK_ARRAY_UC_SIZE || X < 0 || Y < 0 || X >= (MAP_WIDTH / CHUNKS) || Y >= (MAP_HEIGHT / CHUNKS))
                                 continue;
-
-                            index *= sizeof(float);
 
                             if(world->getTerrainMaximumState() && mapData[index] >= world->getTerrainMaximumHeight())
                                 continue;
@@ -622,7 +662,7 @@ bool MapChunk::flattenTerrain(float x, float z, float y, float change, const Bru
             terrainData->setHeight(changing.value(i).first, changing.value(i).second);
         }
 
-        chunkMaterial->setTextureUnitConfiguration(0, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
+        chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
 
         if(bottomNeighbour && !horizontalData.isEmpty())
             bottomNeighbour->setBorder(Horizontal, horizontalData);
@@ -634,9 +674,11 @@ bool MapChunk::flattenTerrain(float x, float z, float y, float change, const Bru
     return changed;
 }
 
-bool MapChunk::blurTerrain(float x, float z, float change, const Brush* brush)
+bool MapChunk::blurTerrain(float x, float z, float change)
 {
     bool changed = false;
+
+    const Brush* brush = world->getBrush();
 
     float xdiff = baseX - x + CHUNKSIZE / 2;
     float ydiff = baseY - z + CHUNKSIZE / 2;
@@ -678,10 +720,8 @@ bool MapChunk::blurTerrain(float x, float z, float change, const Brush* brush)
 
                             int index = (Y * (MAP_WIDTH / CHUNKS)) + X;
 
-                            if(index < 0 || index >= CHUNK_ARRAY_SIZE || X < 0 || Y < 0 || X >= (MAP_WIDTH / CHUNKS) || Y >= (MAP_HEIGHT / CHUNKS))
+                            if(index < 0 || index >= CHUNK_ARRAY_UC_SIZE || X < 0 || Y < 0 || X >= (MAP_WIDTH / CHUNKS) || Y >= (MAP_HEIGHT / CHUNKS))
                                 continue;
-
-                            index *= sizeof(float);
 
                             if(world->getTerrainMaximumState() && mapData[index] >= world->getTerrainMaximumHeight())
                                 continue;
@@ -718,8 +758,6 @@ bool MapChunk::blurTerrain(float x, float z, float change, const Brush* brush)
                                     Y2 -= chunkY * (MAP_HEIGHT / CHUNKS);
 
                                     int index2 = (Y2 * (MAP_WIDTH / CHUNKS)) + X2;
-
-                                    index2 *= sizeof(float);
 
                                     const float height = mapData[index2];
 
@@ -788,7 +826,7 @@ bool MapChunk::blurTerrain(float x, float z, float change, const Brush* brush)
             terrainData->setHeight(changing.value(i).first, changing.value(i).second);
         }
 
-        chunkMaterial->setTextureUnitConfiguration(0, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
+        chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
 
         if(bottomNeighbour && !horizontalData.isEmpty())
             bottomNeighbour->setBorder(Horizontal, horizontalData);
@@ -800,9 +838,11 @@ bool MapChunk::blurTerrain(float x, float z, float change, const Brush* brush)
     return changed;
 }
 
-bool MapChunk::paintTerrain(float x, float z, float flow, const Brush* brush, TexturePtr texture)
+bool MapChunk::paintTerrain(float x, float z, float flow, TexturePtr texture)
 {
     bool changed = false;
+
+    const Brush* brush = world->getBrush();
 
     int textureIndex = -1;
 
@@ -945,7 +985,7 @@ bool MapChunk::paintTerrain(float x, float z, float flow, const Brush* brush, Te
 
             QString uniformName = QString("layer%1Alpha").arg(textureIndex + 1);
 
-            chunkMaterial->setTextureUnitConfiguration(4 + textureIndex, alphaMaps[textureIndex], terrainSampler, uniformName.toLatin1());
+            chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Alphamap1 + textureIndex, alphaMaps[textureIndex], terrainSampler, uniformName.toLatin1());
 
             ++textureIndex;
         }
@@ -964,8 +1004,108 @@ bool MapChunk::paintTerrain(float x, float z, float flow, const Brush* brush, Te
 
             QString uniformName = QString("layer%1Alpha").arg(i + 1);
 
-            chunkMaterial->setTextureUnitConfiguration(4 + i, alphaMaps[i], terrainSampler, uniformName.toLatin1());
+            chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Alphamap1 + i, alphaMaps[i], terrainSampler, uniformName.toLatin1());
         }
+    }
+
+    return changed;
+}
+
+bool MapChunk::paintVertexShading(float x, float z, float flow, QColor& color)
+{
+    bool changed = false;
+
+    const Brush* brush = world->getBrush();
+
+    float xdiff = baseX - x + CHUNKSIZE / 2;
+    float ydiff = baseY - z + CHUNKSIZE / 2;
+
+    float dist = sqrt(pow(xdiff, 2) + pow(ydiff, 2));
+
+    if(dist > (brush->OuterRadius() + CHUNK_DIAMETER))
+        return changed;
+
+    QList<QPair<QVector<unsigned char>, QVector2D>> changing;
+
+    int minX = horizToHMapSize(x - brush->OuterRadius());
+    int maxX = horizToHMapSize(x + brush->OuterRadius());
+
+    int minY = horizToHMapSize(z - brush->OuterRadius());
+    int maxY = horizToHMapSize(z + brush->OuterRadius());
+
+    for(int _x = minX; _x < maxX; ++_x)
+    {
+        for(int _y = minY; _y < maxY; ++_y) // _y mean z!
+        {
+            switch(brush->Shape())
+            {
+                case Brush::Circle:
+                default:
+                    {
+                        xdiff = HMapSizeToHoriz(_x) - x;
+                        ydiff = HMapSizeToHoriz(_y) - z;
+
+                        dist = sqrt(pow(xdiff, 2) + pow(ydiff, 2));
+
+                        if(dist < brush->OuterRadius())
+                        {
+                            int X = _x % MAP_WIDTH;
+                            int Y = _y % MAP_HEIGHT;
+
+                            X -= chunkX * (MAP_WIDTH / CHUNKS);
+                            Y -= chunkY * (MAP_HEIGHT / CHUNKS);
+
+                            int index = (Y * (MAP_WIDTH / CHUNKS)) + X;
+
+                            if(index < 0 || index >= CHUNK_ARRAY_SIZE || X < 0 || Y < 0 || X >= (MAP_WIDTH / CHUNKS) || Y >= (MAP_HEIGHT / CHUNKS))
+                                continue;
+
+                            index *= sizeof(float);
+
+                            switch(brush->BrushTypes().vertexShading)
+                            {
+                                case Brush::TexturingType::Solid:
+                                default:
+                                    {
+                                        vertexShadingData[index]     = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index],     color.redF(),   2.0f * flow), 255.0f), 0.0f));
+                                        vertexShadingData[index + 1] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 1], color.greenF(), 2.0f * flow), 255.0f), 0.0f));
+                                        vertexShadingData[index + 2] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 2], color.blueF(),  2.0f * flow), 255.0f), 0.0f));
+                                        vertexShadingData[index + 3] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 3], color.alphaF(), 2.0f * flow), 255.0f), 0.0f));
+
+                                        QVector<unsigned char> dataContainer;
+                                        dataContainer.append(vertexShadingData[index]);     // R
+                                        dataContainer.append(vertexShadingData[index + 1]); // G
+                                        dataContainer.append(vertexShadingData[index + 2]); // B
+                                        dataContainer.append(vertexShadingData[index + 3]); // A
+
+                                        changing.append(qMakePair<QVector<unsigned char>, QVector2D>(dataContainer, QVector2D(X, Y)));
+                                    }
+                                    break;
+                            }
+
+                            changed = true;
+                        }
+                    }
+                    break;
+            }
+        }
+    }
+
+    if(changed)
+    {
+        vertexShadingMap->bind();
+
+        for(int i = 0; i < changing.count(); ++i)
+        {
+            unsigned char data[4];
+
+            for(int j = 0; j < 4; ++j)
+                data[j] = changing.value(i).first.at(j);
+
+            vertexShadingMap->setVertexShade(data, changing.value(i).second);
+        }
+
+        chunkMaterial->setTextureUnitConfiguration(ShaderUnits::VertexShading, vertexShadingMap, terrainSampler, "vertexShading");
     }
 
     return changed;
@@ -994,14 +1134,14 @@ void MapChunk::moveAlphaMap(int index, bool up)
                 textures[index - 1] = textures[index];
                 textures[index]     = temp;
 
-                world->getGLFunctions()->glActiveTexture(GL_TEXTURE1 + static_cast<GLuint>(index - 1));
+                world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture1 + ToGLuint(index - 1));
 
                 uniformName = QString("layer%1Texture").arg(index - 1);
 
                 if(index - 1 == 0)
                     uniformName = "baseTexture";
 
-                chunkMaterial->setTextureUnitConfiguration(index, textures[index - 1], world->getTextureManager()->getSampler(), uniformName.toLatin1());
+                chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1 + index - 1, textures[index - 1], world->getTextureManager()->getSampler(), uniformName.toLatin1());
             }
             break;
 
@@ -1012,23 +1152,23 @@ void MapChunk::moveAlphaMap(int index, bool up)
                 textures[index + 1] = textures[index];
                 textures[index]     = temp;
 
-                world->getGLFunctions()->glActiveTexture(GL_TEXTURE1 + static_cast<GLuint>(index + 1));
+                world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture1 + ToGLuint(index + 1));
 
                 uniformName = QString("layer%1Texture").arg(index + 1);
 
-                chunkMaterial->setTextureUnitConfiguration(index + 2, textures[index + 1], world->getTextureManager()->getSampler(), uniformName.toLatin1());
+                chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1 + index + 1, textures[index + 1], world->getTextureManager()->getSampler(), uniformName.toLatin1());
             }
             break;
     }
 
-    world->getGLFunctions()->glActiveTexture(GL_TEXTURE1 + static_cast<GLuint>(index));
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture1 + ToGLuint(index));
 
     uniformName = QString("layer%1Texture").arg(index);
 
     if(index == 0)
         uniformName = "baseTexture";
 
-    chunkMaterial->setTextureUnitConfiguration(index + 1, textures[index], world->getTextureManager()->getSampler(), uniformName.toLatin1());
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1 + index, textures[index], world->getTextureManager()->getSampler(), uniformName.toLatin1());
 }
 
 void MapChunk::deleteAlphaMap(int index)
@@ -1041,7 +1181,7 @@ void MapChunk::deleteAlphaMap(int index)
 
     QString uniformName = QString("layer%1Alpha").arg(index);
 
-    chunkMaterial->setTextureUnitConfiguration(4 + index, alphaMaps[index], terrainSampler, uniformName.toLatin1());
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Alphamap1 + index, alphaMaps[index], terrainSampler, uniformName.toLatin1());
 }
 
 void MapChunk::setBorder(Border border, const QVector<QPair<int, float>>& data)
@@ -1056,7 +1196,7 @@ void MapChunk::setBorder(Border border, const QVector<QPair<int, float>>& data)
                 {
                     terrainData->setHeight(data.at(i).second, QVector2D(data.at(i).first, MAP_HEIGHT / CHUNKS - 1));
 
-                    int index = (((MAP_HEIGHT / CHUNKS - 1) * (MAP_WIDTH / CHUNKS)) + data.at(i).first) * sizeof(float);
+                    int index = (((MAP_HEIGHT / CHUNKS - 1) * (MAP_WIDTH / CHUNKS)) + data.at(i).first);
 
                     mapData[index] = data.at(i).second;
                 }
@@ -1069,7 +1209,7 @@ void MapChunk::setBorder(Border border, const QVector<QPair<int, float>>& data)
                 {
                     terrainData->setHeight(data.at(i).second, QVector2D(MAP_HEIGHT / CHUNKS - 1, data.at(i).first));
 
-                    int index = ((data.at(i).first * (MAP_WIDTH / CHUNKS)) + (MAP_HEIGHT / CHUNKS - 1)) * sizeof(float);
+                    int index = ((data.at(i).first * (MAP_WIDTH / CHUNKS)) + (MAP_HEIGHT / CHUNKS - 1));
 
                     mapData[index] = data.at(i).second;
                 }
@@ -1077,7 +1217,7 @@ void MapChunk::setBorder(Border border, const QVector<QPair<int, float>>& data)
             break;
     }
 
-    chunkMaterial->setTextureUnitConfiguration(0, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
 }
 
 void MapChunk::setBottomNeighbour(MapChunk* chunk)
@@ -1115,7 +1255,7 @@ void MapChunk::save(MCNK* chunk)
     chunk->terrainOffset = new MCVT;
 
     // Heightmap
-    for(int i = 0; i < CHUNK_ARRAY_SIZE; ++i)
+    for(int i = 0; i < CHUNK_ARRAY_UC_SIZE; ++i) // chunk_array_size
         chunk->terrainOffset->height[i] = mapData[i];
 
     // Alphamaps
@@ -1124,6 +1264,10 @@ void MapChunk::save(MCNK* chunk)
         for(int j = 0; j < CHUNK_ARRAY_UC_SIZE; ++j)
             chunk->terrainOffset->alphaMaps[i][j] = alphaMapsData[i][j];
     }
+
+    // Vertex Shading
+    for(int i = 0; i < CHUNK_ARRAY_SIZE; ++i)
+        chunk->terrainOffset->vertexShading[i] = vertexShadingData[i];
 
     // Textures
     for(int i = 0; i < MAX_TEXTURES; ++i)

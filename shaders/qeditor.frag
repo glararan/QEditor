@@ -42,6 +42,8 @@ uniform sampler2D layer1Alpha;
 uniform sampler2D layer2Alpha;
 //uniform sampler2D layer3Alpha;
 
+uniform sampler2D vertexShading;
+
 uniform float colorStop1 = 0.0;
 uniform float colorStop2 = 4.0;
 uniform float colorStop3 = 8.0;
@@ -239,7 +241,7 @@ vec4 shaderBaseLayer()
     vec4 baseFar   = texture(baseTexture, texCoords);
     vec4 baseColor = mix(baseNear, baseFar, textureDistanceFactor);
 
-    return baseColor;
+    return mix(baseColor, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
 }
 
 subroutine(ShaderModelType)
@@ -262,11 +264,9 @@ vec4 shadeBaseAndLayer1()
     vec4 layer1Color = mix(layer1Near, layer1Far, textureDistanceFactor);
 
     // Blend layer 1 and base texture based upon alphamap
-    //vec4 grassRockColor = mix(layer1Color, baseColor, smoothstep(0.75, 0.95, clamp(worldNormal.y, 0.0, 1.0)));
-    //vec4 baseLayer1Color = mix(baseColor, layer1Color, ALPHALAYER_LAYER1);
-    vec4 baseLayer1Color = mix(layer1Color, baseColor, smoothstep(0.75, 0.95, clamp(worldNormal.y, 0.0, 1.0)));
+    vec4 baseLayer1Color = mix(baseColor, layer1Color, texture(layer1Alpha, texCoords).r);
 
-    return baseLayer1Color;
+    return mix(baseLayer1Color, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
 }
 
 subroutine(ShaderModelType)
@@ -289,20 +289,16 @@ vec4 shadeBaseLayer1AndLayer2()
     vec4 layer1Color = mix(layer1Near, layer1Far, textureDistanceFactor);
 
     // Blend layer 1 and base texture based upon alphamap
-    //vec4 grassRockColor = mix(layer1Color, baseColor, smoothstep(0.75, 0.95, clamp(worldNormal.y, 0.0, 1.0)));
-    //vec4 baseLayer1Color = mix(baseColor, layer1Color, ALPHALAYER_LAYER1);
-    vec4 baseLayer1Color = mix(layer1Color, baseColor, smoothstep(0.75, 0.95, clamp(worldNormal.y, 0.0, 1.0)));
+    vec4 baseAndLayer1Color = mix(baseColor, layer1Color, texture(layer1Alpha, texCoords).r);
 
     // Now blend with layer 2 based upon alphamap
     vec4 layer2Near  = texture(layer2Texture, uvNear);
     vec4 layer2Far   = texture(layer2Texture, 5.0 * uvFar);
     vec4 layer2Color = mix(layer2Near, layer2Far, textureDistanceFactor);
 
-    //vec4 diffuseColor = mix(grassRockColor, snowColor, smoothstep(10.0, 15.0, worldPosition.y));
-    //vec4 diffuseColor = mix(baseLayer1Color, layer2Color, ALPHALAYER_LAYER2);
-    vec4 diffuseColor = mix(baseLayer1Color, layer2Color, smoothstep(10.0, 15.0, worldPosition.y));
+    vec4 diffuseColor = mix(baseAndLayer1Color, layer2Color, texture(layer2Alpha, texCoords).r);
 
-    return diffuseColor;
+    return mix(diffuseColor, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);;
 }
 
 subroutine(ShaderModelType)
@@ -326,26 +322,6 @@ vec4 shadeTexturedAndLit()
 
     float textureDistanceFactor = textureDistanceBlendFactor();
 
-    /*// Get grass texture color
-    vec4 grassNear  = texture(grassTexture, uvNear);
-    vec4 grassFar   = texture(grassTexture, texCoords);
-    vec4 grassColor = mix(grassNear, grassFar, textureDistanceFactor);
-
-    // Get rock texture color
-    vec4 rockNear  = texture(rockTexture, uvNear);
-    vec4 rockFar   = texture(rockTexture, uvFar);
-    vec4 rockColor = mix(rockNear, rockFar, textureDistanceFactor);
-
-    // Blend rock and grass texture based upon the worldNormal vector
-    vec4 grassRockColor = mix(rockColor, grassColor, smoothstep(0.75, 0.95, clamp(worldNormal.y, 0.0, 1.0)));
-
-    // Now blend with snow based upon world height
-    vec4 snowNear  = texture(snowTexture, uvNear);
-    vec4 snowFar   = texture(snowTexture, 5.0 * uvFar);
-    vec4 snowColor = mix(snowNear, snowFar, textureDistanceFactor);
-
-    vec4 diffuseColor = mix(grassRockColor, snowColor, smoothstep(10.0, 15.0, worldPosition.y));*/
-
     /// Get base texture color
     vec4 baseNear  = texture(baseTexture, uvNear);
     vec4 baseFar   = texture(baseTexture, texCoords);
@@ -362,13 +338,9 @@ vec4 shadeTexturedAndLit()
     vec4 layer2Color = mix(layer2Near, layer2Far, textureDistanceFactor);
 
     /// Blend layer 1 and base texture based upon alphamap
-    //vec4 grassRockColor = mix(layer1Color, baseColor, smoothstep(0.75, 0.95, clamp(worldNormal.y, 0.0, 1.0)));
-    //vec4 baseLayer1Color = mix(layer1Color, baseColor, smoothstep(0.75, 0.95, clamp(worldNormal.y, 0.0, 1.0)));
     vec4 baseAndLayer1Color = mix(baseColor, layer1Color, texture(layer1Alpha, texCoords).r);
 
     /// Now blend with layer 2 based upon alphamap
-    //vec4 diffuseColor = mix(grassRockColor, snowColor, smoothstep(10.0, 15.0, worldPosition.y));
-    //vec4 diffuseColor = mix(baseLayer1Color, layer2Color, smoothstep(10.0, 15.0, worldPosition.y));
     vec4 diffuseColor = mix(baseAndLayer1Color, layer2Color, texture(layer2Alpha, texCoords).r);
 
     // Calculate the lighting model, keeping the specular component separate
@@ -378,7 +350,7 @@ vec4 shadeTexturedAndLit()
 
     vec4 color = vec4(ambientAndDiff, 1.0) * diffuseColor + vec4(spec, 1.0);
 
-    return color;
+    return mix(color, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
 }
 
 subroutine(ShaderModelType)

@@ -27,11 +27,12 @@ public:
     void draw();
 
     /// Terrain
-    bool changeTerrain(float x , float z, float change         , const Brush* brush);
-    bool flattenTerrain(float x, float z, float y, float change, const Brush* brush);
-    bool blurTerrain(float x   , float z, float change         , const Brush* brush);
+    bool changeTerrain(float x , float z, float change);
+    bool flattenTerrain(float x, float z, float y, float change);
+    bool blurTerrain(float x   , float z, float change);
 
-    bool paintTerrain(float x, float z, float flow, const Brush* brush, TexturePtr texture);
+    bool paintTerrain(float x      , float z, float flow, TexturePtr texture);
+    bool paintVertexShading(float x, float z, float flow, QColor& color);
 
     /// Get
     const float getHeight(const float& x, const float& y) const;
@@ -96,7 +97,10 @@ private:
     TexturePtr textures[MAX_TEXTURES];
     TexturePtr alphaMaps[ALPHAMAPS];
 
+    TexturePtr vertexShadingMap;
+
     unsigned char* alphaMapsData[ALPHAMAPS];
+    unsigned char* vertexShadingData;
 
     float* mapData;
     /// ----------------------------------

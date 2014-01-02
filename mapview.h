@@ -39,9 +39,10 @@ public:
 
     enum eEditingMode
     {
-        Objects   = 0,
-        Terrain   = 1,
-        Texturing = 2
+        Objects       = 0,
+        Terrain       = 1,
+        Texturing     = 2,
+        VertexShading = 3
     };
 
     void setEditingMode(eEditingMode editingMode) { eMode = editingMode; }
@@ -90,6 +91,9 @@ private:
 
     /// Texturing parameters
     float texturing_flow;
+
+    // Vertex shading parameters
+    QColor vertexShadingColor;
 
     /// Global parameters
     QOpenGLContext* GLcontext;
@@ -158,12 +162,13 @@ public slots:
     void setDisplayMode(int mode);
     void setModeEditing(int option);
     void setCameraPosition(QVector3D* position);
-    void setShapingSpeed(double speed);
-    void setShapingOuterRadius(double radius);
-    void setShapingInnerRadius(double radius);
-    void setShapingBrush(int brush);
-    void setShapingBrushType(int type);
+    void setBrushSpeed(double speed);
+    void setBrushOuterRadius(double radius);
+    void setBrushInnerRadius(double radius);
+    void setBrush(int brush);
+    void setBrushType(int type);
     void setTexturingFlow(double flow);
+    void setVertexShading(QColor color);
     void setTerrainMaximumHeight(double value);
     void setTerrainMode(int mode);
     void setBrushColor(QColor* color, bool outer);
@@ -182,10 +187,10 @@ public slots:
 signals:
     void statusBar(QString message);
 
-    void updateShapingSpeed(double speed);
-    void updateShapingOuterRadius(double radius);
-    void updateShapingInnerRadius(double radius);
-    void updateShapingBrush(int brush);
+    void updateBrushSpeed(double speed);
+    void updateBrushOuterRadius(double radius);
+    void updateBrushInnerRadius(double radius);
+    void updateBrush(int brush);
 
     void selectedMapChunk(MapChunk* chunk);
 

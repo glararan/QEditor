@@ -93,12 +93,12 @@ void Texture::setHeight(const GLfloat data, QVector2D offset, bool bindTexture)
     if(bindTexture)
         bind();
 
-    GLfuncs->glTexSubImage2D(GL_TEXTURE_2D, 0, offset.x(), offset.y(), 1, 1, GL_RGBA, GL_FLOAT, &data);
+    GLfuncs->glTexSubImage2D(GL_TEXTURE_2D, 0, offset.x(), offset.y(), 1, 1, GL_RED, GL_FLOAT, &data);
 }
 
 void Texture::setHeightmap(void* data)
 {
-    GLfuncs->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width(), height(), 0, GL_RGBA, GL_FLOAT, data);
+    GLfuncs->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width(), height(), 0, GL_RED, GL_FLOAT, data);
 }
 
 void Texture::setAlpha(const unsigned char data, QVector2D offset, bool bindTexture)
@@ -112,6 +112,19 @@ void Texture::setAlpha(const unsigned char data, QVector2D offset, bool bindText
 void Texture::setAlphamap(void* data)
 {
     GLfuncs->glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width(), height(), 0, GL_RED, GL_UNSIGNED_BYTE, data);
+}
+
+void Texture::setVertexShade(void* data, QVector2D offset, bool bindTexture)
+{
+    if(bindTexture)
+        bind();
+
+    GLfuncs->glTexSubImage2D(GL_TEXTURE_2D, 0, offset.x(), offset.y(), 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
+}
+
+void Texture::setVertexShading(const void* data)
+{
+    GLfuncs->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width(), height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 }
 
 const QImage Texture::getImage()

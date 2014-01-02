@@ -74,6 +74,7 @@
    <addaction name="action_mapview_m0"/>
    <addaction name="action_mapview_m1"/>
    <addaction name="action_mapview_m2"/>
+   <addaction name="action_mapview_m3"/>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -139,6 +140,8 @@
     <addaction name="action_Texture_Picker"/>
     <addaction name="action_Settings"/>
     <addaction name="action_Teleport"/>
+    <addaction name="separator"/>
+    <addaction name="action_Screenshot"/>
     <addaction name="action_Reset_camera"/>
     <addaction name="separator"/>
     <addaction name="action_Test"/>
@@ -478,6 +481,32 @@
    </property>
    <property name="text">
     <string>&amp;Show &amp;Chunk lines</string>
+   </property>
+  </action>
+  <action name="action_mapview_m3">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="qeditor.qrc">
+     <normaloff>:/vertexshading_icon</normaloff>:/vertexshading_icon</iconset>
+   </property>
+   <property name="text">
+    <string>Nástroj barvení textur</string>
+   </property>
+   <property name="toolTip">
+    <string>Vertex Shading</string>
+   </property>
+  </action>
+  <action name="action_Screenshot">
+   <property name="text">
+    <string>&amp;Screenshot</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
+   <property name="autoRepeat">
+    <bool>false</bool>
    </property>
   </action>
  </widget>
