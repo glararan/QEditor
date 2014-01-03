@@ -73,7 +73,12 @@ void StartUp::showNewProject()
 
 void StartUp::showOpenProject()
 {
-    openProject(QFileDialog::getOpenFileName(0, tr("Open Project"), QString(), tr("QEditor project files (*.qep)")));
+    QString path = QFileDialog::getOpenFileName(0, tr("Open Project"), QString(), tr("QEditor project files (*.qep)"));
+
+    if(path == QString())
+        return;
+
+    openProject(path);
 }
 
 void StartUp::createProject(NewProjectData projectData)

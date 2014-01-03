@@ -275,13 +275,13 @@ void MapView::update(float t)
 
                 case Texturing:
                     {
-                        world->paintTerrain(position.x(), position.z(), texturing_flow);
+                        world->paintTerrain(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f));
                     }
                     break;
 
                 case VertexShading:
                     {
-                        world->paintVertexShading(position.x(), position.z(), texturing_flow, vertexShadingColor);
+                        world->paintVertexShading(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f), vertexShadingColor);
                     }
                     break;
             }
@@ -307,13 +307,13 @@ void MapView::update(float t)
 
                 case Texturing:
                     {
-                        world->paintTerrain(position.x(), position.z(), texturing_flow);
+                        world->paintTerrain(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f));
                     }
                     break;
 
                 case VertexShading:
                     {
-                        world->paintVertexShading(position.x(), position.z(), texturing_flow, vertexShadingColor);
+                        world->paintVertexShading(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f), vertexShadingColor);
                     }
                     break;
             }
@@ -553,17 +553,21 @@ void MapView::setBrush(int brush)
 
 void MapView::setBrushType(int type)
 {
+    Brush::Types types = world->getBrush()->BrushTypes();
+
     switch(eTerrain)
     {
         case Shaping:
         default:
-            world->getBrush()->BrushTypes().setShaping((Brush::ShapingType::Formula)type);
+            types.setShaping(static_cast<Brush::ShapingType::Formula>(type));
             break;
 
         case Smoothing:
-            world->getBrush()->BrushTypes().setSmoothing((Brush::SmoothingType::Formula)type);
+            types.setSmoothing(static_cast<Brush::SmoothingType::Formula>(type));
             break;
     }
+
+    world->getBrush()->setBrush(types);
 }
 
 void MapView::setTexturingFlow(double flow)

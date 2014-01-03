@@ -301,6 +301,9 @@ void MainWindow::loadNewProjectMapTilesIntoMemory()
 
 void MainWindow::takeScreenshot()
 {
+    if(centralWidget() == NULL)
+        return;
+
     QString path = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
 
     if(path == QString())
@@ -311,7 +314,19 @@ void MainWindow::takeScreenshot()
     if(fileName == QString())
         return;
 
-    if(!grab().toImage().save(fileName))
+    QPixmap mainWindowPixmap = grab();
+
+    QRect centralRect = QRect(0, 0, centralWidget()->width(), centralWidget()->height());
+
+    QImage mapViewImage = mapView->grabFrameBuffer();
+
+    QPainter painter;
+    painter.begin(&mainWindowPixmap);
+    painter.translate(QPoint(centralWidget()->x(), centralWidget()->y()));
+    painter.drawImage(centralRect, mapViewImage, centralRect);
+    painter.end();
+
+    if(!mainWindowPixmap.toImage().save(fileName))
     {
         QMessageBox msg;
         msg.setWindowTitle("Error");
@@ -487,7 +502,12 @@ void MainWindow::addDockWindow(const QString& title, QWidget* widget, Qt::DockWi
     foreach(QDockWidget* dWidget, dWidgets)
     {
         if(dWidget->widget() == widget)
-            return;
+        {
+            if(widget->isVisible())
+                return;
+
+            removeDockWidget(dWidget);
+        }
     }
 
     // Add

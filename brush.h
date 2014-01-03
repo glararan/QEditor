@@ -129,6 +129,7 @@ public:
 
     float InnerRadius() const { return innerRadius / multiplier; }
     float OuterRadius() const { return outerRadius / multiplier; }
+    float FallOff() const     { return innerRadius / outerRadius; }
     float Multiplier() const  { return multiplier; }
 
     QVector4D InnerColorVect() const { return innerColor; }

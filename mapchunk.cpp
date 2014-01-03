@@ -490,8 +490,7 @@ bool MapChunk::changeTerrain(float x, float z, float change)
                             {
                                 case Brush::ShapingType::Linear:
                                 default:
-                                    changeFormula = change * (1.0f - dist / brush->OuterRadius());
-                                    //float changeFormula = change * (1.0f - dist / brush->OuterRadius() * (1.0f / brush->InnerRadius()));
+                                    changeFormula = change * (1.0f - dist / brush->OuterRadius() * brush->FallOff());
                                     break;
 
                                 case Brush::ShapingType::Flat:
@@ -499,15 +498,15 @@ bool MapChunk::changeTerrain(float x, float z, float change)
                                     break;
 
                                 case Brush::ShapingType::Smooth:
-                                    changeFormula = change / (1.0f + dist / brush->OuterRadius());
+                                    changeFormula = change / (1.0f + dist / brush->OuterRadius() * brush->FallOff());
                                     break;
 
                                 case Brush::ShapingType::Polynomial:
-                                    changeFormula = change * ((dist / brush->OuterRadius()) * (dist / brush->OuterRadius()) + dist / brush->OuterRadius() + 1.0f);
+                                    changeFormula = change * (pow(dist / brush->OuterRadius() * brush->FallOff(), 2) + dist / brush->OuterRadius() + 1.0f);
                                     break;
 
                                 case Brush::ShapingType::Trigonometric:
-                                    changeFormula = change * cos(dist / brush->OuterRadius());
+                                    changeFormula = change * cos(dist / brush->OuterRadius() * brush->FallOff());
                                     break;
                             }
 
@@ -615,7 +614,7 @@ bool MapChunk::flattenTerrain(float x, float z, float y, float change)
                                 case Brush::SmoothingType::Linear:
                                 default:
                                     {
-                                        changeFormula = 1.0f - (1.0f - change) * (1.0f - dist / brush->OuterRadius());
+                                        changeFormula = 1.0f - (1.0f - change) * (1.0f - dist / brush->OuterRadius() * brush->FallOff());
                                         changeFormula = changeFormula * mapData[index] + (1 - changeFormula) * y;
                                     }
                                     break;
@@ -626,7 +625,7 @@ bool MapChunk::flattenTerrain(float x, float z, float y, float change)
 
                                 case Brush::SmoothingType::Smooth:
                                     {
-                                        changeFormula = 1.0f - pow(1.0f - change, 1.0f + dist / brush->OuterRadius());
+                                        changeFormula = 1.0f - pow(1.0f - change, 1.0f + dist / brush->OuterRadius() * brush->FallOff());
                                         changeFormula = changeFormula * mapData[index] + (1 - changeFormula) * y;
                                     }
                                     break;
@@ -776,7 +775,7 @@ bool MapChunk::blurTerrain(float x, float z, float change)
                                 case Brush::SmoothingType::Linear: // Linear
                                 default:
                                     {
-                                        changeFormula = 1.0f - (1.0f - change) * (1.0f - dist / brush->OuterRadius());
+                                        changeFormula = 1.0f - (1.0f - change) * (1.0f - dist / brush->OuterRadius() * brush->FallOff());
                                         changeFormula = changeFormula * mapData[index] + (1 - changeFormula) * h;
                                     }
                                     break;
@@ -787,7 +786,7 @@ bool MapChunk::blurTerrain(float x, float z, float change)
 
                                 case Brush::SmoothingType::Smooth: // Smooth
                                     {
-                                        changeFormula = 1.0f - pow(1.0f - change, (1.0f + dist / brush->OuterRadius()));
+                                        changeFormula = 1.0f - pow(1.0f - change, (1.0f + dist / brush->OuterRadius() * brush->FallOff()));
                                         changeFormula = changeFormula * mapData[index] + (1 - changeFormula) * h;
                                     }
                                     break;
@@ -942,9 +941,8 @@ bool MapChunk::paintTerrain(float x, float z, float flow, TexturePtr texture)
 
                                             //alphaMapsData[textureIndex][index] = ToUChar(qMax(qMin((1.0f - flow) * ToFloat(alphaMapsData[textureIndex][index]) + flow + 0.5f, 255.0f), 0.0f));
                                             //alphaMapsData[textureIndex][index] = ToUChar(qMax(qMin((1.0f - flow) * ToFloat(alphaMapsData[textureIndex][index]) + (1.0f - flow) + 0.5f, 255.0f), 0.0f));
-                                            alphaMapsData[textureIndex][index] = ToUChar(qMax(qMin(ToFloat(alphaMapsData[textureIndex][index]) + 2.0f * flow, 255.0f), 0.0f));
-
-                                            //alphaMapsData[textureIndex][index] = ToUChar(qMax(qMin(ToFloat(alphaMapsData[textureIndex][index] + 2.0f), 255.0f), 0.0f));
+                                            //alphaMapsData[textureIndex][index] = ToUChar(qMax(qMin(ToFloat(alphaMapsData[textureIndex][index]) + 2.0f * flow, 255.0f), 0.0f));
+                                            alphaMapsData[textureIndex][index] = ToUChar(qMax(qMin(ToFloat(alphaMapsData[textureIndex][index]) + ((255.0f - ToFloat(alphaMapsData[textureIndex][index])) * flow), 255.0f), 0.0f));
 
                                             changing.append(qMakePair<unsigned char, QVector2D>(alphaMapsData[textureIndex][index], QVector2D(X, Y)));
 
@@ -955,7 +953,7 @@ bool MapChunk::paintTerrain(float x, float z, float flow, TexturePtr texture)
                                         {
                                             if(ToFloat(alphaMapsData[i][index]) > 0.0f)
                                             {
-                                                alphaMapsData[i][index] = ToUChar(qMax(qMin(ToFloat(alphaMapsData[i][index]) - 2.0f * flow, 255.0f), 0.0f));
+                                                alphaMapsData[i][index] = ToUChar(qMax(qMin(ToFloat(alphaMapsData[i][index]) - ((255.0f - ToFloat(alphaMapsData[i][index])) * flow), 255.0f), 0.0f));
 
                                                 changing2.insert(i, qMakePair<unsigned char, QVector2D>(alphaMapsData[i][index], QVector2D(X, Y)));
                                             }
@@ -1067,10 +1065,10 @@ bool MapChunk::paintVertexShading(float x, float z, float flow, QColor& color)
                                 case Brush::TexturingType::Solid:
                                 default:
                                     {
-                                        vertexShadingData[index]     = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index],     color.redF(),   2.0f * flow), 255.0f), 0.0f));
-                                        vertexShadingData[index + 1] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 1], color.greenF(), 2.0f * flow), 255.0f), 0.0f));
-                                        vertexShadingData[index + 2] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 2], color.blueF(),  2.0f * flow), 255.0f), 0.0f));
-                                        vertexShadingData[index + 3] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 3], color.alphaF(), 2.0f * flow), 255.0f), 0.0f));
+                                        vertexShadingData[index]     = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index],     color.redF(),   (255.0f - vertexShadingData[index])     * flow), 255.0f), 0.0f));
+                                        vertexShadingData[index + 1] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 1], color.greenF(), (255.0f - vertexShadingData[index + 1]) * flow), 255.0f), 0.0f));
+                                        vertexShadingData[index + 2] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 2], color.blueF(),  (255.0f - vertexShadingData[index + 2]) * flow), 255.0f), 0.0f));
+                                        vertexShadingData[index + 3] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 3], color.alphaF(), (255.0f - vertexShadingData[index + 3]) * flow), 255.0f), 0.0f));
 
                                         QVector<unsigned char> dataContainer;
                                         dataContainer.append(vertexShadingData[index]);     // R
