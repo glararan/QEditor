@@ -50,24 +50,6 @@ public:
     SamplerPtr sampler() const                { return second; }
 };
 
-class FramebufferUnitConfiguration : public QPair<FrameBufferPtr, SamplerPtr>
-{
-public:
-    FramebufferUnitConfiguration() : QPair<FrameBufferPtr, SamplerPtr>(FrameBufferPtr(), SamplerPtr())
-    {
-    }
-
-    explicit FramebufferUnitConfiguration(const FrameBufferPtr& frameBuffer, const SamplerPtr& sampler) : QPair<FrameBufferPtr, SamplerPtr>(frameBuffer, sampler)
-    {
-    }
-
-    void setFrameBuffer(const FrameBufferPtr& frameBuffer) { first = frameBuffer; }
-    FrameBufferPtr frameBuffer() const                     { return first; }
-
-    void setSampler(const SamplerPtr sampler) { second = sampler; }
-    SamplerPtr sampler() const                { return second; }
-};
-
 class QOpenGLFunctions_3_1;
 
 class Material
@@ -96,13 +78,13 @@ public:
     void setTextureArrayUnitConfiguration(GLuint unit, TextureArrayPtr textureArray, SamplerPtr sampler);
     void setTextureArrayUnitConfiguration(GLuint unit, TextureArrayPtr textureArray, SamplerPtr sampler, const QByteArray& uniformName);
 
-    void setFramebufferUnitConfiguration(GLuint unit, FrameBufferPtr frameBuffer, SamplerPtr sampler);
-    void setFramebufferUnitConfiguration(GLuint unit, FrameBufferPtr frameBuffer, SamplerPtr sampler, const QByteArray& uniformName);
+    void setFramebufferUnitConfiguration(GLuint unit, GLuint textureID);
+    void setFramebufferUnitConfiguration(GLuint unit, GLuint textureID, const QByteArray& uniformName);
 
     TextureUnitConfiguration      textureUnitConfiguration(GLuint unit) const;
     TextureArrayUnitConfiguration textureArrayUnitConfiguration(GLuint unit) const;
 
-    FramebufferUnitConfiguration frameBufferUnitConfiguration(GLuint unit) const;
+    GLuint frameBufferUnitConfiguration(GLuint unit) const;
 
 private:
     // For now we assume that we own the shader
@@ -118,8 +100,8 @@ private:
     QMap<GLuint, QByteArray>                    m_arraySamplerUniforms;
 
     // This map contains the configuration for the framebuffer units
-    QMap<GLuint, FramebufferUnitConfiguration> m_FramebufferUnitConfigs;
-    QMap<GLuint, QByteArray>                   m_FramebufferSamplerUniforms;
+    QMap<GLuint, GLuint>     m_FramebufferUnitConfigs;
+    QMap<GLuint, QByteArray> m_FramebufferByteUnitUniforms;
 
     QOpenGLFunctions_3_1* m_funcs;
 

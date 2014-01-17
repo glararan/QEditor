@@ -33,14 +33,14 @@ public:
     explicit World(const ProjectFileData& projectFile);
 
     void deleteMe();
-    void initialize(QOpenGLContext* context);
+    void initialize(QOpenGLContext* context, QSize fboSize);
 
     void update(float dt);
     void draw(QMatrix4x4 modelMatrix, float triangles, QVector2D mousePosition, bool drawBrush = false);
 
     bool hasTile(int pX, int pY) const;
 
-    void loadNewProjectMapTilesIntoMemory(bool** mapCoords);
+    void loadNewProjectMapTilesIntoMemory(bool** mapCoords, QSize size);
 
     enum eDisplayMode
     {
@@ -90,6 +90,7 @@ public:
 
     MapChunk* getMapChunkAt(const QVector3D& position) const;
 
+    void setFboSize(QSize size);
     void setCamera(Camera* cam);
     void setProjectData(ProjectFileData& data);
 

@@ -296,7 +296,7 @@ void MainWindow::createMemoryProject(NewProjectData projectData)
 
 void MainWindow::loadNewProjectMapTilesIntoMemory()
 {
-    world->loadNewProjectMapTilesIntoMemory(mapCoords);
+    world->loadNewProjectMapTilesIntoMemory(mapCoords, mapView->size());
 }
 
 void MainWindow::takeScreenshot()

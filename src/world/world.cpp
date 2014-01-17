@@ -1,6 +1,7 @@
 #include "world.h"
 
 #include "maptile.h"
+#include "watertile.h"
 #include "mathhelper.h"
 #include "qeditor.h"
 #include "texturemanager.h"
@@ -56,7 +57,7 @@ void World::deleteMe()
     delete this;
 }
 
-void World::initialize(QOpenGLContext* context)
+void World::initialize(QOpenGLContext* context, QSize fboSize)
 {
     GLfuncs = context->versionFunctions<QOpenGLFunctions_4_2_Core>();
 
@@ -79,7 +80,7 @@ void World::initialize(QOpenGLContext* context)
 
     // prepare Shaders
     material = MaterialPtr(new Material);
-    material->setShaders(":/shaders/qeditor_world.vert", ":/shaders/qeditor_world.frag");
+    material->setShaders(":/data/shaders/qeditor_world.vert", ":/data/shaders/qeditor_world.frag");
 
     for(int x = 0; x < TILES; ++x)
     {
@@ -90,7 +91,11 @@ void World::initialize(QOpenGLContext* context)
             if(projectData.maps[index].exists == 0)
                 mapTiles[x][y].tile = NULL;
             else
+            {
                 loadTile(x, y);
+
+                mapTiles[x][y].tile->setFboSize(fboSize);
+            }
         }
     }
 
@@ -101,68 +106,123 @@ void World::update(float dt)
 {
     Q_UNUSED(dt);
 
-    /*QOpenGLShaderProgramPtr shader = material->shader();
-    shader->setUniformValue("waterTime", dt);*/
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
+                for(int cx = 0; cx < CHUNKS; ++cx)
+                {
+                    for(int cy = 0; cy < CHUNKS; ++cy)
+                    {
+                        if(mapTiles[tx][ty].tile->getWater()->getChunk(cx, cy)->hasData())
+                        {
+                            QOpenGLShaderProgramPtr shader = mapTiles[tx][ty].tile->getWater()->getChunk(cx, cy)->getShader();
+                            shader->bind();
+
+                            shader->setUniformValue("deltaTime", dt);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     // load tiles around + load neighbours
 }
 
 void World::draw(QMatrix4x4 modelMatrix, float triangles, QVector2D mousePosition, bool drawBrush)
 {
-    for(int x = 0; x < TILES; ++x)
+
+    QMatrix4x4 viewMatrix        = camera->viewMatrix();
+    QMatrix4x4 modelViewMatrix   = viewMatrix * modelMatrix;
+    QMatrix3x3 worldNormalMatrix = modelMatrix.normalMatrix();
+    QMatrix3x3 normalMatrix      = modelViewMatrix.normalMatrix();
+    QMatrix4x4 mvp               = camera->projectionMatrix() * modelViewMatrix;
+
+    // Set the lighting parameters
+    QVector4D worldLightDirection(sinf(sunTheta * MathHelper::degreesToRadians(1.0f)), cosf(sunTheta * MathHelper::degreesToRadians(1.0f)), 0.0f, 0.0f);
+    QMatrix4x4 worldToEyeNormal(normalMatrix);
+
+    QVector4D lightDirection = worldToEyeNormal * worldLightDirection;
+
+    for(int tx = 0; tx < TILES; ++tx)
     {
-        for(int y = 0; y < TILES; ++y)
+        for(int ty = 0; ty < TILES; ++ty)
         {
-            if(tileLoaded(x, y))
+            if(tileLoaded(tx, ty))
             {
-                for(int tx = 0; tx < CHUNKS; ++tx)
+                for(int cx = 0; cx < CHUNKS; ++cx)
                 {
-                    for(int ty = 0; ty < CHUNKS; ++ty)
+                    for(int cy = 0; cy < CHUNKS; ++cy)
                     {
-                        QOpenGLShaderProgramPtr shader = mapTiles[x][y].tile->getChunk(tx, ty)->getShader();
-                        shader->bind();
+                        for(int i = 0; i < 2; ++i)
+                        {
+                            // @i == 0 terrain
+                            // @i == 1 water
+                            if(i == 1 && !mapTiles[tx][ty].tile->getWater()->getChunk(cx, cy)->hasData())
+                                continue;
 
-                        // Set the horizontal and vertical scales applied in the tess eval shader
-                        shader->setUniformValue("horizontalScale"      , CHUNKSIZE);
-                        shader->setUniformValue("pixelsPerTriangleEdge", triangles);
+                            QOpenGLShaderProgramPtr shader;
 
-                        // Pass in the usual transformation matrices
-                        QMatrix4x4 viewMatrix        = camera->viewMatrix();
-                        QMatrix4x4 modelViewMatrix   = viewMatrix * modelMatrix;
-                        QMatrix3x3 worldNormalMatrix = modelMatrix.normalMatrix();
-                        QMatrix3x3 normalMatrix      = modelViewMatrix.normalMatrix();
-                        QMatrix4x4 mvp               = camera->projectionMatrix() * modelViewMatrix;
+                            if(i == 0)
+                                shader = mapTiles[tx][ty].tile->getChunk(cx, cy)->getShader();
+                            else
+                                shader = mapTiles[tx][ty].tile->getWater()->getChunk(cx, cy)->getShader();
 
-                        shader->setUniformValue("modelMatrix"      , modelMatrix);
-                        shader->setUniformValue("modelViewMatrix"  , modelViewMatrix);
-                        shader->setUniformValue("worldNormalMatrix", worldNormalMatrix);
-                        shader->setUniformValue("normalMatrix"     , normalMatrix);
-                        shader->setUniformValue("mvp"              , mvp);
+                            shader->bind();
 
-                        // Set the lighting parameters
-                        QVector4D worldLightDirection(sinf(sunTheta * MathHelper::degreesToRadians(1.0f)), cosf(sunTheta * MathHelper::degreesToRadians(1.0f)), 0.0f, 0.0f);
-                        QMatrix4x4 worldToEyeNormal(normalMatrix);
+                            // Set the horizontal and vertical scales applied in the tess eval shader
+                            shader->setUniformValue("horizontalScale"      , CHUNKSIZE);
+                            shader->setUniformValue("pixelsPerTriangleEdge", triangles);
 
-                        QVector4D lightDirection = worldToEyeNormal * worldLightDirection;
+                            // Pass in the usual transformation matrices
+                            shader->setUniformValue("modelMatrix"      , modelMatrix);
+                            shader->setUniformValue("modelViewMatrix"  , modelViewMatrix);
+                            shader->setUniformValue("worldNormalMatrix", worldNormalMatrix);
+                            shader->setUniformValue("normalMatrix"     , normalMatrix);
+                            shader->setUniformValue("mvp"              , mvp);
 
-                        shader->setUniformValue("light.position" , lightDirection);
-                        shader->setUniformValue("light.intensity", QVector3D(1.0f, 1.0f, 1.0f));
+                            // Set the lighting parameters
+                            shader->setUniformValue("light.position" , lightDirection);
+                            shader->setUniformValue("light.intensity", QVector3D(1.0f, 1.0f, 1.0f));
 
-                        // Set the material properties
-                        shader->setUniformValue("material.Ka", QVector3D(0.1f, 0.1f, 0.1f));
-                        shader->setUniformValue("material.Kd", QVector3D(1.0f, 1.0f, 1.0f));
-                        shader->setUniformValue("material.Ks", QVector3D(0.3f, 0.3f, 0.3f));
-                        shader->setUniformValue("material.shininess", 10.0f);
+                            // Set the material properties
+                            shader->setUniformValue("material.Ka", QVector3D(0.1f, 0.1f, 0.1f));
+                            shader->setUniformValue("material.Kd", QVector3D(1.0f, 1.0f, 1.0f));
+                            shader->setUniformValue("material.Ks", QVector3D(0.3f, 0.3f, 0.3f));
+                            shader->setUniformValue("material.shininess", 10.0f);
 
-                        if(drawBrush)
-                            brush->draw(shader, mousePosition);
+                            if(drawBrush && i == 0)
+                                brush->draw(shader, mousePosition);
+                        }
                     }
                 }
 
-                mapTiles[x][y].tile->draw(MAP_DRAW_DISTANCE, camera->position());
+                //mapTiles[tx][ty].tile->preDrawWater();
+
+                //GLfuncs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                //mapTiles[tx][ty].tile->getWater()->draw();
+
+                mapTiles[tx][ty].tile->draw(MAP_DRAW_DISTANCE, camera->position());
+                mapTiles[tx][ty].tile->drawWater(MAP_DRAW_DISTANCE, camera->position());
             }
         }
     }
+
+    /*for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
+                mapTiles[tx][ty].tile->draw(MAP_DRAW_DISTANCE, camera->position());
+                //mapTiles[tx][ty].tile->drawWater(MAP_DRAW_DISTANCE, camera->position());
+            }
+        }
+    }*/
 
     //material->bind();
 }
@@ -205,14 +265,18 @@ MapTile* World::loadTile(int x, int y, bool fileExists)
     return mapTiles[x][y].tile;
 }
 
-void World::loadNewProjectMapTilesIntoMemory(bool** mapCoords)
+void World::loadNewProjectMapTilesIntoMemory(bool** mapCoords, QSize size)
 {
     for(int x = 0; x < TILES; ++x)
     {
         for(int y = 0; y < TILES; ++y)
         {
             if(mapCoords[x][y])
+            {
                 loadTile(x, y, false);
+
+                mapTiles[x][y].tile->setFboSize(size);
+            }
         }
     }
 
@@ -647,6 +711,18 @@ void World::save()
     }
 
     projectFile.close();
+}
+
+void World::setFboSize(QSize size)
+{
+    for(int x = 0; x < TILES; ++x)
+    {
+        for(int y = 0; y < TILES; ++y)
+        {
+            if(tileLoaded(x, y))
+                mapTiles[x][y].tile->setFboSize(size);
+        }
+    }
 }
 
 void World::setCamera(Camera* cam)

@@ -41,11 +41,8 @@ void main()
     // Calculate extent of this patch in texture coords [0,1]
     vec2 patchExtent = maxTessLevel / (textureSize(heightMap, 0) * maxTrianglesPerTexel);
 
-    float baseTexCoordX = baseX / horizontalScale;
-    float baseTexCoordY = baseY / horizontalScale;
-
     // Calculate the texture coordinates
-    Out.texCoords = In[0].position.xy + gl_TessCoord.xy * patchExtent;// + vec2(baseTexCoordX, baseTexCoordY);
+    Out.texCoords = In[0].position.xy + gl_TessCoord.xy * patchExtent;
 
     // Calculate the model-space position
     vec4 position;

@@ -97,7 +97,7 @@ void MapView::initializeGL()
     this->makeCurrent();
 
     // Initialize World
-    world->initialize(GLcontext);
+    world->initialize(GLcontext, size());
 
     // Enable depth testing
     glEnable(GL_DEPTH_TEST);
@@ -401,6 +401,9 @@ void MapView::resizeGL(int w, int h)
     aspectRatio = MathHelper::toFloat(w) / MathHelper::toFloat(h);
 
     camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
+
+    // Update World FBO
+    world->setFboSize(QSize(w, h));
 
     // Update the viewport matrix
     float w2 = w / 2.0f;

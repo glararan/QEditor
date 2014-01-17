@@ -5,10 +5,10 @@
 #include "world.h"
 #include "mapheaders.h"
 
-#include "texturearray.h"
-
 #include <QOpenGLFramebufferObjectFormat>
 #include <QOpenGLFramebufferObject>
+
+class WaterTile;
 
 class MapTile
 {
@@ -22,10 +22,16 @@ public:
     MapChunk* getChunk(int x, int y);
 
     const MapHeader& getHeader() const { return tileHeader; }
+    WaterTile* getWater() const        { return waterTile; }
+
+    void preDrawWater();
 
     void draw(const float& distance, const QVector3D& camera);
+    void drawWater(const float& distance, const QVector3D& camera);
 
     bool isTile(int pX, int pY);
+
+    void setFboSize(QSize size);
 
     void saveTile();
 
@@ -38,15 +44,15 @@ private:
 
     World* world;
 
+    WaterTile* waterTile;
+
+    QOpenGLFramebufferObject* fbo;
+
     SamplerPtr terrainSampler;
 
     MapHeader tileHeader;
 
-    /// water
-    FrameBufferPtr waterReflection;
-    FrameBufferPtr depthMap;
-    FrameBufferPtr depthMap2;
-
+    friend class WaterTile;
     friend class MapChunk;
 };
 

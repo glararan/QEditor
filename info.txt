@@ -42,6 +42,15 @@ Tessellation shader resources
 http://codeflow.org/entries/2010/nov/07/opengl-4-tessellation/
 https://github.com/tijutv/GPU-Terrain-Generation
 
+editace terénu
+- uniform: nastaví okamžitě výšku térénu na X
+
+texture painting
+- smudge: rozmazání
+- blur: přechod
+- border: na okraji se kreslí nějaká další textura
+
+
 voda
 - přidání
 - odebrání

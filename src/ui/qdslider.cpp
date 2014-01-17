@@ -1,6 +1,6 @@
 #include "qdslider.h"
 
-#include "mathhelper.h"
+#include "helper/mathhelper.h"
 
 QDSlider::QDSlider(int decimals, QWidget* parent) : QSlider(parent)
 {

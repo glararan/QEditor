@@ -30,21 +30,21 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 , chunkBaseY((tile->coordY * TILESIZE) + baseY)
 {
     chunkMaterial = new ChunkMaterial();
-    chunkMaterial->setShaders(":/shaders/qeditor.vert",
-                              ":/shaders/qeditor.tcs",
-                              ":/shaders/qeditor.tes",
-                              ":/shaders/qeditor.geom",
-                              ":/shaders/qeditor.frag");
+    chunkMaterial->setShaders(":/data/shaders/qeditor.vert",
+                              ":/data/shaders/qeditor.tcs",
+                              ":/data/shaders/qeditor.tes",
+                              ":/data/shaders/qeditor.geom",
+                              ":/data/shaders/qeditor.frag");
 
     /// Textures
-    if(!world->getTextureManager()->hasTexture("grassTexture", ""))
-        world->getTextureManager()->loadTexture("grassTexture", "grass.png");
+    if(!world->getTextureManager()->hasTexture("grassTexture", "textures/grass.png"))
+        world->getTextureManager()->loadTexture("grassTexture", "textures/grass.png");
 
-    if(!world->getTextureManager()->hasTexture("rockTexture", ""))
-        world->getTextureManager()->loadTexture("rockTexture", "rock.png");
+    if(!world->getTextureManager()->hasTexture("rockTexture", "textures/rock.png"))
+        world->getTextureManager()->loadTexture("rockTexture", "textures/rock.png");
 
-    if(!world->getTextureManager()->hasTexture("snowTexture", ""))
-        world->getTextureManager()->loadTexture("snowTexture", "snowrocks.png");
+    if(!world->getTextureManager()->hasTexture("snowTexture", "textures/snowrocks.png"))
+        world->getTextureManager()->loadTexture("snowTexture", "textures/snowrocks.png");
 
     textures[0] = world->getTextureManager()->getTexture("grassTexture");
     textures[1] = world->getTextureManager()->getTexture("rockTexture");
@@ -132,11 +132,11 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
 , chunkBaseY((tile->coordY * TILESIZE) + baseY)
 {
     chunkMaterial = new ChunkMaterial();
-    chunkMaterial->setShaders(":/shaders/qeditor.vert",
-                              ":/shaders/qeditor.tcs",
-                              ":/shaders/qeditor.tes",
-                              ":/shaders/qeditor.geom",
-                              ":/shaders/qeditor.frag");
+    chunkMaterial->setShaders(":/data/shaders/qeditor.vert",
+                              ":/data/shaders/qeditor.tcs",
+                              ":/data/shaders/qeditor.tes",
+                              ":/data/shaders/qeditor.geom",
+                              ":/data/shaders/qeditor.frag");
     //chunkMaterial->link();
 
     // Load from file
@@ -177,14 +177,14 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
         qWarning(QObject::tr("Loading default chunk for tile %1_%2 chunk %3_%4, because we couldn't open file!").arg(tile->coordX).arg(tile->coordY).arg(chunkX).arg(chunkY).toLatin1().data());
 
         /// Load Textures
-        if(!world->getTextureManager()->hasTexture("grassTexture", "grass.png"))
-            world->getTextureManager()->loadTexture("grassTexture", "grass.png");
+        if(!world->getTextureManager()->hasTexture("grassTexture", "textures/grass.png"))
+            world->getTextureManager()->loadTexture("grassTexture", "textures/grass.png");
 
-        if(!world->getTextureManager()->hasTexture("rockTexture", "rock.png"))
-            world->getTextureManager()->loadTexture("rockTexture", "rock.png");
+        if(!world->getTextureManager()->hasTexture("rockTexture", "textures/rock.png"))
+            world->getTextureManager()->loadTexture("rockTexture", "textures/rock.png");
 
-        if(!world->getTextureManager()->hasTexture("snowTexture", "snowrocks.png"))
-            world->getTextureManager()->loadTexture("snowTexture", "snowrocks.png");
+        if(!world->getTextureManager()->hasTexture("snowTexture", "textures/snowrocks.png"))
+            world->getTextureManager()->loadTexture("snowTexture", "textures/snowrocks.png");
 
         textures[0] = world->getTextureManager()->getTexture("grassTexture");
         textures[1] = world->getTextureManager()->getTexture("rockTexture");

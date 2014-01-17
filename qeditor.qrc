@@ -1,23 +1,24 @@
 <RCC>
     <qresource prefix="/">
-        <file>shaders/qeditor.frag</file>
-        <file>shaders/qeditor.geom</file>
-        <file>shaders/qeditor.tcs</file>
-        <file>shaders/qeditor.tes</file>
-        <file>shaders/qeditor.vert</file>
-        <file alias="arrow">arrow.png</file>
-        <file alias="terrain">terrain.png</file>
-        <file alias="circle_icon">circle.png</file>
-        <file alias="square_icon">square.png</file>
-        <file alias="brush_icon">brush.png</file>
-        <file alias="app_icon">icon.png</file>
-        <file>shaders/qeditor_world.frag</file>
-        <file>shaders/qeditor_world.vert</file>
-        <file alias="vertexshading_icon">vertexshading.png</file>
+        <file>data/shaders/qeditor.frag</file>
+        <file>data/shaders/qeditor.geom</file>
+        <file>data/shaders/qeditor.tcs</file>
+        <file>data/shaders/qeditor.tes</file>
+        <file>data/shaders/qeditor.vert</file>
+        <file alias="arrow">data/images/arrow.png</file>
+        <file alias="terrain">data/images/terrain.png</file>
+        <file alias="circle_icon">data/images/circle.png</file>
+        <file alias="square_icon">data/images/square.png</file>
+        <file alias="brush_icon">data/images/brush.png</file>
+        <file alias="app_icon">data/images/icon.png</file>
+        <file>data/shaders/qeditor_world.frag</file>
+        <file>data/shaders/qeditor_world.vert</file>
+        <file alias="vertexshading_icon">data/images/vertexshading.png</file>
+        <file>data/shaders/qeditor_water.frag</file>
     </qresource>
     <qresource prefix="/textures">
-        <file>grass.png</file>
-        <file>rock.png</file>
-        <file>snowrocks.png</file>
+        <file>textures/grass.png</file>
+        <file>textures/rock.png</file>
+        <file>textures/snowrocks.png</file>
     </qresource>
 </RCC>

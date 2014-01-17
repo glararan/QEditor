@@ -151,18 +151,16 @@ void Material::setTextureArrayUnitConfiguration(GLuint unit, TextureArrayPtr tex
     m_arraySamplerUniforms.insert(unit, uniformName);
 }
 
-void Material::setFramebufferUnitConfiguration(GLuint unit, FrameBufferPtr frameBuffer, SamplerPtr sampler)
+void Material::setFramebufferUnitConfiguration(GLuint unit, GLuint textureID)
 {
-    FramebufferUnitConfiguration config(frameBuffer, sampler);
-
-    m_FramebufferUnitConfigs.insert(unit, config);
+    m_FramebufferUnitConfigs.insert(unit, textureID);
 }
 
-void Material::setFramebufferUnitConfiguration(GLuint unit, FrameBufferPtr frameBuffer, SamplerPtr sampler, const QByteArray& uniformName)
+void Material::setFramebufferUnitConfiguration(GLuint unit, GLuint textureID, const QByteArray& uniformName)
 {
-    setFramebufferUnitConfiguration(unit, frameBuffer, sampler);
+    setFramebufferUnitConfiguration(unit, textureID);
 
-    m_FramebufferSamplerUniforms.insert(unit, uniformName);
+    m_FramebufferByteUnitUniforms.insert(unit, uniformName);
 }
 
 TextureUnitConfiguration Material::textureUnitConfiguration(GLuint unit) const
@@ -175,9 +173,9 @@ TextureArrayUnitConfiguration Material::textureArrayUnitConfiguration(GLuint uni
     return m_arrayUnitConfigs.value(unit, TextureArrayUnitConfiguration());
 }
 
-FramebufferUnitConfiguration Material::frameBufferUnitConfiguration(GLuint unit) const
+GLuint Material::frameBufferUnitConfiguration(GLuint unit) const
 {
-    return m_FramebufferUnitConfigs.value(unit, FramebufferUnitConfiguration());
+    return m_FramebufferUnitConfigs.value(unit, 0);
 }
 
 /// Chunk Material
@@ -212,6 +210,21 @@ void ChunkMaterial::bind()
         // Associate with sampler uniform in shader (if we know the name or location)
         if(m_samplerUniforms.contains(unit))
             m_shader->setUniformValue(m_samplerUniforms.value(unit).constData(), unit);
+    }
+
+    m_funcs->glActiveTexture(GL_TEXTURE0);
+
+    foreach(const GLuint unit, m_FramebufferUnitConfigs.keys())
+    {
+        const GLuint& textureID = m_FramebufferUnitConfigs.value(unit);
+
+        // Bind the texture
+        m_funcs->glActiveTexture(GL_TEXTURE0 + unit);
+        m_funcs->glBindTexture(GL_TEXTURE_2D, textureID);
+
+        // Associate with byte uniform in shader (if we know the name or location)
+        if(m_FramebufferByteUnitUniforms.contains(unit))
+            m_shader->setUniformValue(m_FramebufferByteUnitUniforms.value(unit).constData(), unit);
     }
 }
 

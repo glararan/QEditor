@@ -343,6 +343,17 @@ vec4 shadeTexturedAndLit()
     /// Now blend with layer 2 based upon alphamap
     vec4 diffuseColor = mix(baseAndLayer1Color, layer2Color, texture(layer2Alpha, texCoords).r);
 
+    // overlay effect
+    //diffuseColor += texture(vertexShading, texCoords);
+
+    vec4 vertexShadingColor = texture(vertexShading, texCoords);
+    //vertexShadingColor.rgb *= vertexShadingColor.a;
+
+    diffuseColor.rgb += vertexShadingColor.rgb;
+
+    // non overlay effect
+    //diffuseColor = mix(diffuseColor, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
+
     // Calculate the lighting model, keeping the specular component separate
     vec3 ambientAndDiff, spec;
 
@@ -350,7 +361,7 @@ vec4 shadeTexturedAndLit()
 
     vec4 color = vec4(ambientAndDiff, 1.0) * diffuseColor + vec4(spec, 1.0);
 
-    return mix(color, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
+    return color;
 }
 
 subroutine(ShaderModelType)

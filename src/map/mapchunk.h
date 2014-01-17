@@ -94,6 +94,9 @@ private:
     TexturePtr terrainData;
     SamplerPtr terrainSampler;
 
+    float* mapData;
+
+    /// Textures, Alphamaps and Vertex Shading
     TexturePtr textures[MAX_TEXTURES];
     TexturePtr alphaMaps[ALPHAMAPS];
 
@@ -101,9 +104,6 @@ private:
 
     unsigned char* alphaMapsData[ALPHAMAPS];
     unsigned char* vertexShadingData;
-
-    float* mapData;
-    /// ----------------------------------
 
     /// Chunk data
     QVector<GLuint> displaySubroutines;

@@ -1,6 +1,6 @@
-include(common/common.pri)
+include(src/src.pri)
 
-QT += core gui widgets
+QT += core gui widgets opengl
 
 CONFIG += c++11
 
@@ -9,77 +9,28 @@ CONFIG += c++11
 #DEFINES -= QT_NO_WARNING_OUTPUT QT_NO_DEBUG_OUTPUT
 
 install_it.path = $$OUT_PWD
-install_it.files += $$PWD/grass.png
-install_it.files += $$PWD/rock.png
-install_it.files += $$PWD/snowrocks.png
+install_it.files += $$PWD/textures/grass.png
+install_it.files += $$PWD/textures/rock.png
+install_it.files += $$PWD/textures/snowrocks.png
+install_it.files += $$PWD/textures/water.png
 
 INSTALLS += install_it
 
 TEMPLATE = app
 
-INCLUDEPATH += common
+INCLUDEPATH += src
 
-SOURCES  += main.cpp \
-    mainwindow.cpp \
-    ui/teleportwidget.cpp \
-    ui/qdslider.cpp \
-    ui/mapview_settings.cpp \
-    world.cpp \
-    maptile.cpp \
-    mapchunk.cpp \
-    mapview.cpp \
-    mathhelper.cpp \
-    brush.cpp \
-    ui/about.cpp \
-    ui/texturepicker.cpp \
-    ui/tableview.cpp \
-    qeditor.cpp \
-    ui/startup.cpp \
-    ui/newproject.cpp \
-    ui/project_settings.cpp
+RESOURCES += qeditor.qrc
 
-HEADERS  += \
-    mainwindow.h \
-    ui/teleportwidget.h \
-    ui/qdslider.h \
-    ui/mapview_settings.h \
-    world.h \
-    maptile.h \
-    mapchunk.h \
-    mapheaders.h \
-    mapview.h \
-    mathhelper.h \
-    brush.h \
-    ui/about.h \
-    ui/texturepicker.h \
-    ui/tableview.h \
-    qeditor.h \
-    ui/startup.h \
-    ui/newproject.h \
-    globalheader.h \
-    ui/project_settings.h
-
-RESOURCES += \
-    qeditor.qrc
-
-OTHER_FILES += \
-    info.txt \
-    shaders/qeditor.frag \
-    shaders/qeditor.geom \
-    shaders/qeditor.tcs \
-    shaders/qeditor.tes \
-    shaders/qeditor.vert \
-    shaders/qeditor_world.frag \
-    shaders/qeditor_world.vert
-
-FORMS += \
-    mainwindow.ui \
-    ui/teleportwidget.ui \
-    ui/mapview_settings.ui \
-    ui/about.ui \
-    ui/texturepicker.ui \
-    ui/startup.ui \
-    ui/project_settings.ui
+OTHER_FILES += info.txt \
+    data/shaders/qeditor.frag \
+    data/shaders/qeditor.geom \
+    data/shaders/qeditor.tcs \
+    data/shaders/qeditor.tes \
+    data/shaders/qeditor.vert \
+    data/shaders/qeditor_world.frag \
+    data/shaders/qeditor_world.vert \
+    data/shaders/qeditor_water.frag
 
 unix|win32: LIBS += -L$$PWD/ -lquazip
 
