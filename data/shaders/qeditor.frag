@@ -81,6 +81,7 @@ uniform float textureScaleNear = 0.4;
 
 uniform bool chunkLines = false;
 uniform bool highlight  = false;
+uniform bool selected   = false;
 
 in wireFrameVertex
 {
@@ -508,6 +509,9 @@ void main()
             if(chunkY == 3 && texCoords.y > maxVal)
                 outColor = mix(fog.color, vec4(0.0, 1.0, 0.0, 1.0), fogFactor);
         }
+
+        if(selected && (texCoords.x > maxVal - 0.001 || texCoords.y > maxVal - 0.001 || texCoords.x < minVal + 0.001 || texCoords.y < minVal + 0.001))
+            outColor = mix(fog.color, vec4(1.0, 0.5, 0.0, 1.0), fogFactor);
     }
 
     // Terrain brush

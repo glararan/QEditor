@@ -7,7 +7,8 @@
 class WaterTile
 {
 public:
-    WaterTile(MapTile* parentTile, bool cache = false);
+    WaterTile(MapTile* parentTil);
+    WaterTile(MapTile* parentTile, QFile& file);
     ~WaterTile();
 
     WaterChunk* getChunk(int x, int y);

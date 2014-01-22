@@ -193,6 +193,7 @@ signals:
     void updateBrush(int brush);
 
     void selectedMapChunk(MapChunk* chunk);
+    void selectedWaterChunk(WaterChunk* chunk);
 
     void initialized();
 };

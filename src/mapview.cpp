@@ -246,7 +246,10 @@ void MapView::update(float t)
         world->highlightMapChunkAt(position);
 
         if(leftButtonPressed)
+        {
             emit selectedMapChunk(world->getMapChunkAt(position));
+            emit selectedWaterChunk(world->getWaterChunkAt(position));
+        }
     }
 
     // Change terrain
@@ -857,6 +860,11 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
     {
         if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
             updateBrushOuterRadius(dx);
+    }
+    else if(rightButtonPressed && altDown)
+    {
+        if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+            updateBrushInnerRadius(dx);
     }
 
     prevMousePos = mousePos;

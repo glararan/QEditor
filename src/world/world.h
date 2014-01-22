@@ -13,6 +13,7 @@
 
 class MapTile;
 class MapChunk;
+class WaterChunk;
 class TextureManager;
 
 class MapTiles
@@ -88,7 +89,8 @@ public:
     const float getTerrainMaximumHeight() const  { return terrainMaximumHeight; }
     const bool getTerrainMaximumState() const    { return terrainMaximumState; }
 
-    MapChunk* getMapChunkAt(const QVector3D& position) const;
+    MapChunk*   getMapChunkAt(const QVector3D& position) const;
+    WaterChunk* getWaterChunkAt(const QVector3D& position) const;
 
     void setFboSize(QSize size);
     void setCamera(Camera* cam);

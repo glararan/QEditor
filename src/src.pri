@@ -28,7 +28,9 @@ SOURCES  += $$PWD/main.cpp \
             $$PWD/map/maptile.cpp \
             $$PWD/helper/mathhelper.cpp \
             $$PWD/map/watertile.cpp \
-            $$PWD/map/waterchunk.cpp
+            $$PWD/map/waterchunk.cpp \
+            $$PWD/ui/waterwidget.cpp \
+    src/ui/waterwidget.cpp
 
 HEADERS  += $$PWD/mainwindow.h \
             $$PWD/ui/teleportwidget.h \
@@ -57,7 +59,9 @@ HEADERS  += $$PWD/mainwindow.h \
             $$PWD/helper/globalheader.h \
             $$PWD/helper/mathhelper.h \
             $$PWD/map/watertile.h \
-            $$PWD/map/waterchunk.h
+            $$PWD/map/waterchunk.h \
+            $$PWD/ui/waterwidget.h \
+    src/ui/waterwidget.h
 
 FORMS += $$PWD/mainwindow.ui \
          $$PWD/ui/teleportwidget.ui \
@@ -65,4 +69,5 @@ FORMS += $$PWD/mainwindow.ui \
          $$PWD/ui/about.ui \
          $$PWD/ui/texturepicker.ui \
          $$PWD/ui/startup.ui \
-         $$PWD/ui/project_settings.ui
+         $$PWD/ui/project_settings.ui \
+         $$PWD/ui/waterwidget.ui

@@ -14,7 +14,7 @@
    <string>QEditor</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="qeditor.qrc">
+   <iconset resource="../qeditor.qrc">
     <normaloff>:/app_icon</normaloff>:/app_icon</iconset>
   </property>
   <property name="dockNestingEnabled">
@@ -75,6 +75,7 @@
    <addaction name="action_mapview_m1"/>
    <addaction name="action_mapview_m2"/>
    <addaction name="action_mapview_m3"/>
+   <addaction name="action_mapview_m4"/>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -142,6 +143,7 @@
     <addaction name="action_Teleport"/>
     <addaction name="separator"/>
     <addaction name="action_Screenshot"/>
+    <addaction name="action_Fullscreen"/>
     <addaction name="action_Reset_camera"/>
     <addaction name="separator"/>
     <addaction name="action_Test"/>
@@ -198,7 +200,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="qeditor.qrc">
+    <iconset resource="../qeditor.qrc">
      <normaloff>:/arrow</normaloff>:/arrow</iconset>
    </property>
    <property name="text">
@@ -256,7 +258,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="qeditor.qrc">
+    <iconset resource="../qeditor.qrc">
      <normaloff>:/terrain</normaloff>:/terrain</iconset>
    </property>
    <property name="text">
@@ -414,7 +416,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="qeditor.qrc">
+    <iconset resource="../qeditor.qrc">
      <normaloff>:/brush_icon</normaloff>:/brush_icon</iconset>
    </property>
    <property name="text">
@@ -488,7 +490,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="qeditor.qrc">
+    <iconset resource="../qeditor.qrc">
      <normaloff>:/vertexshading_icon</normaloff>:/vertexshading_icon</iconset>
    </property>
    <property name="text">
@@ -509,9 +511,32 @@
     <bool>false</bool>
    </property>
   </action>
+  <action name="action_Fullscreen">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Fullscreen</string>
+   </property>
+  </action>
+  <action name="action_mapview_m4">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../qeditor.qrc">
+     <normaloff>:/water_icon</normaloff>:/water_icon</iconset>
+   </property>
+   <property name="text">
+    <string>Nástroj voda</string>
+   </property>
+   <property name="toolTip">
+    <string>Water</string>
+   </property>
+  </action>
  </widget>
  <resources>
-  <include location="qeditor.qrc"/>
+  <include location="../qeditor.qrc"/>
  </resources>
  <connections/>
 </ui>

@@ -33,7 +33,7 @@ MapTile::MapTile(World* mWorld, const QString& mapFile, int x, int y) // Cache M
         qDebug() << QString(QObject::tr("chunk[%1, %2]: %3 bases: [%4, %5]")).arg(i / CHUNKS).arg(i % CHUNKS).arg(i).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().x()).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().y());
     }
 
-    waterTile = new WaterTile(this, true);
+    waterTile = new WaterTile(this);
 }
 
 MapTile::MapTile(World* mWorld, int x, int y, const QString& mapFile) // File based MapTile
@@ -76,7 +76,7 @@ MapTile::MapTile(World* mWorld, int x, int y, const QString& mapFile) // File ba
         qDebug() << QString(QObject::tr("chunk[%1, %2]: %3 bases: [%4, %5]")).arg(i / CHUNKS).arg(i % CHUNKS).arg(i).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().x()).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().y());
     }
 
-    waterTile = new WaterTile(this);
+    waterTile = new WaterTile(this, file);
 
     file.close();
 }
@@ -112,75 +112,29 @@ void MapTile::draw(const float& distance, const QVector3D& camera)
         }
     }
 }
-#include <QMessageBox>
-void MapTile::preDrawWater()
-{
-    /*fbo->bind();
-
-    world->getGLFunctions()->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    mapChunks[0][0]->draw();
-
-    fbo->bindDefault();*/
-
-    /*GLuint fb, tex;
-
-    world->getGLFunctions()->glGenFramebuffers(1, &fb);
-    world->getGLFunctions()->glGenTextures(1, &tex);
-
-    {
-        world->getGLFunctions()->glBindTexture(GL_TEXTURE_2D, tex);
-        world->getGLFunctions()->glBindFramebuffer(GL_FRAMEBUFFER, fb);
-
-        world->getGLFunctions()->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        world->getGLFunctions()->glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        world->getGLFunctions()->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbo->width(), fbo->height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-        world->getGLFunctions()->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
-    }
-
-    {
-        world->getGLFunctions()->glBindFramebuffer(GL_FRAMEBUFFER, fb);
-        {
-            mapChunks[0][0]->draw();
-        }
-
-        world->getGLFunctions()->glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        {
-            waterTile->getChunk(0, 0)->draw(tex);
-        }
-    }*/
-}
 
 void MapTile::drawWater(const float& distance, const QVector3D& camera)
 {
-    /*for(int x = 0; x < CHUNKS; ++x)
+    for(int x = 0; x < CHUNKS; ++x)
     {
         for(int y = 0; y < CHUNKS; ++y)
         {
             if(mapChunks[x][y]->isInVisibleRange(distance, camera))
             {
-                fbo->bind();
+                /*fbo->bind();
+
+                world->getGLFunctions()->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 mapChunks[x][y]->draw();
 
                 fbo->release();
 
-                waterTile->getChunk(x, y)->draw(fbo->texture());
+                waterTile->getChunk(x, y)->draw(fbo->texture());*/
+
+                waterTile->getChunk(x, y)->draw(0);
             }
         }
-    }*/
-
-    fbo->bind();
-
-    mapChunks[0][0]->draw();
-
-    fbo->bindDefault();
-
-    waterTile->getChunk(0, 0)->draw(fbo->texture());
-
-    fbo->release();
+    }
 }
 
 MapChunk* MapTile::getChunk(int x, int y)
@@ -200,7 +154,7 @@ void MapTile::setFboSize(QSize size)
 {
     QOpenGLFramebufferObjectFormat format;
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-    //format.setMipmap(true);
+    format.setMipmap(true); // http://www.opengl.org/wiki/Common_Mistakes#Render_To_Texture
 
     if(fbo == NULL)
         fbo = new QOpenGLFramebufferObject(size, format);

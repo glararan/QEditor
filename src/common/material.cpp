@@ -227,8 +227,3 @@ void ChunkMaterial::bind()
             m_shader->setUniformValue(m_FramebufferByteUnitUniforms.value(unit).constData(), unit);
     }
 }
-
-void ChunkMaterial::link()
-{
-    m_funcs->glLinkProgram(m_shader->programId());
-}

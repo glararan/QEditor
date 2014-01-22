@@ -16,6 +16,7 @@
 #include "ui/mapview_settings.h"
 #include "ui/texturepicker.h"
 #include "ui/startup.h"
+#include "ui/waterwidget.h"
 
 #include "world.h"
 #include "mapview.h"
@@ -53,6 +54,8 @@ private:
         if(object != NULL)
             delete object;
     }
+
+    Qt::WindowStates nonFullScreenState;
 
     // Editing mode = 1
     QDSlider* t_outer_radius;
@@ -95,11 +98,15 @@ private:
     // Editing mode = 3
     QColorDialog* colorW;
 
+    // Editing mode = 4
+    WaterWidget* waterW;
+
     //
     QList<QString> mode0Actions;
     QList<QString> mode1Actions;
     QList<QString> mode2Actions;
     QList<QString> mode3Actions;
+    QList<QString> mode4Actions;
 
     void initMode();
     void showMode(QList<QString>& parentList);
@@ -125,6 +132,7 @@ private slots:
     void setSpeedMultiplier();
     void setDisplayMode();
     void setToolBarItem();
+    void setFullscreen(bool checked);
 
     void setTerrainMaximumHeightState(int state);
 

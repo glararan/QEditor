@@ -69,6 +69,12 @@ void World::initialize(QOpenGLContext* context, QSize fboSize)
 
     GLfuncs->initializeOpenGLFunctions();
 
+    if(!QOpenGLFramebufferObject::hasOpenGLFramebufferObjects())
+    {
+        qFatal(QObject::tr("Requires OpenGL framebuffer object.").toLatin1().data());
+        exit(1);
+    }
+
     qDebug() << "OpenGL Version: " << QString::fromLocal8Bit((char*)GLfuncs->glGetString(GL_VERSION));
     qDebug() << "OpenGL Vendor:"   << QString::fromLocal8Bit((char*)GLfuncs->glGetString(GL_VENDOR));
     qDebug() << "OpenGL Rendered:" << QString::fromLocal8Bit((char*)GLfuncs->glGetString(GL_RENDERER));
@@ -147,6 +153,10 @@ void World::draw(QMatrix4x4 modelMatrix, float triangles, QVector2D mousePositio
 
     QVector4D lightDirection = worldToEyeNormal * worldLightDirection;
 
+    ///GLfuncs->glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+    GLfuncs->glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_DST_ALPHA);
+    GLfuncs->glBlendEquation(GL_FUNC_ADD);
+
     for(int tx = 0; tx < TILES; ++tx)
     {
         for(int ty = 0; ty < TILES; ++ty)
@@ -200,29 +210,17 @@ void World::draw(QMatrix4x4 modelMatrix, float triangles, QVector2D mousePositio
                     }
                 }
 
-                //mapTiles[tx][ty].tile->preDrawWater();
-
-                //GLfuncs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                //mapTiles[tx][ty].tile->getWater()->draw();
-
                 mapTiles[tx][ty].tile->draw(MAP_DRAW_DISTANCE, camera->position());
-                mapTiles[tx][ty].tile->drawWater(MAP_DRAW_DISTANCE, camera->position());
+
+                GLfuncs->glEnable(GL_BLEND);
+                    mapTiles[tx][ty].tile->drawWater(MAP_DRAW_DISTANCE, camera->position());
+                GLfuncs->glDisable(GL_BLEND);
             }
         }
     }
 
-    /*for(int tx = 0; tx < TILES; ++tx)
-    {
-        for(int ty = 0; ty < TILES; ++ty)
-        {
-            if(tileLoaded(tx, ty))
-            {
-                mapTiles[tx][ty].tile->draw(MAP_DRAW_DISTANCE, camera->position());
-                //mapTiles[tx][ty].tile->drawWater(MAP_DRAW_DISTANCE, camera->position());
-            }
-        }
-    }*/
+    GLfuncs->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GLfuncs->glBlendEquation(GL_FUNC_ADD);
 
     //material->bind();
 }
@@ -447,8 +445,30 @@ MapChunk* World::getMapChunkAt(const QVector3D& position) const
     int ty = floor(position.z() / TILESIZE);
 
     if(!tileLoaded(tx, ty))
-        return NULL;
+    {
+        // disable selected chunk
+        for(int tx = 0; tx < TILES; ++tx)
+        {
+            for(int ty = 0; ty < TILES; ++ty)
+            {
+                if(tileLoaded(tx, ty))
+                {
+                    for(int cx = 0; cx < CHUNKS; ++cx)
+                    {
+                        for(int cy = 0; cy < CHUNKS; ++cy)
+                        {
+                            QOpenGLShaderProgramPtr shader = mapTiles[tx][ty].tile->getChunk(cx, cy)->getShader();
+                            shader->bind();
 
+                            shader->setUniformValue("selected", false);
+                        }
+                    }
+                }
+            }
+        }
+
+        return NULL;
+    }
     int cx = floor((position.x() - TILESIZE * tx) / CHUNKSIZE);
     int cy = floor((position.z() - TILESIZE * ty) / CHUNKSIZE);
 
@@ -459,7 +479,55 @@ MapChunk* World::getMapChunkAt(const QVector3D& position) const
         return NULL;
     }
 
+    // disable selected chunk
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
+                for(int cx = 0; cx < CHUNKS; ++cx)
+                {
+                    for(int cy = 0; cy < CHUNKS; ++cy)
+                    {
+                        QOpenGLShaderProgramPtr shader = mapTiles[tx][ty].tile->getChunk(cx, cy)->getShader();
+                        shader->bind();
+
+                        shader->setUniformValue("selected", false);
+                    }
+                }
+            }
+        }
+    }
+
+    // enable selected chunk
+    QOpenGLShaderProgramPtr shader = mapTiles[tx][ty].tile->getChunk(cx, cy)->getShader();
+    shader->bind();
+
+    shader->setUniformValue("selected", true);
+
     return mapTiles[tx][ty].tile->getChunk(cx, cy);
+}
+
+WaterChunk* World::getWaterChunkAt(const QVector3D& position) const
+{
+    int tx = floor(position.x() / TILESIZE);
+    int ty = floor(position.z() / TILESIZE);
+
+    if(!tileLoaded(tx, ty))
+        return NULL;
+
+    int cx = floor((position.x() - TILESIZE * tx) / CHUNKSIZE);
+    int cy = floor((position.z() - TILESIZE * ty) / CHUNKSIZE);
+
+    if(cx >= CHUNKS || cy >= CHUNKS)
+    {
+        qDebug() << QObject::tr("getWaterChunkAt cx or cy is wrong calculated!");
+
+        return NULL;
+    }
+
+    return mapTiles[tx][ty].tile->getWater()->getChunk(cx, cy);
 }
 
 void World::setChunkShaderUniform(const char* name, const QVector2D& value)

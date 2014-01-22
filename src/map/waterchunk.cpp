@@ -2,13 +2,14 @@
 
 #include "qeditor.h"
 
-WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX, int tileY, bool cache)
+WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX, int tileY)
 : world(mWorld)
 , patchBuffer(QOpenGLBuffer::VertexBuffer)
 , patchCount(NULL)
 , positionData(NULL)
 , waterSampler(sampler)
 , waterSurface(new Texture(QOpenGLTexture::Target2D))
+, data(false)
 , chunkX(x)
 , chunkY(y)
 , baseX(chunkX * CHUNKSIZE)
@@ -43,6 +44,80 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
 
     chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, waterSurface, waterSampler, QByteArrayLiteral("heightMap"));
 
+    //
+    BorderHeights bh;
+    bh.top = bh.right = bh.bottom = bh.left = 0;
+    bh.topStatus = bh.rightStatus = bh.bottomStatus = bh.leftStatus = true;
+
+    heights = bh;
+
+    initialize();
+}
+
+WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX, int tileY, QFile& file)
+: world(mWorld)
+, patchBuffer(QOpenGLBuffer::VertexBuffer)
+, patchCount(NULL)
+, positionData(NULL)
+, waterSampler(sampler)
+, waterSurface(new Texture(QOpenGLTexture::Target2D))
+, data(false)
+, chunkX(x)
+, chunkY(y)
+, baseX(chunkX * CHUNKSIZE)
+, baseY(chunkY * CHUNKSIZE)
+, chunkBaseX((tileX * TILESIZE) + baseX)
+, chunkBaseY((tileY * TILESIZE) + baseY)
+{
+    chunkMaterial = new ChunkMaterial();
+    chunkMaterial->setShaders(":/data/shaders/qeditor.vert",
+                              ":/data/shaders/qeditor.tcs",
+                              ":/data/shaders/qeditor.tes",
+                              ":/data/shaders/qeditor.geom",
+                              ":/data/shaders/qeditor_water.frag");
+
+    /// Set Water texture
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture1);
+
+    if(!world->getTextureManager()->hasTexture("waterTexture", "textures/water.png"))
+        world->getTextureManager()->loadTexture("waterTexture", "textures/water.png");
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, world->getTextureManager()->getTexture("waterTexture"), world->getTextureManager()->getSampler(), QByteArrayLiteral("baseTexture"));
+
+    /// Water - todo file load
+    waterData = new float[CHUNK_ARRAY_UC_SIZE]; // chunk_array_size
+
+    memset(waterData, 0, sizeof(float) * CHUNK_ARRAY_UC_SIZE);
+
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Heightmap);
+
+    waterSurface->setSize(MAP_WIDTH / CHUNKS, MAP_HEIGHT / CHUNKS);
+    waterSurface->setHeightmap(waterData);
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, waterSurface, waterSampler, QByteArrayLiteral("heightMap"));
+
+    //
+    BorderHeights bh;
+    bh.top = bh.right = bh.bottom = bh.left = 0;
+    bh.topStatus = bh.rightStatus = bh.bottomStatus = bh.leftStatus = true;
+
+    heights = bh;
+
+    initialize();
+}
+
+WaterChunk::~WaterChunk()
+{
+    delete[] waterData;
+
+    waterData = NULL;
+
+    patchBuffer.destroy();
+    vao.destroy();
+}
+
+void WaterChunk::initialize()
+{
     /// Create a Vertex Buffers
     const int maxTessellationLevel     = 64;
     const int trianglesPerHeightSample = 10;
@@ -111,37 +186,79 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
     shader2->setUniformValue("fog.maxDistance", app().getSetting("environmentDistance", 256.0f).toFloat() - 32.0f);
 }
 
-WaterChunk::~WaterChunk()
-{
-    delete[] waterData;
-
-    waterData = NULL;
-
-    patchBuffer.destroy();
-    vao.destroy();
-}
-
 void WaterChunk::draw(GLuint reflectionTexture)
 {
-    setReflectionTexture(reflectionTexture);
-
-    chunkMaterial->bind();
-
-    QOpenGLShaderProgramPtr shader = chunkMaterial->shader();
-    shader->bind();
-
-    // Render the quad as a patch
+    if(data)
     {
-        QOpenGLVertexArrayObject::Binder binder(&vao);
-        shader->setPatchVertexCount(1);
+        //setReflectionTexture(reflectionTexture);
 
-        world->getGLFunctions()->glDrawArrays(GL_PATCHES, 0, patchCount);
+        chunkMaterial->bind();
+
+        QOpenGLShaderProgramPtr shader = chunkMaterial->shader();
+        shader->bind();
+
+        // Render the quad as a patch
+        {
+            QOpenGLVertexArrayObject::Binder binder(&vao);
+            shader->setPatchVertexCount(1);
+
+            world->getGLFunctions()->glDrawArrays(GL_PATCHES, 0, patchCount);
+        }
     }
 }
 
-bool WaterChunk::hasData()
+void WaterChunk::updateData()
 {
-    return true;
+    if(data)
+    {
+        float top   = heights.top;
+        float right = heights.right;
+        float bot   = heights.bottom;
+        float left  = heights.left;
+
+        float topleft  = (top + left) / 2;
+        float topright = (top + right) / 2;
+        float botleft  = (bot + left) / 2;
+        float botright = (bot + right) / 2;
+
+        // row column
+        int rc = MAP_WIDTH / CHUNKS;
+
+        // calc row min to row max, cell min to cell max first and last index
+        for(int y = 0; y < rc; ++y)
+        {
+            waterData[y * rc]          = topleft - (topleft - botleft) / (rc - 1) * y;
+            waterData[y * rc + rc - 1] = topright - (topright - botright) / (rc - 1) * y;
+        }
+
+        for(int x = 0; x < rc; ++x)
+        {
+            waterData[x]                 = topleft - (topleft - topright) / (rc - 1) * x;
+            waterData[x + (rc - 1) * rc] = botleft - (botleft - botright) / (rc - 1) * x;
+        }
+
+        // calc data
+        for(int x = 0; x < rc; ++x)
+        {
+            if(x <= 0 || x >= rc - 1)
+                continue;
+
+            for(int y = 0; y < rc; ++y)
+            {
+                if(y <= 0 || y >= rc - 1)
+                    continue;
+
+                float currLeft  = waterData[y * rc];
+                float currRight = waterData[y * rc + rc - 1];
+
+                waterData[x + rc * y] = currLeft - ((currLeft - currRight) / (rc - 1)) * x;
+            }
+        }
+
+        waterSurface->setHeightmap(waterData);
+
+        chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, waterSurface, waterSampler, QByteArrayLiteral("heightMap"));
+    }
 }
 
 const int WaterChunk::chunkIndex() const
@@ -190,6 +307,11 @@ void WaterChunk::setHeight(int x, int y, float height)
     chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, waterSurface, waterSampler, QByteArrayLiteral("heightMap"));
 }
 
+void WaterChunk::setHeights(BorderHeights borderHeights)
+{
+    heights = borderHeights;
+}
+
 void WaterChunk::save()
 {
 
@@ -197,7 +319,6 @@ void WaterChunk::save()
 
 void WaterChunk::setReflectionTexture(GLuint reflectionTexture)
 {
-    //world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture2);
     world->getGLFunctions()->glBindTexture(GL_TEXTURE_2D, reflectionTexture);
 
     chunkMaterial->setFramebufferUnitConfiguration(ShaderUnits::Texture2, reflectionTexture, QByteArrayLiteral("reflectionTexture"));

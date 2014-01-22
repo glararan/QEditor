@@ -1,13 +1,24 @@
 #include "watertile.h"
 
-WaterTile::WaterTile(MapTile* parentTile, bool cache)
+WaterTile::WaterTile(MapTile* parentTile)
 : tile(parentTile)
 , world(parentTile->world)
 {
     for(int x = 0; x < CHUNKS; ++x)
     {
         for(int y = 0; y < CHUNKS; ++y)
-            chunks[x][y] = new WaterChunk(world, x, y, tile->terrainSampler.data(), tile->coordX, tile->coordY, cache);
+            chunks[x][y] = new WaterChunk(world, x, y, tile->terrainSampler.data(), tile->coordX, tile->coordY);
+    }
+}
+
+WaterTile::WaterTile(MapTile* parentTile, QFile& file)
+: tile(parentTile)
+, world(parentTile->world)
+{
+    for(int x = 0; x < CHUNKS; ++x)
+    {
+        for(int y = 0; y < CHUNKS; ++y)
+            chunks[x][y] = new WaterChunk(world, x, y, tile->terrainSampler.data(), tile->coordX, tile->coordY, file);
     }
 }
 

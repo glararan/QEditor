@@ -15,6 +15,7 @@
         <file>data/shaders/qeditor_world.vert</file>
         <file alias="vertexshading_icon">data/images/vertexshading.png</file>
         <file>data/shaders/qeditor_water.frag</file>
+        <file alias="water_icon">data/images/water.png</file>
     </qresource>
     <qresource prefix="/textures">
         <file>textures/grass.png</file>

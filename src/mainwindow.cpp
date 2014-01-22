@@ -22,6 +22,7 @@ MainWindow::MainWindow(QWidget* parent)
 , settingsW(NULL)
 , texturepW(NULL)
 , colorW(NULL)
+, waterW(NULL)
 , t_outer_radius(NULL)
 , t_inner_radius(NULL)
 , t_speed(NULL)
@@ -72,8 +73,9 @@ MainWindow::MainWindow(QWidget* parent)
     // help - about
     connect(ui->action_About, SIGNAL(triggered()), this, SLOT(showAbout()));
 
-    // tools - screenshot
-    connect(ui->action_Screenshot, SIGNAL(triggered()), this, SLOT(takeScreenshot()));
+    // tools - screenshot, fullscreen
+    connect(ui->action_Screenshot, SIGNAL(triggered()),     this, SLOT(takeScreenshot()));
+    connect(ui->action_Fullscreen, SIGNAL(triggered(bool)), this, SLOT(setFullscreen(bool)));
 }
 
 MainWindow::~MainWindow()
@@ -84,6 +86,7 @@ MainWindow::~MainWindow()
     delete settingsW;
     delete texturepW;
     delete colorW;
+    delete waterW;
 
     deleteObject(t_outer_radius);
     deleteObject(t_inner_radius);
@@ -158,6 +161,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
     teleportW = new TeleportWidget();
     settingsW = new MapView_Settings();
     texturepW = new TexturePicker();
+    waterW    = new WaterWidget();
 
     // post initialize world sub widgets
     connect(mapView, SIGNAL(initialized()), this, SLOT(postInitializeSubWorldWidgets()));
@@ -166,10 +170,11 @@ void MainWindow::openWorld(ProjectFileData projectData)
     initMode();
 
     /// map view
-    connect(mapView, SIGNAL(statusBar(QString)),             ui->statusbar, SLOT(showMessage(QString)));
-    connect(mapView, SIGNAL(updateBrushOuterRadius(double)), this,          SLOT(setBrushOuterRadius(double)));
-    connect(mapView, SIGNAL(updateBrushInnerRadius(double)), this,          SLOT(setBrushInnerRadius(double)));
-    connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)),    texturepW,     SLOT(setChunk(MapChunk*)));
+    connect(mapView, SIGNAL(statusBar(QString)),              ui->statusbar, SLOT(showMessage(QString)));
+    connect(mapView, SIGNAL(updateBrushOuterRadius(double)),  this,          SLOT(setBrushOuterRadius(double)));
+    connect(mapView, SIGNAL(updateBrushInnerRadius(double)),  this,          SLOT(setBrushInnerRadius(double)));
+    connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)),     texturepW,     SLOT(setChunk(MapChunk*)));
+    connect(mapView, SIGNAL(selectedWaterChunk(WaterChunk*)), waterW,        SLOT(setChunk(WaterChunk*)));
 
     /// menu bar
     // file
@@ -229,6 +234,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(ui->action_mapview_m1, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
     connect(ui->action_mapview_m2, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
     connect(ui->action_mapview_m3, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
+    connect(ui->action_mapview_m4, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
 
     connect(this, SIGNAL(setModeEditing(int)), mapView, SLOT(setModeEditing(int)));
 
@@ -459,6 +465,32 @@ void MainWindow::setToolBarItem()
         showMode(mode3Actions);
 
         addDockWindow(tr("Vertex Shading"), colorW);
+    }
+    else if(iName == "action_mapview_m4")
+    {
+        emit setModeEditing(4);
+
+        showMode(mode4Actions);
+
+        addDockWindow(tr("Water"), waterW);
+    }
+}
+
+void MainWindow::setFullscreen(bool checked)
+{
+    switch(checked)
+    {
+        case true:
+            {
+                nonFullScreenState = windowState();
+
+                setWindowState(Qt::WindowFullScreen);
+            }
+            break;
+
+        case false:
+            setWindowState(nonFullScreenState);
+            break;
     }
 }
 

@@ -24,8 +24,6 @@ public:
     const MapHeader& getHeader() const { return tileHeader; }
     WaterTile* getWater() const        { return waterTile; }
 
-    void preDrawWater();
-
     void draw(const float& distance, const QVector3D& camera);
     void drawWater(const float& distance, const QVector3D& camera);
 
