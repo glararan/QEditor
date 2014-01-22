@@ -55,7 +55,7 @@ void LogInitialize()
 
 int main(int argc, char* argv[])
 {
-    //LogInitialize();
+    LogInitialize();
 
     QEditor application(argc, argv);
 
