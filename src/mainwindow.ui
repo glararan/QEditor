@@ -1,0 +1,564 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>QEditor</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../qeditor.qrc">
+    <normaloff>:/app_icon</normaloff>:/app_icon</iconset>
+  </property>
+  <property name="dockNestingEnabled">
+   <bool>true</bool>
+  </property>
+  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QToolBar" name="toolbar3">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>0</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="movable">
+    <bool>false</bool>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QToolBar" name="toolbar2">
+   <property name="movable">
+    <bool>false</bool>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>BottomToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QToolBar" name="toolbar">
+   <property name="styleSheet">
+    <string notr="true">QToolBar {padding:5px;spacing:5px}</string>
+   </property>
+   <property name="movable">
+    <bool>false</bool>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>LeftToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="action_mapview_m0"/>
+   <addaction name="action_mapview_m1"/>
+   <addaction name="action_mapview_m2"/>
+   <addaction name="action_mapview_m3"/>
+   <addaction name="action_mapview_m4"/>
+   <addaction name="action_mapview_m5"/>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu_File">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="action_New"/>
+    <addaction name="action_Load"/>
+    <addaction name="separator"/>
+    <addaction name="action_Save"/>
+    <addaction name="action_Close_Project"/>
+    <addaction name="separator"/>
+    <addaction name="action_Backup_Maps"/>
+    <addaction name="separator"/>
+    <addaction name="action_Exit"/>
+   </widget>
+   <widget class="QMenu" name="menu_Tools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <widget class="QMenu" name="menu_Speed_Multiplier">
+     <property name="title">
+      <string>&amp;Speed Multiplier</string>
+     </property>
+     <addaction name="action_Speed_0"/>
+     <addaction name="action_Speed_1"/>
+     <addaction name="action_Speed_3"/>
+     <addaction name="action_Speed_5"/>
+     <addaction name="action_Speed_7"/>
+     <addaction name="action_Speed_10"/>
+     <addaction name="separator"/>
+     <addaction name="action_Speed_0_1"/>
+     <addaction name="action_Speed_0_2"/>
+    </widget>
+    <widget class="QMenu" name="menu_Display_Mode">
+     <property name="title">
+      <string>&amp;Display Mode</string>
+     </property>
+     <addaction name="action_Default"/>
+     <addaction name="action_Terrain_Wireframe"/>
+     <addaction name="action_Wireframe"/>
+     <addaction name="action_BaseLayer"/>
+     <addaction name="action_Base_Layer1"/>
+     <addaction name="action_Base_Layer1_Layer2"/>
+     <addaction name="action_Wireframe_Height"/>
+     <addaction name="action_Colored"/>
+     <addaction name="action_Light_and_Shadow"/>
+     <addaction name="action_Hidden"/>
+    </widget>
+    <addaction name="menu_Speed_Multiplier"/>
+    <addaction name="menu_Display_Mode"/>
+    <addaction name="separator"/>
+    <addaction name="action_Show_Chunk_lines"/>
+    <addaction name="separator"/>
+    <addaction name="action_Texture_Picker"/>
+    <addaction name="action_Settings"/>
+    <addaction name="action_Teleport"/>
+    <addaction name="separator"/>
+    <addaction name="action_Screenshot"/>
+    <addaction name="action_Fullscreen"/>
+    <addaction name="action_Reset_camera"/>
+    <addaction name="separator"/>
+    <addaction name="action_Test"/>
+   </widget>
+   <widget class="QMenu" name="menu_Edit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="action_Undo"/>
+    <addaction name="action_Redo"/>
+   </widget>
+   <widget class="QMenu" name="menu_Help">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="action_About"/>
+   </widget>
+   <widget class="QMenu" name="menu_Project">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="acceptDrops">
+     <bool>true</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="tearOffEnabled">
+     <bool>false</bool>
+    </property>
+    <property name="title">
+     <string>&amp;Project</string>
+    </property>
+    <addaction name="action_Project_Settings"/>
+    <addaction name="action_Project_Maps"/>
+   </widget>
+   <addaction name="menu_File"/>
+   <addaction name="menu_Edit"/>
+   <addaction name="menu_Project"/>
+   <addaction name="menu_Tools"/>
+   <addaction name="menu_Help"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="action_Exit">
+   <property name="text">
+    <string>&amp;Exit</string>
+   </property>
+  </action>
+  <action name="action_mapview_m0">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../qeditor.qrc">
+     <normaloff>:/arrow</normaloff>:/arrow</iconset>
+   </property>
+   <property name="text">
+    <string>Nástroj upravování objektů</string>
+   </property>
+  </action>
+  <action name="action_Speed_0">
+   <property name="text">
+    <string>Speed &amp;0</string>
+   </property>
+  </action>
+  <action name="action_Speed_1">
+   <property name="text">
+    <string>Speed &amp;1</string>
+   </property>
+  </action>
+  <action name="action_Speed_3">
+   <property name="text">
+    <string>Speed &amp;3</string>
+   </property>
+  </action>
+  <action name="action_Speed_5">
+   <property name="text">
+    <string>Speed &amp;5</string>
+   </property>
+  </action>
+  <action name="action_Speed_7">
+   <property name="text">
+    <string>Speed &amp;7</string>
+   </property>
+  </action>
+  <action name="action_Speed_10">
+   <property name="text">
+    <string>Speed &amp;10</string>
+   </property>
+  </action>
+  <action name="action_Speed_0_1">
+   <property name="text">
+    <string>Speed +0.1</string>
+   </property>
+   <property name="shortcut">
+    <string>+</string>
+   </property>
+  </action>
+  <action name="action_Speed_0_2">
+   <property name="text">
+    <string>Speed -0.1</string>
+   </property>
+   <property name="shortcut">
+    <string>-</string>
+   </property>
+  </action>
+  <action name="action_mapview_m1">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../qeditor.qrc">
+     <normaloff>:/terrain</normaloff>:/terrain</iconset>
+   </property>
+   <property name="text">
+    <string>Nástroj upravování terénu</string>
+   </property>
+  </action>
+  <action name="action_Test">
+   <property name="text">
+    <string>&amp;Test</string>
+   </property>
+  </action>
+  <action name="action_Default">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Default</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
+   </property>
+  </action>
+  <action name="action_Terrain_Wireframe">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Terrain + Wireframe</string>
+   </property>
+   <property name="shortcut">
+    <string>F2</string>
+   </property>
+  </action>
+  <action name="action_Wireframe">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Wireframe</string>
+   </property>
+   <property name="shortcut">
+    <string>F3</string>
+   </property>
+  </action>
+  <action name="action_BaseLayer">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Base Layer</string>
+   </property>
+   <property name="shortcut">
+    <string>F4</string>
+   </property>
+  </action>
+  <action name="action_Base_Layer1">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Base + Layer 1</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
+  </action>
+  <action name="action_Base_Layer1_Layer2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Base + Layer 2 + Layer 3</string>
+   </property>
+   <property name="shortcut">
+    <string>F6</string>
+   </property>
+  </action>
+  <action name="action_Wireframe_Height">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Wireframe + &amp;Height</string>
+   </property>
+   <property name="shortcut">
+    <string>F7</string>
+   </property>
+  </action>
+  <action name="action_Colored">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Colored</string>
+   </property>
+   <property name="shortcut">
+    <string>F8</string>
+   </property>
+  </action>
+  <action name="action_Light_and_Shadow">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Light and Shadow</string>
+   </property>
+   <property name="shortcut">
+    <string>F9</string>
+   </property>
+  </action>
+  <action name="action_Hidden">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>H&amp;idden</string>
+   </property>
+   <property name="shortcut">
+    <string>F10</string>
+   </property>
+  </action>
+  <action name="action_Teleport">
+   <property name="text">
+    <string>Teleport</string>
+   </property>
+  </action>
+  <action name="action_Reset_camera">
+   <property name="text">
+    <string>&amp;Reset camera</string>
+   </property>
+   <property name="shortcut">
+    <string>R</string>
+   </property>
+  </action>
+  <action name="action_Save">
+   <property name="text">
+    <string>&amp;Save</string>
+   </property>
+  </action>
+  <action name="action_New">
+   <property name="text">
+    <string>&amp;New</string>
+   </property>
+  </action>
+  <action name="action_Load">
+   <property name="text">
+    <string>&amp;Load</string>
+   </property>
+  </action>
+  <action name="action_mapview_m2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../qeditor.qrc">
+     <normaloff>:/brush_icon</normaloff>:/brush_icon</iconset>
+   </property>
+   <property name="text">
+    <string>Nástroj kreslení textur</string>
+   </property>
+   <property name="toolTip">
+    <string>Paint</string>
+   </property>
+  </action>
+  <action name="action_Undo">
+   <property name="text">
+    <string>&amp;Undo</string>
+   </property>
+  </action>
+  <action name="action_Redo">
+   <property name="text">
+    <string>&amp;Redo</string>
+   </property>
+  </action>
+  <action name="action_Settings">
+   <property name="text">
+    <string>&amp;Settings</string>
+   </property>
+  </action>
+  <action name="action_About">
+   <property name="text">
+    <string>&amp;About</string>
+   </property>
+  </action>
+  <action name="action_Texture_Picker">
+   <property name="text">
+    <string>Texture &amp;Picker</string>
+   </property>
+  </action>
+  <action name="action_Backup_Maps">
+   <property name="text">
+    <string>&amp;Backup Maps</string>
+   </property>
+  </action>
+  <action name="action_Close_Project">
+   <property name="text">
+    <string>&amp;Close Project</string>
+   </property>
+  </action>
+  <action name="action_Project_Settings">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Settings</string>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="action_Project_Maps">
+   <property name="text">
+    <string>Maps</string>
+   </property>
+  </action>
+  <action name="action_Show_Chunk_lines">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Show &amp;Chunk lines</string>
+   </property>
+  </action>
+  <action name="action_mapview_m3">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../qeditor.qrc">
+     <normaloff>:/vertexshading_icon</normaloff>:/vertexshading_icon</iconset>
+   </property>
+   <property name="text">
+    <string>Nástroj barvení textur</string>
+   </property>
+   <property name="toolTip">
+    <string>Vertex Shading</string>
+   </property>
+  </action>
+  <action name="action_Screenshot">
+   <property name="text">
+    <string>&amp;Screenshot</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
+   <property name="autoRepeat">
+    <bool>false</bool>
+   </property>
+  </action>
+  <action name="action_Fullscreen">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Fullscreen</string>
+   </property>
+  </action>
+  <action name="action_mapview_m4">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../qeditor.qrc">
+     <normaloff>:/water_icon</normaloff>:/water_icon</iconset>
+   </property>
+   <property name="text">
+    <string>Nástroj voda</string>
+   </property>
+   <property name="toolTip">
+    <string>Water</string>
+   </property>
+  </action>
+  <action name="action_mapview_m5">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../qeditor.qrc">
+     <normaloff>:/object_icon</normaloff>:/object_icon</iconset>
+   </property>
+   <property name="text">
+    <string>Nástroj objekt</string>
+   </property>
+   <property name="toolTip">
+    <string>Object</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="../qeditor.qrc"/>
+ </resources>
+ <connections/>
+</ui>
