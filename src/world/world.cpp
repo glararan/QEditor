@@ -154,8 +154,7 @@ void World::draw(QMatrix4x4 modelMatrix, float triangles, QVector2D mousePositio
     QVector4D lightDirection = worldToEyeNormal * worldLightDirection;
 
     ///GLfuncs->glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
-    GLfuncs->glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_DST_ALPHA);
-    GLfuncs->glBlendEquation(GL_FUNC_ADD);
+    GLfuncs->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
     for(int tx = 0; tx < TILES; ++tx)
     {
@@ -213,14 +212,15 @@ void World::draw(QMatrix4x4 modelMatrix, float triangles, QVector2D mousePositio
                 mapTiles[tx][ty].tile->draw(MAP_DRAW_DISTANCE, camera->position());
 
                 GLfuncs->glEnable(GL_BLEND);
+                    GLfuncs->glDisable(GL_DEPTH_TEST);
                     mapTiles[tx][ty].tile->drawWater(MAP_DRAW_DISTANCE, camera->position());
+                    GLfuncs->glEnable(GL_DEPTH_TEST);
                 GLfuncs->glDisable(GL_BLEND);
             }
         }
     }
 
     GLfuncs->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    GLfuncs->glBlendEquation(GL_FUNC_ADD);
 
     //material->bind();
 }

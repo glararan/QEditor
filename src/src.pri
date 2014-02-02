@@ -1,11 +1,16 @@
 INCLUDEPATH += src/common \
                src/helper \
                src/map \
+<<<<<<< Updated upstream
 <<<<<<< HEAD
 =======
                src/model \
 >>>>>>> origin/netix
                src/world
+=======
+               src/world \
+               src/3rd-party/imageshackAPI
+>>>>>>> Stashed changes
 
 SOURCES  += $$PWD/main.cpp \
             $$PWD/mainwindow.cpp \
@@ -34,6 +39,7 @@ SOURCES  += $$PWD/main.cpp \
             $$PWD/map/watertile.cpp \
             $$PWD/map/waterchunk.cpp \
             $$PWD/ui/waterwidget.cpp \
+<<<<<<< Updated upstream
 <<<<<<< HEAD
     src/ui/waterwidget.cpp
 =======
@@ -50,6 +56,11 @@ SOURCES  += $$PWD/main.cpp \
             $$PWD/ui/modelpicker.cpp \
             $$PWD/ui/toolbox.cpp
 >>>>>>> origin/netix
+=======
+            $$PWD/ui/waterwidget.cpp \
+            $$PWD/common/framebuffer.cpp \
+            $$PWD/3rd-party/imgurAPI/fileupload.cpp
+>>>>>>> Stashed changes
 
 HEADERS  += $$PWD/mainwindow.h \
             $$PWD/ui/teleportwidget.h \
@@ -80,6 +91,7 @@ HEADERS  += $$PWD/mainwindow.h \
             $$PWD/map/watertile.h \
             $$PWD/map/waterchunk.h \
             $$PWD/ui/waterwidget.h \
+<<<<<<< Updated upstream
 <<<<<<< HEAD
     src/ui/waterwidget.h
 =======
@@ -96,6 +108,11 @@ HEADERS  += $$PWD/mainwindow.h \
             $$PWD/ui/modelpicker.h \
             $$PWD/ui/toolbox.h
 >>>>>>> origin/netix
+=======
+            $$PWD/ui/waterwidget.h \
+            $$PWD/common/framebuffer.h \
+            $$PWD/3rd-party/imgurAPI/fileupload.h
+>>>>>>> Stashed changes
 
 FORMS += $$PWD/mainwindow.ui \
          $$PWD/ui/teleportwidget.ui \

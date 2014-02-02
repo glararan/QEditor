@@ -153,10 +153,12 @@
     <addaction name="action_Teleport"/>
     <addaction name="separator"/>
     <addaction name="action_Screenshot"/>
+    <addaction name="action_Screenshot_upload"/>
     <addaction name="action_Fullscreen"/>
     <addaction name="action_Reset_camera"/>
     <addaction name="separator"/>
     <addaction name="action_Test"/>
+    <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menu_Edit">
     <property name="title">
@@ -544,6 +546,7 @@
     <string>Water</string>
    </property>
   </action>
+<<<<<<< Updated upstream
 <<<<<<< HEAD:src/mainwindow.ui
 =======
   <action name="action_mapview_m5">
@@ -562,6 +565,13 @@
    </property>
   </action>
 >>>>>>> origin/netix:src/mainwindow.ui
+=======
+  <action name="action_Screenshot_upload">
+   <property name="text">
+    <string>&amp;Screenshot + upload</string>
+   </property>
+  </action>
+>>>>>>> Stashed changes
  </widget>
  <resources>
   <include location="../qeditor.qrc"/>

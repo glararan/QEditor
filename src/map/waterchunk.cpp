@@ -186,16 +186,18 @@ void WaterChunk::initialize()
     shader2->setUniformValue("fog.maxDistance", app().getSetting("environmentDistance", 256.0f).toFloat() - 32.0f);
 }
 
-void WaterChunk::draw(GLuint reflectionTexture)
+void WaterChunk::draw(GLuint reflectionTexture, GLuint depthTexture)
 {
     if(data)
     {
-        //setReflectionTexture(reflectionTexture);
-
-        chunkMaterial->bind();
+        setReflectionTexture(reflectionTexture, depthTexture);
 
         QOpenGLShaderProgramPtr shader = chunkMaterial->shader();
         shader->bind();
+
+        shader->setUniformValue("eyePos", world->getCamera()->position());
+
+        chunkMaterial->bind();
 
         // Render the quad as a patch
         {
@@ -317,9 +319,13 @@ void WaterChunk::save()
 
 }
 
-void WaterChunk::setReflectionTexture(GLuint reflectionTexture)
+void WaterChunk::setReflectionTexture(GLuint reflectionTexture, GLuint depthTexture)
 {
     world->getGLFunctions()->glBindTexture(GL_TEXTURE_2D, reflectionTexture);
 
     chunkMaterial->setFramebufferUnitConfiguration(ShaderUnits::Texture2, reflectionTexture, QByteArrayLiteral("reflectionTexture"));
+
+    world->getGLFunctions()->glBindTexture(GL_TEXTURE_2D, depthTexture);
+
+    chunkMaterial->setFramebufferUnitConfiguration(ShaderUnits::Texture3, depthTexture, QByteArrayLiteral("depthTexture"));
 }

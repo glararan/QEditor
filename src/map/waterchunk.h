@@ -15,7 +15,7 @@ public:
     WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX, int tileY, QFile& file);
     ~WaterChunk();
 
-    void draw(GLuint reflectionTexture);
+    void draw(GLuint reflectionTexture, GLuint depthTexture);
     void updateData();
 
     bool hasData() const { return data; }
@@ -76,7 +76,7 @@ private:
     //
     void initialize();
 
-    void setReflectionTexture(GLuint reflectionTexture);
+    void setReflectionTexture(GLuint reflectionTexture, GLuint depthTexture);
 };
 
 #endif // WATERCHUNK_H

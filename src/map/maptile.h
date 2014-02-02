@@ -4,6 +4,7 @@
 #include "mapchunk.h"
 #include "world.h"
 #include "mapheaders.h"
+#include "framebuffer.h"
 
 #include <QOpenGLFramebufferObjectFormat>
 #include <QOpenGLFramebufferObject>
@@ -44,7 +45,7 @@ private:
 
     WaterTile* waterTile;
 
-    QOpenGLFramebufferObject* fbo;
+    Framebuffer* fbo;
 
     SamplerPtr terrainSampler;
 

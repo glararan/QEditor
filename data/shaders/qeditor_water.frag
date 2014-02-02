@@ -34,7 +34,9 @@ uniform struct MaterialInfo
 } material;
 
 uniform sampler2D baseTexture;
-uniform sampler2D reflectionTexture;
+
+uniform samplerCube reflectionTexture;
+uniform samplerCube depthTexture;
 
 uniform float colorStop1 = 0.0;
 uniform float colorStop2 = 4.0;
@@ -58,6 +60,8 @@ uniform float baseY = 0.0f;
 
 uniform int chunkX = 0;
 uniform int chunkY = 0;
+
+uniform vec3 eyePos;
 
 in wireFrameVertex
 {
@@ -150,6 +154,13 @@ vec4 wireFrame(const in vec4 color, const in vec4 wireFrameColor)
     return c;
 }
 
+float Fresnel(float NdotL, float bias, float power)
+{
+    float facing = (1.0 - NdotL);
+
+    return max(bias + (1.0 - bias) * pow(facing, power), 0.0);
+}
+
 float textureDistanceBlendFactor()
 {
     float dist = abs(position.z);
@@ -176,11 +187,12 @@ vec4 shadeWireFrame()
 subroutine(ShaderModelType)
 vec4 shadeWater()
 {
-    vec3 _refract = normalize(refract(position.xyz, normal, 1.2));
+    /*vec3 eye       = normalize(worldPosition.xyz - eyePos);
+    vec3 reflected = normalize(refract(eye, normalize(worldNormal), 1.1)); // 1.3330
 
-    //vec4 diffuseColor = 0.6 * texture(baseTexture, texCoords + deltaTime * 0.025) * vec4(0.0, 1.0, 1.0, 0.5);
-    //vec4 diffuseColor = mix(vec4(0.0, 1.0, 1.0, 0.5), texture(reflectionTexture, texCoords/* + _refract.xy * 0.1*/), 0.6);
-    vec4 diffuseColor = vec4(0.0, 0.6982758620689655, 1.0, 1.0);
+    vec4 diffuseColor = mix(vec4(0.0, 0.5, 1.0, 1.0), texture(reflectionTexture, reflected), 0.6);*/
+
+    vec4 diffuseColor = texture(baseTexture, texCoords + deltaTime * 0.01);
 
     // Calculate the lighting model, keeping the specular component separate
     vec3 ambientAndDiff, spec;
@@ -188,6 +200,7 @@ vec4 shadeWater()
     phongModel(ambientAndDiff, spec);
 
     vec4 color = vec4(ambientAndDiff, 1.0) * diffuseColor + vec4(spec, 1.0);
+    color.a    = 0.5;
 
     return color;
 }
@@ -220,5 +233,4 @@ void main()
     float fogFactor = clamp((fog.maxDistance - dist) / (fog.maxDistance - fog.minDistance), 0.0, 1.0);
 
     fragColor = mix(fog.color, outColor, fogFactor);
-    //fragColor = vec4(0.0, 0.6, 1.0, 1.0);
 }

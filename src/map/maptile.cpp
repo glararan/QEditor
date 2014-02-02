@@ -145,6 +145,18 @@ void MapTile::drawObjects(const float &distance, const QVector3D &camera, QMatri
 >>>>>>> origin/netix
 void MapTile::drawWater(const float& distance, const QVector3D& camera)
 {
+    fbo->bind();
+
+    world->getGLFunctions()->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    world->getGLFunctions()->glDisable(GL_DEPTH_TEST);
+
+    draw(distance, camera);
+
+    world->getGLFunctions()->glEnable(GL_DEPTH_TEST);
+    world->getGLFunctions()->glClear(GL_DEPTH_BUFFER_BIT);
+
+    fbo->release();
+
     for(int x = 0; x < CHUNKS; ++x)
     {
         for(int y = 0; y < CHUNKS; ++y)
@@ -157,11 +169,11 @@ void MapTile::drawWater(const float& distance, const QVector3D& camera)
 
                 mapChunks[x][y]->draw();
 
-                fbo->release();
+                fbo->release();*/
 
-                waterTile->getChunk(x, y)->draw(fbo->texture());*/
+                waterTile->getChunk(x, y)->draw(fbo->texture(), fbo->depthTexture());
 
-                waterTile->getChunk(x, y)->draw(0);
+                //waterTile->getChunk(x, y)->draw(0);
             }
         }
     }
@@ -195,7 +207,7 @@ bool MapTile::isTile(int pX, int pY)
 
 void MapTile::setFboSize(QSize size)
 {
-    QOpenGLFramebufferObjectFormat format;
+    /*QOpenGLFramebufferObjectFormat format;
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
     format.setMipmap(true); // http://www.opengl.org/wiki/Common_Mistakes#Render_To_Texture
 
@@ -206,6 +218,15 @@ void MapTile::setFboSize(QSize size)
         delete fbo;
 
         fbo = new QOpenGLFramebufferObject(size, format);
+    }*/
+
+    if(fbo == NULL)
+        fbo = new Framebuffer(size.height(), size.height());//Framebuffer(size.width(), size.height());
+    else
+    {
+        delete fbo;
+
+        fbo = new Framebuffer(size.height(), size.height());//Framebuffer(size.width(), size.height());
     }
 }
 

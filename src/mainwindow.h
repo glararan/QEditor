@@ -184,6 +184,10 @@ private slots:
     void loadNewProjectMapTilesIntoMemory();
 
     void takeScreenshot();
+    void takeScreenshotAndUpload();
+
+    void screenshotUploadDone(const QString& link);
+    void screenshotUploadError(const QString& error);
 };
 
 #endif // MAINWINDOW_H

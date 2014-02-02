@@ -355,6 +355,10 @@ vec4 shadeTexturedAndLit()
     // non overlay effect
     //diffuseColor = mix(diffuseColor, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
 
+    /// water test
+    //if(worldPosition.z > 256)
+    //    diffuseColor += vec4(0.0, 1.0, 1.0, 0.5);
+
     // Calculate the lighting model, keeping the specular component separate
     vec3 ambientAndDiff, spec;
 
@@ -376,78 +380,6 @@ vec4 shadeHidden()
 {
     return vec4(0);
 }
-
-/// water
-/*uniform float waterNoiseTile   = 10.0;
-uniform float waterNoiseFactor = 0.1;
-uniform float waterTime        = 0.5;
-uniform float waterShininess   = 50.0;
-
-uniform sampler2D waterReflection;
-uniform sampler2D waterNoise;*/
-
-float fresnel(vec3 incident, vec3 normal, float bias, float power)
-{
-    float scale = 1.0 - bias;
-
-    return bias + pow(1.0 - dot(incident, normal), power) * scale;
-}
-
-/*float shadowMapping(vec4 vertexFromLightView)
-{
-    float shadow = 0.0;
-
-    float ortho[2];
-    ortho[0] = 20.0;
-    ortho[1] = 100.0;
-
-    if(length(pixToEye) <= 140.0)
-    {
-        bool ok = false;
-
-        int id = 0;
-
-        vec3 pixPosInDepthMap;
-
-        for(int i = 0; i < 2; i++)
-        {
-            if(!ok)
-            {
-                pixPosInDepthMap = vec3(vertexFromLightView.xy / ortho[i], vertexFromLightView.z) / vertexFromLightView.w;
-                pixPosInDepthMap = (pixPosInDepthMap + 1.0) * 0.5;
-
-                if(pixPosInDepthMap.x >= 0.0 && pixPosInDepthMap.y >= 0.0 && pixPosInDepthMap.x <= 1.0 && pixPosInDepthMap.y <= 1.0)
-                {
-                    id = i;
-                    ok = true;
-                }
-            }
-        }
-
-        if(ok)
-        {
-            vec4 depthMapColor = vec4(0.0, 0.0, 0.0, 1.0);
-
-            if(id == 0)
-                depthMapColor = shadow2D(depthMapFromLight0, pixPosInDepthMap);
-            else
-                depthMapColor = shadow2D(depthMapFromLight1, pixPosInDepthMap);
-
-            if((depthMapColor.z + Z_TEST_SIGMA) < pixPosInDepthMap.z)
-                shadow = clamp((pixPosInDepthMap.z - depthMapColor.z) * 10.0, 0.0, 1.0);
-            else
-                shadow = 1.0;
-
-            shadow = clamp(shadow, 0.0, 1.0);
-        }
-        else
-            shadow = 1.0;
-    }
-    else
-        shadow = 1.0;
-
-    return shadow;
-}*/
 
 vec4 ApplyCircle(vec4 colorIn, vec4 brushColor, vec2 distVec, float mouseDist, float maxRadius)
 {

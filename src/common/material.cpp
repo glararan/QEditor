@@ -220,7 +220,7 @@ void ChunkMaterial::bind()
 
         // Bind the texture
         m_funcs->glActiveTexture(GL_TEXTURE0 + unit);
-        m_funcs->glBindTexture(GL_TEXTURE_2D, textureID);
+        m_funcs->glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
 
         // Associate with byte uniform in shader (if we know the name or location)
         if(m_FramebufferByteUnitUniforms.contains(unit))

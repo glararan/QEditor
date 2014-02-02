@@ -1,8 +1,8 @@
 include(src/src.pri)
 
-QT += core gui widgets opengl
+QT += core gui widgets opengl network xml
 
-CONFIG += c++11
+CONFIG += c++11 network
 
 #CONFIG += console
 

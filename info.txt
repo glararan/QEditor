@@ -139,3 +139,6 @@ Lag Troubleshooter:
 
 3) Black terrain
     ex: rly bad using QOpenGLTexture for loading texture :)
+
+4) FBO 1280, 1281, 36054
+    Cube map must be width == height!!!

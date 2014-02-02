@@ -4,12 +4,15 @@
 #include "ui/about.h"
 #include "ui/project_settings.h"
 
+#include "3rd-party/imgurAPI/fileupload.h"
+
 #include "qeditor.h"
 
 #include <QAction>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QDesktopServices>
+#include <QClipboard>
 
 #include <limits>
 
@@ -100,8 +103,9 @@ MainWindow::MainWindow(QWidget* parent)
     connect(ui->action_About, SIGNAL(triggered()), this, SLOT(showAbout()));
 
     // tools - screenshot, fullscreen
-    connect(ui->action_Screenshot, SIGNAL(triggered()),     this, SLOT(takeScreenshot()));
-    connect(ui->action_Fullscreen, SIGNAL(triggered(bool)), this, SLOT(setFullscreen(bool)));
+    connect(ui->action_Screenshot,        SIGNAL(triggered()),     this, SLOT(takeScreenshot()));
+    connect(ui->action_Screenshot_upload, SIGNAL(triggered()),     this, SLOT(takeScreenshotAndUpload()));
+    connect(ui->action_Fullscreen,        SIGNAL(triggered(bool)), this, SLOT(setFullscreen(bool)));
 }
 
 MainWindow::~MainWindow()
@@ -431,6 +435,59 @@ void MainWindow::takeScreenshot()
 
         return;
     }
+}
+
+void MainWindow::takeScreenshotAndUpload()
+{
+    if(centralWidget() == NULL)
+        return;
+
+    QPixmap mainWindowPixmap = grab();
+
+    QRect centralRect = QRect(0, 0, centralWidget()->width(), centralWidget()->height());
+
+    QImage mapViewImage = mapView->grabFrameBuffer();
+
+    QPainter painter;
+    painter.begin(&mainWindowPixmap);
+    painter.translate(QPoint(centralWidget()->x(), centralWidget()->y()));
+    painter.drawImage(centralRect, mapViewImage, centralRect);
+    painter.end();
+
+    FileUpload* uploader = new FileUpload(this);
+
+    connect(uploader, SIGNAL(uploadDone(QString)),  this, SLOT(screenshotUploadDone(QString)));
+    connect(uploader, SIGNAL(uploadError(QString)), this, SLOT(screenshotUploadError(QString)));
+
+    uploader->uploadImage(mainWindowPixmap.toImage());
+}
+
+void MainWindow::screenshotUploadDone(const QString& link)
+{
+    app().clipboard()->setText(link);
+
+    QMessageBox msg;
+    msg.setWindowTitle("Screenshot");
+    msg.setText(tr("Image is uploaded on server Imgur. Link is in Clipboard (Ctrl + V)."));
+    msg.setIcon(QMessageBox::Information);
+
+    msg.exec();
+
+    if(QObject::sender())
+        qobject_cast<FileUpload*>(QObject::sender())->deleteLater();
+}
+
+void MainWindow::screenshotUploadError(const QString& error)
+{
+    QMessageBox msg;
+    msg.setWindowTitle("Error");
+    msg.setIcon(QMessageBox::Critical);
+    msg.setText(error);
+
+    msg.exec();
+
+    if(QObject::sender())
+        qobject_cast<FileUpload*>(QObject::sender())->deleteLater();
 }
 
 QString MainWindow::getActionName(QObject* object) const

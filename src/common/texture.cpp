@@ -84,8 +84,6 @@ Texture::Texture(const QImage& image, QString path, MipMapGeneration genMipMaps)
 
 Texture::~Texture()
 {
-    //destroy();
-    //QOpenGLTexture::~QOpenGLTexture();
 }
 
 void Texture::setHeight(const GLfloat data, QVector2D offset, bool bindTexture)
