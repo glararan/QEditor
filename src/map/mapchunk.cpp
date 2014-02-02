@@ -409,7 +409,11 @@ const float MapChunk::getHeight(const float& x, const float& y) const
 
     int index = (Y * MAP_WIDTH / CHUNKS) + X;
 
+<<<<<<< HEAD
     return mapData[index * sizeof(float)];
+=======
+    return mapData[index];
+>>>>>>> origin/netix
 }
 
 const float MapChunk::getHeight(const int& x, const int& y) const
@@ -417,9 +421,28 @@ const float MapChunk::getHeight(const int& x, const int& y) const
     int X = x % MAP_WIDTH;
     int Y = y % MAP_HEIGHT;
 
+<<<<<<< HEAD
     int index = (Y * MAP_WIDTH / CHUNKS) + X;
 
     return mapData[index * sizeof(float)];
+=======
+    int index = (Y * MAP_WIDTH / CHUNKS) + X;    
+
+    return mapData[index];
+}
+
+float MapChunk::getHeightFromWorld(float x, float z)
+{
+    int X = horizToHMapSize(x) % MAP_WIDTH;
+    int Y = horizToHMapSize(z) % MAP_HEIGHT;
+
+    X -= chunkX * (MAP_WIDTH / CHUNKS);
+    Y -= chunkY * (MAP_HEIGHT / CHUNKS);
+
+    int index = (Y * MAP_WIDTH / CHUNKS) + X;
+
+    return mapData[index];
+>>>>>>> origin/netix
 }
 
 const float MapChunk::getMapData(const int& index) const
@@ -1270,4 +1293,8 @@ void MapChunk::save(MCNK* chunk)
     // Textures
     for(int i = 0; i < MAX_TEXTURES; ++i)
         chunk->terrainOffset->textures[i] = textures[i]->getPath();
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/netix

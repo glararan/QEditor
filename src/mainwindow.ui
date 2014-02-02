@@ -25,6 +25,12 @@
    <property name="enabled">
     <bool>true</bool>
    </property>
+   <property name="minimumSize">
+    <size>
+     <width>0</width>
+     <height>0</height>
+    </size>
+   </property>
    <property name="movable">
     <bool>false</bool>
    </property>
@@ -76,6 +82,10 @@
    <addaction name="action_mapview_m2"/>
    <addaction name="action_mapview_m3"/>
    <addaction name="action_mapview_m4"/>
+<<<<<<< HEAD:src/mainwindow.ui
+=======
+   <addaction name="action_mapview_m5"/>
+>>>>>>> origin/netix:src/mainwindow.ui
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -534,6 +544,24 @@
     <string>Water</string>
    </property>
   </action>
+<<<<<<< HEAD:src/mainwindow.ui
+=======
+  <action name="action_mapview_m5">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../qeditor.qrc">
+     <normaloff>:/object_icon</normaloff>:/object_icon</iconset>
+   </property>
+   <property name="text">
+    <string>Nástroj objekt</string>
+   </property>
+   <property name="toolTip">
+    <string>Object</string>
+   </property>
+  </action>
+>>>>>>> origin/netix:src/mainwindow.ui
  </widget>
  <resources>
   <include location="../qeditor.qrc"/>

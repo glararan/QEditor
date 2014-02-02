@@ -11,9 +11,9 @@
 #include <QToolTip>
 
 TexturesArray::TexturesArray(int rows, int cols, QWidget* parent)
-: QWidget(parent)
-, nrows(rows)
-, ncols(cols)
+    : QWidget(parent)
+    , nrows(rows)
+    , ncols(cols)
 {
     d = 0;
 
@@ -25,6 +25,7 @@ TexturesArray::TexturesArray(int rows, int cols, QWidget* parent)
     curRow = 0;
     selCol = -1;
     selRow = -1;
+    toolTipArray.resize(rows * cols);
 }
 
 TexturesArray::~TexturesArray()
@@ -154,8 +155,13 @@ void TexturesArray::mousePressEvent(QMouseEvent* e)
     // The current cell marker is set to the cell the mouse is pressed in
     QPoint pos = e->pos();
 
+<<<<<<< HEAD:src/ui/tableview.cpp
     pos.setX(pos.x() - floor(MathHelper::toDouble(pos.x()) / MathHelper::toDouble(textureSize.width())) * textureMargin.width());
     pos.setY(pos.y() - floor(MathHelper::toDouble(pos.y()) / MathHelper::toDouble(textureSize.height())) * textureMargin.height());
+=======
+    pos.setX(pos.x() - floor(double(pos.x()) / double(textureSize.width())) * textureMargin.width());
+    pos.setY(pos.y() - floor(double(pos.y()) / double(textureSize.height())) * textureMargin.height());
+>>>>>>> origin/netix:src/ui/tableview.cpp
 
     setCurrent(rowAt(pos.y()), columnAt(pos.x()));
 }
@@ -173,8 +179,13 @@ bool TexturesArray::event(QEvent* e)
         QHelpEvent* help = static_cast<QHelpEvent*>(e);
 
         QPoint pos = help->pos();
+<<<<<<< HEAD:src/ui/tableview.cpp
         pos.setX(pos.x() - floor(MathHelper::toDouble(pos.x()) / MathHelper::toDouble(textureSize.width())) * textureMargin.width());
         pos.setY(pos.y() - floor(MathHelper::toDouble(pos.y()) / MathHelper::toDouble(textureSize.height())) * textureMargin.height());
+=======
+        pos.setX(pos.x() - floor((double)pos.x() / double(textureSize.width())) * textureMargin.width());
+        pos.setY(pos.y() - floor((double)pos.y() / double(textureSize.height())) * textureMargin.height());
+>>>>>>> origin/netix:src/ui/tableview.cpp
 
         int cellIndex = columnAt(pos.x());
         int rowIndex  = rowAt(pos.y());
@@ -230,6 +241,9 @@ void TexturesArray::setCurrent(int row, int col)
 */
 void TexturesArray::setSelected(int row, int col)
 {
+    if((numRows() <= row) || (numCols() <= col))
+        return;
+
     int oldRow = selRow;
     int oldCol = selCol;
 
@@ -243,7 +257,7 @@ void TexturesArray::setSelected(int row, int col)
     updateCell(selRow, selCol);
 
     if(row >= 0)
-        emit selected(row, col);
+        itemSelected(row, col);
 
 #ifndef QT_NO_MENU
     if(isVisible() && qobject_cast<QMenu*>(parentWidget()))
@@ -284,6 +298,39 @@ QBrush TexturesArray::cellBrush(int row, int col)
     return Qt::NoBrush;
 }
 
+void TexturesArray::setTextureSize(const QSize size)
+{
+    textureSize = size;
+
+    cellw = textureSize.width();
+    cellh = textureSize.height();
+}
+
+QRect TexturesArray::cellGeometry(int row, int column)
+{
+    QRect r;
+
+    if(row >= 0 && row < nrows && column >= 0 && column < ncols)
+        r.setRect(columnX(column) + textureMargin.width() * column, rowY(row) + textureMargin.height() * row, cellw, cellh);
+
+    return r;
+}
+
+void TexturesArray::updateToolTip(int row, int column, QString toolTip)
+{
+    toolTipArray[ncols * row + column] = toolTip;
+}
+
+QString TexturesArray::getToolTip(int row, int column)
+{
+    return toolTipArray[ncols * row + column];
+}
+
+void TexturesArray::itemSelected(int row, int col)
+{
+    emit selected(row,col);
+}
+
 /*!\reimp
 */
 
@@ -298,57 +345,133 @@ void TexturesArray::keyPressEvent(QKeyEvent* e)
 {
     switch(e->key()) // Look at the key code
     {
-        case Qt::Key_Left:                                // If 'left arrow'-key,
-            if(curCol > 0)                                // and cr't not in leftmost col
-                setCurrent(curRow, curCol - 1);           // set cr't to next left column
-            break;
+    case Qt::Key_Left:                                // If 'left arrow'-key,
+        if(curCol > 0)                                // and cr't not in leftmost col
+            setCurrent(curRow, curCol - 1);           // set cr't to next left column
+        break;
 
-        case Qt::Key_Right:                               // Correspondingly...
-            if(curCol < numCols()-1)
-                setCurrent(curRow, curCol + 1);
-            break;
+    case Qt::Key_Right:                               // Correspondingly...
+        if(curCol < numCols()-1)
+            setCurrent(curRow, curCol + 1);
+        break;
 
-        case Qt::Key_Up:
-            if(curRow > 0)
-                setCurrent(curRow - 1, curCol);
-            break;
+    case Qt::Key_Up:
+        if(curRow > 0)
+            setCurrent(curRow - 1, curCol);
+        break;
 
-        case Qt::Key_Down:
-            if(curRow < numRows()-1)
-                setCurrent(curRow + 1, curCol);
-            break;
+    case Qt::Key_Down:
+        if(curRow < numRows()-1)
+            setCurrent(curRow + 1, curCol);
+        break;
 #if 0
         // bad idea that shouldn't have been implemented; very counterintuitive
-        case Qt::Key_Return:
-        case Qt::Key_Enter:
-            /*
+    case Qt::Key_Return:
+    case Qt::Key_Enter:
+        /*
               ignore the key, so that the dialog get it, but still select
               the current row/col
             */
-            e->ignore();
-            // fallthrough intended
+        e->ignore();
+        // fallthrough intended
 #endif
-        case Qt::Key_Space:
-            setSelected(curRow, curCol);
-            break;
+    case Qt::Key_Space:
+        setSelected(curRow, curCol);
+        break;
 
-        default:                                // If not an interesting key,
-            e->ignore();                        // we don't accept the event
-            return;
+    default:                                // If not an interesting key,
+        e->ignore();                        // we don't accept the event
+        return;
     }
 }
 
 ///////////////////////////////////
 /// TextureWell
 ///////////////////////////////////
+TextureWell::TextureWell(QWidget *parent, int r, int c, QSize textureIconSize, QSize textureIconMargin)
+    : TexturesArray(r, c, parent)
+    , mousePressed(false)
+    , oldCurrent(-1, -1)
+{
+    setSizePolicy(QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum));
+
+    setTextureSize(textureIconSize);
+    setTextureMargin(textureIconMargin);
+
+    values.resize(r * c);
+    setDefaultImages();
+}
+
+void TextureWell::clear()
+{
+    values.clear();
+    values.resize(numCols() * numRows());
+    setDefaultImages();
+    TexturesArray::clear();
+}
+
+void TextureWell::insertItem(QImage image, QString toolTip, bool makeSpace)
+{
+    if(hasSpace())
+    {
+        int index = firstFreeIndex();
+        values[index].first = image.scaled(TextureSize());
+        values[index].second.isFree = false;
+        insertToolTip(index, toolTip);
+    }
+    else if(makeSpace)
+    {
+        setRows(numRows() + 1);
+        insertItem(image, toolTip, false);
+    }
+}
+
+void TextureWell::insertItems(QVector<QPair<QImage, QString> > vals, bool makeSpace)
+{
+    for(int i = 0; i < vals.count(); ++i)
+    {
+        insertItem(vals.at(i).first, vals.at(i).second, makeSpace);
+    }
+}
+
+void TextureWell::updateItem(int row, int column, QImage image, QString toolTip)
+{
+    if(row >= numRows() || column >= numCols())
+        return;
+
+    values[(row * numCols()) + column].first = image.scaled(TextureSize());
+    values[(row * numCols()) + column].second.isFree = false;
+    updateToolTip(row, column, toolTip);
+}
+
+QImage TextureWell::getImage(int row, int column)
+{
+    return values[(row * numCols()) + column].first;
+}
+
+void TextureWell::setRows(const int count)
+{
+    values.resize(numCols() * count);
+    setDefaultImages();
+    TexturesArray::setRows(count);
+}
+
+void TextureWell::setCols(const int count)
+{
+    values.resize(numRows() * count);
+    setDefaultImages();
+    TexturesArray::setCols(count);
+}
+
 void TextureWell::paintCellContents(QPainter* p, int row, int col, const QRect &r)
 {
-    int i = row + col * numRows();
+    int i = col + row * numCols();
+
 
     if(i >= values.count())
         return;
 
-    p->fillRect(r, QBrush(QPixmap::fromImage(values.at(i)).scaled(TextureSize())));
+    p->fillRect(r, QBrush(QPixmap::fromImage(values.at(i).first.scaled(TextureSize()))));
 }
 
 void TextureWell::mousePressEvent(QMouseEvent* e)
@@ -370,4 +493,43 @@ void TextureWell::mouseReleaseEvent(QMouseEvent* e)
     TexturesArray::mouseReleaseEvent(e);
 
     mousePressed = false;
+}
+
+void TextureWell::itemSelected(int row, int col)
+{
+    if(!values[(row * numCols()) + col].second.isFree)
+        emit selected(row,col);
+}
+
+int TextureWell::firstFreeIndex()
+{
+    for(int i = 0; i < values.size(); ++i)
+    {
+        if(values.at(i).second.isFree)
+            return i;
+    }
+    return -1;
+}
+
+bool TextureWell::hasSpace()
+{
+    for(int i = 0; i < values.size(); ++i)
+    {
+        if(values.at(i).second.isFree)
+            return true;
+    }
+    return false;
+}
+
+void TextureWell::setDefaultImages()
+{
+    QImage defaultimage(1,1,QImage::Format_ARGB32);
+    defaultimage.fill(Qt::transparent);
+    for(int i = 0; i < values.size(); ++i)
+    {
+        if(values.at(i).first.isNull())
+        {
+            values[i].first = defaultimage;
+        }
+    }
 }

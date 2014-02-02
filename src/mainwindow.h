@@ -15,6 +15,7 @@
 #include "ui/teleportwidget.h"
 #include "ui/mapview_settings.h"
 #include "ui/texturepicker.h"
+#include "ui/modelpicker.h"
 #include "ui/startup.h"
 #include "ui/waterwidget.h"
 
@@ -45,6 +46,7 @@ private:
     TeleportWidget*   teleportW;
     MapView_Settings* settingsW;
     TexturePicker*    texturepW;
+    ModelPicker*      modelpickerW;
 
     void addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area = Qt::RightDockWidgetArea);
 
@@ -61,11 +63,17 @@ private:
     QDSlider* t_outer_radius;
     QDSlider* t_inner_radius;
     QDSlider* t_speed;
+    QDSlider* t_rotationx;
+    QDSlider* t_rotationy;
+    QDSlider* t_rotationz;
+    QDSlider* t_impend;
+    QDSlider* t_scale;
 
     QButtonGroup* t_brush;
 
     QPushButton* t_brush_circle;
     QPushButton* t_brush_square;
+    QPushButton* t_reset_transform;
 
     QComboBox* t_terrain_mode;
     QComboBox* t_brush_type;
@@ -85,6 +93,16 @@ private:
     QLabel* t_inner_radius_value_label;
     QLabel* t_speed_label;
     QLabel* t_speed_value_label;
+    QLabel* t_rotationx_label;
+    QLabel* t_rotationx_value_label;
+    QLabel* t_rotationy_label;
+    QLabel* t_rotationy_value_label;
+    QLabel* t_rotationz_label;
+    QLabel* t_rotationz_value_label;
+    QLabel* t_impend_label;
+    QLabel* t_impend_value_label;
+    QLabel* t_scale_label;
+    QLabel* t_scale_value_label;
 
     QList<QPair<QString, QVariant>> t_terrain_mode_0;
     QList<QPair<QString, QVariant>> t_terrain_mode_1;
@@ -107,6 +125,10 @@ private:
     QList<QString> mode2Actions;
     QList<QString> mode3Actions;
     QList<QString> mode4Actions;
+<<<<<<< HEAD:src/mainwindow.h
+=======
+    QList<QString> mode5Actions;
+>>>>>>> origin/netix:src/mainwindow.h
 
     void initMode();
     void showMode(QList<QString>& parentList);
@@ -139,6 +161,10 @@ private slots:
     void setBrushOuterRadius(double value);
     void setBrushInnerRadius(double value);
     void setBrushInnerRadiusMaximumValue(double maximum);
+<<<<<<< HEAD:src/mainwindow.h
+=======
+    void resetModelBrush();
+>>>>>>> origin/netix:src/mainwindow.h
 
     void setTerrain_Mode(int index);
 

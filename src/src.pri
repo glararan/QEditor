@@ -1,6 +1,10 @@
 INCLUDEPATH += src/common \
                src/helper \
                src/map \
+<<<<<<< HEAD
+=======
+               src/model \
+>>>>>>> origin/netix
                src/world
 
 SOURCES  += $$PWD/main.cpp \
@@ -30,7 +34,22 @@ SOURCES  += $$PWD/main.cpp \
             $$PWD/map/watertile.cpp \
             $$PWD/map/waterchunk.cpp \
             $$PWD/ui/waterwidget.cpp \
+<<<<<<< HEAD
     src/ui/waterwidget.cpp
+=======
+            $$PWD/ui/waterwidget.cpp \
+            $$PWD/model/ianimation.cpp \
+            $$PWD/model/ibone.cpp \
+            $$PWD/model/ilight.cpp \
+            $$PWD/model/imesh.cpp \
+            $$PWD/model/imodel.cpp \
+            $$PWD/model/imodelinterface.cpp \
+            $$PWD/model/imodelmanager.cpp \
+            $$PWD/model/ipipeline.cpp \
+            $$PWD/model/itexturemanager.cpp \
+            $$PWD/ui/modelpicker.cpp \
+            $$PWD/ui/toolbox.cpp
+>>>>>>> origin/netix
 
 HEADERS  += $$PWD/mainwindow.h \
             $$PWD/ui/teleportwidget.h \
@@ -61,7 +80,22 @@ HEADERS  += $$PWD/mainwindow.h \
             $$PWD/map/watertile.h \
             $$PWD/map/waterchunk.h \
             $$PWD/ui/waterwidget.h \
+<<<<<<< HEAD
     src/ui/waterwidget.h
+=======
+            $$PWD/ui/waterwidget.h \
+            $$PWD/model/ianimation.h \
+            $$PWD/model/ibone.h \
+            $$PWD/model/ilight.h \
+            $$PWD/model/imesh.h \
+            $$PWD/model/imodel.h \
+            $$PWD/model/imodelinterface.h \
+            $$PWD/model/imodelmanager.h \
+            $$PWD/model/ipipeline.h \
+            $$PWD/model/itexturemanager.h \
+            $$PWD/ui/modelpicker.h \
+            $$PWD/ui/toolbox.h
+>>>>>>> origin/netix
 
 FORMS += $$PWD/mainwindow.ui \
          $$PWD/ui/teleportwidget.ui \
@@ -70,4 +104,9 @@ FORMS += $$PWD/mainwindow.ui \
          $$PWD/ui/texturepicker.ui \
          $$PWD/ui/startup.ui \
          $$PWD/ui/project_settings.ui \
+<<<<<<< HEAD
          $$PWD/ui/waterwidget.ui
+=======
+         $$PWD/ui/waterwidget.ui \
+         $$PWD/ui/modelpicker.ui
+>>>>>>> origin/netix

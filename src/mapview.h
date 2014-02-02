@@ -39,10 +39,18 @@ public:
 
     enum eEditingMode
     {
+<<<<<<< HEAD:src/mapview.h
         Objects       = 0,
         Terrain       = 1,
         Texturing     = 2,
         VertexShading = 3
+=======
+        Default       = 0,
+        Terrain       = 1,
+        Texturing     = 2,
+        VertexShading = 3,
+        Object        = 5
+>>>>>>> origin/netix:src/mapview.h
     };
 
     void setEditingMode(eEditingMode editingMode) { eMode = editingMode; }
@@ -133,7 +141,7 @@ private:
     int fps;
 
     // mouse
-    bool leftButtonPressed, rightButtonPressed;
+    bool leftButtonPressed, rightButtonPressed, wasLeftButtonPressed;
 
     QPoint mouse_position;
 
@@ -145,7 +153,7 @@ private:
     QVector<float> dynamicZoom;
 
     // keyboard
-    bool shiftDown, ctrlDown, altDown;
+    bool shiftDown, ctrlDown, altDown, escapeDown;
 
     // status bar
     QVector<QString>     sbMessageList;
@@ -154,8 +162,6 @@ private:
 
     eEditingMode eMode;
     eTerrainMode eTerrain;
-
-    QVector3D getWorldCoordinates(float mouseX, float mouseY);
 
 public slots:
     void setSpeedMultiplier(float value);
@@ -177,6 +183,11 @@ public slots:
     void setTextureScaleFar(float value);
     void setTextureScaleNear(float value);
     void setTurnChunkLines(bool on);
+    void setModelRotationX(double value);
+    void setModelRotationY(double value);
+    void setModelRotationZ(double value);
+    void setModelScale(double value);
+    void setModelImpend(double value);
 
     void resetCamera();
 

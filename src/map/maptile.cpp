@@ -99,6 +99,13 @@ MapTile::~MapTile()
             }
         }
     }
+<<<<<<< HEAD
+=======
+    for(int i = 0; i < objects.size(); ++i)
+    {
+        delete objects.at(i);
+    }
+>>>>>>> origin/netix
 }
 
 void MapTile::draw(const float& distance, const QVector3D& camera)
@@ -113,6 +120,29 @@ void MapTile::draw(const float& distance, const QVector3D& camera)
     }
 }
 
+<<<<<<< HEAD
+=======
+void MapTile::drawObjects(const float &distance, const QVector3D &camera, QMatrix4x4 viewMatrix, QMatrix4x4 projectionMatrix)
+{
+    for(int i = 0; i < objects.size(); ++i)
+    {
+        MapObject *mapObject = objects.at(i);
+        QVector3D translate = mapObject->translate;
+        QVector3D rotation = mapObject->rotation;
+        QVector3D scale = mapObject->scale;
+        IPipeline Pipeline(QMatrix4x4(),viewMatrix, projectionMatrix);
+        Pipeline.translate(translate.x(),translate.y() + mapObject->height_offset,translate.z());
+        Pipeline.scale(scale.x(),scale.y(),scale.z());
+        Pipeline.rotateX(rotation.x() * 360.0f);
+        Pipeline.rotateY(rotation.y() * 360.0f);
+        Pipeline.rotateZ(rotation.z() * 360.0f);
+
+        if(mapObject->model)
+            mapObject->model->draw(&Pipeline);
+    }
+}
+
+>>>>>>> origin/netix
 void MapTile::drawWater(const float& distance, const QVector3D& camera)
 {
     for(int x = 0; x < CHUNKS; ++x)
@@ -137,6 +167,19 @@ void MapTile::drawWater(const float& distance, const QVector3D& camera)
     }
 }
 
+<<<<<<< HEAD
+=======
+void MapTile::update(qreal time)
+{
+    for(int i = 0; i < objects.size(); ++i)
+    {
+        MapObject *mapObject = objects.at(i);
+        QVector3D position = mapObject->translate;
+        mapObject->translate.setY(getHeight(position.x(),position.z()));
+    }
+}
+
+>>>>>>> origin/netix
 MapChunk* MapTile::getChunk(int x, int y)
 {
     if(x < CHUNKS && y < CHUNKS)
@@ -218,4 +261,34 @@ void MapTile::test()
 {
     //mapChunks[0][0]->test();
     //mapChunks[1][1]->test();
+<<<<<<< HEAD
 }
+=======
+}
+
+void MapTile::insertModel(MapObject *object)
+{
+    objects.push_back(object);
+}
+
+MapChunk *MapTile::getChunkAt(float x, float z)
+{
+    int cx = floor((x - TILESIZE * coordX) / CHUNKSIZE);
+    int cz = floor((z - TILESIZE * coordY) / CHUNKSIZE);
+
+    if(cx >= CHUNKS || cz >= CHUNKS || cx < 0 || cz < 0)
+        return 0;
+
+    return mapChunks[cx][cz];
+}
+
+float MapTile::getHeight(float x, float z)
+{
+    MapChunk *chunk = getChunkAt(x,z);
+    if(chunk)
+    {
+        return chunk->getHeightFromWorld(x,z);
+    }
+    return 0.0f;
+}
+>>>>>>> origin/netix

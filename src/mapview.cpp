@@ -39,7 +39,8 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , shiftDown(false)
 , ctrlDown(false)
 , altDown(false)
-, eMode(Objects)
+, escapeDown(false)
+, eMode(Default)
 , eTerrain(Shaping)
 {
     setFocusPolicy(Qt::StrongFocus);
@@ -236,6 +237,7 @@ void MapView::update(float t)
 
     /// mouse on terrain
     // getWorldCoordinates can be used to spawn object in middle of screen
+<<<<<<< HEAD:src/mapview.cpp
     terrain_pos = getWorldCoordinates(mouse_position.x(), mouse_position.y());
 
     // highlight and select chunk
@@ -250,6 +252,30 @@ void MapView::update(float t)
             emit selectedMapChunk(world->getMapChunkAt(position));
             emit selectedWaterChunk(world->getWaterChunkAt(position));
         }
+=======
+    terrain_pos = world->getWorldCoordinates();
+
+    // highlight and select chunk
+    if(eMode == Default && altDown)
+    {
+        const QVector3D& position(terrain_pos);
+
+        world->highlightMapChunkAt(position);
+
+        if(leftButtonPressed)
+        {
+            emit selectedMapChunk(world->getMapChunkAt(position));
+            emit selectedWaterChunk(world->getWaterChunkAt(position));
+        }
+    }
+    // objects
+    if(eMode == Object)
+    {
+        world->updateNewModel(shiftDown, wasLeftButtonPressed);
+
+        if(escapeDown)
+            world->getModelManager()->setCurrentModel(-1);
+>>>>>>> origin/netix:src/mapview.cpp
     }
 
     // Change terrain
@@ -323,6 +349,8 @@ void MapView::update(float t)
         }
     }
 
+    wasLeftButtonPressed = false;
+
     world->update(t);
 
     // Update status bar
@@ -386,9 +414,15 @@ void MapView::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+<<<<<<< HEAD:src/mapview.cpp
         world->draw(modelMatrix, screenSpaceErrorLevel, QVector2D(terrain_pos.x(), terrain_pos.z()), true);
+=======
+        world->draw(viewportMatrix, viewportSize, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
+    else if(eMode == Object)
+        world->draw(viewportMatrix, viewportSize, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
+>>>>>>> origin/netix:src/mapview.cpp
     else
-        world->draw(modelMatrix, screenSpaceErrorLevel, QVector2D(terrain_pos.x(), terrain_pos.z()));
+        world->draw(viewportMatrix, viewportSize, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
 }
 
 void MapView::resizeGL(int w, int h)
@@ -472,15 +506,19 @@ void MapView::setModeEditing(int option)
 {
     switch(option)
     {
-        case Objects:
+        case Default:
         case Terrain:
         case Texturing:
         case VertexShading:
+<<<<<<< HEAD:src/mapview.cpp
+=======
+        case Object:
+>>>>>>> origin/netix:src/mapview.cpp
             eMode = (eEditingMode)option;
             break;
 
         default:
-            eMode = Objects;
+            eMode = Default;
             break;
     }
 }
@@ -504,36 +542,37 @@ void MapView::setCameraPosition(QVector3D* position)
     camera->moveToPosition(*position);
 }
 
-QVector3D MapView::getWorldCoordinates(float mouseX, float mouseY)
-{
-    QMatrix4x4 viewMatrix       = camera->viewMatrix();
-    QMatrix4x4 modelViewMatrix  = viewMatrix * modelMatrix;
-    QMatrix4x4 modelViewProject = camera->projectionMatrix() * modelViewMatrix;
-    QMatrix4x4 inverted         = viewportMatrix * modelViewProject;
-
-    inverted = inverted.inverted();
-
-    float posZ;
-    float posY = viewportSize.y() - mouseY - 1.0f;
-
-    world->getGLFunctions()->glReadPixels(MathHelper::toInt(mouseX), MathHelper::toInt(posY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
-
-    QVector4D clickedPointOnScreen(mouseX, posY, 2.0f * posZ - 1.0f, 1.0f);
-    QVector4D clickedPointIn3DOrgn = inverted * clickedPointOnScreen;
-
-    clickedPointIn3DOrgn /= clickedPointIn3DOrgn.w();
-
-    return clickedPointIn3DOrgn.toVector3DAffine();
-}
-
 void MapView::resetCamera()
 {
     camera->resetRotation();
 
+<<<<<<< HEAD:src/mapview.cpp
+    world->getGLFunctions()->glReadPixels(MathHelper::toInt(mouseX), MathHelper::toInt(posY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
+=======
     panAngle  = 0.0f;
     tiltAngle = 0.0f;
 }
+>>>>>>> origin/netix:src/mapview.cpp
 
+void MapView::setBrushSpeed(double speed)
+{
+    shaping_speed = MathHelper::toFloat(speed);
+}
+
+void MapView::setBrushOuterRadius(double radius)
+{
+    world->getBrush()->setOuterRadius(MathHelper::toFloat(radius));
+
+    // Todo inner radius
+    //world->getBrush()->setRadius(MathHelper::toFloat(radius));
+}
+
+void MapView::setBrushInnerRadius(double radius)
+{
+    world->getBrush()->setInnerRadius(MathHelper::toFloat(radius));
+}
+
+<<<<<<< HEAD:src/mapview.cpp
 void MapView::setBrushSpeed(double speed)
 {
     shaping_speed = MathHelper::toFloat(speed);
@@ -588,6 +627,44 @@ void MapView::setVertexShading(QColor color)
 
 void MapView::setTerrainMaximumHeight(double value)
 {
+=======
+void MapView::setBrush(int brush)
+{
+    world->getBrush()->BrushTypes().setShaping((Brush::ShapingType::Formula)brush);
+}
+
+void MapView::setBrushType(int type)
+{
+    Brush::Types types = world->getBrush()->BrushTypes();
+
+    switch(eTerrain)
+    {
+        case Shaping:
+        default:
+            types.setShaping(static_cast<Brush::ShapingType::Formula>(type));
+            break;
+
+        case Smoothing:
+            types.setSmoothing(static_cast<Brush::SmoothingType::Formula>(type));
+            break;
+    }
+
+    world->getBrush()->setBrush(types);
+}
+
+void MapView::setTexturingFlow(double flow)
+{
+    texturing_flow = flow;
+}
+
+void MapView::setVertexShading(QColor color)
+{
+    vertexShadingColor = color;
+}
+
+void MapView::setTerrainMaximumHeight(double value)
+{
+>>>>>>> origin/netix:src/mapview.cpp
     world->setTerrainMaximumHeight(MathHelper::toFloat(value));
 }
 
@@ -603,6 +680,7 @@ void MapView::setBrushColor(QColor* color, bool outer)
         case true:
             {
                 world->getBrush()->setOuterColor(*color);
+<<<<<<< HEAD:src/mapview.cpp
 
                 app().setSetting("outerBrushColor", *color);
             }
@@ -612,6 +690,17 @@ void MapView::setBrushColor(QColor* color, bool outer)
             {
                 world->getBrush()->setInnerColor(*color);
 
+=======
+
+                app().setSetting("outerBrushColor", *color);
+            }
+            break;
+
+        case false:
+            {
+                world->getBrush()->setInnerColor(*color);
+
+>>>>>>> origin/netix:src/mapview.cpp
                 app().setSetting("innerBrushColor", *color);
             }
             break;
@@ -658,6 +747,41 @@ void MapView::setTurnChunkLines(bool on)
     world->setChunkShaderUniform("chunkLines", on);
 }
 
+void MapView::setModelRotationX(double value)
+{
+    app().setSetting("modelRotationX", value);
+
+    world->getObjectBrush()->rotation_x = value;
+}
+
+void MapView::setModelRotationY(double value)
+{
+    app().setSetting("modelRotationY", value);
+
+    world->getObjectBrush()->rotation_y = value;
+}
+
+void MapView::setModelRotationZ(double value)
+{
+    app().setSetting("modelRotationZ", value);
+
+    world->getObjectBrush()->rotation_z = value;
+}
+
+void MapView::setModelScale(double value)
+{
+    app().setSetting("modelScale", value);
+
+    world->getObjectBrush()->scale = value;
+}
+
+void MapView::setModelImpend(double value)
+{
+    app().setSetting("modelImpend", value);
+
+    world->getObjectBrush()->impend = value;
+}
+
 void MapView::save()
 {
     world->save();
@@ -668,7 +792,7 @@ void MapView::keyPressEvent(QKeyEvent* e)
     switch (e->key())
     {
         case Qt::Key_Escape:
-            exit(0);
+            escapeDown = true;
             break;
 
         case Qt::Key_W:
@@ -762,6 +886,9 @@ void MapView::keyReleaseEvent(QKeyEvent* e)
 {
     switch (e->key())
     {
+        case Qt::Key_Escape:
+            escapeDown = false;
+            break;
         case Qt::Key_W:
         case Qt::Key_S:
             setForwardSpeed(0.0f);
@@ -810,7 +937,10 @@ void MapView::keyReleaseEvent(QKeyEvent* e)
 void MapView::mousePressEvent(QMouseEvent* e)
 {
     if(e->button() == Qt::LeftButton)
+    {
         leftButtonPressed = true;
+        wasLeftButtonPressed = true;
+    }
 
     if(e->button() == Qt::RightButton)
         rightButtonPressed = true;

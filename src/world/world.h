@@ -10,11 +10,32 @@
 #include "camera.h"
 #include "brush.h"
 #include "texturemanager.h"
+#include "model/imodelmanager.h"
+#include "model/imodel.h"
+#include "model/ipipeline.h"
 
 class MapTile;
 class MapChunk;
 class WaterChunk;
 class TextureManager;
+
+struct ObjectBrush
+{
+    ObjectBrush()
+    {
+        impend = 0.0f;
+        scale = 1.0f;
+        rotation_x = 0.0f;
+        rotation_y = 0.0f;
+        rotation_z = 0.0f;
+    }
+
+    float impend;
+    float scale;
+    float rotation_x;
+    float rotation_y;
+    float rotation_z;
+};
 
 class MapTiles
 {
@@ -28,6 +49,8 @@ private:
     friend class World;
 };
 
+class MapObject;
+
 class World
 {
 public:
@@ -37,7 +60,7 @@ public:
     void initialize(QOpenGLContext* context, QSize fboSize);
 
     void update(float dt);
-    void draw(QMatrix4x4 modelMatrix, float triangles, QVector2D mousePosition, bool drawBrush = false);
+    void draw(QMatrix4x4 viewportMatrix, QVector2D  viewportSize, QMatrix4x4 modelMatrix, float triangles, QVector2D mousePosition, bool drawBrush = false, bool drawNewModel = false);
 
     bool hasTile(int pX, int pY) const;
 
@@ -70,6 +93,14 @@ public:
     void changeTerrain(float x, float z, float change);
     void flattenTerrain(float x, float z, float y, float change);
     void blurTerrain(float x, float z, float change);
+<<<<<<< HEAD:src/world/world.h
+
+    void paintTerrain(float x, float z, float flow);
+    void paintVertexShading(float x, float z, float flow, QColor& color);
+
+    void highlightMapChunkAt(const QVector3D& position);
+    void unHighlight();
+=======
 
     void paintTerrain(float x, float z, float flow);
     void paintVertexShading(float x, float z, float flow, QColor& color);
@@ -77,21 +108,34 @@ public:
     void highlightMapChunkAt(const QVector3D& position);
     void unHighlight();
 
+    void updateNewModel(bool shiftDown, bool leftButtonPressed);
+>>>>>>> origin/netix:src/world/world.h
+
     void save();
 
     QOpenGLFunctions_4_2_Core* getGLFunctions()    { return GLfuncs; }
     Brush*                     getBrush()          { return brush; }
     Camera*                    getCamera()         { return camera; }
+    ObjectBrush*               getObjectBrush()    { return objectBrush; }
     TextureManager*            getTextureManager() { return textureManager; }
+    IModelManager*             getModelManager()   { return modelManager; }
 
     const ProjectFileData getProjectData() const { return projectData; }
     const int getAlphamapSize() const            { return alphaMapSize; }
     const float getTerrainMaximumHeight() const  { return terrainMaximumHeight; }
     const bool getTerrainMaximumState() const    { return terrainMaximumState; }
+<<<<<<< HEAD:src/world/world.h
 
     MapChunk*   getMapChunkAt(const QVector3D& position) const;
     WaterChunk* getWaterChunkAt(const QVector3D& position) const;
 
+=======
+
+    MapTile* getTileAt(float x, float z) const;
+    MapChunk*   getMapChunkAt(const QVector3D& position) const;
+    WaterChunk* getWaterChunkAt(const QVector3D& position) const;
+
+>>>>>>> origin/netix:src/world/world.h
     void setFboSize(QSize size);
     void setCamera(Camera* cam);
     void setProjectData(ProjectFileData& data);
@@ -107,6 +151,8 @@ public:
 
     MaterialPtr material;
 
+    QVector3D getWorldCoordinates();
+
     void test();
 
 private:
@@ -116,7 +162,12 @@ private:
 
     Camera*         camera;
     Brush*          brush;
+    ObjectBrush*    objectBrush;
     TextureManager* textureManager;
+<<<<<<< HEAD:src/world/world.h
+=======
+    IModelManager*  modelManager;
+>>>>>>> origin/netix:src/world/world.h
     MapChunk*       highlightChunk;
 
     bool tileLoaded(int x, int y) const;
@@ -125,6 +176,11 @@ private:
 
     MapTiles mapTiles[TILES][TILES];
 
+<<<<<<< HEAD:src/world/world.h
+=======
+    IModel *possibleModel;
+
+>>>>>>> origin/netix:src/world/world.h
     float terrainMaximumHeight;
     bool  terrainMaximumState;
 
@@ -142,6 +198,13 @@ private:
 
     //
     void createNeighbours();
+<<<<<<< HEAD:src/world/world.h
+=======
+
+    // worldCoordinates
+    void loadWorldCoordinates(QMatrix4x4 viewportMatrix, QVector2D  viewportSize, QMatrix4x4 model, QMatrix4x4 view, QMatrix4x4 projection, QVector2D mousePosition);
+    QVector3D worldCoordinates;
+>>>>>>> origin/netix:src/world/world.h
 };
 
 #endif // WORLD_H

@@ -45,7 +45,12 @@ void TexturePicker::initialize(TextureManager* manager)
     if(textures.count() < columns)
         columns = textures.count();
 
+<<<<<<< HEAD
     textureWell = new TextureWell(this, ceil(MathHelper::toDouble(textures.count()) / MathHelper::toDouble(columns)), columns, textures, textureIconSize, textureIconMargin);
+=======
+    textureWell = new TextureWell(this, 0, 4, textureIconSize, textureIconMargin);
+    textureWell->insertItems(textures);
+>>>>>>> origin/netix
 
     ui->verticalLayout->addWidget(textureWell);
 
@@ -163,4 +168,8 @@ void TexturePicker::handleLayerGUI(QTableWidgetItem* item)
         ui->deleteLayerButton->setEnabled(true);
     else
         ui->deleteLayerButton->setEnabled(false);
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/netix
