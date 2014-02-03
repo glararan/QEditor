@@ -30,13 +30,9 @@ OTHER_FILES += info.txt \
     data/shaders/qeditor.vert \
     data/shaders/qeditor_world.frag \
     data/shaders/qeditor_world.vert \
-<<<<<<< HEAD
-    data/shaders/qeditor_water.frag
-=======
     data/shaders/qeditor_water.frag \
     data/shaders/model.frag \
     data/shaders/model.vert
->>>>>>> origin/netix
 
 unix|win32: LIBS += -L$$PWD/ -lquazip
 

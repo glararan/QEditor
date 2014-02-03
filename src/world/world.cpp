@@ -16,8 +16,11 @@ World::World(const ProjectFileData& projectFile)
 : camera(0)
 , projectData(projectFile)
 , brush(new Brush(Brush::Types(), 3.0f, 10.0f, app().getSetting("outerBrushColor", QColor(0, 255, 0)).value<QColor>(), app().getSetting("innerBrushColor", QColor(0, 255, 0)).value<QColor>(), 5.3f))
+, objectBrush(new ObjectBrush())
 , textureManager(NULL)
 , highlightChunk(NULL)
+, possibleModel(NULL)
+, modelManager(NULL)
 , terrainMaximumHeight(0.0f)
 , terrainMaximumState(false)
 , sunTheta(30.0f)
@@ -50,6 +53,9 @@ World::~World()
     }
 
     delete textureManager;
+    delete modelManager;
+    delete objectBrush;
+    delete possibleModel;
 }
 
 void World::deleteMe()
@@ -83,6 +89,10 @@ void World::initialize(QOpenGLContext* context, QSize fboSize)
 
     // initialize texture manager
     textureManager = new TextureManager(this, app().getSetting("antialiasing", 1.0f).toFloat());
+
+    // initialize model manager
+    modelManager = new IModelManager();
+    modelManager->loadModels(projectData.projectRootDir);
 
     // prepare Shaders
     material = MaterialPtr(new Material);
@@ -138,9 +148,8 @@ void World::update(float dt)
     // load tiles around + load neighbours
 }
 
-void World::draw(QMatrix4x4 modelMatrix, float triangles, QVector2D mousePosition, bool drawBrush)
+void World::draw(QMatrix4x4 viewportMatrix, QVector2D viewportSize, QMatrix4x4 modelMatrix, float triangles, QVector2D mousePosition, bool drawBrush, bool drawNewModel)
 {
-
     QMatrix4x4 viewMatrix        = camera->viewMatrix();
     QMatrix4x4 modelViewMatrix   = viewMatrix * modelMatrix;
     QMatrix3x3 worldNormalMatrix = modelMatrix.normalMatrix();
@@ -204,13 +213,26 @@ void World::draw(QMatrix4x4 modelMatrix, float triangles, QVector2D mousePositio
                             shader->setUniformValue("material.shininess", 10.0f);
 
                             if(drawBrush && i == 0)
-                                brush->draw(shader, mousePosition);
+                                brush->draw(shader, QVector2D(worldCoordinates.x(), worldCoordinates.z()));
                         }
                     }
                 }
 
                 mapTiles[tx][ty].tile->draw(MAP_DRAW_DISTANCE, camera->position());
+                mapTiles[tx][ty].tile->drawObjects(MAP_DRAW_DISTANCE, camera->position(), camera->viewMatrix(), camera->projectionMatrix());
+            }
+        }
+    }
 
+    //get world coord
+    loadWorldCoordinates(viewportMatrix, viewportSize, modelMatrix, camera->viewMatrix(), camera->projectionMatrix(), mousePosition);
+
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
                 GLfuncs->glEnable(GL_BLEND);
                     GLfuncs->glDisable(GL_DEPTH_TEST);
                     mapTiles[tx][ty].tile->drawWater(MAP_DRAW_DISTANCE, camera->position());
@@ -221,6 +243,18 @@ void World::draw(QMatrix4x4 modelMatrix, float triangles, QVector2D mousePositio
     }
 
     GLfuncs->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    if(possibleModel && drawNewModel && modelManager->isModelSelected() && getTileAt(worldCoordinates.x(), worldCoordinates.z()))
+    {
+        IPipeline Pipeline(modelMatrix, camera->viewMatrix(), camera->projectionMatrix());
+        Pipeline.translate(worldCoordinates.x(), worldCoordinates.y() + (getObjectBrush()->impend * 10.0f), worldCoordinates.z());
+        Pipeline.scale(getObjectBrush()->scale);
+        Pipeline.rotateX(getObjectBrush()->rotation_x * 360.0f);
+        Pipeline.rotateY(getObjectBrush()->rotation_y * 360.0f);
+        Pipeline.rotateZ(getObjectBrush()->rotation_z * 360.0f);
+
+        possibleModel->draw(&Pipeline);
+    }
 
     //material->bind();
 }
@@ -439,6 +473,43 @@ void World::unHighlight()
     }
 }
 
+void World::updateNewModel(bool shiftDown, bool leftButtonPressed)
+{
+    int current_index = modelManager->getCurrentModel();
+
+    if(possibleModel && current_index >= 0)
+    {
+        QString path = possibleModel->getModelInterface()->getFilePath() + possibleModel->getModelInterface()->getFileName();
+
+        if(modelManager->getIndex(path) != current_index)
+        {
+            delete possibleModel;
+
+            possibleModel = new IModel(modelManager, current_index);
+        }
+    }
+    else if(current_index >= 0)
+        possibleModel = new IModel(modelManager, current_index);
+
+    if(leftButtonPressed && shiftDown) //insert new model
+    {
+        MapTile* tile = getTileAt(worldCoordinates.x(), worldCoordinates.z());
+
+        if(tile)
+        {
+            MapObject* object = new MapObject();
+
+            object->model         = new IModel(modelManager, current_index);
+            object->translate     = worldCoordinates;
+            object->height_offset = getObjectBrush()->impend * 10.0f;
+            object->rotation      = QVector3D(getObjectBrush()->rotation_x, getObjectBrush()->rotation_y, getObjectBrush()->rotation_z);
+            object->scale         = QVector3D(getObjectBrush()->scale, getObjectBrush()->scale, getObjectBrush()->scale);
+
+            tile->insertModel(object);
+        }
+    }
+}
+
 MapChunk* World::getMapChunkAt(const QVector3D& position) const
 {
     int tx = floor(position.x() / TILESIZE);
@@ -530,6 +601,25 @@ WaterChunk* World::getWaterChunkAt(const QVector3D& position) const
     return mapTiles[tx][ty].tile->getWater()->getChunk(cx, cy);
 }
 
+MapTile* World::getTileAt(float x, float z) const
+{
+    int tx = floor(x / TILESIZE);
+    int ty = floor(z / TILESIZE);
+
+    if(tx >= TILES || ty >= TILES || tx < 0 || ty < 0)
+        return 0;
+
+    if(!tileLoaded(tx, ty))
+        return 0;
+
+    return mapTiles[tx][ty].tile;
+}
+
+QVector3D World::getWorldCoordinates()
+{
+    return worldCoordinates;
+}
+
 void World::setChunkShaderUniform(const char* name, const QVector2D& value)
 {
     for(int x = 0; x < TILES; ++x)
@@ -552,6 +642,7 @@ void World::setChunkShaderUniform(const char* name, const QVector2D& value)
         }
     }
 }
+
 void World::setChunkShaderUniform(const char* name, const QVector4D& value)
 {
     for(int x = 0; x < TILES; ++x)
@@ -884,6 +975,32 @@ void World::createNeighbours()
             }
         }
     }
+}
+
+void World::loadWorldCoordinates(QMatrix4x4 viewportMatrix, QVector2D viewportSize, QMatrix4x4 model, QMatrix4x4 view, QMatrix4x4 projection, QVector2D mousePosition)
+{
+    float mouseX = mousePosition.x();
+    float mouseY = mousePosition.y();
+
+    if(mouseX < 0 || mouseY < 0 || mouseX > viewportSize.x() || mouseY > viewportSize.y())
+        return;
+
+    QMatrix4x4 modelViewProjectionMatrix = projection * view * model;
+    QMatrix4x4 inverted                  = viewportMatrix * modelViewProjectionMatrix;
+
+    inverted = inverted.inverted();
+
+    float posZ;
+    float posY = viewportSize.y() - mouseY - 1.0f;
+
+    GLfuncs->glReadPixels(MathHelper::toInt(mouseX), MathHelper::toInt(posY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
+
+    QVector4D clickedPointOnScreen(mouseX, posY, 2.0f * posZ - 1.0f, 1.0f);
+    QVector4D clickedPointIn3DOrgn = inverted * clickedPointOnScreen;
+
+    clickedPointIn3DOrgn /= clickedPointIn3DOrgn.w();
+
+    worldCoordinates = clickedPointIn3DOrgn.toVector3DAffine();
 }
 
 void World::test()

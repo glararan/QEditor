@@ -37,10 +37,8 @@ public:
     /// Get
     const float getHeight(const float& x, const float& y) const;
     const float getHeight(const int& x, const int& y) const;
-<<<<<<< HEAD
-=======
-    float getHeightFromWorld(float x, float z);
->>>>>>> origin/netix
+
+    const float getHeightFromWorld(float x, float z);
     const float getMapData(const int& index) const;
 
     const int chunkIndex() const;
@@ -130,8 +128,4 @@ private:
     void initialize();
 };
 
-<<<<<<< HEAD
 #endif // MAPCHUNK_H
-=======
-#endif // MAPCHUNK_H
->>>>>>> origin/netix

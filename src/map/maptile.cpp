@@ -99,13 +99,9 @@ MapTile::~MapTile()
             }
         }
     }
-<<<<<<< HEAD
-=======
+
     for(int i = 0; i < objects.size(); ++i)
-    {
         delete objects.at(i);
-    }
->>>>>>> origin/netix
 }
 
 void MapTile::draw(const float& distance, const QVector3D& camera)
@@ -120,19 +116,22 @@ void MapTile::draw(const float& distance, const QVector3D& camera)
     }
 }
 
-<<<<<<< HEAD
-=======
-void MapTile::drawObjects(const float &distance, const QVector3D &camera, QMatrix4x4 viewMatrix, QMatrix4x4 projectionMatrix)
+void MapTile::drawObjects(const float& distance, const QVector3D& camera, QMatrix4x4 viewMatrix, QMatrix4x4 projectionMatrix)
 {
+    Q_UNUSED(distance);
+    Q_UNUSED(camera);
+
     for(int i = 0; i < objects.size(); ++i)
     {
-        MapObject *mapObject = objects.at(i);
+        MapObject* mapObject = objects.at(i);
+
         QVector3D translate = mapObject->translate;
-        QVector3D rotation = mapObject->rotation;
-        QVector3D scale = mapObject->scale;
+        QVector3D rotation  = mapObject->rotation;
+        QVector3D scale     = mapObject->scale;
+
         IPipeline Pipeline(QMatrix4x4(),viewMatrix, projectionMatrix);
-        Pipeline.translate(translate.x(),translate.y() + mapObject->height_offset,translate.z());
-        Pipeline.scale(scale.x(),scale.y(),scale.z());
+        Pipeline.translate(translate.x(), translate.y() + mapObject->height_offset, translate.z());
+        Pipeline.scale(scale.x(),scale.y(), scale.z());
         Pipeline.rotateX(rotation.x() * 360.0f);
         Pipeline.rotateY(rotation.y() * 360.0f);
         Pipeline.rotateZ(rotation.z() * 360.0f);
@@ -142,7 +141,6 @@ void MapTile::drawObjects(const float &distance, const QVector3D &camera, QMatri
     }
 }
 
->>>>>>> origin/netix
 void MapTile::drawWater(const float& distance, const QVector3D& camera)
 {
     fbo->bind();
@@ -179,19 +177,20 @@ void MapTile::drawWater(const float& distance, const QVector3D& camera)
     }
 }
 
-<<<<<<< HEAD
-=======
 void MapTile::update(qreal time)
 {
+    Q_UNUSED(time);
+
     for(int i = 0; i < objects.size(); ++i)
     {
-        MapObject *mapObject = objects.at(i);
+        MapObject* mapObject = objects.at(i);
+
         QVector3D position = mapObject->translate;
-        mapObject->translate.setY(getHeight(position.x(),position.z()));
+
+        mapObject->translate.setY(getHeight(position.x(), position.z()));
     }
 }
 
->>>>>>> origin/netix
 MapChunk* MapTile::getChunk(int x, int y)
 {
     if(x < CHUNKS && y < CHUNKS)
@@ -282,9 +281,6 @@ void MapTile::test()
 {
     //mapChunks[0][0]->test();
     //mapChunks[1][1]->test();
-<<<<<<< HEAD
-}
-=======
 }
 
 void MapTile::insertModel(MapObject *object)
@@ -305,11 +301,10 @@ MapChunk *MapTile::getChunkAt(float x, float z)
 
 float MapTile::getHeight(float x, float z)
 {
-    MapChunk *chunk = getChunkAt(x,z);
+    MapChunk* chunk = getChunkAt(x, z);
+
     if(chunk)
-    {
-        return chunk->getHeightFromWorld(x,z);
-    }
+        return chunk->getHeightFromWorld(x, z);
+
     return 0.0f;
 }
->>>>>>> origin/netix

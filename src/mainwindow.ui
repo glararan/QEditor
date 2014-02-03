@@ -82,10 +82,7 @@
    <addaction name="action_mapview_m2"/>
    <addaction name="action_mapview_m3"/>
    <addaction name="action_mapview_m4"/>
-<<<<<<< HEAD:src/mainwindow.ui
-=======
    <addaction name="action_mapview_m5"/>
->>>>>>> origin/netix:src/mainwindow.ui
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -546,9 +543,6 @@
     <string>Water</string>
    </property>
   </action>
-<<<<<<< Updated upstream
-<<<<<<< HEAD:src/mainwindow.ui
-=======
   <action name="action_mapview_m5">
    <property name="checkable">
     <bool>true</bool>
@@ -564,14 +558,11 @@
     <string>Object</string>
    </property>
   </action>
->>>>>>> origin/netix:src/mainwindow.ui
-=======
   <action name="action_Screenshot_upload">
    <property name="text">
     <string>&amp;Screenshot + upload</string>
    </property>
   </action>
->>>>>>> Stashed changes
  </widget>
  <resources>
   <include location="../qeditor.qrc"/>

@@ -130,9 +130,11 @@ private:
 
 struct Slot
 {
-    Slot(bool free = true) {
+    Slot(bool free = true)
+    {
         isFree = free;
     }
+
     bool isFree;
 };
 
@@ -159,7 +161,7 @@ private:
     bool hasSpace();
     void setDefaultImages();
 
-    QVector<QPair<QImage,Slot> > values;
+    QVector<QPair<QImage, Slot> > values;
     bool mousePressed;
     QPoint pressPos;
     QPoint oldCurrent;

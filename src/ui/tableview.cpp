@@ -11,9 +11,9 @@
 #include <QToolTip>
 
 TexturesArray::TexturesArray(int rows, int cols, QWidget* parent)
-    : QWidget(parent)
-    , nrows(rows)
-    , ncols(cols)
+: QWidget(parent)
+, nrows(rows)
+, ncols(cols)
 {
     d = 0;
 
@@ -155,13 +155,8 @@ void TexturesArray::mousePressEvent(QMouseEvent* e)
     // The current cell marker is set to the cell the mouse is pressed in
     QPoint pos = e->pos();
 
-<<<<<<< HEAD:src/ui/tableview.cpp
     pos.setX(pos.x() - floor(MathHelper::toDouble(pos.x()) / MathHelper::toDouble(textureSize.width())) * textureMargin.width());
     pos.setY(pos.y() - floor(MathHelper::toDouble(pos.y()) / MathHelper::toDouble(textureSize.height())) * textureMargin.height());
-=======
-    pos.setX(pos.x() - floor(double(pos.x()) / double(textureSize.width())) * textureMargin.width());
-    pos.setY(pos.y() - floor(double(pos.y()) / double(textureSize.height())) * textureMargin.height());
->>>>>>> origin/netix:src/ui/tableview.cpp
 
     setCurrent(rowAt(pos.y()), columnAt(pos.x()));
 }
@@ -179,13 +174,8 @@ bool TexturesArray::event(QEvent* e)
         QHelpEvent* help = static_cast<QHelpEvent*>(e);
 
         QPoint pos = help->pos();
-<<<<<<< HEAD:src/ui/tableview.cpp
         pos.setX(pos.x() - floor(MathHelper::toDouble(pos.x()) / MathHelper::toDouble(textureSize.width())) * textureMargin.width());
         pos.setY(pos.y() - floor(MathHelper::toDouble(pos.y()) / MathHelper::toDouble(textureSize.height())) * textureMargin.height());
-=======
-        pos.setX(pos.x() - floor((double)pos.x() / double(textureSize.width())) * textureMargin.width());
-        pos.setY(pos.y() - floor((double)pos.y() / double(textureSize.height())) * textureMargin.height());
->>>>>>> origin/netix:src/ui/tableview.cpp
 
         int cellIndex = columnAt(pos.x());
         int rowIndex  = rowAt(pos.y());
@@ -388,10 +378,10 @@ void TexturesArray::keyPressEvent(QKeyEvent* e)
 ///////////////////////////////////
 /// TextureWell
 ///////////////////////////////////
-TextureWell::TextureWell(QWidget *parent, int r, int c, QSize textureIconSize, QSize textureIconMargin)
-    : TexturesArray(r, c, parent)
-    , mousePressed(false)
-    , oldCurrent(-1, -1)
+TextureWell::TextureWell(QWidget* parent, int r, int c, QSize textureIconSize, QSize textureIconMargin)
+: TexturesArray(r, c, parent)
+, mousePressed(false)
+, oldCurrent(-1, -1)
 {
     setSizePolicy(QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum));
 
@@ -399,6 +389,7 @@ TextureWell::TextureWell(QWidget *parent, int r, int c, QSize textureIconSize, Q
     setTextureMargin(textureIconMargin);
 
     values.resize(r * c);
+
     setDefaultImages();
 }
 
@@ -406,7 +397,9 @@ void TextureWell::clear()
 {
     values.clear();
     values.resize(numCols() * numRows());
+
     setDefaultImages();
+
     TexturesArray::clear();
 }
 
@@ -415,8 +408,10 @@ void TextureWell::insertItem(QImage image, QString toolTip, bool makeSpace)
     if(hasSpace())
     {
         int index = firstFreeIndex();
-        values[index].first = image.scaled(TextureSize());
+
+        values[index].first         = image.scaled(TextureSize());
         values[index].second.isFree = false;
+
         insertToolTip(index, toolTip);
     }
     else if(makeSpace)
@@ -429,9 +424,7 @@ void TextureWell::insertItem(QImage image, QString toolTip, bool makeSpace)
 void TextureWell::insertItems(QVector<QPair<QImage, QString> > vals, bool makeSpace)
 {
     for(int i = 0; i < vals.count(); ++i)
-    {
         insertItem(vals.at(i).first, vals.at(i).second, makeSpace);
-    }
 }
 
 void TextureWell::updateItem(int row, int column, QImage image, QString toolTip)
@@ -439,8 +432,9 @@ void TextureWell::updateItem(int row, int column, QImage image, QString toolTip)
     if(row >= numRows() || column >= numCols())
         return;
 
-    values[(row * numCols()) + column].first = image.scaled(TextureSize());
+    values[(row * numCols()) + column].first         = image.scaled(TextureSize());
     values[(row * numCols()) + column].second.isFree = false;
+
     updateToolTip(row, column, toolTip);
 }
 
@@ -452,21 +446,24 @@ QImage TextureWell::getImage(int row, int column)
 void TextureWell::setRows(const int count)
 {
     values.resize(numCols() * count);
+
     setDefaultImages();
+
     TexturesArray::setRows(count);
 }
 
 void TextureWell::setCols(const int count)
 {
     values.resize(numRows() * count);
+
     setDefaultImages();
+
     TexturesArray::setCols(count);
 }
 
-void TextureWell::paintCellContents(QPainter* p, int row, int col, const QRect &r)
+void TextureWell::paintCellContents(QPainter* p, int row, int col, const QRect& r)
 {
     int i = col + row * numCols();
-
 
     if(i >= values.count())
         return;
@@ -508,6 +505,7 @@ int TextureWell::firstFreeIndex()
         if(values.at(i).second.isFree)
             return i;
     }
+
     return -1;
 }
 
@@ -518,18 +516,19 @@ bool TextureWell::hasSpace()
         if(values.at(i).second.isFree)
             return true;
     }
+
     return false;
 }
 
 void TextureWell::setDefaultImages()
 {
-    QImage defaultimage(1,1,QImage::Format_ARGB32);
+    QImage defaultimage(1, 1, QImage::Format_ARGB32);
+
     defaultimage.fill(Qt::transparent);
+
     for(int i = 0; i < values.size(); ++i)
     {
         if(values.at(i).first.isNull())
-        {
             values[i].first = defaultimage;
-        }
     }
 }

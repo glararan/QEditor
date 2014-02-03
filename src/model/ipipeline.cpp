@@ -1,7 +1,5 @@
 #include "ipipeline.h"
-#include <math.h>
-#define PI 3.14159265358979323846
-#define DEG2RAD(DEG) ((DEG)*((PI)/(180.0)))
+#include "mathhelper.h"
 
 IPipeline::IPipeline()
 {
@@ -129,8 +127,8 @@ void IPipeline::lookAt(QVector3D &position, QVector3D &direction)
     float angleLR = direction.y() + 180;
     //float angleCT = direction.getZ();
 
-    float vLRx = sin(DEG2RAD(angleLR)), vLRz = -cos(DEG2RAD(angleLR));
-    float vUDy = sin(DEG2RAD(angleUD)), vUDz = -cos(DEG2RAD(angleUD));
+    float vLRx = sin(MathHelper::degreesToRadians(angleLR)), vLRz = -cos(MathHelper::degreesToRadians(angleLR));
+    float vUDy = sin(MathHelper::degreesToRadians(angleUD)), vUDz = -cos(MathHelper::degreesToRadians(angleUD));
     //float vCTx = cos(DEG2RAD(angleCT)), vCTy = sin(DEG2RAD(angleCT)), vCTz = 0;
 
     float cX = position.x() + (vLRx * vUDz);

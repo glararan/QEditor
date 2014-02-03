@@ -16,13 +16,10 @@
         <file alias="vertexshading_icon">data/images/vertexshading.png</file>
         <file>data/shaders/qeditor_water.frag</file>
         <file alias="water_icon">data/images/water.png</file>
-<<<<<<< HEAD
-=======
         <file alias="object_icon">data/images/objects.png</file>
         <file>data/shaders/model.frag</file>
         <file>data/shaders/model.vert</file>
         <file alias="reset">data/images/reset.png</file>
->>>>>>> origin/netix
     </qresource>
     <qresource prefix="/textures">
         <file>textures/grass.png</file>

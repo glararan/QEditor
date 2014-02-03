@@ -1,19 +1,18 @@
 #include "toolbox.h"
 
-
-ToolBox::ToolBox() :
-    layout(new QVBoxLayout)
+ToolBox::ToolBox()
+: layout(new QVBoxLayout)
 {
     layout->setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
 }
 
-void ToolBox::addItem(ToolItem *item)
+void ToolBox::addItem(ToolItem* item)
 {
     int count = layout->count();
-    if (count > 1) {
+
+    if (count > 1)
         layout->removeItem(layout->itemAt(count - 1));
-    }
 
     layout->addWidget(item);
     layout->addStretch();
@@ -32,9 +31,9 @@ QSize ToolBox::sizeHint() const
     return QSize(314,0).boundedTo(QSize(640, 480));
 }
 
-
-ToolItem::ToolItem(const QString &t, QWidget *item) : item(item) {
-    QVBoxLayout *layout = new QVBoxLayout;
+ToolItem::ToolItem(const QString& t, QWidget* item) : item(item)
+{
+    QVBoxLayout* layout = new QVBoxLayout;
     layout->setContentsMargins(0, 0, 0, 0);
 
     QString titleString = t;
@@ -52,11 +51,14 @@ ToolItem::ToolItem(const QString &t, QWidget *item) : item(item) {
     item->setVisible(false);
 }
 
-QWidget *ToolItem::getWidget()
+QWidget* ToolItem::getWidget()
 {
     return item;
 }
 
-void ToolItem::mousePressEvent(QMouseEvent *event) {
+void ToolItem::mousePressEvent(QMouseEvent* event)
+{
+    Q_UNUSED(event);
+
     item->setVisible(!item->isVisible());
 }

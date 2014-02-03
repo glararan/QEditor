@@ -237,22 +237,6 @@ void MapView::update(float t)
 
     /// mouse on terrain
     // getWorldCoordinates can be used to spawn object in middle of screen
-<<<<<<< HEAD:src/mapview.cpp
-    terrain_pos = getWorldCoordinates(mouse_position.x(), mouse_position.y());
-
-    // highlight and select chunk
-    if(eMode == Objects && altDown)
-    {
-        const QVector3D& position(terrain_pos);
-
-        world->highlightMapChunkAt(position);
-
-        if(leftButtonPressed)
-        {
-            emit selectedMapChunk(world->getMapChunkAt(position));
-            emit selectedWaterChunk(world->getWaterChunkAt(position));
-        }
-=======
     terrain_pos = world->getWorldCoordinates();
 
     // highlight and select chunk
@@ -268,6 +252,7 @@ void MapView::update(float t)
             emit selectedWaterChunk(world->getWaterChunkAt(position));
         }
     }
+
     // objects
     if(eMode == Object)
     {
@@ -275,7 +260,6 @@ void MapView::update(float t)
 
         if(escapeDown)
             world->getModelManager()->setCurrentModel(-1);
->>>>>>> origin/netix:src/mapview.cpp
     }
 
     // Change terrain
@@ -414,13 +398,9 @@ void MapView::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
-<<<<<<< HEAD:src/mapview.cpp
-        world->draw(modelMatrix, screenSpaceErrorLevel, QVector2D(terrain_pos.x(), terrain_pos.z()), true);
-=======
         world->draw(viewportMatrix, viewportSize, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
     else if(eMode == Object)
         world->draw(viewportMatrix, viewportSize, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
->>>>>>> origin/netix:src/mapview.cpp
     else
         world->draw(viewportMatrix, viewportSize, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
 }
@@ -510,10 +490,7 @@ void MapView::setModeEditing(int option)
         case Terrain:
         case Texturing:
         case VertexShading:
-<<<<<<< HEAD:src/mapview.cpp
-=======
         case Object:
->>>>>>> origin/netix:src/mapview.cpp
             eMode = (eEditingMode)option;
             break;
 
@@ -546,33 +523,10 @@ void MapView::resetCamera()
 {
     camera->resetRotation();
 
-<<<<<<< HEAD:src/mapview.cpp
-    world->getGLFunctions()->glReadPixels(MathHelper::toInt(mouseX), MathHelper::toInt(posY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
-=======
     panAngle  = 0.0f;
     tiltAngle = 0.0f;
 }
->>>>>>> origin/netix:src/mapview.cpp
 
-void MapView::setBrushSpeed(double speed)
-{
-    shaping_speed = MathHelper::toFloat(speed);
-}
-
-void MapView::setBrushOuterRadius(double radius)
-{
-    world->getBrush()->setOuterRadius(MathHelper::toFloat(radius));
-
-    // Todo inner radius
-    //world->getBrush()->setRadius(MathHelper::toFloat(radius));
-}
-
-void MapView::setBrushInnerRadius(double radius)
-{
-    world->getBrush()->setInnerRadius(MathHelper::toFloat(radius));
-}
-
-<<<<<<< HEAD:src/mapview.cpp
 void MapView::setBrushSpeed(double speed)
 {
     shaping_speed = MathHelper::toFloat(speed);
@@ -627,44 +581,6 @@ void MapView::setVertexShading(QColor color)
 
 void MapView::setTerrainMaximumHeight(double value)
 {
-=======
-void MapView::setBrush(int brush)
-{
-    world->getBrush()->BrushTypes().setShaping((Brush::ShapingType::Formula)brush);
-}
-
-void MapView::setBrushType(int type)
-{
-    Brush::Types types = world->getBrush()->BrushTypes();
-
-    switch(eTerrain)
-    {
-        case Shaping:
-        default:
-            types.setShaping(static_cast<Brush::ShapingType::Formula>(type));
-            break;
-
-        case Smoothing:
-            types.setSmoothing(static_cast<Brush::SmoothingType::Formula>(type));
-            break;
-    }
-
-    world->getBrush()->setBrush(types);
-}
-
-void MapView::setTexturingFlow(double flow)
-{
-    texturing_flow = flow;
-}
-
-void MapView::setVertexShading(QColor color)
-{
-    vertexShadingColor = color;
-}
-
-void MapView::setTerrainMaximumHeight(double value)
-{
->>>>>>> origin/netix:src/mapview.cpp
     world->setTerrainMaximumHeight(MathHelper::toFloat(value));
 }
 
@@ -680,7 +596,6 @@ void MapView::setBrushColor(QColor* color, bool outer)
         case true:
             {
                 world->getBrush()->setOuterColor(*color);
-<<<<<<< HEAD:src/mapview.cpp
 
                 app().setSetting("outerBrushColor", *color);
             }
@@ -690,18 +605,7 @@ void MapView::setBrushColor(QColor* color, bool outer)
             {
                 world->getBrush()->setInnerColor(*color);
 
-=======
-
                 app().setSetting("outerBrushColor", *color);
-            }
-            break;
-
-        case false:
-            {
-                world->getBrush()->setInnerColor(*color);
-
->>>>>>> origin/netix:src/mapview.cpp
-                app().setSetting("innerBrushColor", *color);
             }
             break;
     }

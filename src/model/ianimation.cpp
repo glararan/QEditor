@@ -29,7 +29,7 @@ QString IAnimation::getName()
 QVector<QMatrix4x4> IAnimation::getTransforms(float time_stamp, QMap<int, QPair<float, int> > *position_state, QMap<int, QPair<float, int> > *scaling_state, QMap<int, QPair<float, int> > *rotation_state)
 {
     QVector<QMatrix4x4> out;
-    for (int bone_index = 0; bone_index < bone_count; bone_index++)
+    for (uint bone_index = 0; bone_index < bone_count; bone_index++)
     {
         QVector3D position;
         QVector3D scaling;

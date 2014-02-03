@@ -2,7 +2,7 @@
 #define MATHHELPER_H
 
 #define _USE_MATH_DEFINES
-#include <math.h>
+#include <qmath.h>
 
 #include <QtGlobal>
 #include <qgl.h> // GLuint

@@ -39,18 +39,11 @@ public:
 
     enum eEditingMode
     {
-<<<<<<< HEAD:src/mapview.h
-        Objects       = 0,
-        Terrain       = 1,
-        Texturing     = 2,
-        VertexShading = 3
-=======
         Default       = 0,
         Terrain       = 1,
         Texturing     = 2,
         VertexShading = 3,
         Object        = 5
->>>>>>> origin/netix:src/mapview.h
     };
 
     void setEditingMode(eEditingMode editingMode) { eMode = editingMode; }

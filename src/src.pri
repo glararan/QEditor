@@ -1,16 +1,9 @@
 INCLUDEPATH += src/common \
                src/helper \
                src/map \
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-=======
                src/model \
->>>>>>> origin/netix
-               src/world
-=======
                src/world \
                src/3rd-party/imageshackAPI
->>>>>>> Stashed changes
 
 SOURCES  += $$PWD/main.cpp \
             $$PWD/mainwindow.cpp \
@@ -38,12 +31,6 @@ SOURCES  += $$PWD/main.cpp \
             $$PWD/helper/mathhelper.cpp \
             $$PWD/map/watertile.cpp \
             $$PWD/map/waterchunk.cpp \
-            $$PWD/ui/waterwidget.cpp \
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-    src/ui/waterwidget.cpp
-=======
-            $$PWD/ui/waterwidget.cpp \
             $$PWD/model/ianimation.cpp \
             $$PWD/model/ibone.cpp \
             $$PWD/model/ilight.cpp \
@@ -54,13 +41,10 @@ SOURCES  += $$PWD/main.cpp \
             $$PWD/model/ipipeline.cpp \
             $$PWD/model/itexturemanager.cpp \
             $$PWD/ui/modelpicker.cpp \
-            $$PWD/ui/toolbox.cpp
->>>>>>> origin/netix
-=======
+            $$PWD/ui/toolbox.cpp \
             $$PWD/ui/waterwidget.cpp \
             $$PWD/common/framebuffer.cpp \
             $$PWD/3rd-party/imgurAPI/fileupload.cpp
->>>>>>> Stashed changes
 
 HEADERS  += $$PWD/mainwindow.h \
             $$PWD/ui/teleportwidget.h \
@@ -91,11 +75,6 @@ HEADERS  += $$PWD/mainwindow.h \
             $$PWD/map/watertile.h \
             $$PWD/map/waterchunk.h \
             $$PWD/ui/waterwidget.h \
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-    src/ui/waterwidget.h
-=======
-            $$PWD/ui/waterwidget.h \
             $$PWD/model/ianimation.h \
             $$PWD/model/ibone.h \
             $$PWD/model/ilight.h \
@@ -106,24 +85,17 @@ HEADERS  += $$PWD/mainwindow.h \
             $$PWD/model/ipipeline.h \
             $$PWD/model/itexturemanager.h \
             $$PWD/ui/modelpicker.h \
-            $$PWD/ui/toolbox.h
->>>>>>> origin/netix
-=======
+            $$PWD/ui/toolbox.h \
             $$PWD/ui/waterwidget.h \
             $$PWD/common/framebuffer.h \
             $$PWD/3rd-party/imgurAPI/fileupload.h
->>>>>>> Stashed changes
 
-FORMS += $$PWD/mainwindow.ui \
-         $$PWD/ui/teleportwidget.ui \
-         $$PWD/ui/mapview_settings.ui \
-         $$PWD/ui/about.ui \
-         $$PWD/ui/texturepicker.ui \
-         $$PWD/ui/startup.ui \
-         $$PWD/ui/project_settings.ui \
-<<<<<<< HEAD
-         $$PWD/ui/waterwidget.ui
-=======
-         $$PWD/ui/waterwidget.ui \
-         $$PWD/ui/modelpicker.ui
->>>>>>> origin/netix
+FORMS    += $$PWD/mainwindow.ui \
+            $$PWD/ui/teleportwidget.ui \
+            $$PWD/ui/mapview_settings.ui \
+            $$PWD/ui/about.ui \
+            $$PWD/ui/texturepicker.ui \
+            $$PWD/ui/startup.ui \
+            $$PWD/ui/project_settings.ui \
+            $$PWD/ui/waterwidget.ui \
+            $$PWD/ui/modelpicker.ui

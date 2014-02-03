@@ -24,10 +24,7 @@ MainWindow::MainWindow(QWidget* parent)
 , teleportW(NULL)
 , settingsW(NULL)
 , texturepW(NULL)
-<<<<<<< HEAD
-=======
 , modelpickerW(NULL)
->>>>>>> origin/netix
 , colorW(NULL)
 , waterW(NULL)
 , t_outer_radius(NULL)
@@ -37,14 +34,16 @@ MainWindow::MainWindow(QWidget* parent)
 , t_brush(NULL)
 , t_brush_circle(NULL)
 , t_brush_square(NULL)
-<<<<<<< HEAD
-=======
 , t_reset_transform(NULL)
->>>>>>> origin/netix
 , t_terrain_mode(NULL)
 , t_brush_type(NULL)
 , t_terrain_maxHeight(NULL)
 , t_terrain_maximum_height(NULL)
+, t_rotationx(NULL)
+, t_rotationy(NULL)
+, t_rotationz(NULL)
+, t_impend(NULL)
+, t_scale(NULL)
 , t_terrain_mode_label(NULL)
 , t_brush_label(NULL)
 , t_brush_type_label(NULL)
@@ -56,11 +55,6 @@ MainWindow::MainWindow(QWidget* parent)
 , t_speed_value_label(NULL)
 , t_flow_label(NULL)
 , t_flow_value_label(NULL)
-, world(NULL)
-, mapView(NULL)
-, mapCoords(NULL)
-<<<<<<< HEAD
-=======
 , t_rotationx_label(NULL)
 , t_rotationx_value_label(NULL)
 , t_rotationy_label(NULL)
@@ -71,12 +65,9 @@ MainWindow::MainWindow(QWidget* parent)
 , t_impend_value_label(NULL)
 , t_scale_label(NULL)
 , t_scale_value_label(NULL)
-, t_rotationx(NULL)
-, t_rotationy(NULL)
-, t_rotationz(NULL)
-, t_impend(NULL)
-, t_scale(NULL)
->>>>>>> origin/netix
+, world(NULL)
+, mapView(NULL)
+, mapCoords(NULL)
 {
     ui->setupUi(this);
 
@@ -115,10 +106,7 @@ MainWindow::~MainWindow()
     delete teleportW;
     delete settingsW;
     delete texturepW;
-<<<<<<< HEAD
-=======
     delete modelpickerW;
->>>>>>> origin/netix
     delete colorW;
     delete waterW;
 
@@ -126,23 +114,19 @@ MainWindow::~MainWindow()
     deleteObject(t_inner_radius);
     deleteObject(t_speed);
     deleteObject(t_flow);
-<<<<<<< HEAD
-=======
+
     deleteObject(t_rotationx);
     deleteObject(t_rotationy);
     deleteObject(t_rotationz);
     deleteObject(t_impend);
     deleteObject(t_scale);
->>>>>>> origin/netix
 
     deleteObject(t_brush);
 
     deleteObject(t_brush_circle);
     deleteObject(t_brush_square);
-<<<<<<< HEAD
-=======
+
     deleteObject(t_reset_transform);
->>>>>>> origin/netix
 
     deleteObject(t_terrain_mode);
     deleteObject(t_brush_type);
@@ -163,8 +147,6 @@ MainWindow::~MainWindow()
     deleteObject(t_speed_value_label);
     deleteObject(t_flow_label);
     deleteObject(t_flow_value_label);
-<<<<<<< HEAD
-=======
     deleteObject(t_rotationx_label);
     deleteObject(t_rotationx_value_label);
     deleteObject(t_rotationy_label);
@@ -175,7 +157,6 @@ MainWindow::~MainWindow()
     deleteObject(t_impend_value_label);
     deleteObject(t_scale_label);
     deleteObject(t_scale_value_label);
->>>>>>> origin/netix
 
     qDebug() << tr("UI in MainWindow was destroyed!");
 
@@ -217,14 +198,11 @@ void MainWindow::openWorld(ProjectFileData projectData)
     ui->menu_Tools->menuAction()->setVisible(true);
 
     // menu dialogs constructors
-    teleportW = new TeleportWidget();
-    settingsW = new MapView_Settings();
-    texturepW = new TexturePicker();
-<<<<<<< HEAD
-=======
+    teleportW    = new TeleportWidget();
+    settingsW    = new MapView_Settings();
+    texturepW    = new TexturePicker();
     modelpickerW = new ModelPicker();
->>>>>>> origin/netix
-    waterW    = new WaterWidget();
+    waterW       = new WaterWidget();
 
     // post initialize world sub widgets
     connect(mapView, SIGNAL(initialized()), this, SLOT(postInitializeSubWorldWidgets()));
@@ -298,10 +276,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(ui->action_mapview_m2, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
     connect(ui->action_mapview_m3, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
     connect(ui->action_mapview_m4, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
-<<<<<<< HEAD
-=======
     connect(ui->action_mapview_m5, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
->>>>>>> origin/netix
 
     connect(this, SIGNAL(setModeEditing(int)), mapView, SLOT(setModeEditing(int)));
 
@@ -310,10 +285,8 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(this,           SIGNAL(setTerrainMode(int))     , mapView, SLOT(setTerrainMode(int)));
 
     connect(t_brush_type  , SIGNAL(currentIndexChanged(int)), mapView, SLOT(setBrushType(int)));
-<<<<<<< HEAD
-=======
-    connect(t_reset_transform, SIGNAL(clicked()), this,             SLOT(resetModelBrush()));
->>>>>>> origin/netix
+
+    connect(t_reset_transform, SIGNAL(clicked()), this, SLOT(resetModelBrush()));
 
     connect(t_terrain_maxHeight,      SIGNAL(stateChanged(int)),    this,    SLOT(setTerrainMaximumHeightState(int)));
     connect(t_terrain_maximum_height, SIGNAL(valueChanged(double)), mapView, SLOT(setTerrainMaximumHeight(double)));
@@ -322,29 +295,24 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(t_inner_radius, SIGNAL(valueChanged(double)), t_inner_radius_value_label, SLOT(setNum(double)));
     connect(t_speed,        SIGNAL(valueChanged(double)), t_speed_value_label,        SLOT(setNum(double)));
     connect(t_flow,         SIGNAL(valueChanged(double)), t_flow_value_label,         SLOT(setNum(double)));
-<<<<<<< HEAD
-=======
+
     connect(t_rotationx,    SIGNAL(valueChanged(double)), t_rotationx_value_label,    SLOT(setNum(double)));
     connect(t_rotationy,    SIGNAL(valueChanged(double)), t_rotationy_value_label,    SLOT(setNum(double)));
     connect(t_rotationz,    SIGNAL(valueChanged(double)), t_rotationz_value_label,    SLOT(setNum(double)));
     connect(t_impend,       SIGNAL(valueChanged(double)), t_impend_value_label,       SLOT(setNum(double)));
     connect(t_scale,        SIGNAL(valueChanged(double)), t_scale_value_label,        SLOT(setNum(double)));
 
->>>>>>> origin/netix
-
     connect(t_outer_radius, SIGNAL(valueChanged(double)), mapView, SLOT(setBrushOuterRadius(double)));
     connect(t_outer_radius, SIGNAL(valueChanged(double)), this,    SLOT(setBrushInnerRadiusMaximumValue(double)));
     connect(t_inner_radius, SIGNAL(valueChanged(double)), mapView, SLOT(setBrushInnerRadius(double)));
     connect(t_speed,        SIGNAL(valueChanged(double)), mapView, SLOT(setBrushSpeed(double)));
     connect(t_flow,         SIGNAL(valueChanged(double)), mapView, SLOT(setTexturingFlow(double)));
-<<<<<<< HEAD
-=======
+
     connect(t_rotationx,    SIGNAL(valueChanged(double)), mapView, SLOT(setModelRotationX(double)));
     connect(t_rotationy,    SIGNAL(valueChanged(double)), mapView, SLOT(setModelRotationY(double)));
     connect(t_rotationz,    SIGNAL(valueChanged(double)), mapView, SLOT(setModelRotationZ(double)));
     connect(t_impend,       SIGNAL(valueChanged(double)), mapView, SLOT(setModelImpend(double)));
     connect(t_scale,        SIGNAL(valueChanged(double)), mapView, SLOT(setModelScale(double)));
->>>>>>> origin/netix
 
     connect(colorW, SIGNAL(currentColorChanged(QColor)), mapView, SLOT(setVertexShading(QColor)));
 }
@@ -352,10 +320,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
 void MainWindow::postInitializeSubWorldWidgets()
 {
     texturepW->initialize(world->getTextureManager());
-<<<<<<< HEAD
-=======
     modelpickerW->loadPicker(world->getModelManager());
->>>>>>> origin/netix
 }
 
 void MainWindow::createMemoryProject(NewProjectData projectData)
@@ -619,8 +584,6 @@ void MainWindow::setToolBarItem()
 
         addDockWindow(tr("Water"), waterW);
     }
-<<<<<<< HEAD
-=======
     else if(iName == "action_mapview_m5")
     {
         emit setModeEditing(5);
@@ -629,7 +592,6 @@ void MainWindow::setToolBarItem()
 
         addDockWindow(tr("Model Picker"), modelpickerW);
     }
->>>>>>> origin/netix
 }
 
 void MainWindow::setFullscreen(bool checked)
@@ -735,8 +697,6 @@ void MainWindow::initMode()
     t_flow->setMaximumWidth(this->width() / 3);
     t_flow->setObjectName("t_flow");
 
-<<<<<<< HEAD
-=======
     t_rotationx = new QDSlider(2,this);
     t_rotationx->setMinimum(0.0);
     t_rotationx->setMaximum(1.0);
@@ -772,7 +732,6 @@ void MainWindow::initMode()
     t_scale->setMaximumWidth(this->width() / 6);
     t_scale->setObjectName("t_scale");
 
->>>>>>> origin/netix
     t_brush = new QButtonGroup();
     t_brush->setObjectName("t_brush");
 
@@ -791,14 +750,11 @@ void MainWindow::initMode()
     t_brush_square->setObjectName("t_brush_square");
     t_brush->addButton(t_brush_square);
 
-<<<<<<< HEAD
-=======
     t_reset_transform = new QPushButton(QIcon("://reset"),"Reset");
     t_reset_transform->setToolTip(tr("Reset Transform"));
     t_reset_transform->setIconSize(QSize(24, 24));
     t_reset_transform->setObjectName("t_reset_transform");
 
->>>>>>> origin/netix
     t_terrain_mode = new QComboBox();
     t_terrain_mode->setToolTip(tr("Select terrain mode"));
     t_terrain_mode->setObjectName("t_terrain_mode");
@@ -851,8 +807,7 @@ void MainWindow::initMode()
     t_speed_value_label        = new QLabel(QString("%1").arg(t_speed->value()));
     t_flow_label               = new QLabel(tr("Flow:"));
     t_flow_value_label         = new QLabel(QString("%1").arg(t_flow->value()));
-<<<<<<< HEAD
-=======
+
     t_rotationx_label          = new QLabel(tr("Rotation X:"));
     t_rotationx_value_label    = new QLabel(QString("%1").arg(t_rotationx->value()));
     t_rotationy_label          = new QLabel(tr("Rotation Y:"));
@@ -863,7 +818,6 @@ void MainWindow::initMode()
     t_impend_value_label       = new QLabel(QString("%1").arg(t_impend->value()));
     t_scale_label              = new QLabel(tr("Scale:"));
     t_scale_value_label        = new QLabel(QString("%1").arg(t_scale->value()));
->>>>>>> origin/netix
 
     t_terrain_mode_label->setObjectName("t_terrain_mode_label");
     t_brush_label->setObjectName("t_brush_label");
@@ -886,28 +840,23 @@ void MainWindow::initMode()
     t_inner_radius_label->setStyleSheet("margin:-3px 5px 0 20px;");
     t_speed_label->setStyleSheet("margin:-3px 5px 0 20px;");
     t_flow_label->setStyleSheet("margin:-3px 5px 0 20px;");
-<<<<<<< HEAD
-=======
+
     t_rotationx_label->setStyleSheet("margin:-3px 5px 0 20px;");
     t_rotationy_label->setStyleSheet("margin:-3px 5px 0 20px;");
     t_rotationz_label->setStyleSheet("margin:-3px 5px 0 20px;");
     t_impend_label->setStyleSheet("margin:-3px 5px 0 20px;");
     t_scale_label->setStyleSheet("margin:-3px 5px 0 20px;");
->>>>>>> origin/netix
 
     t_outer_radius_value_label->setStyleSheet("margin:-3px 0 0 5px;");
     t_inner_radius_value_label->setStyleSheet("margin:-3px 0 0 5px;");
     t_speed_value_label->setStyleSheet("margin:-3px 0 0 5px;");
-<<<<<<< HEAD
     t_flow_value_label->setStyleSheet("margin:-3px 0 0 5px;");
-=======
     t_flow_value_label->setStyleSheet("margin:-3px 0 0 5px;");    
     t_rotationx_value_label->setStyleSheet("margin:-3px 0 0 5px;");
     t_rotationy_value_label->setStyleSheet("margin:-3px 0 0 5px;");
     t_rotationz_value_label->setStyleSheet("margin:-3px 0 0 5px;");
     t_impend_value_label->setStyleSheet("margin:-3px 0 0 5px;");
     t_scale_value_label->setStyleSheet("margin:-3px 0 0 5px;");
->>>>>>> origin/netix
 
     /// mode1
     addToolbarAction(t_brush_label             , mode1Actions);
@@ -957,8 +906,6 @@ void MainWindow::initMode()
     addToolbarAction(t_flow                    , mode3Actions);
     addToolbarAction(t_flow_value_label        , mode3Actions);
 
-<<<<<<< HEAD
-=======
     // mode5
     addToolbarAction(t_reset_transform         , mode5Actions);
     addToolbarAction(t_rotationx_label         , mode5Actions);
@@ -977,7 +924,6 @@ void MainWindow::initMode()
     addToolbarAction(t_scale                   , mode5Actions);
     addToolbarAction(t_scale_value_label       , mode5Actions);
 
->>>>>>> origin/netix
     hideToolbarActions();
 }
 
@@ -1042,8 +988,6 @@ void MainWindow::setBrushInnerRadiusMaximumValue(double maximum)
     t_inner_radius->setMaximum(t_outer_radius->value());
 }
 
-<<<<<<< HEAD
-=======
 void MainWindow::resetModelBrush()
 {
     t_rotationx->setValue(0.0f);
@@ -1053,7 +997,6 @@ void MainWindow::resetModelBrush()
     t_scale->setValue(1.0f);
 }
 
->>>>>>> origin/netix
 void MainWindow::setTerrain_Mode(int index)
 {
     switch(index)
@@ -1113,8 +1056,4 @@ void MainWindow::hideToolbarActions()
 {
     foreach(QAction* action, ui->toolbar3->actions())
         action->setVisible(false);
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> origin/netix

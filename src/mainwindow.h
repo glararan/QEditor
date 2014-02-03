@@ -125,10 +125,7 @@ private:
     QList<QString> mode2Actions;
     QList<QString> mode3Actions;
     QList<QString> mode4Actions;
-<<<<<<< HEAD:src/mainwindow.h
-=======
     QList<QString> mode5Actions;
->>>>>>> origin/netix:src/mainwindow.h
 
     void initMode();
     void showMode(QList<QString>& parentList);
@@ -161,10 +158,8 @@ private slots:
     void setBrushOuterRadius(double value);
     void setBrushInnerRadius(double value);
     void setBrushInnerRadiusMaximumValue(double maximum);
-<<<<<<< HEAD:src/mainwindow.h
-=======
+
     void resetModelBrush();
->>>>>>> origin/netix:src/mainwindow.h
 
     void setTerrain_Mode(int index);
 
