@@ -943,6 +943,14 @@ bool MapChunk::paintTerrain(float x, float z, float flow, TexturePtr texture)
                             if(index < 0 || index >= CHUNK_ARRAY_UC_SIZE || X < 0 || Y < 0 || X >= (MAP_WIDTH / CHUNKS) || Y >= (MAP_HEIGHT / CHUNKS))
                                 continue;
 
+                            if(textureIndex > 0 && world->getPaintMaximumState() && ToFloat(alphaMapsData[textureIndex - 1][index]) >= world->getPaintMaximumAlpha() * 255.0f)
+                                continue;
+
+                            float lossyMultiplier = 1.0f;
+
+                            if(dist > brush->InnerRadius())
+                                lossyMultiplier = 1.0f - ((dist - brush->InnerRadius()) / (brush->OuterRadius() - brush->InnerRadius()));
+
                             switch(brush->BrushTypes().texturing)
                             {
                                 case Brush::TexturingType::Solid:
@@ -952,10 +960,7 @@ bool MapChunk::paintTerrain(float x, float z, float flow, TexturePtr texture)
                                         {
                                             --textureIndex;
 
-                                            //alphaMapsData[textureIndex][index] = ToUChar(qMax(qMin((1.0f - flow) * ToFloat(alphaMapsData[textureIndex][index]) + flow + 0.5f, 255.0f), 0.0f));
-                                            //alphaMapsData[textureIndex][index] = ToUChar(qMax(qMin((1.0f - flow) * ToFloat(alphaMapsData[textureIndex][index]) + (1.0f - flow) + 0.5f, 255.0f), 0.0f));
-                                            //alphaMapsData[textureIndex][index] = ToUChar(qMax(qMin(ToFloat(alphaMapsData[textureIndex][index]) + 2.0f * flow, 255.0f), 0.0f));
-                                            alphaMapsData[textureIndex][index] = ToUChar(qMax(qMin(ToFloat(alphaMapsData[textureIndex][index]) + ((255.0f - ToFloat(alphaMapsData[textureIndex][index])) * flow), 255.0f), 0.0f));
+                                            alphaMapsData[textureIndex][index] = ToUChar(qMax(qMin(ToFloat(alphaMapsData[textureIndex][index]) + (((255.0f - ToFloat(alphaMapsData[textureIndex][index])) * flow) * lossyMultiplier), 255.0f), 0.0f));
 
                                             changing.append(qMakePair<unsigned char, QVector2D>(alphaMapsData[textureIndex][index], QVector2D(X, Y)));
 
@@ -966,7 +971,7 @@ bool MapChunk::paintTerrain(float x, float z, float flow, TexturePtr texture)
                                         {
                                             if(ToFloat(alphaMapsData[i][index]) > 0.0f)
                                             {
-                                                alphaMapsData[i][index] = ToUChar(qMax(qMin(ToFloat(alphaMapsData[i][index]) - ((255.0f - ToFloat(alphaMapsData[i][index])) * flow), 255.0f), 0.0f));
+                                                alphaMapsData[i][index] = ToUChar(qMax(qMin(ToFloat(alphaMapsData[i][index]) - (((255.0f - ToFloat(alphaMapsData[i][index])) * flow) * lossyMultiplier), 255.0f), 0.0f));
 
                                                 changing2.insert(i, qMakePair<unsigned char, QVector2D>(alphaMapsData[i][index], QVector2D(X, Y)));
                                             }
@@ -1073,15 +1078,22 @@ bool MapChunk::paintVertexShading(float x, float z, float flow, QColor& color)
 
                             index *= sizeof(float);
 
+                            float lossyMultiplier = 1.0f;
+
+                            if(dist > brush->InnerRadius())
+                                lossyMultiplier = 1.0f - ((dist - brush->InnerRadius()) / (brush->OuterRadius() - brush->InnerRadius()));
+
                             switch(brush->BrushTypes().vertexShading)
                             {
                                 case Brush::TexturingType::Solid:
                                 default:
                                     {
-                                        vertexShadingData[index]     = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index],     color.redF(),   (255.0f - vertexShadingData[index])     * flow), 255.0f), 0.0f));
-                                        vertexShadingData[index + 1] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 1], color.greenF(), (255.0f - vertexShadingData[index + 1]) * flow), 255.0f), 0.0f));
-                                        vertexShadingData[index + 2] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 2], color.blueF(),  (255.0f - vertexShadingData[index + 2]) * flow), 255.0f), 0.0f));
-                                        vertexShadingData[index + 3] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 3], color.alphaF(), (255.0f - vertexShadingData[index + 3]) * flow), 255.0f), 0.0f));
+                                        vertexShadingData[index]     = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index],     color.redF(),   ((255.0f - vertexShadingData[index])     * flow) * lossyMultiplier), 255.0f), 0.0f));
+                                        vertexShadingData[index + 1] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 1], color.greenF(), ((255.0f - vertexShadingData[index + 1]) * flow) * lossyMultiplier), 255.0f), 0.0f));
+                                        vertexShadingData[index + 2] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 2], color.blueF(),  ((255.0f - vertexShadingData[index + 2]) * flow) * lossyMultiplier), 255.0f), 0.0f));
+
+                                        if(!world->getPaintMaximumState() || (world->getPaintMaximumState() && ToFloat(vertexShadingData[index + 3]) < world->getPaintMaximumAlpha() * 255.0f))
+                                            vertexShadingData[index + 3] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 3], color.alphaF(), ((255.0f - vertexShadingData[index + 3]) * flow) * lossyMultiplier), 255.0f), 0.0f));
 
                                         QVector<unsigned char> dataContainer;
                                         dataContainer.append(vertexShadingData[index]);     // R

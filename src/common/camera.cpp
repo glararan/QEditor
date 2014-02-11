@@ -260,6 +260,20 @@ float Camera::top() const
     return d->m_top;
 }
 
+void Camera::setLock(const bool& lock)
+{
+    Q_D(Camera);
+
+    d->locked = lock;
+}
+
+bool Camera::lock() const
+{
+    Q_D(const Camera);
+
+    return d->locked;
+}
+
 QMatrix4x4 Camera::viewMatrix() const
 {
     Q_D(const Camera);
@@ -384,18 +398,33 @@ QQuaternion Camera::rollRotation(const float& angle) const
 
 void Camera::tilt(const float& angle)
 {
+    Q_D(Camera);
+
+    if(d->locked)
+        return;
+
     QQuaternion q = tiltRotation(angle);
     rotate(q);
 }
 
 void Camera::pan(const float& angle)
 {
+    Q_D(Camera);
+
+    if(d->locked)
+        return;
+
     QQuaternion q = panRotation(-angle);
     rotate(q);
 }
 
 void Camera::pan(const float& angle, const QVector3D& axis)
 {
+    Q_D(Camera);
+
+    if(d->locked)
+        return;
+
     QQuaternion q = panRotation(-angle, axis);
     rotate(q);
 }

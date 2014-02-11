@@ -33,24 +33,17 @@ MapChunk:
     3. voda
 
 discuss features:
-- jeden shader ve World misto xx v MapChunk
-- MapView draw v posloupnosti
-  - terren
-  - getWorldPosition
-  - water
-  - models
-- player camera (first person, third person camera)
+- jeden shader ve World misto xx v MapChunk (netix)
+- player camera (first person[netix], third person camera)
 - prechody mezi chunky
-- skyboxs
+- skyboxs (netix)
 - water display (wireframe, ..)
-- maximum alpha (painting, shading..)
 - zkouska vetsiho rozliseni pro alphamapy (mozna jen floating point?), pro vertex shading stejne(spis floating point)
 - texture scale pro ostatni textury
 - novy tool vybrani plochy
  - posunutí
  - zneviditelneni
  - skopirovani
-- camera lock
 - camera record (myšleno tak, že se naplanuje trasa a kamera po ní pojede)
 
 List pro funkce:
@@ -67,7 +60,6 @@ texture painting
 - smudge: rozmazání
 - blur: přechod
 - border: na okraji se kreslí nějaká další textura
-
 
 voda
 - přidání

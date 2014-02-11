@@ -22,6 +22,7 @@ public:
     , m_right(0.5f)
     , m_bottom(-0.5f)
     , m_top(0.5f)
+    , locked(false)
     , m_viewMatrixDirty(true)
     , m_viewProjectionMatrixDirty(true)
     {
@@ -70,6 +71,8 @@ public:
     float m_right;
     float m_bottom;
     float m_top;
+
+    bool locked;
 
     mutable QMatrix4x4 m_viewMatrix;
     mutable QMatrix4x4 m_projectionMatrix;

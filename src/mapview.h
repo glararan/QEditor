@@ -58,6 +58,8 @@ public:
     void setTerrainMode(eTerrainMode terrainMode) { eTerrain = terrainMode; }
     eTerrainMode terrainMode() const              { return eTerrain; }
 
+    QVector3D getWorldCoordinates(float mouseX, float mouseY);
+
 protected:
     void initializeGL();
     void resizeGL(int w, int h);
@@ -169,6 +171,7 @@ public slots:
     void setTexturingFlow(double flow);
     void setVertexShading(QColor color);
     void setTerrainMaximumHeight(double value);
+    void setPaintMaximumAlpha(double value);
     void setTerrainMode(int mode);
     void setBrushColor(QColor* color, bool outer);
     void setEnvionmentDistance(float value);
@@ -183,6 +186,7 @@ public slots:
     void setModelImpend(double value);
 
     void resetCamera();
+    void lockCamera(bool lock);
 
     void save();
 

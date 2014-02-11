@@ -348,16 +348,13 @@ vec4 shadeTexturedAndLit()
     //diffuseColor += texture(vertexShading, texCoords);
 
     vec4 vertexShadingColor = texture(vertexShading, texCoords);
+    vertexShadingColor.rgb *= vertexShadingColor.a;
     //vertexShadingColor.rgb *= vertexShadingColor.a;
 
     diffuseColor.rgb += vertexShadingColor.rgb;
 
     // non overlay effect
     //diffuseColor = mix(diffuseColor, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
-
-    /// water test
-    //if(worldPosition.z > 256)
-    //    diffuseColor += vec4(0.0, 1.0, 1.0, 0.5);
 
     // Calculate the lighting model, keeping the specular component separate
     vec3 ambientAndDiff, spec;

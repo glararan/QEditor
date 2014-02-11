@@ -153,6 +153,7 @@
     <addaction name="action_Screenshot_upload"/>
     <addaction name="action_Fullscreen"/>
     <addaction name="action_Reset_camera"/>
+    <addaction name="action_Lock_camera"/>
     <addaction name="separator"/>
     <addaction name="action_Test"/>
     <addaction name="separator"/>
@@ -561,6 +562,17 @@
   <action name="action_Screenshot_upload">
    <property name="text">
     <string>&amp;Screenshot + upload</string>
+   </property>
+  </action>
+  <action name="action_Lock_camera">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Lock camera</string>
+   </property>
+   <property name="shortcut">
+    <string>L</string>
    </property>
   </action>
  </widget>

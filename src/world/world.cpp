@@ -23,6 +23,8 @@ World::World(const ProjectFileData& projectFile)
 , modelManager(NULL)
 , terrainMaximumHeight(0.0f)
 , terrainMaximumState(false)
+, paintMaximumAlpha(1.0f)
+, paintMaximumState(false)
 , sunTheta(30.0f)
 , alphaMapSize(MAP_WIDTH / CHUNKS)
 , eDisplay(TexturedAndLit)
@@ -148,7 +150,7 @@ void World::update(float dt)
     // load tiles around + load neighbours
 }
 
-void World::draw(QMatrix4x4 viewportMatrix, QVector2D viewportSize, QMatrix4x4 modelMatrix, float triangles, QVector2D mousePosition, bool drawBrush, bool drawNewModel)
+void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatrix, float triangles, QVector2D mousePosition, bool drawBrush, bool drawNewModel)
 {
     QMatrix4x4 viewMatrix        = camera->viewMatrix();
     QMatrix4x4 modelViewMatrix   = viewMatrix * modelMatrix;
@@ -225,7 +227,7 @@ void World::draw(QMatrix4x4 viewportMatrix, QVector2D viewportSize, QMatrix4x4 m
     }
 
     //get world coord
-    loadWorldCoordinates(viewportMatrix, viewportSize, modelMatrix, camera->viewMatrix(), camera->projectionMatrix(), mousePosition);
+    worldCoordinates = terrain_pos = mapView->getWorldCoordinates(mousePosition.x(), mousePosition.y());
 
     for(int tx = 0; tx < TILES; ++tx)
     {
@@ -904,6 +906,16 @@ void World::setTerrainMaximumState(bool state)
     terrainMaximumState = state;
 }
 
+void World::setPaintMaximumAlpha(float value)
+{
+    paintMaximumAlpha = value;
+}
+
+void World::setPaintMaximumState(bool state)
+{
+    paintMaximumState = state;
+}
+
 void World::setDisplayMode(int displayMode)
 {
     if(displayMode == SimpleWireFrame || displayMode == WorldHeight || displayMode == WorldTexturedWireframed)
@@ -975,32 +987,6 @@ void World::createNeighbours()
             }
         }
     }
-}
-
-void World::loadWorldCoordinates(QMatrix4x4 viewportMatrix, QVector2D viewportSize, QMatrix4x4 model, QMatrix4x4 view, QMatrix4x4 projection, QVector2D mousePosition)
-{
-    float mouseX = mousePosition.x();
-    float mouseY = mousePosition.y();
-
-    if(mouseX < 0 || mouseY < 0 || mouseX > viewportSize.x() || mouseY > viewportSize.y())
-        return;
-
-    QMatrix4x4 modelViewProjectionMatrix = projection * view * model;
-    QMatrix4x4 inverted                  = viewportMatrix * modelViewProjectionMatrix;
-
-    inverted = inverted.inverted();
-
-    float posZ;
-    float posY = viewportSize.y() - mouseY - 1.0f;
-
-    GLfuncs->glReadPixels(MathHelper::toInt(mouseX), MathHelper::toInt(posY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
-
-    QVector4D clickedPointOnScreen(mouseX, posY, 2.0f * posZ - 1.0f, 1.0f);
-    QVector4D clickedPointIn3DOrgn = inverted * clickedPointOnScreen;
-
-    clickedPointIn3DOrgn /= clickedPointIn3DOrgn.w();
-
-    worldCoordinates = clickedPointIn3DOrgn.toVector3DAffine();
 }
 
 void World::test()

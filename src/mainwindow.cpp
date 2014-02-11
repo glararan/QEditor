@@ -38,7 +38,9 @@ MainWindow::MainWindow(QWidget* parent)
 , t_terrain_mode(NULL)
 , t_brush_type(NULL)
 , t_terrain_maxHeight(NULL)
+, t_paint_maxAlpha(NULL)
 , t_terrain_maximum_height(NULL)
+, t_paint_maximum_alpha(NULL)
 , t_rotationx(NULL)
 , t_rotationy(NULL)
 , t_rotationz(NULL)
@@ -133,6 +135,9 @@ MainWindow::~MainWindow()
 
     deleteObject(t_terrain_maxHeight);
     deleteObject(t_terrain_maximum_height);
+
+    deleteObject(t_paint_maxAlpha);
+    deleteObject(t_paint_maximum_alpha);
 
     deleteObject(t_terrain_mode_label);
 
@@ -253,11 +258,12 @@ void MainWindow::openWorld(ProjectFileData projectData)
     // tools - show chunk lines
     connect(ui->action_Show_Chunk_lines, SIGNAL(toggled(bool)), mapView, SLOT(setTurnChunkLines(bool)));
 
-    // tools - texture picker, settings, teleport, reset camera
-    connect(ui->action_Texture_Picker, SIGNAL(triggered()), this,    SLOT(showTexturePicker()));
-    connect(ui->action_Settings,       SIGNAL(triggered()), this,    SLOT(showSettings()));
-    connect(ui->action_Teleport,       SIGNAL(triggered()), this,    SLOT(showTeleport()));
-    connect(ui->action_Reset_camera,   SIGNAL(triggered()), mapView, SLOT(resetCamera()));
+    // tools - texture picker, settings, teleport, reset camera, lock camera
+    connect(ui->action_Texture_Picker, SIGNAL(triggered()),     this,    SLOT(showTexturePicker()));
+    connect(ui->action_Settings,       SIGNAL(triggered()),     this,    SLOT(showSettings()));
+    connect(ui->action_Teleport,       SIGNAL(triggered()),     this,    SLOT(showTeleport()));
+    connect(ui->action_Reset_camera,   SIGNAL(triggered()),     mapView, SLOT(resetCamera()));
+    connect(ui->action_Lock_camera,    SIGNAL(triggered(bool)), mapView, SLOT(lockCamera(bool)));
 
     connect(teleportW, SIGNAL(TeleportTo(QVector3D*)), mapView, SLOT(setCameraPosition(QVector3D*)));
 
@@ -290,6 +296,9 @@ void MainWindow::openWorld(ProjectFileData projectData)
 
     connect(t_terrain_maxHeight,      SIGNAL(stateChanged(int)),    this,    SLOT(setTerrainMaximumHeightState(int)));
     connect(t_terrain_maximum_height, SIGNAL(valueChanged(double)), mapView, SLOT(setTerrainMaximumHeight(double)));
+
+    connect(t_paint_maxAlpha,      SIGNAL(stateChanged(int)),    this,    SLOT(setPaintMaximumAlphaState(int)));
+    connect(t_paint_maximum_alpha, SIGNAL(valueChanged(double)), mapView, SLOT(setPaintMaximumAlpha(double)));
 
     connect(t_outer_radius, SIGNAL(valueChanged(double)), t_outer_radius_value_label, SLOT(setNum(double)));
     connect(t_inner_radius, SIGNAL(valueChanged(double)), t_inner_radius_value_label, SLOT(setNum(double)));
@@ -782,12 +791,24 @@ void MainWindow::initMode()
     t_terrain_maxHeight->setObjectName("t_terrain_maxHeight");
     t_terrain_maxHeight->setStyleSheet("margin:-3px 5px 0 0;");
 
+    t_paint_maxAlpha = new QCheckBox(tr("Maximum alpha:"));
+    t_paint_maxAlpha->setObjectName("t_paint_maxAlpha");
+    t_paint_maxAlpha->setStyleSheet("margin:-3px 5px 0 0;");
+
     t_terrain_maximum_height = new QDoubleSpinBox();
     t_terrain_maximum_height->setDecimals(2);
     t_terrain_maximum_height->setMinimum(MathHelper::toDouble(std::numeric_limits<float>::min()));
     t_terrain_maximum_height->setMaximum(MathHelper::toDouble(std::numeric_limits<float>::max()));
     t_terrain_maximum_height->setObjectName("t_terrain_maximum_height");
     t_terrain_maximum_height->setEnabled(false);
+
+    t_paint_maximum_alpha = new QDoubleSpinBox();
+    t_paint_maximum_alpha->setDecimals(2);
+    t_paint_maximum_alpha->setMinimum(0.0);
+    t_paint_maximum_alpha->setMaximum(1.0);
+    t_paint_maximum_alpha->setSingleStep(0.1);
+    t_paint_maximum_alpha->setObjectName("t_paint_maximum_alpha");
+    t_paint_maximum_alpha->setEnabled(false);
 
     colorW = new QColorDialog();
     colorW->setOption(QColorDialog::NoButtons);
@@ -891,6 +912,8 @@ void MainWindow::initMode()
     addToolbarAction(t_flow_label              , mode2Actions);
     addToolbarAction(t_flow                    , mode2Actions);
     addToolbarAction(t_flow_value_label        , mode2Actions);
+    addToolbarAction(t_paint_maxAlpha          , mode2Actions);
+    addToolbarAction(t_paint_maximum_alpha     , mode2Actions);
 
     // mode3
     addToolbarAction(t_brush_label             , mode3Actions);
@@ -905,6 +928,8 @@ void MainWindow::initMode()
     addToolbarAction(t_flow_label              , mode3Actions);
     addToolbarAction(t_flow                    , mode3Actions);
     addToolbarAction(t_flow_value_label        , mode3Actions);
+    addToolbarAction(t_paint_maxAlpha          , mode3Actions);
+    addToolbarAction(t_paint_maximum_alpha     , mode3Actions);
 
     // mode5
     addToolbarAction(t_reset_transform         , mode5Actions);
@@ -961,6 +986,29 @@ void MainWindow::setTerrainMaximumHeightState(int state)
                 t_terrain_maximum_height->setEnabled(true);
 
                 world->setTerrainMaximumState(true);
+            }
+            break;
+    }
+}
+
+void MainWindow::setPaintMaximumAlphaState(int state)
+{
+    switch(state)
+    {
+        case 0:
+        default:
+            {
+                t_paint_maximum_alpha->setEnabled(false);
+
+                world->setPaintMaximumState(false);
+            }
+            break;
+
+        case 2:
+            {
+                t_paint_maximum_alpha->setEnabled(true);
+
+                world->setPaintMaximumState(true);
             }
             break;
     }

@@ -29,6 +29,8 @@ class Camera : public QObject
     Q_PROPERTY(float bottom READ bottom WRITE setBottom)
     Q_PROPERTY(float top READ top WRITE setTop)
 
+    Q_PROPERTY(bool locked READ lock WRITE setLock)
+
     Q_ENUMS(ProjectionType)
 
 public:
@@ -85,6 +87,9 @@ public:
 
     void setTop(const float& top);
     float top() const;
+
+    void setLock(const bool& lock);
+    bool lock() const;
 
     void resetRotation();
 

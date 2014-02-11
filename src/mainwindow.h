@@ -63,17 +63,11 @@ private:
     QDSlider* t_outer_radius;
     QDSlider* t_inner_radius;
     QDSlider* t_speed;
-    QDSlider* t_rotationx;
-    QDSlider* t_rotationy;
-    QDSlider* t_rotationz;
-    QDSlider* t_impend;
-    QDSlider* t_scale;
 
     QButtonGroup* t_brush;
 
     QPushButton* t_brush_circle;
     QPushButton* t_brush_square;
-    QPushButton* t_reset_transform;
 
     QComboBox* t_terrain_mode;
     QComboBox* t_brush_type;
@@ -93,6 +87,35 @@ private:
     QLabel* t_inner_radius_value_label;
     QLabel* t_speed_label;
     QLabel* t_speed_value_label;
+
+    QList<QPair<QString, QVariant>> t_terrain_mode_0;
+    QList<QPair<QString, QVariant>> t_terrain_mode_1;
+
+    // Editing mode = 2
+    QDSlider* t_flow;
+
+    QCheckBox* t_paint_maxAlpha;
+
+    QDoubleSpinBox* t_paint_maximum_alpha;
+
+    QLabel* t_flow_label;
+    QLabel* t_flow_value_label;
+
+    // Editing mode = 3
+    QColorDialog* colorW;
+
+    // Editing mode = 4
+    WaterWidget* waterW;
+
+    // Editing mode = 5
+    QDSlider* t_rotationx;
+    QDSlider* t_rotationy;
+    QDSlider* t_rotationz;
+    QDSlider* t_impend;
+    QDSlider* t_scale;
+
+    QPushButton* t_reset_transform;
+
     QLabel* t_rotationx_label;
     QLabel* t_rotationx_value_label;
     QLabel* t_rotationy_label;
@@ -103,21 +126,6 @@ private:
     QLabel* t_impend_value_label;
     QLabel* t_scale_label;
     QLabel* t_scale_value_label;
-
-    QList<QPair<QString, QVariant>> t_terrain_mode_0;
-    QList<QPair<QString, QVariant>> t_terrain_mode_1;
-
-    // Editing mode = 2
-    QDSlider* t_flow;
-
-    QLabel* t_flow_label;
-    QLabel* t_flow_value_label;
-
-    // Editing mode = 3
-    QColorDialog* colorW;
-
-    // Editing mode = 4
-    WaterWidget* waterW;
 
     //
     QList<QString> mode0Actions;
@@ -154,6 +162,7 @@ private slots:
     void setFullscreen(bool checked);
 
     void setTerrainMaximumHeightState(int state);
+    void setPaintMaximumAlphaState(int state);
 
     void setBrushOuterRadius(double value);
     void setBrushInnerRadius(double value);

@@ -16,6 +16,7 @@
 
 class MapTile;
 class MapChunk;
+class MapView;
 class WaterChunk;
 class TextureManager;
 
@@ -60,7 +61,7 @@ public:
     void initialize(QOpenGLContext* context, QSize fboSize);
 
     void update(float dt);
-    void draw(QMatrix4x4 viewportMatrix, QVector2D viewportSize, QMatrix4x4 modelMatrix, float triangles, QVector2D mousePosition, bool drawBrush = false, bool drawNewModel = false);
+    void draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatrix, float triangles, QVector2D mousePosition, bool drawBrush = false, bool drawNewModel = false);
 
     bool hasTile(int pX, int pY) const;
 
@@ -115,6 +116,8 @@ public:
     const int getAlphamapSize() const            { return alphaMapSize; }
     const float getTerrainMaximumHeight() const  { return terrainMaximumHeight; }
     const bool getTerrainMaximumState() const    { return terrainMaximumState; }
+    const float getPaintMaximumAlpha() const     { return paintMaximumAlpha; }
+    const bool getPaintMaximumState() const      { return paintMaximumState; }
 
     MapTile* getTileAt(float x, float z) const;
     MapChunk*   getMapChunkAt(const QVector3D& position) const;
@@ -126,6 +129,9 @@ public:
 
     void setTerrainMaximumHeight(float value);
     void setTerrainMaximumState(bool state);
+
+    void setPaintMaximumAlpha(float value);
+    void setPaintMaximumState(bool state);
 
     void setChunkShaderUniform(const char* name, const QVector2D& value);
     void setChunkShaderUniform(const char* name, const QVector4D& value);
@@ -162,6 +168,9 @@ private:
     float terrainMaximumHeight;
     bool  terrainMaximumState;
 
+    float paintMaximumAlpha;
+    bool  paintMaximumState;
+
     // Angle of sun. 0 is directly overhead, 90 to the East, -90 to the West
     float sunTheta;
 
@@ -178,7 +187,6 @@ private:
     void createNeighbours();
 
     // worldCoordinates
-    void loadWorldCoordinates(QMatrix4x4 viewportMatrix, QVector2D viewportSize, QMatrix4x4 model, QMatrix4x4 view, QMatrix4x4 projection, QVector2D mousePosition);
     QVector3D worldCoordinates;
 };
 

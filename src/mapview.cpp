@@ -235,10 +235,6 @@ void MapView::update(float t)
     if(camera_zoom != camera->fieldOfView())
         camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 
-    /// mouse on terrain
-    // getWorldCoordinates can be used to spawn object in middle of screen
-    terrain_pos = world->getWorldCoordinates();
-
     // highlight and select chunk
     if(eMode == Default && altDown)
     {
@@ -398,11 +394,11 @@ void MapView::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
-        world->draw(viewportMatrix, viewportSize, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
+        world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
     else if(eMode == Object)
-        world->draw(viewportMatrix, viewportSize, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
+        world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
     else
-        world->draw(viewportMatrix, viewportSize, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
+        world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
 }
 
 void MapView::resizeGL(int w, int h)
@@ -527,6 +523,11 @@ void MapView::resetCamera()
     tiltAngle = 0.0f;
 }
 
+void MapView::lockCamera(bool lock)
+{
+    camera->setLock(lock);
+}
+
 void MapView::setBrushSpeed(double speed)
 {
     shaping_speed = MathHelper::toFloat(speed);
@@ -582,6 +583,11 @@ void MapView::setVertexShading(QColor color)
 void MapView::setTerrainMaximumHeight(double value)
 {
     world->setTerrainMaximumHeight(MathHelper::toFloat(value));
+}
+
+void MapView::setPaintMaximumAlpha(double value)
+{
+    world->setPaintMaximumAlpha(MathHelper::toFloat(value));
 }
 
 void MapView::setTerrainMode(int mode)
@@ -686,6 +692,28 @@ void MapView::setModelImpend(double value)
     world->getObjectBrush()->impend = value;
 }
 
+QVector3D MapView::getWorldCoordinates(float mouseX, float mouseY)
+{
+    QMatrix4x4 viewMatrix       = camera->viewMatrix();
+    QMatrix4x4 modelViewMatrix  = viewMatrix * modelMatrix;
+    QMatrix4x4 modelViewProject = camera->projectionMatrix() * modelViewMatrix;
+    QMatrix4x4 inverted         = viewportMatrix * modelViewProject;
+
+    inverted = inverted.inverted();
+
+    float posZ;
+    float posY = viewportSize.y() - mouseY - 1.0f;
+
+    world->getGLFunctions()->glReadPixels(MathHelper::toInt(mouseX), MathHelper::toInt(posY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &posZ);
+
+    QVector4D clickedPointOnScreen(mouseX, posY, 2.0f * posZ - 1.0f, 1.0f);
+    QVector4D clickedPointIn3DOrgn = inverted * clickedPointOnScreen;
+
+    clickedPointIn3DOrgn /= clickedPointIn3DOrgn.w();
+
+    return clickedPointIn3DOrgn.toVector3DAffine();
+}
+
 void MapView::save()
 {
     world->save();
@@ -700,41 +728,65 @@ void MapView::keyPressEvent(QKeyEvent* e)
             break;
 
         case Qt::Key_W:
-            setForwardSpeed(speed * speed_mult);
+            {
+                if(!camera->lock())
+                    setForwardSpeed(speed * speed_mult);
+            }
             break;
 
         case Qt::Key_S:
-            setForwardSpeed(-speed * speed_mult);
+            {
+                if(!camera->lock())
+                    setForwardSpeed(-speed * speed_mult);
+            }
             break;
 
         case Qt::Key_A:
-            setSideSpeed(-speed * speed_mult);
+            {
+                if(!camera->lock())
+                    setSideSpeed(-speed * speed_mult);
+            }
             break;
 
         case Qt::Key_D:
-            setSideSpeed(speed * speed_mult);
+            {
+                if(!camera->lock())
+                    setSideSpeed(speed * speed_mult);
+            }
             break;
 
         case Qt::Key_Q:
             {
-                setForwardSpeed(speed * speed_mult);
-                setSideSpeed(-speed * speed_mult);
+                if(!camera->lock())
+                {
+                    setForwardSpeed(speed * speed_mult);
+                    setSideSpeed(-speed * speed_mult);
+                }
             }
             break;
 
         case Qt::Key_E:
             {
-                setForwardSpeed(speed * speed_mult);
-                setSideSpeed(speed * speed_mult);
+                if(!camera->lock())
+                {
+                    setForwardSpeed(speed * speed_mult);
+                    setSideSpeed(speed * speed_mult);
+                }
             }
             break;
 
         case Qt::Key_Space:
-            setVerticalSpeed(speed * speed_mult);
+            {
+                if(!camera->lock())
+                    setVerticalSpeed(speed * speed_mult);
+            }
             break;
 
         case Qt::Key_X:
-            setVerticalSpeed(-speed * speed_mult);
+            {
+                if(!camera->lock())
+                    setVerticalSpeed(-speed * speed_mult);
+            }
             break;
 
         case Qt::Key_Shift:
@@ -795,25 +847,37 @@ void MapView::keyReleaseEvent(QKeyEvent* e)
             break;
         case Qt::Key_W:
         case Qt::Key_S:
-            setForwardSpeed(0.0f);
+            {
+                if(!camera->lock())
+                    setForwardSpeed(0.0f);
+            }
             break;
 
         case Qt::Key_D:
         case Qt::Key_A:
-            setSideSpeed(0.0f);
+            {
+                if(!camera->lock())
+                    setSideSpeed(0.0f);
+            }
             break;
 
         case Qt::Key_Q:
         case Qt::Key_E:
             {
-                setForwardSpeed(0.0f);
-                setSideSpeed(0.0f);
+                if(!camera->lock())
+                {
+                    setForwardSpeed(0.0f);
+                    setSideSpeed(0.0f);
+                }
             }
             break;
 
         case Qt::Key_Space:
         case Qt::Key_X:
-            setVerticalSpeed(0.0f);
+            {
+                if(!camera->lock())
+                    setVerticalSpeed(0.0f);
+            }
             break;
 
         case Qt::Key_Shift:
@@ -849,7 +913,7 @@ void MapView::mousePressEvent(QMouseEvent* e)
     if(e->button() == Qt::RightButton)
         rightButtonPressed = true;
 
-    if(leftButtonPressed && rightButtonPressed)
+    if(leftButtonPressed && rightButtonPressed && !camera->lock())
         setForwardSpeed(speed * speed_mult);
 
     mousePos = prevMousePos = e->pos();
@@ -885,7 +949,7 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
     float dx =  0.4f * (mousePos.x() - prevMousePos.x());
     float dy = -0.4f * (mousePos.y() - prevMousePos.y());
 
-    if((leftButtonPressed || rightButtonPressed) && !shiftDown && !altDown && !ctrlDown)
+    if((leftButtonPressed || rightButtonPressed) && !shiftDown && !altDown && !ctrlDown && !camera->lock())
     {
         pan(dx);
         tilt(dy);
