@@ -14,6 +14,7 @@
 
 #include "material.h"
 #include "world.h"
+#include "imesh.h"
 
 class MapChunk
 {
@@ -84,12 +85,7 @@ private:
     World* world;
 
     /// Terrain
-    QOpenGLVertexArrayObject vao;
-    QOpenGLBuffer            patchBuffer;
-
-    QVector<float> positionData;
-
-    int patchCount;
+    IMesh Mesh;
 
     ChunkMaterial* chunkMaterial;
 

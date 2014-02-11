@@ -2,6 +2,7 @@
 #include <qopenglfunctions_3_1.h>
 
 IModel::IModel(IModelManager *modelManager, int index) :
+    lastShader(0),
     animation_state(0),
     animations_enabled(true),
     texture_manager(modelManager->getTextureManager()),
@@ -15,24 +16,6 @@ IModel::IModel(IModelManager *modelManager, int index) :
     }
     m_funcs->initializeOpenGLFunctions();
 
-    m_shader = new QOpenGLShaderProgram();
-    if(!initializeShaders())
-        exit(-1);
-    m_shader->bind();
-
-    m_shader->setUniformValue("qt_lPosition",Light.position);
-    m_shader->setUniformValue("qt_lAmbient",Light.ambient);
-    m_shader->setUniformValue("qt_lDiffuse",Light.diffuse);
-    m_shader->setUniformValue("qt_lSpecular",Light.specular);
-    m_shader->setUniformValue("diffuseTexture",0);
-
-    IMeshes *meshes = model_interface->getMeshes();
-    for(int i = 0; i < meshes->size(); ++i)
-    {
-        IMesh *mesh = meshes->at(i);
-        IMeshes::createAttributeArray(m_shader,mesh);
-    }
-
     if(model_interface->hasAnimations())
         animation_state = new IAnimationState(model_interface->getAnimations());
 }
@@ -40,22 +23,26 @@ IModel::IModel(IModelManager *modelManager, int index) :
 IModel::~IModel()
 {
     delete animation_state;
-    delete m_shader;
 }
 
-void IModel::draw(IPipeline *Pipeline)
+void IModel::draw(QOpenGLShaderProgram *shader)
 {
-    m_shader->bind();
-    Pipeline->updateMatrices(m_shader);
+    createAttributeArray(shader);
+
+    shader->setUniformValue("qt_lPosition",Light.position);
+    shader->setUniformValue("qt_lAmbient",Light.ambient);
+    shader->setUniformValue("qt_lDiffuse",Light.diffuse);
+    shader->setUniformValue("qt_lSpecular",Light.specular);
+    shader->setUniformValue("diffuseTexture",0);
 
     if(model_interface->hasAnimations() && animations_enabled)
     {
-        m_shader->setUniformValue("animationEnabled",true);
-        m_shader->setUniformValueArray("boneMatrix",animation_state->getTransforms().data(),100);
+        shader->setUniformValue("animationEnabled",true);
+        shader->setUniformValueArray("boneMatrix",animation_state->getTransforms().data(),100);
     }
     else
     {
-        m_shader->setUniformValue("animationEnabled",false);
+        shader->setUniformValue("animationEnabled",false);
     }
 
     IMeshes *meshes = model_interface->getMeshes();
@@ -63,29 +50,28 @@ void IModel::draw(IPipeline *Pipeline)
     {
         IMesh *mesh = meshes->at(i);
 
-        m_shader->setUniformValue("qt_mAmbient",mesh->mAmbient);
-        m_shader->setUniformValue("qt_mDiffuse",mesh->mDiffuse);
-        m_shader->setUniformValue("qt_mSpecular",mesh->mSpecular);
-        m_shader->setUniformValue("qt_Shininess",mesh->shininess);
-        m_shader->setUniformValue("qt_Opacity",mesh->opacity);
+        shader->setUniformValue("qt_mAmbient",mesh->getMeshMaterial()->mAmbient);
+        shader->setUniformValue("qt_mDiffuse",mesh->getMeshMaterial()->mDiffuse);
+        shader->setUniformValue("qt_mSpecular",mesh->getMeshMaterial()->mSpecular);
+        shader->setUniformValue("qt_Shininess",mesh->getMeshMaterial()->shininess);
+        shader->setUniformValue("qt_Opacity",mesh->getMeshMaterial()->opacity);
 
-        m_shader->setUniformValue("hasDiffuse",mesh->hasDiffuse);
-        if(mesh->hasDiffuse)
+        shader->setUniformValue("hasDiffuse",mesh->getMeshTextures()->hasDiffuseTexture);
+        if(mesh->getMeshTextures()->hasDiffuseTexture)
         {
             m_funcs->glActiveTexture(GL_TEXTURE0);
-            texture_manager->getTexture(mesh->diffuseIndex)->bind();
+            texture_manager->getTexture(mesh->getMeshTextures()->diffuseTextureIndex)->bind();
             texture_manager->getSampler()->bind(0);
         }
 
-        if(mesh->opacity != 1.0f)
+        if(mesh->getMeshMaterial()->opacity != 1.0f)
         {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
-        mesh->getVertexArrayObject()->bind();
-        mesh->getIndexBuffer()->bind();
-        glDrawElements(GL_TRIANGLES, mesh->numFaces, GL_UNSIGNED_INT, 0);
-        if(mesh->opacity != 1.0f)
+        mesh->bind();
+        glDrawElements(GL_TRIANGLES, mesh->getNumFaces(), GL_UNSIGNED_INT, 0);
+        if(mesh->getMeshMaterial()->opacity != 1.0f)
         {
             glDisable(GL_BLEND);
         }
@@ -117,24 +103,11 @@ IAnimationState *IModel::getAnimationState()
     return animation_state;
 }
 
-bool IModel::initializeShaders()
+void IModel::createAttributeArray(QOpenGLShaderProgram *shader)
 {
-    if(!m_shader->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/data/shaders/model.vert"))
-    {
-        qDebug() << QObject::tr("Could not compile vertex shader. Log:") << m_shader->log();
-        return false;
-    }
+    if(lastShader == shader)
+        return;
 
-    if(!m_shader->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/data/shaders/model.frag"))
-    {
-        qDebug() << QObject::tr("Could not compile fragment shader. Log:") << m_shader->log();
-        return false;
-    }
-
-    if(!m_shader->link())
-    {
-        qDebug() << QObject::tr("Could not link shader program. Log:") << m_shader->log();
-        return false;
-    }
-    return true;
+    model_interface->getMeshes()->createAttributeArray(shader);
+    lastShader = shader;
 }

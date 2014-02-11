@@ -16,7 +16,7 @@ public:
     IModel(IModelManager *modelManager, int index);
     ~IModel();
 
-    void draw(IPipeline *Pipeline);
+    void draw(QOpenGLShaderProgram *shader);
     bool isAnimationEnabled();
     void enableAnimations();
     void disableAnimations();
@@ -26,7 +26,7 @@ public:
 
 private:
     QOpenGLFunctions_3_1 *m_funcs;
-    QOpenGLShaderProgram *m_shader;
+    QOpenGLShaderProgram *lastShader;
     ITextureManager *texture_manager;
     IModelInterface *model_interface;
     IAnimationState *animation_state;
@@ -34,7 +34,7 @@ private:
     ILight Light;
 
 private:
-    bool initializeShaders();
+    void createAttributeArray(QOpenGLShaderProgram *shader);
 };
 
 #endif // IMODEL_H

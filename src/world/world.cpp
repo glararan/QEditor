@@ -58,6 +58,7 @@ World::~World()
     delete modelManager;
     delete objectBrush;
     delete possibleModel;
+    delete modelShader;
 }
 
 void World::deleteMe()
@@ -117,6 +118,16 @@ void World::initialize(QOpenGLContext* context, QSize fboSize)
         }
     }
 
+    modelShader = new QOpenGLShaderProgram();
+    if(!modelShader->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/data/shaders/model.vert"))
+        qCritical() << QObject::tr("Could not compile vertex shader. Log:") << modelShader->log();
+
+    if(!modelShader->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/data/shaders/model.frag"))
+        qCritical() << QObject::tr("Could not compile fragment shader. Log:") << modelShader->log();
+
+    if(!modelShader->link())
+        qCritical() << QObject::tr("Could not link shader program. Log:") << modelShader->log();
+
     createNeighbours();
 }
 
@@ -130,6 +141,7 @@ void World::update(float dt)
         {
             if(tileLoaded(tx, ty))
             {
+                mapTiles[tx][ty].tile->updateModelHeight();
                 for(int cx = 0; cx < CHUNKS; ++cx)
                 {
                     for(int cy = 0; cy < CHUNKS; ++cy)
@@ -255,7 +267,9 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
         Pipeline.rotateY(getObjectBrush()->rotation_y * 360.0f);
         Pipeline.rotateZ(getObjectBrush()->rotation_z * 360.0f);
 
-        possibleModel->draw(&Pipeline);
+        modelShader->bind();
+        Pipeline.updateMatrices(modelShader);
+        possibleModel->draw(modelShader);
     }
 
     //material->bind();

@@ -56,6 +56,7 @@ public:
     void update(qreal time);
 
     void insertModel(MapObject* object);
+    void updateModelHeight();
 
     bool isTile(int pX, int pY);
 

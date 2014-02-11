@@ -137,7 +137,12 @@ void MapTile::drawObjects(const float& distance, const QVector3D& camera, QMatri
         Pipeline.rotateZ(rotation.z() * 360.0f);
 
         if(mapObject->model)
-            mapObject->model->draw(&Pipeline);
+        {
+            QOpenGLShaderProgram* shader = world->getModelShader();
+            shader->bind();
+            Pipeline.updateMatrices(shader);
+            mapObject->model->draw(shader);
+        }
     }
 }
 
@@ -180,15 +185,6 @@ void MapTile::drawWater(const float& distance, const QVector3D& camera)
 void MapTile::update(qreal time)
 {
     Q_UNUSED(time);
-
-    for(int i = 0; i < objects.size(); ++i)
-    {
-        MapObject* mapObject = objects.at(i);
-
-        QVector3D position = mapObject->translate;
-
-        mapObject->translate.setY(getHeight(position.x(), position.z()));
-    }
 }
 
 MapChunk* MapTile::getChunk(int x, int y)
@@ -286,6 +282,18 @@ void MapTile::test()
 void MapTile::insertModel(MapObject *object)
 {
     objects.push_back(object);
+}
+
+void MapTile::updateModelHeight()
+{
+    for(int i = 0; i < objects.size(); ++i)
+    {
+        MapObject* mapObject = objects.at(i);
+
+        QVector3D position = mapObject->translate;
+
+        mapObject->translate.setY(getHeight(position.x(), position.z()));
+    }
 }
 
 MapChunk *MapTile::getChunkAt(float x, float z)

@@ -26,7 +26,11 @@ private:
     IBones *loadBones(const aiScene *scene);
     IAnimation *loadAnimation(const aiAnimation *ai_animation, int index);
     IMesh *loadMesh(aiMesh *ai_mesh, aiMaterial *ai_material ,int index);
+    void loadMaterial(aiMaterial *ai_material, IMesh *meshTarget);
     void buildSkeleton(aiNode *current, IBone *parent);
+
+    static void loadTextures(aiMaterial *ai_material, aiTextureType type, int &index, bool &succes, QString filePath, ITextureManager *textureManager);
+    static void addWeightData(QVector4D * boneIdTarget, QVector4D * weightTarget, float id, float w);
     static QMatrix4x4 getMatrix(const aiMatrix4x4 *m);
 
 private:

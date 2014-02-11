@@ -12,9 +12,6 @@
 
 MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 : world(mWorld)
-, patchBuffer(QOpenGLBuffer::VertexBuffer)
-, patchCount(NULL)
-, positionData(NULL)
 , terrainSampler(tile->terrainSampler.data())
 , terrainData(new Texture(QOpenGLTexture::Target2D))
 , vertexShadingMap(NULL)
@@ -114,9 +111,6 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 
 MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // File based MapChunk
 : world(mWorld)
-, patchBuffer(QOpenGLBuffer::VertexBuffer)
-, patchCount(NULL)
-, positionData(NULL)
 , terrainSampler(tile->terrainSampler.data())
 , terrainData(new Texture(QOpenGLTexture::Target2D))
 , vertexShadingMap(NULL)
@@ -275,9 +269,6 @@ MapChunk::~MapChunk()
 
         alphaMapsData[i] = NULL;
     }*/
-
-    patchBuffer.destroy();
-    vao.destroy();
 }
 
 void MapChunk::initialize()
@@ -289,9 +280,9 @@ void MapChunk::initialize()
     const int xDivisions = trianglesPerHeightSample * MAP_WIDTH  / CHUNKS / maxTessellationLevel;
     const int zDivisions = trianglesPerHeightSample * MAP_HEIGHT / CHUNKS / maxTessellationLevel;
 
-    patchCount = xDivisions * zDivisions;
+    int patchCount = xDivisions * zDivisions;
 
-    positionData.resize(2 * patchCount); // 2 floats per vertex
+    QVector<float> positionData(2 * patchCount); // 2 floats per vertex
 
     qDebug() << QObject::tr("Total number of patches for mapchunk =") << patchCount;
 
@@ -312,24 +303,9 @@ void MapChunk::initialize()
         }
     }
 
-    patchBuffer.create();
-    patchBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    patchBuffer.bind();
-    patchBuffer.allocate(positionData.data(), positionData.size() * sizeof(float));
-    patchBuffer.release();
-
-    /// Create a VAO for this "object"
-    vao.create();
-    {
-        QOpenGLVertexArrayObject::Binder binder(&vao);
-        QOpenGLShaderProgramPtr shader = chunkMaterial->shader();
-
-        shader->bind();
-        patchBuffer.bind();
-
-        shader->enableAttributeArray("vertexPosition");
-        shader->setAttributeBuffer("vertexPosition", GL_FLOAT, 0, 2);
-    }
+    Mesh.createVertexArrayObject();
+    Mesh.createBuffer(IMesh::Vertices, positionData.data(), positionData.size() * sizeof(float));
+    Mesh.setNumFaces(patchCount);
 
     /// Default shader values
     QOpenGLShaderProgramPtr shader2 = chunkMaterial->shader();
@@ -387,10 +363,10 @@ void MapChunk::draw()
     {
         // Render the quad as a patch
         {
-            QOpenGLVertexArrayObject::Binder binder(&vao);
+            Mesh.bind();
+            Mesh.createAttributeArray(IMesh::Vertices,shader.data(),"vertexPosition",GL_FLOAT,0,2);
             shader->setPatchVertexCount(1);
-
-            world->getGLFunctions()->glDrawArrays(GL_PATCHES, 0, patchCount);
+            world->getGLFunctions()->glDrawArrays(GL_PATCHES, 0, Mesh.getNumFaces());
         }
     }
 }

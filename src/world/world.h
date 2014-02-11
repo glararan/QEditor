@@ -111,6 +111,7 @@ public:
     ObjectBrush*               getObjectBrush()    { return objectBrush; }
     TextureManager*            getTextureManager() { return textureManager; }
     IModelManager*             getModelManager()   { return modelManager; }
+    QOpenGLShaderProgram*      getModelShader()   { return modelShader; }
 
     const ProjectFileData getProjectData() const { return projectData; }
     const int getAlphamapSize() const            { return alphaMapSize; }
@@ -180,6 +181,8 @@ private:
     QStringList     eDisplayNames;
 
     QOpenGLFunctions_4_2_Core* GLfuncs;
+
+    QOpenGLShaderProgram* modelShader;
 
     ProjectFileData projectData;
 
