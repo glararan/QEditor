@@ -428,11 +428,12 @@ void MapView::resizeGL(int w, int h)
     viewportMatrix.setColumn(2, QVector4D(0.0f, 0.0f, 1.0f, 0.0f));
     viewportMatrix.setColumn(3, QVector4D(w2, h2, 0.0f, 1.0f));
 
-    // We need the viewport size to calculate tessellation levels
-    world->setChunkShaderUniform("viewportSize", viewportSize);
+    QOpenGLShaderProgram* shader = world->getTerrainShader();
+    shader->bind();
 
-    // The geometry shader also needs the viewport matrix
-    world->setChunkShaderUniform("viewportMatrix", viewportMatrix);
+    // We need the viewport size to calculate tessellation levels and the geometry shader also needs the viewport matrix
+    shader->setUniformValue("viewportSize", viewportSize);
+    shader->setUniformValue("viewportMatrix", viewportMatrix);
 }
 
 void MapView::SpeedMultiplier(float multiplier)
@@ -623,8 +624,11 @@ void MapView::setEnvionmentDistance(float value)
 
     app().setSetting("environmentDistance", farPlane);
 
-    world->setChunkShaderUniform("fog.minDistance", farPlane / 2);
-    world->setChunkShaderUniform("fog.maxDistance", farPlane - 32.0f);
+    QOpenGLShaderProgram* shader = world->getTerrainShader();
+    shader->bind();
+
+    shader->setUniformValue("fog.minDistance", farPlane / 2);
+    shader->setUniformValue("fog.maxDistance", farPlane - 32.0f);
 
     camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 }
@@ -633,28 +637,36 @@ void MapView::setTextureScaleOption_(int option)
 {
     app().setSetting("textureScaleOption", option);
 
-    world->setChunkShaderUniform("textureScaleOption", option);
+    QOpenGLShaderProgram* shader = world->getTerrainShader();
+    shader->bind();
+    shader->setUniformValue("textureScaleOption", option);
 }
 
 void MapView::setTextureScaleFar(float value)
 {
     app().setSetting("textureScaleFar", value);
 
-    world->setChunkShaderUniform("textureScaleFar", value);
+    QOpenGLShaderProgram* shader = world->getTerrainShader();
+    shader->bind();
+    shader->setUniformValue("textureScaleFar", value);
 }
 
 void MapView::setTextureScaleNear(float value)
 {
     app().setSetting("textureScaleNear", value);
 
-    world->setChunkShaderUniform("textureScaleNear", value);
+    QOpenGLShaderProgram* shader = world->getTerrainShader();
+    shader->bind();
+    shader->setUniformValue("textureScaleNear", value);
 }
 
 void MapView::setTurnChunkLines(bool on)
 {
     app().setSetting("chunkLines", on);
 
-    world->setChunkShaderUniform("chunkLines", on);
+    QOpenGLShaderProgram* shader = world->getTerrainShader();
+    shader->bind();
+    shader->setUniformValue("chunkLines", on);
 }
 
 void MapView::setModelRotationX(double value)

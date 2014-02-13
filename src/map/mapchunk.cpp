@@ -17,6 +17,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 , vertexShadingMap(NULL)
 , displaySubroutines(world->DisplayModeCount)
 , highlight(false)
+, selected(false)
 , bottomNeighbour(NULL)
 , leftNeighbour(NULL)
 , chunkX(x)
@@ -26,13 +27,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 , chunkBaseX((tile->coordX * TILESIZE) + baseX)
 , chunkBaseY((tile->coordY * TILESIZE) + baseY)
 {
-    chunkMaterial = new ChunkMaterial();
-    chunkMaterial->setShaders(":/data/shaders/qeditor.vert",
-                              ":/data/shaders/qeditor.tcs",
-                              ":/data/shaders/qeditor.tes",
-                              ":/data/shaders/qeditor.geom",
-                              ":/data/shaders/qeditor.frag");
-
+    chunkMaterial = new Material();
     /// Textures
     if(!world->getTextureManager()->hasTexture("grassTexture", "textures/grass.png"))
         world->getTextureManager()->loadTexture("grassTexture", "textures/grass.png");
@@ -116,6 +111,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
 , vertexShadingMap(NULL)
 , displaySubroutines(world->DisplayModeCount)
 , highlight(false)
+, selected(false)
 , bottomNeighbour(NULL)
 , leftNeighbour(NULL)
 , chunkX(x)
@@ -125,14 +121,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
 , chunkBaseX((tile->coordX * TILESIZE) + baseX)
 , chunkBaseY((tile->coordY * TILESIZE) + baseY)
 {
-    chunkMaterial = new ChunkMaterial();
-    chunkMaterial->setShaders(":/data/shaders/qeditor.vert",
-                              ":/data/shaders/qeditor.tcs",
-                              ":/data/shaders/qeditor.tes",
-                              ":/data/shaders/qeditor.geom",
-                              ":/data/shaders/qeditor.frag");
-    //chunkMaterial->link();
-
+    chunkMaterial = new Material();
     // Load from file
     if(file.isOpen())
     {
@@ -306,34 +295,6 @@ void MapChunk::initialize()
     Mesh.createVertexArrayObject();
     Mesh.createBuffer(IMesh::Vertices, positionData.data(), positionData.size() * sizeof(float));
     Mesh.setNumFaces(patchCount);
-
-    /// Default shader values
-    QOpenGLShaderProgramPtr shader2 = chunkMaterial->shader();
-    shader2->bind();
-
-    // Get subroutine indices
-    for(int i = 0; i < world->DisplayModeCount; ++i)
-        displaySubroutines[i] = world->getGLFunctions()->glGetSubroutineIndex(shader2->programId(), GL_FRAGMENT_SHADER, world->displayName(i).toLatin1());
-
-    shader2->setUniformValue("line.width", 0.2f);
-    shader2->setUniformValue("line.color", QVector4D(0.17f, 0.50f, 1.0f, 1.0f)); // blue
-
-    shader2->setUniformValue("baseX", chunkBaseX);
-    shader2->setUniformValue("baseY", chunkBaseY);
-
-    shader2->setUniformValue("chunkX", chunkX);
-    shader2->setUniformValue("chunkY", chunkY);
-
-    shader2->setUniformValue("chunkLines", app().getSetting("chunkLines", false).toBool());
-
-    shader2->setUniformValue("textureScaleOption", app().getSetting("textureScaleOption", 0).toInt());
-    shader2->setUniformValue("textureScaleFar",    app().getSetting("textureScaleFar",    0.4f).toFloat());
-    shader2->setUniformValue("textureScaleNear",   app().getSetting("textureScaleNear",   0.4f).toFloat());
-
-    // Set the fog parameters
-    shader2->setUniformValue("fog.color"      , QVector4D(0.65f, 0.77f, 1.0f, 1.0f));
-    shader2->setUniformValue("fog.minDistance", app().getSetting("environmentDistance", 256.0f).toFloat() / 2.0f);
-    shader2->setUniformValue("fog.maxDistance", app().getSetting("environmentDistance", 256.0f).toFloat() - 32.0f);
 }
 
 void MapChunk::test()
@@ -349,12 +310,28 @@ void MapChunk::test()
     chunkMaterial->setTextureUnitConfiguration(0, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));*/
 }
 
-void MapChunk::draw()
+void MapChunk::draw(QOpenGLShaderProgram* shader)
 {
-    chunkMaterial->bind();
+    chunkMaterial->bind(shader);
 
-    QOpenGLShaderProgramPtr shader = chunkMaterial->shader();
-    shader->bind();
+    shader->setUniformValue("highlight", highlight);
+    shader->setUniformValue("selected", selected);
+
+    // Get subroutine indices
+    for(int i = 0; i < world->DisplayModeCount; ++i)
+        displaySubroutines[i] = world->getGLFunctions()->glGetSubroutineIndex(shader->programId(), GL_FRAGMENT_SHADER, world->displayName(i).toLatin1());
+
+    shader->setUniformValue("baseX", chunkBaseX);
+    shader->setUniformValue("baseY", chunkBaseY);
+
+    shader->setUniformValue("chunkX", chunkX);
+    shader->setUniformValue("chunkY", chunkY);
+
+    shader->setUniformValue("chunkLines", app().getSetting("chunkLines", false).toBool());
+
+    shader->setUniformValue("textureScaleOption", app().getSetting("textureScaleOption", 0).toInt());
+    shader->setUniformValue("textureScaleFar",    app().getSetting("textureScaleFar",    0.4f).toFloat());
+    shader->setUniformValue("textureScaleNear",   app().getSetting("textureScaleNear",   0.4f).toFloat());
 
     // Set the fragment shader display mode subroutine
     world->getGLFunctions()->glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &getDisplaySubroutines());
@@ -364,7 +341,7 @@ void MapChunk::draw()
         // Render the quad as a patch
         {
             Mesh.bind();
-            Mesh.createAttributeArray(IMesh::Vertices,shader.data(),"vertexPosition",GL_FLOAT,0,2);
+            Mesh.createAttributeArray(IMesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 2);
             shader->setPatchVertexCount(1);
             world->getGLFunctions()->glDrawArrays(GL_PATCHES, 0, Mesh.getNumFaces());
         }
@@ -1235,11 +1212,14 @@ void MapChunk::setHighlight(bool on)
         return;
 
     highlight = on;
+}
 
-    QOpenGLShaderProgramPtr shader = chunkMaterial->shader();
-    shader->bind();
+void MapChunk::setSelected(bool on)
+{
+    if(selected == on)
+        return;
 
-    shader->setUniformValue("highlight", highlight);
+    selected = on;
 }
 
 void MapChunk::save(MCNK* chunk)

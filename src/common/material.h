@@ -58,19 +58,7 @@ public:
     Material();
     ~Material();
 
-    void bind();
-
-    void setShaders(const QString& vertexShader, const QString& fragmentShader);
-    void setShaders(const QString& vertexShader, const QString& geometryShader, const QString& fragmentShader);
-    void setShaders(const QString& vertexShader,
-                    const QString& tessellationControlShader,
-                    const QString& tessellationEvaluationShader,
-                    const QString& geometryShader,
-                    const QString& fragmentShader);
-
-    void setShader(const QOpenGLShaderProgramPtr& shader);
-
-    QOpenGLShaderProgramPtr shader() const { return m_shader; }
+    void bind(QOpenGLShaderProgram *shader);
 
     void setTextureUnitConfiguration(GLuint unit, TexturePtr texture, SamplerPtr sampler);
     void setTextureUnitConfiguration(GLuint unit, TexturePtr texture, SamplerPtr sampler, const QByteArray& uniformName);
@@ -87,9 +75,6 @@ public:
     GLuint frameBufferUnitConfiguration(GLuint unit) const;
 
 private:
-    // For now we assume that we own the shader
-    /** \todo Allow this to use reference to non-owned shader */
-    QOpenGLShaderProgramPtr m_shader;
 
     // This map contains the configuration for the texture units
     QMap<GLuint, TextureUnitConfiguration> m_unitConfigs;
@@ -104,22 +89,8 @@ private:
     QMap<GLuint, QByteArray> m_FramebufferByteUnitUniforms;
 
     QOpenGLFunctions_3_1* m_funcs;
-
-    friend class ChunkMaterial;
 };
 
 typedef QSharedPointer<Material> MaterialPtr;
-
-class ChunkMaterial : public Material
-{
-public:
-    ChunkMaterial();
-    ~ChunkMaterial();
-
-    void bind();
-    void link();
-};
-
-typedef QSharedPointer<ChunkMaterial> ChunkMaterialPtr;
 
 #endif // MATERIAL_H

@@ -111,7 +111,9 @@ public:
     ObjectBrush*               getObjectBrush()    { return objectBrush; }
     TextureManager*            getTextureManager() { return textureManager; }
     IModelManager*             getModelManager()   { return modelManager; }
-    QOpenGLShaderProgram*      getModelShader()   { return modelShader; }
+    QOpenGLShaderProgram*      getModelShader()    { return modelShader; }
+    QOpenGLShaderProgram*      getTerrainShader()  { return terrainShader; }
+    QOpenGLShaderProgram*      getWaterShader()    { return waterShader; }
 
     const ProjectFileData getProjectData() const { return projectData; }
     const int getAlphamapSize() const            { return alphaMapSize; }
@@ -133,14 +135,6 @@ public:
 
     void setPaintMaximumAlpha(float value);
     void setPaintMaximumState(bool state);
-
-    void setChunkShaderUniform(const char* name, const QVector2D& value);
-    void setChunkShaderUniform(const char* name, const QVector4D& value);
-    void setChunkShaderUniform(const char* name, const QMatrix4x4& value);
-    void setChunkShaderUniform(const char* name, float value);
-    void setChunkShaderUniform(const char* name, int value);
-
-    MaterialPtr material;
 
     QVector3D getWorldCoordinates();
 
@@ -183,6 +177,8 @@ private:
     QOpenGLFunctions_4_2_Core* GLfuncs;
 
     QOpenGLShaderProgram* modelShader;
+    QOpenGLShaderProgram* terrainShader;
+    QOpenGLShaderProgram* waterShader;
 
     ProjectFileData projectData;
 

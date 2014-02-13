@@ -4,9 +4,6 @@
 
 WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX, int tileY)
 : world(mWorld)
-, patchBuffer(QOpenGLBuffer::VertexBuffer)
-, patchCount(NULL)
-, positionData(NULL)
 , waterSampler(sampler)
 , waterSurface(new Texture(QOpenGLTexture::Target2D))
 , data(false)
@@ -17,12 +14,7 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
 , chunkBaseX((tileX * TILESIZE) + baseX)
 , chunkBaseY((tileY * TILESIZE) + baseY)
 {
-    chunkMaterial = new ChunkMaterial();
-    chunkMaterial->setShaders(":/data/shaders/qeditor.vert",
-                              ":/data/shaders/qeditor.tcs",
-                              ":/data/shaders/qeditor.tes",
-                              ":/data/shaders/qeditor.geom",
-                              ":/data/shaders/qeditor_water.frag");
+    chunkMaterial = new Material();
 
     /// Set Water texture
     world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture1);
@@ -56,9 +48,6 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
 
 WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX, int tileY, QFile& file)
 : world(mWorld)
-, patchBuffer(QOpenGLBuffer::VertexBuffer)
-, patchCount(NULL)
-, positionData(NULL)
 , waterSampler(sampler)
 , waterSurface(new Texture(QOpenGLTexture::Target2D))
 , data(false)
@@ -69,13 +58,7 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
 , chunkBaseX((tileX * TILESIZE) + baseX)
 , chunkBaseY((tileY * TILESIZE) + baseY)
 {
-    chunkMaterial = new ChunkMaterial();
-    chunkMaterial->setShaders(":/data/shaders/qeditor.vert",
-                              ":/data/shaders/qeditor.tcs",
-                              ":/data/shaders/qeditor.tes",
-                              ":/data/shaders/qeditor.geom",
-                              ":/data/shaders/qeditor_water.frag");
-
+    chunkMaterial = new Material();
     /// Set Water texture
     world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture1);
 
@@ -111,9 +94,6 @@ WaterChunk::~WaterChunk()
     delete[] waterData;
 
     waterData = NULL;
-
-    patchBuffer.destroy();
-    vao.destroy();
 }
 
 void WaterChunk::initialize()
@@ -125,9 +105,9 @@ void WaterChunk::initialize()
     const int xDivisions = trianglesPerHeightSample * MAP_WIDTH  / CHUNKS / maxTessellationLevel;
     const int zDivisions = trianglesPerHeightSample * MAP_HEIGHT / CHUNKS / maxTessellationLevel;
 
-    patchCount = xDivisions * zDivisions;
+    int patchCount = xDivisions * zDivisions;
 
-    positionData.resize(2 * patchCount); // 2 floats per vertex
+    QVector<float> positionData(2 * patchCount); // 2 floats per vertex
 
     qDebug() << QObject::tr("Total number of patches for waterchunk =") << patchCount;
 
@@ -148,63 +128,33 @@ void WaterChunk::initialize()
         }
     }
 
-    patchBuffer.create();
-    patchBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    patchBuffer.bind();
-    patchBuffer.allocate(positionData.data(), positionData.size() * sizeof(float));
-    patchBuffer.release();
-
-    /// Create a VAO for this "object"
-    vao.create();
-    {
-        QOpenGLVertexArrayObject::Binder binder(&vao);
-        QOpenGLShaderProgramPtr shader = chunkMaterial->shader();
-
-        shader->bind();
-        patchBuffer.bind();
-
-        shader->enableAttributeArray("vertexPosition");
-        shader->setAttributeBuffer("vertexPosition", GL_FLOAT, 0, 2);
-    }
-
-    /// Default shader values
-    QOpenGLShaderProgramPtr shader2 = chunkMaterial->shader();
-    shader2->bind();
-
-    shader2->setUniformValue("line.width", 0.2f);
-    shader2->setUniformValue("line.color", QVector4D(0.17f, 0.50f, 1.0f, 1.0f)); // blue
-
-    shader2->setUniformValue("baseX", chunkBaseX);
-    shader2->setUniformValue("baseY", chunkBaseY);
-
-    shader2->setUniformValue("chunkX", chunkX);
-    shader2->setUniformValue("chunkY", chunkY);
-
-    // Set the fog parameters
-    shader2->setUniformValue("fog.color"      , QVector4D(0.65f, 0.77f, 1.0f, 1.0f));
-    shader2->setUniformValue("fog.minDistance", app().getSetting("environmentDistance", 256.0f).toFloat() / 2.0f);
-    shader2->setUniformValue("fog.maxDistance", app().getSetting("environmentDistance", 256.0f).toFloat() - 32.0f);
+    Mesh.createVertexArrayObject();
+    Mesh.createBuffer(IMesh::Vertices, positionData.data(), positionData.size() * sizeof(float));
+    Mesh.setNumFaces(patchCount);
 }
 
-void WaterChunk::draw(GLuint reflectionTexture, GLuint depthTexture)
+void WaterChunk::draw(QOpenGLShaderProgram* shader, GLuint reflectionTexture, GLuint depthTexture)
 {
     if(data)
     {
         setReflectionTexture(reflectionTexture, depthTexture);
 
-        QOpenGLShaderProgramPtr shader = chunkMaterial->shader();
-        shader->bind();
+        shader->setUniformValue("baseX", chunkBaseX);
+        shader->setUniformValue("baseY", chunkBaseY);
+
+        shader->setUniformValue("chunkX", chunkX);
+        shader->setUniformValue("chunkY", chunkY);
 
         shader->setUniformValue("eyePos", world->getCamera()->position());
 
-        chunkMaterial->bind();
+        chunkMaterial->bind(shader);
 
         // Render the quad as a patch
         {
-            QOpenGLVertexArrayObject::Binder binder(&vao);
+            Mesh.bind();
+            Mesh.createAttributeArray(IMesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 2);
             shader->setPatchVertexCount(1);
-
-            world->getGLFunctions()->glDrawArrays(GL_PATCHES, 0, patchCount);
+            world->getGLFunctions()->glDrawArrays(GL_PATCHES, 0, Mesh.getNumFaces());
         }
     }
 }

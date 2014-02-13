@@ -96,7 +96,7 @@ public:
           QColor InnerColor = QColor::fromRgbF(0.0f, 1.0f, 0.0f, 1.0f), float Multiplier = 1.0f, Shapes Shape = Circle);
     ~Brush();
 
-    void draw(QOpenGLShaderProgramPtr shader, QVector2D terrain_pos);
+    void draw(QOpenGLShaderProgram* shader, QVector2D terrain_pos);
 
     void setBrush(const Types BrushTypes);
     void setBrush(const Types BrushTypes, const float InnerRadius, const float OuterRadius);

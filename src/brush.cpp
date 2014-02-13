@@ -17,7 +17,7 @@ Brush::~Brush()
     shape       = Circle;
 }
 
-void Brush::draw(QOpenGLShaderProgramPtr shader, QVector2D terrain_pos)
+void Brush::draw(QOpenGLShaderProgram* shader, QVector2D terrain_pos)
 {
     shader->setUniformValue("brush"                , (int)types.texturing);
     shader->setUniformValue("cursorPos"            , QVector2D(terrain_pos.x(), terrain_pos.y()));

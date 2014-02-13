@@ -29,21 +29,21 @@ IModelInterface::IModelInterface(ITextureManager *textureManager, QString filena
         return;
     }
 
-    if (scene->HasAnimations())
+    if(scene->HasAnimations())
     {
         has_animations = true;
         Bones = loadBones(scene);
         buildSkeleton(scene->mRootNode, NULL);
         Animations = new IAnimations();
         Animations->setBones(Bones);
-        for (unsigned int i = 0; i < scene->mNumAnimations; ++i)
+        for (uint i = 0; i < scene->mNumAnimations; ++i)
         {
             Animations->add(loadAnimation(scene->mAnimations[i], i));
         }
     }
 
     Meshes = new IMeshes();
-    for (unsigned int i = 0; i < scene->mNumMeshes; ++i)
+    for (uint i = 0; i < scene->mNumMeshes; ++i)
     {
         Meshes->Add(loadMesh(scene->mMeshes[i],scene->mMaterials[scene->mMeshes[i]->mMaterialIndex] ,i));
     }
@@ -93,16 +93,16 @@ IBones *IModelInterface::loadBones(const aiScene *scene)
 {
     IBones *bones = new IBones();
 
-    for (unsigned int mesh_index = 0; mesh_index < scene->mNumMeshes; mesh_index++)
+    for (uint mesh_index = 0; mesh_index < scene->mNumMeshes; mesh_index++)
     {
         aiMesh *ai_mesh = scene->mMeshes[mesh_index];
-        if (ai_mesh->HasBones())
+        if(ai_mesh->HasBones())
         {
-            for (unsigned int bone_index = 0; bone_index < ai_mesh->mNumBones; bone_index++)
+            for (uint bone_index = 0; bone_index < ai_mesh->mNumBones; bone_index++)
             {
                 aiBone *ai_bone = ai_mesh->mBones[bone_index];
                 QString bone_name(ai_bone->mName.data);
-                if (!bones->hasBone(bone_name))
+                if(!bones->hasBone(bone_name))
                     bones->createEmptyBone(bone_name,getMatrix(&ai_bone->mOffsetMatrix));
             }
         }
@@ -120,7 +120,7 @@ IAnimation *IModelInterface::loadAnimation(const aiAnimation *ai_animation, int 
     IAnimation *animation = new IAnimation(animation_name, duration, index);
     animation->setBoneCount(Bones->getBoneNames().size());
 
-    for (unsigned int bone_index = 0; bone_index < ai_animation->mNumChannels; bone_index++)
+    for (uint bone_index = 0; bone_index < ai_animation->mNumChannels; bone_index++)
     {
         aiNodeAnim *channel = ai_animation->mChannels[bone_index];
         QString bone_name(channel->mNodeName.data);
@@ -132,17 +132,17 @@ IAnimation *IModelInterface::loadAnimation(const aiAnimation *ai_animation, int 
 
         animation->registerBone(bone_id);
 
-        for (unsigned int i = 0; i < channel->mNumPositionKeys; i++)
+        for (uint i = 0; i < channel->mNumPositionKeys; i++)
         {
             aiVectorKey pos_key = channel->mPositionKeys[i];
             animation->addBonePosition(bone_id, float(pos_key.mTime), QVector3D(pos_key.mValue.x, pos_key.mValue.y, pos_key.mValue.z));
         }
-        for (unsigned int i = 0; i < channel->mNumRotationKeys; i++)
+        for (uint i = 0; i < channel->mNumRotationKeys; i++)
         {
             aiQuatKey rot_key = channel->mRotationKeys[i];
             animation->addBoneRotation(bone_id, float(rot_key.mTime), QQuaternion(rot_key.mValue.w, rot_key.mValue.x, rot_key.mValue.y, rot_key.mValue.z));
         }
-        for (unsigned int i = 0; i < channel->mNumScalingKeys; i++)
+        for (uint i = 0; i < channel->mNumScalingKeys; i++)
         {
             aiVectorKey scale_key = channel->mScalingKeys[i];
             animation->addBoneScaling(bone_id, float(scale_key.mTime), QVector3D(scale_key.mValue.x, scale_key.mValue.y, scale_key.mValue.z));
@@ -162,13 +162,13 @@ IMesh *IModelInterface::loadMesh(aiMesh *ai_mesh, aiMaterial *ai_material, int i
     QVector2D* texCoords = new QVector2D[ai_mesh->mNumVertices];
     QVector4D * boneIDs = new QVector4D[ai_mesh->mNumVertices];
     QVector4D * weight  = new QVector4D[ai_mesh->mNumVertices];
-    QVector<unsigned int> indices;
+    QVector<uint> indices;
 
     if(ai_mesh->HasBones() && Bones)
     {
-        for(unsigned int i = 0; i < ai_mesh->mNumBones; ++i)
+        for(uint i = 0; i < ai_mesh->mNumBones; ++i)
         {
-            for(unsigned int j = 0; j < ai_mesh->mBones[i]->mNumWeights; ++j)
+            for(uint j = 0; j < ai_mesh->mBones[i]->mNumWeights; ++j)
             {
                 QString boneName(ai_mesh->mBones[i]->mName.data);
                 aiVertexWeight w = ai_mesh->mBones[i]->mWeights[j];
@@ -182,7 +182,7 @@ IMesh *IModelInterface::loadMesh(aiMesh *ai_mesh, aiMaterial *ai_material, int i
         }
     }
 
-    for(unsigned int i = 0;i < ai_mesh->mNumVertices; ++i)
+    for(uint i = 0;i < ai_mesh->mNumVertices; ++i)
     {
         vertices[i] = QVector3D(ai_mesh->mVertices[i].x, ai_mesh->mVertices[i].y, ai_mesh->mVertices[i].z);
         normals[i] = QVector3D(ai_mesh->mNormals[i].x, ai_mesh->mNormals[i].y, ai_mesh->mNormals[i].z);
@@ -198,10 +198,10 @@ IMesh *IModelInterface::loadMesh(aiMesh *ai_mesh, aiMaterial *ai_material, int i
             texCoords[i] = QVector2D(0.0f, 0.0f);
     }
 
-    for(unsigned int i = 0; i < ai_mesh->mNumFaces; ++i)
+    for(uint i = 0; i < ai_mesh->mNumFaces; ++i)
     {
         aiFace face = ai_mesh->mFaces[i];
-        for(unsigned int j = 0; j < face.mNumIndices; ++j)
+        for(uint j = 0; j < face.mNumIndices; ++j)
         {
             indices.push_back(face.mIndices[j]);
         }
@@ -264,10 +264,10 @@ void IModelInterface::buildSkeleton(aiNode *current, IBone *parent)
 
     bone->setNodeTransformation(getMatrix(&current->mTransformation));
 
-    if (parent != NULL)
+    if(parent != NULL)
         parent->addChild(bone);
 
-    for (unsigned int child_index = 0; child_index < current->mNumChildren; child_index++) {
+    for (uint child_index = 0; child_index < current->mNumChildren; child_index++) {
         buildSkeleton(current->mChildren[child_index], bone);
     }
 }
@@ -334,7 +334,7 @@ void IModelInterface::addWeightData(QVector4D *boneIdTarget, QVector4D *weightTa
 QMatrix4x4 IModelInterface::getMatrix(const aiMatrix4x4 *m)
 {
     QMatrix4x4 nodeMatrix;
-    if (m->IsIdentity())
+    if(m->IsIdentity())
         return nodeMatrix;
     aiQuaternion rotation;
     aiVector3D position;
@@ -343,11 +343,11 @@ QMatrix4x4 IModelInterface::getMatrix(const aiMatrix4x4 *m)
     QVector3D qscale(scale.x,scale.y, scale.z);
     QVector3D qposition(position.x, position.y, position.z);
     QQuaternion qrotation(rotation.w, rotation.x, rotation.y, rotation.z);
-    if (!qscale.isNull())
+    if(!qscale.isNull())
         nodeMatrix.scale(qscale);
-    if (!qposition.isNull())
+    if(!qposition.isNull())
         nodeMatrix.translate(qposition);
-    if (!qrotation.isNull())
+    if(!qrotation.isNull())
         nodeMatrix.rotate(qrotation);
     return nodeMatrix;
 }

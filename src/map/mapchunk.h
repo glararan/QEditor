@@ -25,7 +25,7 @@ public:
 
     bool isInVisibleRange(const float& distance, const QVector3D& camera) const;
 
-    void draw();
+    void draw(QOpenGLShaderProgram* shader);
 
     /// Terrain
     bool changeTerrain(float x , float z, float change);
@@ -56,8 +56,6 @@ public:
         return textures[index];
     }
 
-    QOpenGLShaderProgramPtr getShader() const { return chunkMaterial->shader(); }
-
     //
     void moveAlphaMap(int index, bool up);
     void deleteAlphaMap(int index);
@@ -75,6 +73,7 @@ public:
     void setLeftNeighbour(MapChunk* chunk);
 
     void setHighlight(bool on);
+    void setSelected(bool on);
 
     /// ...
     void save(MCNK* chunk);
@@ -87,7 +86,7 @@ private:
     /// Terrain
     IMesh Mesh;
 
-    ChunkMaterial* chunkMaterial;
+    Material* chunkMaterial;
 
     TexturePtr terrainData;
     SamplerPtr terrainSampler;
@@ -112,6 +111,7 @@ private:
     float chunkBaseX, chunkBaseY;
 
     bool highlight;
+    bool selected;
 
     // Neighbour
     MapChunk* bottomNeighbour;

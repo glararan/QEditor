@@ -106,12 +106,15 @@ MapTile::~MapTile()
 
 void MapTile::draw(const float& distance, const QVector3D& camera)
 {
+    QOpenGLShaderProgram* shader = world->getTerrainShader();
+    shader->bind();
+
     for(int x = 0; x < CHUNKS; ++x)
     {
         for(int y = 0; y < CHUNKS; ++y)
         {
             if(mapChunks[x][y]->isInVisibleRange(distance, camera))
-                mapChunks[x][y]->draw();
+                mapChunks[x][y]->draw(shader);
         }
     }
 }
@@ -120,6 +123,9 @@ void MapTile::drawObjects(const float& distance, const QVector3D& camera, QMatri
 {
     Q_UNUSED(distance);
     Q_UNUSED(camera);
+
+    QOpenGLShaderProgram* shader = world->getModelShader();
+    shader->bind();
 
     for(int i = 0; i < objects.size(); ++i)
     {
@@ -138,8 +144,6 @@ void MapTile::drawObjects(const float& distance, const QVector3D& camera, QMatri
 
         if(mapObject->model)
         {
-            QOpenGLShaderProgram* shader = world->getModelShader();
-            shader->bind();
             Pipeline.updateMatrices(shader);
             mapObject->model->draw(shader);
         }
@@ -160,6 +164,9 @@ void MapTile::drawWater(const float& distance, const QVector3D& camera)
 
     fbo->release();
 
+    QOpenGLShaderProgram* shader = world->getWaterShader();
+    shader->bind();
+
     for(int x = 0; x < CHUNKS; ++x)
     {
         for(int y = 0; y < CHUNKS; ++y)
@@ -174,7 +181,7 @@ void MapTile::drawWater(const float& distance, const QVector3D& camera)
 
                 fbo->release();*/
 
-                waterTile->getChunk(x, y)->draw(fbo->texture(), fbo->depthTexture());
+                waterTile->getChunk(x, y)->draw(shader, fbo->texture(), fbo->depthTexture());
 
                 //waterTile->getChunk(x, y)->draw(0);
             }

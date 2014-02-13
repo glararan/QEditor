@@ -15,7 +15,7 @@ public:
     WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX, int tileY, QFile& file);
     ~WaterChunk();
 
-    void draw(GLuint reflectionTexture, GLuint depthTexture);
+    void draw(QOpenGLShaderProgram* shader, GLuint reflectionTexture, GLuint depthTexture);
     void updateData();
 
     bool hasData() const { return data; }
@@ -32,8 +32,6 @@ public:
     const QVector2D getBases() const       { return QVector2D(baseX, baseY); }
     const BorderHeights getHeights() const { return heights; }
 
-    QOpenGLShaderProgramPtr getShader() const { return chunkMaterial->shader(); }
-
     float getHeight() const;
     float getHeight(int x, int y) const;
 
@@ -49,14 +47,9 @@ private:
     World* world;
 
     /// Water
-    QOpenGLVertexArrayObject vao;
-    QOpenGLBuffer            patchBuffer;
+    IMesh Mesh;
 
-    QVector<float> positionData;
-
-    int patchCount;
-
-    ChunkMaterial* chunkMaterial;
+    Material* chunkMaterial;
 
     TexturePtr waterSurface;
     SamplerPtr waterSampler;
