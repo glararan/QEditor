@@ -1,3 +1,18 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -18,6 +33,7 @@
 #include "ui/modelpicker.h"
 #include "ui/startup.h"
 #include "ui/waterwidget.h"
+#include "ui/camerawidget.h"
 
 #include "world.h"
 #include "mapview.h"
@@ -127,6 +143,9 @@ private:
     QLabel* t_scale_label;
     QLabel* t_scale_value_label;
 
+    // Editing mode = 6
+    CameraWidget* cameraW;
+
     //
     QList<QString> mode0Actions;
     QList<QString> mode1Actions;
@@ -134,6 +153,7 @@ private:
     QList<QString> mode3Actions;
     QList<QString> mode4Actions;
     QList<QString> mode5Actions;
+    QList<QString> mode6Actions;
 
     void initMode();
     void showMode(QList<QString>& parentList);
@@ -164,6 +184,8 @@ private slots:
     void setTerrainMaximumHeightState(int state);
     void setPaintMaximumAlphaState(int state);
 
+    void setBrush(int unknown, bool unknown2);
+
     void setBrushOuterRadius(double value);
     void setBrushInnerRadius(double value);
     void setBrushInnerRadiusMaximumValue(double maximum);
@@ -192,6 +214,8 @@ private slots:
 
     void screenshotUploadDone(const QString& link);
     void screenshotUploadError(const QString& error);
+
+    void actionIsInDevelopment();
 };
 
 #endif // MAINWINDOW_H

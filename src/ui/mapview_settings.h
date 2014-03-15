@@ -1,3 +1,18 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #ifndef MAPVIEW_SETTINGS_H
 #define MAPVIEW_SETTINGS_H
 
@@ -30,12 +45,24 @@ private:
         Outer = 1
     };
 
-    BrushColor brushColorType;
+    // Wireframe color
+    enum WireframeColor
+    {
+        Wireframe        = 0,
+        TerrainWireframe = 1
+    };
+
+    BrushColor     brushColorType;
+    WireframeColor wireframeColorType;
 
     QColorDialog* colorDialog;
+    QColorDialog* wireframeColorDialog;
 
     QColor cacheOuterBrushColor;
     QColor cacheInnerBrushColor;
+
+    QColor cacheWireframeColor;
+    QColor cacheTWireframeColor;
 
     // Texture scale
     QDSlider* textureScaleFarSlider;
@@ -46,9 +73,13 @@ private:
 private slots:
     void showColorDialog();
 
-    void setCacheColor(QColor color);
+    void setBrushCacheColor(QColor color);
     void setBrushColor(QColor color);
     void setBrushToCacheColor();
+
+    void setWireframeCacheColor(QColor color);
+    void setWireframeColor(QColor color);
+    void setWireframeToCacheColor();
 
     void setEnvironmentDistance(int posVal);
 
@@ -58,7 +89,10 @@ private slots:
 
 signals:
     void setColorOfBrush(QColor* color, bool outer);
+    void setColorOfWireframe(QColor* color, bool terrain);
+
     void setEnvironmentDistance(float value);
+
     void setTextureScaleOption(int option);
     void setTextureScaleFar(float value);
     void setTextureScaleNear(float value);

@@ -1,3 +1,18 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #include "mapchunk.h"
 
 #include "maptile.h"
@@ -28,7 +43,11 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 , chunkBaseY((tile->coordY * TILESIZE) + baseY)
 {
     chunkMaterial = new Material();
+
     /// Textures
+    if(!world->getTextureManager()->hasTexture("groundTexture", "textures/ground.png"))
+        world->getTextureManager()->loadTexture("groundTexture", "textures/ground.png");
+
     if(!world->getTextureManager()->hasTexture("grassTexture", "textures/grass.png"))
         world->getTextureManager()->loadTexture("grassTexture", "textures/grass.png");
 
@@ -38,11 +57,10 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
     if(!world->getTextureManager()->hasTexture("snowTexture", "textures/snowrocks.png"))
         world->getTextureManager()->loadTexture("snowTexture", "textures/snowrocks.png");
 
-    textures[0] = world->getTextureManager()->getTexture("grassTexture");
-    textures[1] = world->getTextureManager()->getTexture("rockTexture");
-    textures[2] = world->getTextureManager()->getTexture("snowTexture");
-    textures[3] = TexturePtr(new Texture());
-    //textures[3] = world->getTextureManager()->getTexture("grassTexture");
+    textures[0] = world->getTextureManager()->getTexture("groundTexture");
+    textures[1] = world->getTextureManager()->getTexture("grassTexture");
+    textures[2] = world->getTextureManager()->getTexture("rockTexture");
+    textures[3] = world->getTextureManager()->getTexture("snowTexture");
 
     for(int i = 0; i < MAX_TEXTURES; ++i)
     {
@@ -122,6 +140,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
 , chunkBaseY((tile->coordY * TILESIZE) + baseY)
 {
     chunkMaterial = new Material();
+
     // Load from file
     if(file.isOpen())
     {
@@ -137,7 +156,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
                 continue;
             }
 
-            QString textureName = QFileInfo(texturePath).fileName();
+            QString textureName = QFileInfo(texturePath).baseName() + "Texture";
 
             if(!world->getTextureManager()->hasTexture(textureName, texturePath))
                 world->getTextureManager()->loadTexture(textureName, texturePath);
@@ -160,6 +179,9 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
         qWarning(QObject::tr("Loading default chunk for tile %1_%2 chunk %3_%4, because we couldn't open file!").arg(tile->coordX).arg(tile->coordY).arg(chunkX).arg(chunkY).toLatin1().data());
 
         /// Load Textures
+        if(!world->getTextureManager()->hasTexture("groundTexture", "textures/ground.png"))
+            world->getTextureManager()->loadTexture("groundTexture", "textures/ground.png");
+
         if(!world->getTextureManager()->hasTexture("grassTexture", "textures/grass.png"))
             world->getTextureManager()->loadTexture("grassTexture", "textures/grass.png");
 
@@ -169,10 +191,10 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
         if(!world->getTextureManager()->hasTexture("snowTexture", "textures/snowrocks.png"))
             world->getTextureManager()->loadTexture("snowTexture", "textures/snowrocks.png");
 
-        textures[0] = world->getTextureManager()->getTexture("grassTexture");
-        textures[1] = world->getTextureManager()->getTexture("rockTexture");
-        textures[2] = world->getTextureManager()->getTexture("snowTexture");
-        textures[3] = TexturePtr(new Texture());
+        textures[0] = world->getTextureManager()->getTexture("groundTexture");
+        textures[1] = world->getTextureManager()->getTexture("grassTexture");
+        textures[2] = world->getTextureManager()->getTexture("rockTexture");
+        textures[3] = world->getTextureManager()->getTexture("snowTexture");
 
         /// Load Alphamaps
         for(int i = 0; i < ALPHAMAPS; ++i)
@@ -308,6 +330,23 @@ void MapChunk::test()
     }
 
     chunkMaterial->setTextureUnitConfiguration(0, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));*/
+
+    terrainData->bind();
+
+    for(int x = 0; x < MAP_WIDTH / CHUNKS; ++x)
+    {
+        for(int y = 0; y < MAP_HEIGHT / CHUNKS; ++y)
+        {
+            if(MathHelper::isNaN(getHeight(x, y)))
+            {
+                mapData[(MAP_WIDTH / CHUNKS) * y + x] = 0.0f;
+
+                terrainData->setHeight(0.0f, QVector2D(QPoint(x, y)));
+            }
+        }
+    }
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
 }
 
 void MapChunk::draw(QOpenGLShaderProgram* shader)
@@ -315,7 +354,7 @@ void MapChunk::draw(QOpenGLShaderProgram* shader)
     chunkMaterial->bind(shader);
 
     shader->setUniformValue("highlight", highlight);
-    shader->setUniformValue("selected", selected);
+    shader->setUniformValue("selected",  selected);
 
     // Get subroutine indices
     for(int i = 0; i < world->DisplayModeCount; ++i)
@@ -342,7 +381,9 @@ void MapChunk::draw(QOpenGLShaderProgram* shader)
         {
             Mesh.bind();
             Mesh.createAttributeArray(IMesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 2);
+
             shader->setPatchVertexCount(1);
+
             world->getGLFunctions()->glDrawArrays(GL_PATCHES, 0, Mesh.getNumFaces());
         }
     }
@@ -456,25 +497,28 @@ bool MapChunk::changeTerrain(float x, float z, float change)
                             {
                                 case Brush::ShapingType::Linear:
                                 default:
-                                    changeFormula = change * (1.0f - dist / brush->OuterRadius() * brush->FallOff());
+                                    changeFormula = (change * (1.0f - dist / brush->OuterRadius())) * brush->calcLossyMultiplier(dist);
                                     break;
 
                                 case Brush::ShapingType::Flat:
-                                    changeFormula = change;
+                                    changeFormula = change * brush->calcLossyMultiplier(dist);
                                     break;
 
                                 case Brush::ShapingType::Smooth:
-                                    changeFormula = change / (1.0f + dist / brush->OuterRadius() * brush->FallOff());
+                                    changeFormula = (change / (1.0f + dist / brush->OuterRadius())) * brush->calcLossyMultiplier(dist);
                                     break;
 
                                 case Brush::ShapingType::Polynomial:
-                                    changeFormula = change * (pow(dist / brush->OuterRadius() * brush->FallOff(), 2) + dist / brush->OuterRadius() + 1.0f);
+                                    changeFormula = (change * (pow(dist / brush->OuterRadius(), 2) + dist / brush->OuterRadius() + 1.0f)) * brush->calcLossyMultiplier(dist);
                                     break;
 
                                 case Brush::ShapingType::Trigonometric:
-                                    changeFormula = change * cos(dist / brush->OuterRadius() * brush->FallOff());
+                                    changeFormula = (change * cos(dist / brush->OuterRadius())) * brush->calcLossyMultiplier(dist);
                                     break;
                             }
+
+                            if(MathHelper::isNaN(changeFormula))
+                                continue;
 
                             if(world->getTerrainMaximumState() && mapData[index] + changeFormula > world->getTerrainMaximumHeight())
                                 mapData[index] = world->getTerrainMaximumHeight();
@@ -580,7 +624,7 @@ bool MapChunk::flattenTerrain(float x, float z, float y, float change)
                                 case Brush::SmoothingType::Linear:
                                 default:
                                     {
-                                        changeFormula = 1.0f - (1.0f - change) * (1.0f - dist / brush->OuterRadius() * brush->FallOff());
+                                        changeFormula = 1.0f - ((1.0f - change) * (1.0f - dist / brush->OuterRadius())) * brush->calcLossyMultiplier(dist);
                                         changeFormula = changeFormula * mapData[index] + (1 - changeFormula) * y;
                                     }
                                     break;
@@ -591,11 +635,14 @@ bool MapChunk::flattenTerrain(float x, float z, float y, float change)
 
                                 case Brush::SmoothingType::Smooth:
                                     {
-                                        changeFormula = 1.0f - pow(1.0f - change, 1.0f + dist / brush->OuterRadius() * brush->FallOff());
+                                        changeFormula = 1.0f - (pow(1.0f - change, 1.0f + dist / brush->OuterRadius())) * brush->calcLossyMultiplier(dist);
                                         changeFormula = changeFormula * mapData[index] + (1 - changeFormula) * y;
                                     }
                                     break;
                             }
+
+                            if(MathHelper::isNaN(changeFormula))
+                                continue;
 
                             mapData[index] = changeFormula;
 
@@ -741,7 +788,7 @@ bool MapChunk::blurTerrain(float x, float z, float change)
                                 case Brush::SmoothingType::Linear: // Linear
                                 default:
                                     {
-                                        changeFormula = 1.0f - (1.0f - change) * (1.0f - dist / brush->OuterRadius() * brush->FallOff());
+                                        changeFormula = 1.0f - ((1.0f - change) * (1.0f - dist / brush->OuterRadius())) * brush->calcLossyMultiplier(dist);
                                         changeFormula = changeFormula * mapData[index] + (1 - changeFormula) * h;
                                     }
                                     break;
@@ -752,7 +799,7 @@ bool MapChunk::blurTerrain(float x, float z, float change)
 
                                 case Brush::SmoothingType::Smooth: // Smooth
                                     {
-                                        changeFormula = 1.0f - pow(1.0f - change, (1.0f + dist / brush->OuterRadius() * brush->FallOff()));
+                                        changeFormula = 1.0f - (pow(1.0f - change, (1.0f + dist / brush->OuterRadius()))) * brush->calcLossyMultiplier(dist);
                                         changeFormula = changeFormula * mapData[index] + (1 - changeFormula) * h;
                                     }
                                     break;
@@ -846,7 +893,13 @@ bool MapChunk::paintTerrain(float x, float z, float flow, TexturePtr texture)
 
                 full = false;
 
+                // destroy textures[i]
+
                 textures[i] = texture;
+
+                QString uniformName = QString("layer%1Texture").arg(i);
+
+                chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1 + i, textures[i], world->getTextureManager()->getSampler(), uniformName.toLatin1());
 
                 break;
             }
@@ -899,10 +952,7 @@ bool MapChunk::paintTerrain(float x, float z, float flow, TexturePtr texture)
                             if(textureIndex > 0 && world->getPaintMaximumState() && ToFloat(alphaMapsData[textureIndex - 1][index]) >= world->getPaintMaximumAlpha() * 255.0f)
                                 continue;
 
-                            float lossyMultiplier = 1.0f;
-
-                            if(dist > brush->InnerRadius())
-                                lossyMultiplier = 1.0f - ((dist - brush->InnerRadius()) / (brush->OuterRadius() - brush->InnerRadius()));
+                            float lossyMultiplier = brush->calcLossyMultiplier(dist);
 
                             switch(brush->BrushTypes().texturing)
                             {
@@ -913,7 +963,7 @@ bool MapChunk::paintTerrain(float x, float z, float flow, TexturePtr texture)
                                         {
                                             --textureIndex;
 
-                                            alphaMapsData[textureIndex][index] = ToUChar(qMax(qMin(ToFloat(alphaMapsData[textureIndex][index]) + (((255.0f - ToFloat(alphaMapsData[textureIndex][index])) * flow) * lossyMultiplier), 255.0f), 0.0f));
+                                            alphaMapsData[textureIndex][index] = ToUChar(qMax(qMin(ToFloat(alphaMapsData[textureIndex][index]) + (((255.0f - ToFloat(alphaMapsData[textureIndex][index])) * flow * 3) * lossyMultiplier), 255.0f), 0.0f));
 
                                             changing.append(qMakePair<unsigned char, QVector2D>(alphaMapsData[textureIndex][index], QVector2D(X, Y)));
 
@@ -924,7 +974,7 @@ bool MapChunk::paintTerrain(float x, float z, float flow, TexturePtr texture)
                                         {
                                             if(ToFloat(alphaMapsData[i][index]) > 0.0f)
                                             {
-                                                alphaMapsData[i][index] = ToUChar(qMax(qMin(ToFloat(alphaMapsData[i][index]) - (((255.0f - ToFloat(alphaMapsData[i][index])) * flow) * lossyMultiplier), 255.0f), 0.0f));
+                                                alphaMapsData[i][index] = ToUChar(qMax(qMin(ToFloat(alphaMapsData[i][index]) - (((255.0f - ToFloat(alphaMapsData[i][index])) * flow * 3) * lossyMultiplier), 255.0f), 0.0f));
 
                                                 changing2.insert(i, qMakePair<unsigned char, QVector2D>(alphaMapsData[i][index], QVector2D(X, Y)));
                                             }
@@ -1031,22 +1081,19 @@ bool MapChunk::paintVertexShading(float x, float z, float flow, QColor& color)
 
                             index *= sizeof(float);
 
-                            float lossyMultiplier = 1.0f;
-
-                            if(dist > brush->InnerRadius())
-                                lossyMultiplier = 1.0f - ((dist - brush->InnerRadius()) / (brush->OuterRadius() - brush->InnerRadius()));
+                            float lossyMultiplier = brush->calcLossyMultiplier(dist);
 
                             switch(brush->BrushTypes().vertexShading)
                             {
                                 case Brush::TexturingType::Solid:
                                 default:
                                     {
-                                        vertexShadingData[index]     = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index],     color.redF(),   ((255.0f - vertexShadingData[index])     * flow) * lossyMultiplier), 255.0f), 0.0f));
-                                        vertexShadingData[index + 1] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 1], color.greenF(), ((255.0f - vertexShadingData[index + 1]) * flow) * lossyMultiplier), 255.0f), 0.0f));
-                                        vertexShadingData[index + 2] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 2], color.blueF(),  ((255.0f - vertexShadingData[index + 2]) * flow) * lossyMultiplier), 255.0f), 0.0f));
+                                        vertexShadingData[index]     = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index],     color.redF(),   ((255.0f - vertexShadingData[index])     * flow * 3) * lossyMultiplier), 255.0f), 0.0f));
+                                        vertexShadingData[index + 1] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 1], color.greenF(), ((255.0f - vertexShadingData[index + 1]) * flow * 3) * lossyMultiplier), 255.0f), 0.0f));
+                                        vertexShadingData[index + 2] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 2], color.blueF(),  ((255.0f - vertexShadingData[index + 2]) * flow * 3) * lossyMultiplier), 255.0f), 0.0f));
 
                                         if(!world->getPaintMaximumState() || (world->getPaintMaximumState() && ToFloat(vertexShadingData[index + 3]) < world->getPaintMaximumAlpha() * 255.0f))
-                                            vertexShadingData[index + 3] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 3], color.alphaF(), ((255.0f - vertexShadingData[index + 3]) * flow) * lossyMultiplier), 255.0f), 0.0f));
+                                            vertexShadingData[index + 3] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexShadingData[index + 3], color.alphaF(), ((255.0f - vertexShadingData[index + 3]) * flow * 3) * lossyMultiplier), 255.0f), 0.0f));
 
                                         QVector<unsigned char> dataContainer;
                                         dataContainer.append(vertexShadingData[index]);     // R
@@ -1151,11 +1198,15 @@ void MapChunk::deleteAlphaMap(int index)
 {
     textures[index] = TexturePtr(new Texture());
 
+    QString uniformName = QString("layer%1Texture").arg(index);
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1 + index, textures[index], world->getTextureManager()->getSampler(), uniformName.toLatin1());
+
     memset(alphaMapsData[index], 0, MAP_WIDTH / CHUNKS * MAP_HEIGHT / CHUNKS); // clear alpha map
 
     alphaMaps[index]->setAlphamap(alphaMapsData[index]);
 
-    QString uniformName = QString("layer%1Alpha").arg(index);
+    uniformName = QString("layer%1Alpha").arg(index);
 
     chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Alphamap1 + index, alphaMaps[index], terrainSampler, uniformName.toLatin1());
 }

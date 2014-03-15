@@ -1,3 +1,18 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #ifndef WORLD_H
 #define WORLD_H
 
@@ -10,6 +25,8 @@
 #include "camera.h"
 #include "brush.h"
 #include "texturemanager.h"
+#include "framebuffer.h"
+
 #include "model/imodelmanager.h"
 #include "model/imodel.h"
 #include "model/ipipeline.h"
@@ -115,14 +132,14 @@ public:
     QOpenGLShaderProgram*      getTerrainShader()  { return terrainShader; }
     QOpenGLShaderProgram*      getWaterShader()    { return waterShader; }
 
-    const ProjectFileData getProjectData() const { return projectData; }
-    const int getAlphamapSize() const            { return alphaMapSize; }
-    const float getTerrainMaximumHeight() const  { return terrainMaximumHeight; }
-    const bool getTerrainMaximumState() const    { return terrainMaximumState; }
-    const float getPaintMaximumAlpha() const     { return paintMaximumAlpha; }
-    const bool getPaintMaximumState() const      { return paintMaximumState; }
+    const ProjectFileData getProjectData() const          { return projectData; }
+    const int             getAlphamapSize() const         { return alphaMapSize; }
+    const float           getTerrainMaximumHeight() const { return terrainMaximumHeight; }
+    const bool            getTerrainMaximumState() const  { return terrainMaximumState; }
+    const float           getPaintMaximumAlpha() const    { return paintMaximumAlpha; }
+    const bool            getPaintMaximumState() const    { return paintMaximumState; }
 
-    MapTile* getTileAt(float x, float z) const;
+    MapTile*    getTileAt(float x, float z) const;
     MapChunk*   getMapChunkAt(const QVector3D& position) const;
     WaterChunk* getWaterChunkAt(const QVector3D& position) const;
 
@@ -136,7 +153,7 @@ public:
     void setPaintMaximumAlpha(float value);
     void setPaintMaximumState(bool state);
 
-    QVector3D getWorldCoordinates();
+    QVector3D getWorldCoordinates() const;
 
     void test();
 
@@ -151,6 +168,10 @@ private:
     TextureManager* textureManager;
     IModelManager*  modelManager;
     MapChunk*       highlightChunk;
+
+    QOpenGLFramebufferObject* fbo;
+
+    QSize viewportSize;
 
     bool tileLoaded(int x, int y) const;
 
@@ -171,8 +192,8 @@ private:
 
     int alphaMapSize;
 
-    eDisplayMode    eDisplay;
-    QStringList     eDisplayNames;
+    eDisplayMode eDisplay;
+    QStringList  eDisplayNames;
 
     QOpenGLFunctions_4_2_Core* GLfuncs;
 

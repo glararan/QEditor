@@ -1,3 +1,18 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #include "waterwidget.h"
 #include "ui_waterwidget.h"
 
@@ -33,10 +48,6 @@ void WaterWidget::setWaterStatus(int status)
                 ui->rightSpinBox->setEnabled(false);
                 ui->bottomSpinBox->setEnabled(false);
                 ui->leftSpinBox->setEnabled(false);
-                ui->topSpinBoxCheck->setEnabled(false);
-                ui->rightSpinBoxCheck->setEnabled(false);
-                ui->bottomSpinBoxCheck->setEnabled(false);
-                ui->leftSpinBoxCheck->setEnabled(false);
                 ui->updateButton->setEnabled(false);
 
                 if(waterChunk)
@@ -50,10 +61,6 @@ void WaterWidget::setWaterStatus(int status)
                 ui->rightSpinBox->setEnabled(true);
                 ui->bottomSpinBox->setEnabled(true);
                 ui->leftSpinBox->setEnabled(true);
-                ui->topSpinBoxCheck->setEnabled(true);
-                ui->rightSpinBoxCheck->setEnabled(true);
-                ui->bottomSpinBoxCheck->setEnabled(true);
-                ui->leftSpinBoxCheck->setEnabled(true);
                 ui->updateButton->setEnabled(true);
 
                 if(waterChunk)
@@ -93,11 +100,6 @@ void WaterWidget::setChunk(WaterChunk* chunk)
     ui->rightSpinBox->setValue(chunk->getHeights().right);
     ui->bottomSpinBox->setValue(chunk->getHeights().bottom);
     ui->leftSpinBox->setValue(chunk->getHeights().left);
-
-    ui->topSpinBoxCheck->setChecked(chunk->getHeights().topStatus);
-    ui->rightSpinBoxCheck->setChecked(chunk->getHeights().rightStatus);
-    ui->bottomSpinBoxCheck->setChecked(chunk->getHeights().bottomStatus);
-    ui->leftSpinBoxCheck->setChecked(chunk->getHeights().leftStatus);
 }
 
 void WaterWidget::setTopHeight(double value)

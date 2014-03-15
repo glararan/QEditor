@@ -1,3 +1,18 @@
+#This file is part of QEditor.
+
+#QEditor is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+
+#QEditor is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+
+#You should have received a copy of the GNU General Public License
+#along with QEditor.  If not, see <http://www.gnu.org/licenses/>.
+
 INCLUDEPATH += src/common \
                src/helper \
                src/map \
@@ -44,7 +59,9 @@ SOURCES  += $$PWD/main.cpp \
             $$PWD/ui/toolbox.cpp \
             $$PWD/ui/waterwidget.cpp \
             $$PWD/common/framebuffer.cpp \
-            $$PWD/3rd-party/imgurAPI/fileupload.cpp
+            $$PWD/3rd-party/imgurAPI/fileupload.cpp \
+            $$PWD/ui/camerawidget.cpp \
+    src/beziercurve.cpp
 
 HEADERS  += $$PWD/mainwindow.h \
             $$PWD/ui/teleportwidget.h \
@@ -88,7 +105,9 @@ HEADERS  += $$PWD/mainwindow.h \
             $$PWD/ui/toolbox.h \
             $$PWD/ui/waterwidget.h \
             $$PWD/common/framebuffer.h \
-            $$PWD/3rd-party/imgurAPI/fileupload.h
+            $$PWD/3rd-party/imgurAPI/fileupload.h \
+            $$PWD/ui/camerawidget.h \
+    src/beziercurve.h
 
 FORMS    += $$PWD/mainwindow.ui \
             $$PWD/ui/teleportwidget.ui \
@@ -98,4 +117,5 @@ FORMS    += $$PWD/mainwindow.ui \
             $$PWD/ui/startup.ui \
             $$PWD/ui/project_settings.ui \
             $$PWD/ui/waterwidget.ui \
-            $$PWD/ui/modelpicker.ui
+            $$PWD/ui/modelpicker.ui \
+            $$PWD/ui/camerawidget.ui

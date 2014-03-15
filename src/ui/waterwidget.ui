@@ -42,20 +42,6 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="3" rowspan="2">
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <widget class="QPushButton" name="updateButton">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Update</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
      <item row="0" column="1">
       <widget class="QLabel" name="chunkIndexLabel">
        <property name="text">
@@ -135,33 +121,19 @@
        </property>
       </spacer>
      </item>
-     <item row="1" column="2">
-      <widget class="QCheckBox" name="topSpinBoxCheck">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="2">
-      <widget class="QCheckBox" name="rightSpinBoxCheck">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="2">
-      <widget class="QCheckBox" name="bottomSpinBoxCheck">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="2">
-      <widget class="QCheckBox" name="leftSpinBoxCheck">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
+     <item row="1" column="2" rowspan="4">
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="QPushButton" name="updateButton">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Update</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>

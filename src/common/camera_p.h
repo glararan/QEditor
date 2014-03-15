@@ -1,8 +1,26 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #ifndef CAMERA_P_H
 #define CAMERA_P_H
 
 #include <QMatrix4x4>
 #include <QVector3D>
+#include <QOpenGLShaderProgram>
+
+class BezierCurve;
 
 class CameraPrivate
 {
@@ -25,12 +43,14 @@ public:
     , locked(false)
     , m_viewMatrixDirty(true)
     , m_viewProjectionMatrixDirty(true)
+    , curveShader(NULL)
     {
         updateOrthogonalProjection();
     }
 
     ~CameraPrivate()
     {
+        delete curveShader;
     }
 
     inline void updatePerpectiveProjection()
@@ -49,9 +69,31 @@ public:
         m_viewProjectionMatrixDirty = true;
     }
 
+    inline void initialize()
+    {
+        curveShader = new QOpenGLShaderProgram();
+
+        if(!curveShader->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/data/shaders/qeditor_bezier.vert"))
+            qCritical() << QObject::tr("Could not compile vertex shader. Log:") << curveShader->log();
+
+        if(!curveShader->addShaderFromSourceFile(QOpenGLShader::Geometry, ":/data/shaders/qeditor_bezier.geom"))
+            qCritical() << QObject::tr("Could not compile geometry shader. Log:") << curveShader->log();
+
+        if(!curveShader->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/data/shaders/qeditor_bezier.frag"))
+            qCritical() << QObject::tr("Could not compile fragment shader. Log:") << curveShader->log();
+
+        if(!curveShader->link())
+            qCritical() << QObject::tr("Could not link shader program. Log:") << curveShader->log();
+
+    }
+
     Q_DECLARE_PUBLIC(Camera)
 
     Camera* q_ptr;
+
+    QOpenGLShaderProgram* curveShader;
+
+    QVector<BezierCurve> curves;
 
     QVector3D m_position;
     QVector3D m_upVector;

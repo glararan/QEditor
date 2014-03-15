@@ -1,8 +1,49 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #include "camera.h"
 #include "camera_p.h"
 
+#include "beziercurve.h"
+
 Camera::Camera(QObject* parent) : QObject(parent), d_ptr(new CameraPrivate(this))
 {
+}
+
+void Camera::initialize()
+{
+    Q_D(Camera);
+
+    d->initialize();
+}
+
+void Camera::drawCurve(QMatrix4x4 modelMatrix)
+{
+    Q_D(Camera);
+
+    QMatrix4x4 modelViewProject = projectionMatrix() * viewMatrix() * modelMatrix;
+
+    foreach(BezierCurve curve, d->curves)
+    {
+        d->curveShader->setUniformValue("detail", 1000);
+        d->curveShader->setUniformValue("mvp",    modelViewProject);
+        d->curveShader->setUniformValue("point1", curve.points[1]);
+        d->curveShader->setUniformValue("point2", curve.points[2]);
+        d->curveShader->setUniformValue("point3", curve.points[3]);
+        d->curveShader->setUniformValue("point4", curve.points[4]);
+    }
 }
 
 Camera::ProjectionType Camera::projectionType() const
@@ -272,6 +313,23 @@ bool Camera::lock() const
     Q_D(const Camera);
 
     return d->locked;
+}
+
+void Camera::setCurves(const QVector<BezierCurve>& BCurves)
+{
+    Q_D(Camera);
+
+    d->curves = BCurves;
+}
+
+void Camera::play()
+{
+
+}
+
+void Camera::stop()
+{
+
 }
 
 QMatrix4x4 Camera::viewMatrix() const

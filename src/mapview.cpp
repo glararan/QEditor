@@ -1,3 +1,18 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #include "mapview.h"
 #include "camera.h"
 #include "mathhelper.h"
@@ -13,6 +28,7 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , camera(new Camera(this))
 , m_v()
 , viewCenterFixed(false)
+, showCameraCurve(false)
 , m_panAngle(0.0f)
 , m_tiltAngle(0.0f)
 , panAngle(0.0f)
@@ -99,6 +115,9 @@ void MapView::initializeGL()
 
     // Initialize World
     world->initialize(GLcontext, size());
+
+    // Initialize camera shader
+    camera->initialize();
 
     // Enable depth testing
     glEnable(GL_DEPTH_TEST);
@@ -399,6 +418,9 @@ void MapView::paintGL()
         world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
     else
         world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
+
+    if(showCameraCurve)
+        camera->drawCurve(modelMatrix);
 }
 
 void MapView::resizeGL(int w, int h)
@@ -581,6 +603,11 @@ void MapView::setVertexShading(QColor color)
     vertexShadingColor = color;
 }
 
+void MapView::setCameraShowCurve(bool show)
+{
+    showCameraCurve = show;
+}
+
 void MapView::setTerrainMaximumHeight(double value)
 {
     world->setTerrainMaximumHeight(MathHelper::toFloat(value));
@@ -613,6 +640,31 @@ void MapView::setBrushColor(QColor* color, bool outer)
                 world->getBrush()->setInnerColor(*color);
 
                 app().setSetting("outerBrushColor", *color);
+            }
+            break;
+    }
+}
+
+void MapView::setWireframeColor(QColor* color, bool terrain)
+{
+    QOpenGLShaderProgram* shader = world->getTerrainShader();
+    shader->bind();
+
+    switch(terrain)
+    {
+        case true:
+            {
+                shader->setUniformValue("line.color2", MathHelper::toVector4D(*color));
+
+                app().setSetting("terrainWireframe", MathHelper::toVector4D(*color));
+            }
+            break;
+
+        case false:
+            {
+                shader->setUniformValue("line.color", MathHelper::toVector4D(*color));
+
+                app().setSetting("wireframe", MathHelper::toVector4D(*color));
             }
             break;
     }

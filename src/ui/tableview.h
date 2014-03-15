@@ -1,3 +1,18 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #ifndef TABLEVIEW_H
 #define TABLEVIEW_H
 
@@ -78,9 +93,9 @@ public:
 
     void setTextureSize(const QSize size);
 
-    void setTextureMargin(const QSize margins)    { textureMargin = margins; }
+    void setTextureMargin(const QSize margins) { textureMargin = margins; }
 
-    void clearToolTip()                  { toolTipArray.clear(); }
+    void clearToolTip() { toolTipArray.clear(); }
 
     inline QRect cellRect() const { return QRect(0, 0, cellw, cellh); }
     inline QSize gridSize() const { return QSize(ncols * cellw, nrows * cellh); }
@@ -141,28 +156,39 @@ struct Slot
 class TextureWell : public TexturesArray
 {
 public:
-    TextureWell(QWidget* parent, int r, int c, QSize textureIconSize, QSize textureIconMargin);
+    TextureWell(QWidget* parent, int row, int columns, QSize textureIconSize, QSize textureIconMargin);
+
     void clear();
+
     void insertItem(QImage image, QString toolTip, bool makeSpace = true);
     void insertItems(QVector<QPair<QImage, QString>> vals, bool makeSpace = true);
+
     void updateItem(int row, int column, QImage image, QString toolTip);
+
     QImage getImage(int row, int column);
+
     void setRows(const int count);
     void setCols(const int count);
 
 protected:
     void paintCellContents(QPainter*, int row, int col, const QRect&);
+
     void mousePressEvent(QMouseEvent* e);
     void mouseReleaseEvent(QMouseEvent* e);
+
     void itemSelected(int row, int col);
 
 private:
     int firstFreeIndex();
+
     bool hasSpace();
+
     void setDefaultImages();
 
     QVector<QPair<QImage, Slot> > values;
+
     bool mousePressed;
+
     QPoint pressPos;
     QPoint oldCurrent;
 };

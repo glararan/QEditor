@@ -80,7 +80,7 @@ border-style:solid;
               <string/>
              </property>
              <property name="pixmap">
-              <pixmap resource="../qeditor.qrc">:/app_icon</pixmap>
+              <pixmap resource="../../qeditor.qrc">:/app_icon</pixmap>
              </property>
             </widget>
            </item>
@@ -396,7 +396,7 @@ margin-bottom:25px;</string>
   </layout>
  </widget>
  <resources>
-  <include location="../qeditor.qrc"/>
+  <include location="../../qeditor.qrc"/>
  </resources>
  <connections/>
 </ui>

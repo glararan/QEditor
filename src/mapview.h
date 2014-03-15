@@ -1,3 +1,18 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #ifndef MAPVIEW_H
 #define MAPVIEW_H
 
@@ -105,7 +120,9 @@ private:
 
     QVector3D m_v;
 
-    bool  viewCenterFixed;
+    bool viewCenterFixed;
+    bool showCameraCurve;
+
     float m_panAngle;
     float m_tiltAngle;
     float panAngle;
@@ -170,10 +187,12 @@ public slots:
     void setBrushType(int type);
     void setTexturingFlow(double flow);
     void setVertexShading(QColor color);
+    void setCameraShowCurve(bool show);
     void setTerrainMaximumHeight(double value);
     void setPaintMaximumAlpha(double value);
     void setTerrainMode(int mode);
     void setBrushColor(QColor* color, bool outer);
+    void setWireframeColor(QColor* color, bool terrain);
     void setEnvionmentDistance(float value);
     void setTextureScaleOption_(int option);
     void setTextureScaleFar(float value);

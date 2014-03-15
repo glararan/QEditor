@@ -1,3 +1,18 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #include "texturemanager.h"
 
 #include "world.h"
@@ -66,6 +81,19 @@ bool TextureManager::hasTexture(QString textureName, QString texturePath)
     return false;
 }
 
+/*bool TextureManager::hasTexture(QString texturePath)
+{
+    QPair<QString, TexturePtr> pair;
+
+    foreach(pair, textures)
+    {
+        if(pair.second->getPath() == texturePath)
+            return true;
+    }
+
+    return false;
+}*/
+
 const SamplerPtr TextureManager::getSampler() const
 {    
     return sampler;
@@ -78,6 +106,26 @@ const TexturePtr TextureManager::getTexture(QString textureName) const
     foreach(pair, textures)
     {
         if(pair.first == textureName)
+            return pair.second;
+    }
+
+    qDebug() << QObject::tr("We didn't find texture with name") << textureName << QObject::tr("returning black texture!");
+
+    QImage textureImage(1, 1, QImage::Format_RGB32);
+    textureImage.setPixel(1, 1, qRgb(0, 0, 0));
+
+    TexturePtr texture(new Texture(textureImage));
+
+    return texture;
+}
+
+const TexturePtr TextureManager::getTexture(QString textureName, QString texturePath) const
+{
+    QPair<QString, TexturePtr> pair;
+
+    foreach(pair, textures)
+    {
+        if(pair.first == textureName && pair.second->getPath() == texturePath)
             return pair.second;
     }
 

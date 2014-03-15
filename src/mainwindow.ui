@@ -83,6 +83,7 @@
    <addaction name="action_mapview_m3"/>
    <addaction name="action_mapview_m4"/>
    <addaction name="action_mapview_m5"/>
+   <addaction name="action_mapview_m6"/>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -214,7 +215,10 @@
      <normaloff>:/arrow</normaloff>:/arrow</iconset>
    </property>
    <property name="text">
-    <string>Nástroj upravování objektů</string>
+    <string>Pointer</string>
+   </property>
+   <property name="toolTip">
+    <string>Pointer</string>
    </property>
   </action>
   <action name="action_Speed_0">
@@ -272,7 +276,10 @@
      <normaloff>:/terrain</normaloff>:/terrain</iconset>
    </property>
    <property name="text">
-    <string>Nástroj upravování terénu</string>
+    <string>Terrain editing tool</string>
+   </property>
+   <property name="toolTip">
+    <string>Terrain editing tool</string>
    </property>
   </action>
   <action name="action_Test">
@@ -410,15 +417,24 @@
    <property name="text">
     <string>&amp;Save</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
   </action>
   <action name="action_New">
    <property name="text">
     <string>&amp;New</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+N</string>
+   </property>
   </action>
   <action name="action_Load">
    <property name="text">
     <string>&amp;Load</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
    </property>
   </action>
   <action name="action_mapview_m2">
@@ -430,10 +446,10 @@
      <normaloff>:/brush_icon</normaloff>:/brush_icon</iconset>
    </property>
    <property name="text">
-    <string>Nástroj kreslení textur</string>
+    <string>Texture painting tool</string>
    </property>
    <property name="toolTip">
-    <string>Paint</string>
+    <string>Texture painting tool</string>
    </property>
   </action>
   <action name="action_Undo">
@@ -504,7 +520,7 @@
      <normaloff>:/vertexshading_icon</normaloff>:/vertexshading_icon</iconset>
    </property>
    <property name="text">
-    <string>Nástroj barvení textur</string>
+    <string>Vertex Shading tool</string>
    </property>
    <property name="toolTip">
     <string>Vertex Shading</string>
@@ -538,10 +554,10 @@
      <normaloff>:/water_icon</normaloff>:/water_icon</iconset>
    </property>
    <property name="text">
-    <string>Nástroj voda</string>
+    <string>Water tool</string>
    </property>
    <property name="toolTip">
-    <string>Water</string>
+    <string>Water tool</string>
    </property>
   </action>
   <action name="action_mapview_m5">
@@ -553,10 +569,10 @@
      <normaloff>:/object_icon</normaloff>:/object_icon</iconset>
    </property>
    <property name="text">
-    <string>Nástroj objekt</string>
+    <string>Tool objects</string>
    </property>
    <property name="toolTip">
-    <string>Object</string>
+    <string>Tool objects</string>
    </property>
   </action>
   <action name="action_Screenshot_upload">
@@ -573,6 +589,21 @@
    </property>
    <property name="shortcut">
     <string>L</string>
+   </property>
+  </action>
+  <action name="action_mapview_m6">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../qeditor.qrc">
+     <normaloff>:/camera_icon</normaloff>:/camera_icon</iconset>
+   </property>
+   <property name="text">
+    <string>Camera tool</string>
+   </property>
+   <property name="toolTip">
+    <string>Camera tool</string>
    </property>
   </action>
  </widget>

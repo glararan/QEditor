@@ -1,3 +1,18 @@
+This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.
+
 /// Basic info
 1. download quazip - http://quazip.sourceforge.net/index.html
 2. add to 2nd quazip.pro: INCLUDEPATH += "C:\Qt\Qt5.1.0\5.1.0\msvc2010_opengl\include\QtZlib"
@@ -33,7 +48,6 @@ MapChunk:
     3. voda
 
 discuss features:
-- jeden shader ve World misto xx v MapChunk (netix)
 - player camera (first person[netix], third person camera)
 - prechody mezi chunky
 - skyboxs (netix)
@@ -97,6 +111,8 @@ w = a = q
         // count.z = layer count;
         // coords.z = layer
 
+Git:
+    git ls-files | xargs wc -l // počet řádků zdrojáku v /src
 
 C++ standards:
     1) static_cast<int>(foo) // C++ cast

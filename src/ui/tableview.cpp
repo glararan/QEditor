@@ -1,3 +1,18 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #include "tableview.h"
 
 #include "mathhelper.h"
@@ -378,8 +393,8 @@ void TexturesArray::keyPressEvent(QKeyEvent* e)
 ///////////////////////////////////
 /// TextureWell
 ///////////////////////////////////
-TextureWell::TextureWell(QWidget* parent, int r, int c, QSize textureIconSize, QSize textureIconMargin)
-: TexturesArray(r, c, parent)
+TextureWell::TextureWell(QWidget* parent, int row, int columns, QSize textureIconSize, QSize textureIconMargin)
+: TexturesArray(row, columns, parent)
 , mousePressed(false)
 , oldCurrent(-1, -1)
 {
@@ -388,7 +403,7 @@ TextureWell::TextureWell(QWidget* parent, int r, int c, QSize textureIconSize, Q
     setTextureSize(textureIconSize);
     setTextureMargin(textureIconMargin);
 
-    values.resize(r * c);
+    values.resize(row * columns);
 
     setDefaultImages();
 }

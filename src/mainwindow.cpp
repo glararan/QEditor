@@ -1,3 +1,18 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -27,6 +42,7 @@ MainWindow::MainWindow(QWidget* parent)
 , modelpickerW(NULL)
 , colorW(NULL)
 , waterW(NULL)
+, cameraW(NULL)
 , t_outer_radius(NULL)
 , t_inner_radius(NULL)
 , t_speed(NULL)
@@ -111,6 +127,7 @@ MainWindow::~MainWindow()
     delete modelpickerW;
     delete colorW;
     delete waterW;
+    delete cameraW;
 
     deleteObject(t_outer_radius);
     deleteObject(t_inner_radius);
@@ -208,6 +225,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
     texturepW    = new TexturePicker();
     modelpickerW = new ModelPicker();
     waterW       = new WaterWidget();
+    cameraW      = new CameraWidget(world->getCamera());
 
     // post initialize world sub widgets
     connect(mapView, SIGNAL(initialized()), this, SLOT(postInitializeSubWorldWidgets()));
@@ -267,14 +285,24 @@ void MainWindow::openWorld(ProjectFileData projectData)
 
     connect(teleportW, SIGNAL(TeleportTo(QVector3D*)), mapView, SLOT(setCameraPosition(QVector3D*)));
 
-    connect(settingsW, SIGNAL(setColorOfBrush(QColor*, bool)),mapView, SLOT(setBrushColor(QColor*, bool)));
-    connect(settingsW, SIGNAL(setEnvironmentDistance(float)), mapView, SLOT(setEnvionmentDistance(float)));
-    connect(settingsW, SIGNAL(setTextureScaleOption(int)),    mapView, SLOT(setTextureScaleOption_(int)));
-    connect(settingsW, SIGNAL(setTextureScaleFar(float)),     mapView, SLOT(setTextureScaleFar(float)));
-    connect(settingsW, SIGNAL(setTextureScaleNear(float)),    mapView, SLOT(setTextureScaleNear(float)));
+    connect(settingsW, SIGNAL(setColorOfBrush(QColor*, bool)),     mapView, SLOT(setBrushColor(QColor*, bool)));
+    connect(settingsW, SIGNAL(setColorOfWireframe(QColor*, bool)), mapView, SLOT(setWireframeColor(QColor*, bool)));
+    connect(settingsW, SIGNAL(setEnvironmentDistance(float)),      mapView, SLOT(setEnvionmentDistance(float)));
+    connect(settingsW, SIGNAL(setTextureScaleOption(int)),         mapView, SLOT(setTextureScaleOption_(int)));
+    connect(settingsW, SIGNAL(setTextureScaleFar(float)),          mapView, SLOT(setTextureScaleFar(float)));
+    connect(settingsW, SIGNAL(setTextureScaleNear(float)),         mapView, SLOT(setTextureScaleNear(float)));
 
     // tools - test
     connect(ui->action_Test, SIGNAL(triggered()), mapView, SLOT(doTest()));
+
+    // tools - development
+    connect(ui->action_Undo,          SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
+    connect(ui->action_Redo,          SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
+    connect(ui->action_New,           SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
+    connect(ui->action_Load,          SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
+    connect(ui->action_Close_Project, SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
+    connect(ui->action_Backup_Maps,   SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
+    connect(ui->action_Project_Maps,  SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
 
     /// toolbar
     connect(ui->action_mapview_m0, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
@@ -283,6 +311,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(ui->action_mapview_m3, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
     connect(ui->action_mapview_m4, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
     connect(ui->action_mapview_m5, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
+    connect(ui->action_mapview_m6, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
 
     connect(this, SIGNAL(setModeEditing(int)), mapView, SLOT(setModeEditing(int)));
 
@@ -290,6 +319,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(t_terrain_mode, SIGNAL(currentIndexChanged(int)), this   , SLOT(setTerrain_Mode(int)));
     connect(this,           SIGNAL(setTerrainMode(int))     , mapView, SLOT(setTerrainMode(int)));
 
+    connect(t_brush,        SIGNAL(buttonToggled(int, bool)), this,    SLOT(setBrush(int, bool)));
     connect(t_brush_type  , SIGNAL(currentIndexChanged(int)), mapView, SLOT(setBrushType(int)));
 
     connect(t_reset_transform, SIGNAL(clicked()), this, SLOT(resetModelBrush()));
@@ -324,6 +354,8 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(t_scale,        SIGNAL(valueChanged(double)), mapView, SLOT(setModelScale(double)));
 
     connect(colorW, SIGNAL(currentColorChanged(QColor)), mapView, SLOT(setVertexShading(QColor)));
+
+    connect(cameraW, SIGNAL(showPath(bool)), mapView, SLOT(setCameraShowCurve(bool)));
 }
 
 void MainWindow::postInitializeSubWorldWidgets()
@@ -600,6 +632,14 @@ void MainWindow::setToolBarItem()
         showMode(mode5Actions);
 
         addDockWindow(tr("Model Picker"), modelpickerW);
+    }
+    else if(iName == "action_mapview_m6")
+    {
+        emit setModeEditing(6);
+
+        showMode(mode6Actions);
+
+        addDockWindow(tr("Camera"), cameraW);
     }
 }
 
@@ -949,6 +989,9 @@ void MainWindow::initMode()
     addToolbarAction(t_scale                   , mode5Actions);
     addToolbarAction(t_scale_value_label       , mode5Actions);
 
+    // mode6
+
+
     hideToolbarActions();
 }
 
@@ -1014,6 +1057,26 @@ void MainWindow::setPaintMaximumAlphaState(int state)
     }
 }
 
+void MainWindow::setBrush(int unknown, bool unknown2)
+{
+    Q_UNUSED(unknown);
+    Q_UNUSED(unknown2);
+
+    if(t_brush->checkedButton() == t_brush_square)
+    {
+        QMessageBox msg;
+        msg.setWindowTitle("Error");
+        msg.setText(tr("Brush is not ready yet."));
+        msg.setIcon(QMessageBox::Critical);
+
+        msg.exec();
+
+        t_brush->buttonClicked(t_brush_circle);
+
+        t_brush_circle->setChecked(true);
+    }
+}
+
 void MainWindow::setBrushOuterRadius(double value)
 {
     t_outer_radius->setValue(t_outer_radius->value() + value);
@@ -1070,6 +1133,16 @@ void MainWindow::setTerrain_Mode(int index)
     }
 
     emit setTerrainMode(index);
+}
+
+void MainWindow::actionIsInDevelopment()
+{
+    QMessageBox msg;
+    msg.setWindowTitle("Error");
+    msg.setText(tr("This action is under development."));
+    msg.setIcon(QMessageBox::Critical);
+
+    msg.exec();
 }
 
 void MainWindow::setProjectData(ProjectFileData& data)

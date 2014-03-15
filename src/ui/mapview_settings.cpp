@@ -1,23 +1,39 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #include "mapview_settings.h"
 #include "ui_mapview_settings.h"
 
 #include "qeditor.h"
+#include "mathhelper.h"
 
 MapView_Settings::MapView_Settings(QWidget* parent)
 : QDialog(parent)
 , ui(new Ui::MapView_Settings)
 , brushColorType(Outer)
+, wireframeColorType(Wireframe)
 , cacheOuterBrushColor(app().getSetting("outerBrushColor", QColor(0, 255, 0)).value<QColor>())
 , cacheInnerBrushColor(app().getSetting("innerBrushColor", QColor(0, 255, 0)).value<QColor>())
+, cacheWireframeColor(MathHelper::toColor(app().getSetting("wireframe",        QVector4D(0.5f, 1.0f, 0.0f, 1.0f)).value<QVector4D>()))
+, cacheTWireframeColor(MathHelper::toColor(app().getSetting("terrainWireframe", QVector4D(0.0f, 0.0f, 0.0f, 0.0f)).value<QVector4D>()))
 , textureScaleFarSlider(new QDSlider())
 , textureScaleNearSlider(new QDSlider())
 {
     ui->setupUi(this);
 
     initializeComponents();
-
-    // Brush color
-    setBrushColor(cacheOuterBrushColor);
 
     // Environment Distance
     ui->EDistanceSlider->setValue(app().getSetting("environmentDistanceSlider", 1).toInt());
@@ -37,17 +53,25 @@ MapView_Settings::MapView_Settings(QWidget* parent)
     textureScaleNearSlider->setMaximum(0.9);
     textureScaleNearSlider->setValue(app().getSetting("textureScaleNearSlider", 0.4).toDouble());
 
-    ui->gridLayout->addWidget(textureScaleFarSlider,  4, 1, 1, 2);
-    ui->gridLayout->addWidget(textureScaleNearSlider, 5, 1, 1, 2);
+    ui->gridLayout->addWidget(textureScaleFarSlider,  6, 1, 1, 2);
+    ui->gridLayout->addWidget(textureScaleNearSlider, 7, 1, 1, 2);
 
     // connects
     connect(ui->outerBrushColorButton, SIGNAL(clicked()), this, SLOT(showColorDialog()));
     connect(ui->innerBrushColorButton, SIGNAL(clicked()), this, SLOT(showColorDialog()));
 
-    connect(colorDialog, SIGNAL(colorSelected(QColor)),       this, SLOT(setCacheColor(QColor)));
+    connect(ui->wireframeColorButton,        SIGNAL(clicked()), this, SLOT(showColorDialog()));
+    connect(ui->terrainWireframeColorButton, SIGNAL(clicked()), this, SLOT(showColorDialog()));
+
+    connect(colorDialog, SIGNAL(colorSelected(QColor)),       this, SLOT(setBrushCacheColor(QColor)));
     connect(colorDialog, SIGNAL(colorSelected(QColor)),       this, SLOT(setBrushColor(QColor)));
     connect(colorDialog, SIGNAL(currentColorChanged(QColor)), this, SLOT(setBrushColor(QColor)));
     connect(colorDialog, SIGNAL(rejected()),                  this, SLOT(setBrushToCacheColor()));
+
+    connect(wireframeColorDialog, SIGNAL(colorSelected(QColor)),       this, SLOT(setWireframeCacheColor(QColor)));
+    connect(wireframeColorDialog, SIGNAL(colorSelected(QColor)),       this, SLOT(setWireframeColor(QColor)));
+    connect(wireframeColorDialog, SIGNAL(currentColorChanged(QColor)), this, SLOT(setWireframeColor(QColor)));
+    connect(wireframeColorDialog, SIGNAL(rejected()),                  this, SLOT(setWireframeToCacheColor()));
 
     connect(ui->EDistanceSlider, SIGNAL(valueChanged(int)), this, SLOT(setEnvironmentDistance(int)));
 
@@ -65,6 +89,9 @@ void MapView_Settings::initializeComponents()
 {
     colorDialog = new QColorDialog();
     colorDialog->setCurrentColor(cacheOuterBrushColor);
+
+    wireframeColorDialog = new QColorDialog();
+    wireframeColorDialog->setCurrentColor(cacheWireframeColor);
 }
 
 void MapView_Settings::showColorDialog()
@@ -76,18 +103,32 @@ void MapView_Settings::showColorDialog()
         brushColorType = Outer;
 
         colorDialog->setCurrentColor(cacheOuterBrushColor);
+        colorDialog->show();
     }
-    else
+    else if(name == "innerBrushColorButton")
     {
         brushColorType = Inner;
 
         colorDialog->setCurrentColor(cacheInnerBrushColor);
+        colorDialog->show();
     }
+    else if(name == "wireframeColorButton")
+    {
+        wireframeColorType = Wireframe;
 
-    colorDialog->show();
+        wireframeColorDialog->setCurrentColor(cacheWireframeColor);
+        wireframeColorDialog->show();
+    }
+    else if(name == "terrainWireframeColorButton")
+    {
+        wireframeColorType = TerrainWireframe;
+
+        wireframeColorDialog->setCurrentColor(cacheTWireframeColor);
+        wireframeColorDialog->show();
+    }
 }
 
-void MapView_Settings::setCacheColor(QColor color)
+void MapView_Settings::setBrushCacheColor(QColor color)
 {
     switch(brushColorType)
     {
@@ -116,6 +157,39 @@ void MapView_Settings::setBrushToCacheColor()
 
         case Inner:
             emit setColorOfBrush(&cacheInnerBrushColor, false);
+            break;
+    }
+}
+
+void MapView_Settings::setWireframeCacheColor(QColor color)
+{
+    switch(wireframeColorType)
+    {
+        case Wireframe:
+            cacheWireframeColor = color;
+            break;
+
+        case TerrainWireframe:
+            cacheTWireframeColor = color;
+            break;
+    }
+}
+
+void MapView_Settings::setWireframeColor(QColor color)
+{
+    emit setColorOfWireframe(&color, wireframeColorType == Wireframe ? false : true);
+}
+
+void MapView_Settings::setWireframeToCacheColor()
+{
+    switch(wireframeColorType)
+    {
+        case Wireframe:
+            emit setColorOfWireframe(&cacheWireframeColor, false);
+            break;
+
+        case TerrainWireframe:
+            emit setColorOfWireframe(&cacheTWireframeColor, true);
             break;
     }
 }

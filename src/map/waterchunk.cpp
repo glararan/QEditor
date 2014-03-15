@@ -1,3 +1,18 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #include "waterchunk.h"
 
 #include "qeditor.h"
@@ -39,7 +54,6 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
     //
     BorderHeights bh;
     bh.top = bh.right = bh.bottom = bh.left = 0;
-    bh.topStatus = bh.rightStatus = bh.bottomStatus = bh.leftStatus = true;
 
     heights = bh;
 
@@ -82,7 +96,6 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
     //
     BorderHeights bh;
     bh.top = bh.right = bh.bottom = bh.left = 0;
-    bh.topStatus = bh.rightStatus = bh.bottomStatus = bh.leftStatus = true;
 
     heights = bh;
 
@@ -153,7 +166,9 @@ void WaterChunk::draw(QOpenGLShaderProgram* shader, GLuint reflectionTexture, GL
         {
             Mesh.bind();
             Mesh.createAttributeArray(IMesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 2);
+
             shader->setPatchVertexCount(1);
+
             world->getGLFunctions()->glDrawArrays(GL_PATCHES, 0, Mesh.getNumFaces());
         }
     }
@@ -207,6 +222,7 @@ void WaterChunk::updateData()
             }
         }
 
+        waterSurface->bind();
         waterSurface->setHeightmap(waterData);
 
         chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, waterSurface, waterSampler, QByteArrayLiteral("heightMap"));

@@ -1,3 +1,18 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #version 400
 
 layout (location = 0) out vec4 fragColor;
@@ -17,6 +32,7 @@ uniform struct LineInfo
 {
   float width;
   vec4 color;
+  vec4 color2;
 } line;
 
 uniform struct LightInfo
@@ -36,11 +52,11 @@ uniform struct MaterialInfo
 uniform sampler2D baseTexture;
 uniform sampler2D layer1Texture;
 uniform sampler2D layer2Texture;
-//uniform sampler2D layer3Texture;
+uniform sampler2D layer3Texture;
 
 uniform sampler2D layer1Alpha;
 uniform sampler2D layer2Alpha;
-//uniform sampler2D layer3Alpha;
+uniform sampler2D layer3Alpha;
 
 uniform sampler2D vertexShading;
 
@@ -67,6 +83,8 @@ uniform float horizontalScale = 533.33333;
 uniform vec2 viewportSize;
 
 uniform sampler2D heightMap;
+
+uniform float deltaTime;
 
 uniform float baseX = 0.0f;
 uniform float baseY = 0.0f;
@@ -211,7 +229,12 @@ vec4 shadeSimpleWireFrame()
 {
     vec4 color = vec4(0, 0, 0, 0);
 
-    return wireFrame(color, line.color);
+    vec4 outColor = wireFrame(color, line.color);
+
+    if(outColor == color)
+        discard;
+
+    return outColor;
 }
 
 subroutine(ShaderModelType)
@@ -335,23 +358,32 @@ vec4 shadeTexturedAndLit()
 
     /// Get layer 2 texture color
     vec4 layer2Near  = texture(layer2Texture, uvNear);
-    vec4 layer2Far   = texture(layer2Texture, 5.0 * uvFar);
+    vec4 layer2Far   = texture(layer2Texture, uvFar);
     vec4 layer2Color = mix(layer2Near, layer2Far, textureDistanceFactor);
+
+    /// Get layer 3 texture color
+    vec4 layer3Near  = texture(layer3Texture, uvNear);
+    vec4 layer3Far   = texture(layer3Texture, 5.0 * uvFar);
+    vec4 layer3Color = mix(layer3Near, layer3Far, textureDistanceFactor);
 
     /// Blend layer 1 and base texture based upon alphamap
     vec4 baseAndLayer1Color = mix(baseColor, layer1Color, texture(layer1Alpha, texCoords).r);
 
-    /// Now blend with layer 2 based upon alphamap
-    vec4 diffuseColor = mix(baseAndLayer1Color, layer2Color, texture(layer2Alpha, texCoords).r);
+    /// Blend baseAndLayer1Color and layer 1 based upon alphamap
+    vec4 layer1AndLayer2Color = mix(baseAndLayer1Color, layer2Color, texture(layer2Alpha, texCoords).r);
+
+    /// Now blend with layer 3 based upon alphamap
+    vec4 diffuseColor = mix(layer1AndLayer2Color, layer3Color, texture(layer3Alpha, texCoords).r);
 
     // overlay effect
     //diffuseColor += texture(vertexShading, texCoords);
 
     vec4 vertexShadingColor = texture(vertexShading, texCoords);
     vertexShadingColor.rgb *= vertexShadingColor.a;
-    //vertexShadingColor.rgb *= vertexShadingColor.a;
 
     diffuseColor.rgb += vertexShadingColor.rgb;
+
+    //diffuseColor.rgb = mix(diffuseColor.rgb, vertexShadingColor.rgb, vertexShadingColor.a);
 
     // non overlay effect
     //diffuseColor = mix(diffuseColor, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
@@ -369,7 +401,7 @@ vec4 shadeTexturedAndLit()
 subroutine(ShaderModelType)
 vec4 shadeWorldTexturedWireframed()
 {
-    return wireFrame(shadeTexturedAndLit(), vec4(0));
+    return wireFrame(shadeTexturedAndLit(), line.color2);
 }
 
 subroutine(ShaderModelType)
@@ -390,11 +422,13 @@ vec4 ApplyCircle(vec4 colorIn, vec4 brushColor, vec2 distVec, float mouseDist, f
     if(angle < 0)
         angle += 3.1415926535897932384626433832795 * 2;
 
+    angle += deltaTime * 0.25f; // rotate circle
+
     angle = (angle * 180.0f) / 3.1415926535897932384626433832795;
 
-    float resid = int(angle) % 30;
+    float resid = int(angle) % 22;
 
-    if(resid < 20)
+    if(resid < 14)
         colorIn += brushColor;
 
     return colorIn;

@@ -1,3 +1,18 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #include "world.h"
 
 #include "maptile.h"
@@ -74,7 +89,14 @@ void World::initialize(QOpenGLContext* context, QSize fboSize)
 
     if(!GLfuncs)
     {
+        qDebug() << "OpenGL Version: " << QString::fromLocal8Bit((char*)glGetString(GL_VERSION));
+        qDebug() << "OpenGL Vendor:"   << QString::fromLocal8Bit((char*)glGetString(GL_VENDOR));
+        qDebug() << "OpenGL Rendered:" << QString::fromLocal8Bit((char*)glGetString(GL_RENDERER));
+
+        qDebug() << QObject::tr("Requires OpenGL >= 4.2");
+
         qFatal(QObject::tr("Requires OpenGL >= 4.2").toLatin1().data());
+
         exit(1);
     }
 
@@ -116,7 +138,19 @@ void World::initialize(QOpenGLContext* context, QSize fboSize)
         }
     }
 
+    // initialize fbo
+    QOpenGLFramebufferObjectFormat format;
+    format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+    format.setMipmap(true);
+
+    fbo = new QOpenGLFramebufferObject(QSize(8192, 4608), format);
+
+    viewportSize = fboSize;
+
+    //// initialize shaders
+    /// Model Shader
     modelShader = new QOpenGLShaderProgram();
+
     if(!modelShader->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/data/shaders/model.vert"))
         qCritical() << QObject::tr("Could not compile vertex shader. Log:") << modelShader->log();
 
@@ -126,7 +160,9 @@ void World::initialize(QOpenGLContext* context, QSize fboSize)
     if(!modelShader->link())
         qCritical() << QObject::tr("Could not link shader program. Log:") << modelShader->log();
 
+    /// Terrain Shader
     terrainShader = new QOpenGLShaderProgram();
+
     if(!terrainShader->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/data/shaders/qeditor.vert"))
         qCritical() << QObject::tr("Could not compile vertex shader. Log:") << terrainShader->log();
 
@@ -145,7 +181,9 @@ void World::initialize(QOpenGLContext* context, QSize fboSize)
     if(!terrainShader->link())
         qCritical() << QObject::tr("Could not link shader program. Log:") << terrainShader->log();
 
+    /// Water Shader
     waterShader = new QOpenGLShaderProgram();
+
     if(!waterShader->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/data/shaders/qeditor.vert"))
         qCritical() << QObject::tr("Could not compile vertex shader. Log:") << waterShader->log();
 
@@ -164,6 +202,34 @@ void World::initialize(QOpenGLContext* context, QSize fboSize)
     if(!waterShader->link())
         qCritical() << QObject::tr("Could not link shader program. Log:") << waterShader->log();
 
+
+    /// Shader data
+    terrainShader->bind();
+
+    // Set line parameters
+    terrainShader->setUniformValue("line.width", 0.2f);
+    terrainShader->setUniformValue("line.color", app().getSetting("wireframe", QVector4D(0.5f, 1.0f, 0.0f, 1.0f)).value<QVector4D>());
+    //terrainShader->setUniformValue("line.color", QVector4D(0.17f, 0.50f, 1.0f, 1.0f)); // blue
+    terrainShader->setUniformValue("line.color2", app().getSetting("terrainWireframe", QVector4D(0.0f, 0.0f, 0.0f, 0.0f)).value<QVector4D>());
+
+    // Set the fog parameters
+    terrainShader->setUniformValue("fog.color"      , QVector4D(0.65f, 0.77f, 1.0f, 1.0f));
+    terrainShader->setUniformValue("fog.minDistance", app().getSetting("environmentDistance", 256.0f).toFloat() / 2.0f);
+    terrainShader->setUniformValue("fog.maxDistance", app().getSetting("environmentDistance", 256.0f).toFloat() - 32.0f);
+
+    // Set the horizontal and vertical scales applied in the tess eval shader
+    terrainShader->setUniformValue("horizontalScale", CHUNKSIZE);
+
+    // Set the lighting parameters
+    terrainShader->setUniformValue("light.intensity", QVector3D(1.0f, 1.0f, 1.0f));
+
+    // Set the material properties
+    terrainShader->setUniformValue("material.Ka", QVector3D(0.1f, 0.1f, 0.1f));
+    terrainShader->setUniformValue("material.Kd", QVector3D(1.0f, 1.0f, 1.0f));
+    terrainShader->setUniformValue("material.Ks", QVector3D(0.3f, 0.3f, 0.3f));
+    terrainShader->setUniformValue("material.shininess", 10.0f);
+
+    /// MapChunk neighbours
     createNeighbours();
 }
 
@@ -172,6 +238,11 @@ void World::update(float dt)
     Q_UNUSED(dt);
 
     QOpenGLShaderProgram* shader = getWaterShader();
+    shader->bind();
+
+    shader->setUniformValue("deltaTime", dt);
+
+    shader = getTerrainShader();
     shader->bind();
 
     shader->setUniformValue("deltaTime", dt);
@@ -201,17 +272,7 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
         QOpenGLShaderProgram* shader = (i == 0) ? getTerrainShader() : getWaterShader();
         shader->bind();
 
-        // Set line parameters
-        shader->setUniformValue("line.width", 0.2f);
-        shader->setUniformValue("line.color", QVector4D(0.17f, 0.50f, 1.0f, 1.0f)); // blue
-
-        // Set the fog parameters
-        shader->setUniformValue("fog.color"      , QVector4D(0.65f, 0.77f, 1.0f, 1.0f));
-        shader->setUniformValue("fog.minDistance", app().getSetting("environmentDistance", 256.0f).toFloat() / 2.0f);
-        shader->setUniformValue("fog.maxDistance", app().getSetting("environmentDistance", 256.0f).toFloat() - 32.0f);
-
         // Set the horizontal and vertical scales applied in the tess eval shader
-        shader->setUniformValue("horizontalScale"      , CHUNKSIZE);
         shader->setUniformValue("pixelsPerTriangleEdge", triangles);
 
         // Pass in the usual transformation matrices
@@ -222,14 +283,7 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
         shader->setUniformValue("mvp"              , mvp);
 
         // Set the lighting parameters
-        shader->setUniformValue("light.position" , lightDirection);
-        shader->setUniformValue("light.intensity", QVector3D(1.0f, 1.0f, 1.0f));
-
-        // Set the material properties
-        shader->setUniformValue("material.Ka", QVector3D(0.1f, 0.1f, 0.1f));
-        shader->setUniformValue("material.Kd", QVector3D(1.0f, 1.0f, 1.0f));
-        shader->setUniformValue("material.Ks", QVector3D(0.3f, 0.3f, 0.3f));
-        shader->setUniformValue("material.shininess", 10.0f);
+        shader->setUniformValue("light.position", lightDirection);
 
         if(drawBrush && i == 0)
             brush->draw(shader, QVector2D(worldCoordinates.x(), worldCoordinates.z()));
@@ -277,7 +331,9 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
         Pipeline.rotateZ(getObjectBrush()->rotation_z * 360.0f);
 
         modelShader->bind();
+
         Pipeline.updateMatrices(modelShader);
+
         possibleModel->draw(modelShader);
     }
 
@@ -562,6 +618,7 @@ MapChunk* World::getMapChunkAt(const QVector3D& position) const
 
         return NULL;
     }
+
     int cx = floor((position.x() - TILESIZE * tx) / CHUNKSIZE);
     int cy = floor((position.z() - TILESIZE * ty) / CHUNKSIZE);
 
@@ -631,7 +688,7 @@ MapTile* World::getTileAt(float x, float z) const
     return mapTiles[tx][ty].tile;
 }
 
-QVector3D World::getWorldCoordinates()
+QVector3D World::getWorldCoordinates() const
 {
     return worldCoordinates;
 }
@@ -783,6 +840,8 @@ void World::setFboSize(QSize size)
                 mapTiles[x][y].tile->setFboSize(size);
         }
     }
+
+    viewportSize = size;
 }
 
 void World::setCamera(Camera* cam)
@@ -891,12 +950,66 @@ void World::createNeighbours()
 
 void World::test()
 {
-    for(int x = 0; x < TILES; ++x)
+    /// Enable water on each tile and chunk
+    /*for(int x = 0; x < TILES; ++x)
     {
         for(int y = 0; y < TILES; ++y)
         {
             if(tileLoaded(x, y))
-                mapTiles[x][y].tile->test();
+            {
+                for(int wx = 0; wx < CHUNKS; ++wx)
+                {
+                    for(int wy = 0; wy < CHUNKS; ++wy)
+                        mapTiles[x][y].tile->getWater()->getChunk(wx, wy)->setData(true);
+                }
+            }
+        }
+    }*/
+
+    /// Fix NaN values in heightmap
+    /*MapChunk* chunk = getMapChunkAt(worldCoordinates);
+
+    chunk->test();*/
+
+    /// Take capture of screen in fbo
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
+                fbo->bind();
+
+                GLfuncs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                GLfuncs->glViewport(0, 0, fbo->width(), fbo->height());
+
+                mapTiles[tx][ty].tile->draw(MAP_DRAW_DISTANCE, camera->position());
+
+                fbo->release();
+
+                GLfuncs->glViewport(0, 0, viewportSize.width(), viewportSize.height());
+            }
         }
     }
+
+    int width, height;
+
+    GLfuncs->glBindTexture(GL_TEXTURE_2D, fbo->texture());
+
+    GLfuncs->glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH,  &width);
+    GLfuncs->glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+
+    if(width <= 0 || height <= 0)
+        return;
+
+    GLint bytes = width * height * 4;
+
+    unsigned char* data = (unsigned char*)malloc(bytes);
+
+    GLfuncs->glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+    QImage img = QImage(data, width, height, QImage::Format_RGBA8888);
+
+    img.save("test.png");
 }

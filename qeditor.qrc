@@ -11,8 +11,6 @@
         <file alias="square_icon">data/images/square.png</file>
         <file alias="brush_icon">data/images/brush.png</file>
         <file alias="app_icon">data/images/icon.png</file>
-        <file>data/shaders/qeditor_world.frag</file>
-        <file>data/shaders/qeditor_world.vert</file>
         <file alias="vertexshading_icon">data/images/vertexshading.png</file>
         <file>data/shaders/qeditor_water.frag</file>
         <file alias="water_icon">data/images/water.png</file>
@@ -20,10 +18,21 @@
         <file>data/shaders/model.frag</file>
         <file>data/shaders/model.vert</file>
         <file alias="reset">data/images/reset.png</file>
+        <file alias="camera_icon">data/images/camera.png</file>
+        <file>data/shaders/qeditor_bezier.frag</file>
+        <file>data/shaders/qeditor_bezier.geom</file>
+        <file>data/shaders/qeditor_bezier.vert</file>
     </qresource>
     <qresource prefix="/textures">
         <file>textures/grass.png</file>
         <file>textures/rock.png</file>
         <file>textures/snowrocks.png</file>
+        <file>textures/sand.png</file>
+        <file>textures/sand_rock.png</file>
+        <file>textures/sand2.png</file>
+        <file>textures/ground.png</file>
+    </qresource>
+    <qresource prefix="/languages">
+        <file alias="cs_CZ">data/languages/cs_CZ.qlg</file>
     </qresource>
 </RCC>

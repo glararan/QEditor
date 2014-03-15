@@ -1,3 +1,18 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #include "texturepicker.h"
 #include "ui_texturepicker.h"
 
@@ -21,9 +36,10 @@ TexturePicker::TexturePicker(QWidget* parent)
         ui->tableWidget->setItem(i, 0, item);
     }
 
-    connect(ui->layerUpButton,     SIGNAL(clicked()), this, SLOT(moveLayerUp()));
-    connect(ui->layerDownButton,   SIGNAL(clicked()), this, SLOT(moveLayerDown()));
-    connect(ui->deleteLayerButton, SIGNAL(clicked()), this, SLOT(deleteLayer()));
+    connect(ui->layerUpButton,         SIGNAL(clicked()), this, SLOT(moveLayerUp()));
+    connect(ui->layerDownButton,       SIGNAL(clicked()), this, SLOT(moveLayerDown()));
+    connect(ui->deleteLayerButton,     SIGNAL(clicked()), this, SLOT(deleteLayer()));
+    connect(ui->loadAllTexturesButton, SIGNAL(clicked()), this, SLOT(loadAllTextures()));
 
     connect(ui->tableWidget, SIGNAL(itemClicked(QTableWidgetItem*)), this, SLOT(handleLayerGUI(QTableWidgetItem*)));
 }
@@ -36,6 +52,8 @@ TexturePicker::~TexturePicker()
 void TexturePicker::initialize(TextureManager* manager)
 {
     textureManager = manager;
+
+    QVector<QPair<QImage, QString>> textures;
 
     QPair<QString, TexturePtr> pair;
 
@@ -61,12 +79,14 @@ void TexturePicker::resizeEvent(QResizeEvent* e)
     {
         columns = tColumns;
 
-        if(textures.count() < columns)
-            textureWell->setCols(textures.count());
+        int count = textureManager->getTextures().count();
+
+        if(count < columns)
+            textureWell->setCols(count);
         else
             textureWell->setCols(columns);
 
-        textureWell->setRows(ceil(MathHelper::toDouble(textures.count()) / MathHelper::toDouble(columns)));
+        textureWell->setRows(ceil(MathHelper::toDouble(count) / MathHelper::toDouble(columns)));
     }
 
     QDialog::resizeEvent(e);
@@ -143,7 +163,35 @@ void TexturePicker::deleteLayer()
     if(mapChunk != NULL)
         mapChunk->deleteAlphaMap(index);
 
-    ui->tableWidget->itemAt(0, index)->setData(Qt::DecorationRole, QVariant::Invalid);
+    ui->tableWidget->selectedItems().first()->setData(Qt::DecorationRole, QVariant::Invalid);
+}
+
+void TexturePicker::loadAllTextures()
+{
+    QDir textureDir("textures/");
+
+    if(textureDir.exists())
+    {
+        QVector<QPair<QImage, QString>> texts;
+
+        foreach(QString file, textureDir.entryList(QDir::Files | QDir::Readable))
+        {
+            QFile f(file);
+
+            if(!textureManager->hasTexture(QFileInfo(f.fileName()).baseName() + "Texture", textureDir.filePath(f.fileName())))
+            {
+                textureManager->loadTexture(QFileInfo(f.fileName()).baseName() + "Texture", textureDir.filePath(f.fileName()));
+
+                QImage img(textureDir.filePath(f.fileName()));
+
+                texts.append(qMakePair<QImage, QString>(img, QFileInfo(f.fileName()).baseName() + "Texture"));
+            }
+        }
+
+        qDebug() << texts.count();
+
+        textureWell->insertItems(texts);
+    }
 }
 
 void TexturePicker::handleLayerGUI(QTableWidgetItem* item)

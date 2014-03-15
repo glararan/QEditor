@@ -37,14 +37,7 @@
      <property name="rightMargin">
       <number>15</number>
      </property>
-     <item row="2" column="0">
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>Environment distance:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1" colspan="2">
+     <item row="4" column="1" colspan="2">
       <widget class="QSlider" name="EDistanceSlider">
        <property name="minimum">
         <number>1</number>
@@ -72,6 +65,13 @@
        </property>
       </widget>
      </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Outer brush color:</string>
+       </property>
+      </widget>
+     </item>
      <item row="0" column="1">
       <widget class="QPushButton" name="outerBrushColorButton">
        <property name="toolTip">
@@ -82,10 +82,34 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label">
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>Outer brush color:</string>
+        <string>Environment distance:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>Texture scale near:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Texture scale options:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1" colspan="2">
+      <widget class="QComboBox" name="textureScaleOptions">
+       <property name="currentText">
+        <string/>
+       </property>
+       <property name="currentIndex">
+        <number>-1</number>
        </property>
       </widget>
      </item>
@@ -102,34 +126,17 @@
        </property>
       </spacer>
      </item>
-     <item row="3" column="1" colspan="2">
-      <widget class="QComboBox" name="textureScaleOptions">
-       <property name="currentText">
-        <string/>
-       </property>
-       <property name="currentIndex">
-        <number>-1</number>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="label_6">
-       <property name="text">
-        <string>Texture scale near:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="label_5">
        <property name="text">
         <string>Texture scale far:</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="label_3">
+     <item row="1" column="1">
+      <widget class="QPushButton" name="innerBrushColorButton">
        <property name="text">
-        <string>Texture scale options:</string>
+        <string>Choose</string>
        </property>
       </widget>
      </item>
@@ -140,8 +147,29 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QPushButton" name="innerBrushColorButton">
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>Wireframe color:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string>Terrain wireframe color:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QPushButton" name="wireframeColorButton">
+       <property name="text">
+        <string>Choose</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QPushButton" name="terrainWireframeColorButton">
        <property name="text">
         <string>Choose</string>
        </property>

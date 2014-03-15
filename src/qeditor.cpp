@@ -1,8 +1,24 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #include "qeditor.h"
 
 #include "mainwindow.h"
 
 #include <QTime>
+#include <QTranslator>
 
 QEditor::QEditor(int& argc, char** argv)
 : QApplication(argc, argv)
@@ -10,9 +26,14 @@ QEditor::QEditor(int& argc, char** argv)
     setOrganizationDomain("https://github.com/glararan/QEditor");
     setOrganizationName("");
     setApplicationName("QEditor");
-    setApplicationVersion("0.1 pre-alpha");
+    setApplicationVersion("Alpha 0.1a");
 
     settings = new QSettings(this);
+
+    translator = new QTranslator(this);
+    translator->load(getSetting("language", QLocale::system().name()).toString(), ":/languages/", QString(), ".qlg");
+
+    installTranslator(translator);
 
     qsrand((uint)QTime::currentTime().msec());
 
@@ -36,6 +57,9 @@ QEditor::QEditor(int& argc, char** argv)
 
 QEditor::~QEditor()
 {
+    delete settings;
+    delete translator;
+
     delete mainWindow;
 }
 
