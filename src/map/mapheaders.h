@@ -53,10 +53,18 @@ enum ShaderUnits
     //Texture4      = 5,
     Alphamap2     = 6,
     Alphamap3     = 7,
-    VertexShading = 8,
+    VertexShading = 8
 };
 
 /// Structures
+enum TextureScaleOption
+{
+    Multiply    = 0, // Multiply far and near
+    Divide      = 1, // Divide far and near
+    MultiplyFar = 2, // Multiply far and divide near
+    DivideFar   = 3  // Divide far and multiply near
+};
+
 struct MCVT
 {
     float height[CHUNK_ARRAY_UC_SIZE]; // chunk_array_size
@@ -65,6 +73,11 @@ struct MCVT
     quint8 vertexShading[CHUNK_ARRAY_SIZE];
 
     QString textures[MAX_TEXTURES];
+
+    qreal textureScaleFar[MAX_TEXTURES];
+    qreal textureScaleNear[MAX_TEXTURES];
+
+    TextureScaleOption textureScale[MAX_TEXTURES];
 };
 
 struct MH2O

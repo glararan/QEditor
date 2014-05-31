@@ -70,12 +70,12 @@ public:
 
     void drawCurve(QMatrix4x4 modelMatrix);
 
-    QVector3D position() const;
+    QVector3D position() const; // Return camera eye
     QVector3D upVector() const;
     QVector3D viewCenter() const;
     QVector3D viewVector() const;
 
-    const QVector3D& pos() const;
+    const QVector3D& pos() const; // Return camera eye
 
     ProjectionType projectionType() const;
 

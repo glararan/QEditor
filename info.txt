@@ -43,9 +43,8 @@ General:
     1. Save (dodělat save z QListu kde budou soubory) ??? Až v alfě ???
 
 MapChunk:
-    1. editace terenu shift + ctrl se nahradí v toolbaru, shift = zvýšení, ctrl = snížení !!! až v alfě !!!
-    2. flatten tool uhel a směr
-    3. voda
+    1. flatten tool uhel a směr
+    2. voda
 
 discuss features:
 - player camera (first person[netix], third person camera)
@@ -59,6 +58,15 @@ discuss features:
  - zneviditelneni
  - skopirovani
 - camera record (myšleno tak, že se naplanuje trasa a kamera po ní pojede)
+
+// tipy od lidí
+- při založení projektu maximální výška
+- při založení projektu už voda v -X hloubce
+- generace terénu
+- generování objektů po určené textuře
+- automatická textura podle výšky (checkbox)
+- import/export heightmapy v určitém formátu (vyhodit ostatní nástroje jako textury atd..)
+- 3D stereoskopické
 
 List pro funkce:
     Rozdělit MapView na třídy MapView[pouze ukazovat data], World[spravování objektů], Map(?)[spravování heightmapy a alphamap],

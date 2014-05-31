@@ -31,6 +31,7 @@ uniform struct FogInfo
 uniform struct LineInfo
 {
   float width;
+
   vec4 color;
   vec4 color2;
 } line;
@@ -46,6 +47,7 @@ uniform struct MaterialInfo
     vec3 Ka;         // Ambient reflectivity
     vec3 Kd;         // Diffuse reflectivity
     vec3 Ks;         // Specular reflectivity
+
     float shininess; // Specular shininess exponent
 } material;
 

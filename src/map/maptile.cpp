@@ -306,6 +306,26 @@ void MapTile::insertModel(MapObject *object)
     objects.push_back(object);
 }
 
+void MapTile::deleteModel(float x, float z)
+{
+    for(int i = objects.size() - 1; i >= 0; --i)
+    {
+        MapObject* object = objects.at(i);
+
+        float radius = 5.0f;
+
+        if(object->translate.x() - radius < x && object->translate.x() + radius > x
+        && object->translate.z() - radius < z && object->translate.z() + radius > z)
+        {
+            delete object;
+
+            object = NULL;
+
+            objects.removeAt(i);
+        }
+    }
+}
+
 void MapTile::updateModelHeight()
 {
     for(int i = 0; i < objects.size(); ++i)

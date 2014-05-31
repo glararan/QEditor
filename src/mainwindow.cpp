@@ -53,10 +53,14 @@ MainWindow::MainWindow(QWidget* parent)
 , t_reset_transform(NULL)
 , t_terrain_mode(NULL)
 , t_brush_type(NULL)
+, t_brush_mode(NULL)
 , t_terrain_maxHeight(NULL)
 , t_paint_maxAlpha(NULL)
 , t_terrain_maximum_height(NULL)
 , t_paint_maximum_alpha(NULL)
+, t_modelmode(NULL)
+, t_modelmode_insert(NULL)
+, t_modelmode_delete(NULL)
 , t_rotationx(NULL)
 , t_rotationy(NULL)
 , t_rotationz(NULL)
@@ -65,6 +69,7 @@ MainWindow::MainWindow(QWidget* parent)
 , t_terrain_mode_label(NULL)
 , t_brush_label(NULL)
 , t_brush_type_label(NULL)
+, t_brush_mode_label(NULL)
 , t_outer_radius_label(NULL)
 , t_outer_radius_value_label(NULL)
 , t_inner_radius_label(NULL)
@@ -73,6 +78,7 @@ MainWindow::MainWindow(QWidget* parent)
 , t_speed_value_label(NULL)
 , t_flow_label(NULL)
 , t_flow_value_label(NULL)
+, t_model_mode_label(NULL)
 , t_rotationx_label(NULL)
 , t_rotationx_value_label(NULL)
 , t_rotationy_label(NULL)
@@ -134,6 +140,9 @@ MainWindow::~MainWindow()
     deleteObject(t_speed);
     deleteObject(t_flow);
 
+    deleteObject(t_modelmode);
+    deleteObject(t_modelmode_insert);
+    deleteObject(t_modelmode_delete);
     deleteObject(t_rotationx);
     deleteObject(t_rotationy);
     deleteObject(t_rotationz);
@@ -149,6 +158,7 @@ MainWindow::~MainWindow()
 
     deleteObject(t_terrain_mode);
     deleteObject(t_brush_type);
+    deleteObject(t_brush_mode);
 
     deleteObject(t_terrain_maxHeight);
     deleteObject(t_terrain_maximum_height);
@@ -160,6 +170,7 @@ MainWindow::~MainWindow()
 
     deleteObject(t_brush_label);
     deleteObject(t_brush_type_label);
+    deleteObject(t_brush_mode_label);
 
     deleteObject(t_outer_radius_label);
     deleteObject(t_outer_radius_value_label);
@@ -169,6 +180,7 @@ MainWindow::~MainWindow()
     deleteObject(t_speed_value_label);
     deleteObject(t_flow_label);
     deleteObject(t_flow_value_label);
+    deleteObject(t_model_mode_label);
     deleteObject(t_rotationx_label);
     deleteObject(t_rotationx_value_label);
     deleteObject(t_rotationy_label);
@@ -240,9 +252,14 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)),     texturepW,     SLOT(setChunk(MapChunk*)));
     connect(mapView, SIGNAL(selectedWaterChunk(WaterChunk*)), waterW,        SLOT(setChunk(WaterChunk*)));
 
+    connect(mapView, SIGNAL(eMModeChanged(MapView::eMouseMode&, MapView::eEditingMode&)),
+            this,    SLOT(setBrushMode(MapView::eMouseMode&, MapView::eEditingMode&)));
+
     /// menu bar
     // file
-    connect(ui->action_Save, SIGNAL(triggered()), mapView, SLOT(save()));
+    connect(ui->action_New,           SIGNAL(triggered()), this,    SLOT(newProject()));
+    connect(ui->action_Save,          SIGNAL(triggered()), mapView, SLOT(save()));
+    connect(ui->action_Close_Project, SIGNAL(triggered()), this,    SLOT(closeProject())); // not implemented memory cleaning after objects destroy but after loading new project don't make mem leaks.
 
     // project - settings
     connect(ui->action_Project_Settings, SIGNAL(triggered()), this, SLOT(showProjectSettings()));
@@ -292,15 +309,16 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(settingsW, SIGNAL(setTextureScaleFar(float)),          mapView, SLOT(setTextureScaleFar(float)));
     connect(settingsW, SIGNAL(setTextureScaleNear(float)),         mapView, SLOT(setTextureScaleNear(float)));
 
-    // tools - test
+    // tools - test, stereoscopic
+    connect(ui->action_3D_Stereoscopic, SIGNAL(triggered(bool)), mapView, SLOT(set3DStreoscopic(bool)));
     connect(ui->action_Test, SIGNAL(triggered()), mapView, SLOT(doTest()));
 
     // tools - development
     connect(ui->action_Undo,          SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
     connect(ui->action_Redo,          SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
-    connect(ui->action_New,           SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
+    //connect(ui->action_New,           SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
     connect(ui->action_Load,          SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
-    connect(ui->action_Close_Project, SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
+    //connect(ui->action_Close_Project, SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
     connect(ui->action_Backup_Maps,   SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
     connect(ui->action_Project_Maps,  SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
 
@@ -321,6 +339,10 @@ void MainWindow::openWorld(ProjectFileData projectData)
 
     connect(t_brush,        SIGNAL(buttonToggled(int, bool)), this,    SLOT(setBrush(int, bool)));
     connect(t_brush_type  , SIGNAL(currentIndexChanged(int)), mapView, SLOT(setBrushType(int)));
+    connect(t_brush_type,   SIGNAL(currentIndexChanged(int)), this,    SLOT(setBrushType(int)));
+    connect(t_brush_mode,   SIGNAL(currentIndexChanged(int)), mapView, SLOT(setBrushMode(int)));
+
+    connect(t_modelmode, SIGNAL(buttonToggled(int, bool)), this, SLOT(setModel_Mode(int, bool)));
 
     connect(t_reset_transform, SIGNAL(clicked()), this, SLOT(resetModelBrush()));
 
@@ -393,6 +415,9 @@ void MainWindow::createMemoryProject(NewProjectData projectData)
     qDebug() << projectData.projectName;
     qDebug() << projectData.mapName;
 
+    if(world && mapView) // world is already open, close it and create proj.
+        closeProject();
+
     openWorld(projectFile);
 
     connect(mapView, SIGNAL(initialized()), this, SLOT(loadNewProjectMapTilesIntoMemory()));
@@ -401,6 +426,56 @@ void MainWindow::createMemoryProject(NewProjectData projectData)
 void MainWindow::loadNewProjectMapTilesIntoMemory()
 {
     world->loadNewProjectMapTilesIntoMemory(mapCoords, mapView->size());
+
+    texturepW->initialize(world->getTextureManager());
+}
+
+void MainWindow::newProject()
+{
+    NewProject* newProj = new NewProject();
+
+    connect(newProj, SIGNAL(wizardData(NewProjectData)), this, SLOT(createMemoryProject(NewProjectData)));
+
+    newProj->show();
+}
+
+void MainWindow::closeProject()
+{
+    // if world is not saved
+    // ....
+    // ....
+    // ....
+
+    world->deleteMe();
+
+    delete mapView;
+
+    world   = NULL;
+    mapView = NULL;
+
+    // clean toolbars actions
+    mode1Actions.clear();
+    mode2Actions.clear();
+    mode3Actions.clear();
+    mode4Actions.clear();
+    mode5Actions.clear();
+    mode6Actions.clear();
+
+    // clear toolbar
+    ui->toolbar3->clear();
+
+    // set pointer as main tool
+    foreach(QAction* action, ui->toolbar->actions())
+        action->setChecked(false);
+
+    ui->action_mapview_m0->setChecked(true);
+
+    startUp = new StartUp();
+
+    setCentralWidget(startUp);
+
+    connect(startUp, SIGNAL(createMemoryProject(NewProjectData)), this, SLOT(createMemoryProject(NewProjectData)));
+    connect(startUp, SIGNAL(openProject(ProjectFileData)),        this, SLOT(openWorld(ProjectFileData)));
 }
 
 void MainWindow::takeScreenshot()
@@ -742,7 +817,7 @@ void MainWindow::initMode()
     t_flow = new QDSlider();
     t_flow->setMinimum(0.1);
     t_flow->setMaximum(1.0);
-    t_flow->setValue(0.5);
+    t_flow->setValue(1.0);
     t_flow->setMaximumWidth(this->width() / 3);
     t_flow->setObjectName("t_flow");
 
@@ -753,28 +828,28 @@ void MainWindow::initMode()
     t_rotationx->setMaximumWidth(this->width() / 6);
     t_rotationx->setObjectName("t_rotationx");
 
-    t_rotationy = new QDSlider(2,this);
+    t_rotationy = new QDSlider(2, this);
     t_rotationy->setMinimum(0.0);
     t_rotationy->setMaximum(1.0);
     t_rotationy->setValue(0.0);
     t_rotationy->setMaximumWidth(this->width() / 6);
     t_rotationy->setObjectName("t_rotationy");
 
-    t_rotationz = new QDSlider(2,this);
+    t_rotationz = new QDSlider(2, this);
     t_rotationz->setMinimum(0.0);
     t_rotationz->setMaximum(1.0);
     t_rotationz->setValue(0.0);
     t_rotationz->setMaximumWidth(this->width() / 6);
     t_rotationz->setObjectName("t_rotationz");
 
-    t_impend = new QDSlider(2,this);
+    t_impend = new QDSlider(2, this);
     t_impend->setMinimum(-1.0);
     t_impend->setMaximum(1.0);
     t_impend->setValue(0.0);
     t_impend->setMaximumWidth(this->width() / 6);
     t_impend->setObjectName("t_impend");
 
-    t_scale = new QDSlider(2,this);
+    t_scale = new QDSlider(2, this);
     t_scale->setMinimum(0.2);
     t_scale->setMaximum(5.0);
     t_scale->setValue(1.0);
@@ -820,12 +895,37 @@ void MainWindow::initMode()
     t_terrain_mode_1.append(qMakePair<QString, QVariant>(tr("Flat")    , 2));
     t_terrain_mode_1.append(qMakePair<QString, QVariant>(tr("Smooth")  , 3));
 
+    t_modelmode = new QButtonGroup();
+    t_modelmode->setObjectName("t_modelmode");
+
+    t_modelmode_insert = new QPushButton(QIcon(":/insert_icon"), "");
+    t_modelmode_insert->setToolTip(tr("Insert"));
+    t_modelmode_insert->setCheckable(true);
+    t_modelmode_insert->setChecked(true);
+    t_modelmode_insert->setIconSize(QSize(24, 24));
+    t_modelmode_insert->setObjectName("t_modelmode_insert");
+    t_modelmode->addButton(t_modelmode_insert);
+
+    t_modelmode_delete = new QPushButton(QIcon(":/remove_icon"), "");
+    t_modelmode_delete->setToolTip(tr("Delete"));
+    t_modelmode_delete->setCheckable(true);
+    t_modelmode_delete->setIconSize(QSize(24, 24));
+    t_modelmode_delete->setObjectName("t_modelmode_delete");
+    t_modelmode->addButton(t_modelmode_delete);
+
     t_brush_type = new QComboBox();
     t_brush_type->setToolTip(tr("Select brush type"));
     t_brush_type->setObjectName("t_brush_type");
 
     for(int i = 0; i < t_terrain_mode_0.count(); ++i)
         t_brush_type->addItem(t_terrain_mode_0.at(i).first, t_terrain_mode_0.at(i).second);
+
+    t_brush_mode = new QComboBox();
+    t_brush_mode->setToolTip("Select brush mode");
+    t_brush_mode->setObjectName("t_brush_mode");
+    t_brush_mode->addItem(tr("Unselected"), 0);
+    t_brush_mode->addItem(tr("Raising"), 1);
+    t_brush_mode->addItem(tr("Lowering"), 2);
 
     t_terrain_maxHeight = new QCheckBox(tr("Maximum height:"));
     t_terrain_maxHeight->setObjectName("t_terrain_maxHeight");
@@ -859,6 +959,7 @@ void MainWindow::initMode()
 
     t_brush_label      = new QLabel(tr("Brushes:"));
     t_brush_type_label = new QLabel(tr("Brush type:"));
+    t_brush_mode_label = new QLabel(tr("Brush mode:"));
 
     t_outer_radius_label       = new QLabel(tr("Outer radius:"));
     t_outer_radius_value_label = new QLabel(QString("%1").arg(t_outer_radius->value()));
@@ -869,6 +970,7 @@ void MainWindow::initMode()
     t_flow_label               = new QLabel(tr("Flow:"));
     t_flow_value_label         = new QLabel(QString("%1").arg(t_flow->value()));
 
+    t_model_mode_label         = new QLabel(tr("Mode:"));
     t_rotationx_label          = new QLabel(tr("Rotation X:"));
     t_rotationx_value_label    = new QLabel(QString("%1").arg(t_rotationx->value()));
     t_rotationy_label          = new QLabel(tr("Rotation Y:"));
@@ -883,6 +985,7 @@ void MainWindow::initMode()
     t_terrain_mode_label->setObjectName("t_terrain_mode_label");
     t_brush_label->setObjectName("t_brush_label");
     t_brush_type_label->setObjectName("t_brush_type_label");
+    t_brush_mode_label->setObjectName("t_brush_mode_label");
     t_outer_radius_label->setObjectName("t_outer_radius_label");
     t_outer_radius_value_label->setObjectName("t_outer_radius_value_label");
     t_inner_radius_label->setObjectName("t_inner_radius_label");
@@ -896,12 +999,14 @@ void MainWindow::initMode()
 
     t_brush_label->setStyleSheet("margin:-3px 5px 0 0;");
     t_brush_type_label->setStyleSheet("margin:-3px 5px 0 0;");
+    t_brush_mode_label->setStyleSheet("margin:-3px 5px 0 0;");
 
     t_outer_radius_label->setStyleSheet("margin:-3px 5px 0 20px;");
     t_inner_radius_label->setStyleSheet("margin:-3px 5px 0 20px;");
     t_speed_label->setStyleSheet("margin:-3px 5px 0 20px;");
     t_flow_label->setStyleSheet("margin:-3px 5px 0 20px;");
 
+    t_model_mode_label->setStyleSheet("margin:-3px 5px 0 0;");
     t_rotationx_label->setStyleSheet("margin:-3px 5px 0 20px;");
     t_rotationy_label->setStyleSheet("margin:-3px 5px 0 20px;");
     t_rotationz_label->setStyleSheet("margin:-3px 5px 0 20px;");
@@ -927,6 +1032,8 @@ void MainWindow::initMode()
     addToolbarAction(t_terrain_mode            , mode1Actions);
     addToolbarAction(t_brush_type_label        , mode1Actions);
     addToolbarAction(t_brush_type              , mode1Actions);
+    addToolbarAction(t_brush_mode_label        , mode1Actions);
+    addToolbarAction(t_brush_mode              , mode1Actions);
     addToolbarAction(t_outer_radius_label      , mode1Actions);
     addToolbarAction(t_outer_radius            , mode1Actions);
     addToolbarAction(t_outer_radius_value_label, mode1Actions);
@@ -972,6 +1079,9 @@ void MainWindow::initMode()
     addToolbarAction(t_paint_maximum_alpha     , mode3Actions);
 
     // mode5
+    addToolbarAction(t_model_mode_label        , mode5Actions);
+    addToolbarAction(t_modelmode_insert        , mode5Actions);
+    addToolbarAction(t_modelmode_delete        , mode5Actions);
     addToolbarAction(t_reset_transform         , mode5Actions);
     addToolbarAction(t_rotationx_label         , mode5Actions);
     addToolbarAction(t_rotationx               , mode5Actions);
@@ -1077,6 +1187,37 @@ void MainWindow::setBrush(int unknown, bool unknown2)
     }
 }
 
+void MainWindow::setBrushType(int type)
+{
+    Q_UNUSED(type);
+
+    t_speed->setValue(1.0);
+}
+
+void MainWindow::setBrushMode(MapView::eMouseMode& mouseMode, MapView::eEditingMode& editingMode)
+{
+    switch(editingMode)
+    {
+        case MapView::Terrain:
+            {
+                if((int)mouseMode < t_brush_mode->count())
+                {
+                    if((int)mouseMode != t_brush_mode->currentIndex())
+                        t_brush_mode->setCurrentIndex((int)mouseMode);
+                    else
+                        t_brush_mode->setCurrentIndex(0);
+
+                    if(t_brush_mode->currentIndex() > 0)
+                        world->getCamera()->setLock(true);
+                    else
+                        world->getCamera()->setLock(false);
+                }
+                // else set nothing???
+            }
+            break;
+    }
+}
+
 void MainWindow::setBrushOuterRadius(double value)
 {
     t_outer_radius->setValue(t_outer_radius->value() + value);
@@ -1133,6 +1274,17 @@ void MainWindow::setTerrain_Mode(int index)
     }
 
     emit setTerrainMode(index);
+}
+
+void MainWindow::setModel_Mode(int unknown, bool unknown2)
+{
+    Q_UNUSED(unknown);
+    Q_UNUSED(unknown2);
+
+    if(t_modelmode_insert->isChecked())
+        mapView->setModelMode(MapView::Insertion);
+    else
+        mapView->setModelMode(MapView::Removal);
 }
 
 void MainWindow::actionIsInDevelopment()

@@ -203,7 +203,7 @@ void World::initialize(QOpenGLContext* context, QSize fboSize)
         qCritical() << QObject::tr("Could not link shader program. Log:") << waterShader->log();
 
 
-    /// Shader data
+    /// Shader data - terrain
     terrainShader->bind();
 
     // Set line parameters
@@ -229,6 +229,32 @@ void World::initialize(QOpenGLContext* context, QSize fboSize)
     terrainShader->setUniformValue("material.Ks", QVector3D(0.3f, 0.3f, 0.3f));
     terrainShader->setUniformValue("material.shininess", 10.0f);
 
+    /// Shader data - water
+    waterShader->bind();
+
+    // Set line parameters
+    waterShader->setUniformValue("line.width", 0.2f);
+    waterShader->setUniformValue("line.color", app().getSetting("wireframe", QVector4D(0.5f, 1.0f, 0.0f, 1.0f)).value<QVector4D>());
+    //waterShader->setUniformValue("line.color", QVector4D(0.17f, 0.50f, 1.0f, 1.0f)); // blue
+    waterShader->setUniformValue("line.color2", app().getSetting("terrainWireframe", QVector4D(0.0f, 0.0f, 0.0f, 0.0f)).value<QVector4D>());
+
+    // Set the fog parameters
+    waterShader->setUniformValue("fog.color"      , QVector4D(0.65f, 0.77f, 1.0f, 1.0f));
+    waterShader->setUniformValue("fog.minDistance", app().getSetting("environmentDistance", 256.0f).toFloat() / 2.0f);
+    waterShader->setUniformValue("fog.maxDistance", app().getSetting("environmentDistance", 256.0f).toFloat() - 32.0f);
+
+    // Set the horizontal and vertical scales applied in the tess eval shader
+    waterShader->setUniformValue("horizontalScale", CHUNKSIZE);
+
+    // Set the lighting parameters
+    waterShader->setUniformValue("light.intensity", QVector3D(1.0f, 1.0f, 1.0f));
+
+    // Set the material properties
+    waterShader->setUniformValue("material.Ka", QVector3D(0.1f, 0.1f, 0.1f));
+    waterShader->setUniformValue("material.Kd", QVector3D(1.0f, 1.0f, 1.0f));
+    waterShader->setUniformValue("material.Ks", QVector3D(0.3f, 0.3f, 0.3f));
+    waterShader->setUniformValue("material.shininess", 10.0f);
+
     /// MapChunk neighbours
     createNeighbours();
 }
@@ -248,6 +274,36 @@ void World::update(float dt)
     shader->setUniformValue("deltaTime", dt);
 
     // load tiles around + load neighbours
+    int tileX = MathHelper::toInt(camera->pos().x() / TILESIZE);
+    int tileY = MathHelper::toInt(camera->pos().z() / TILESIZE);
+
+    for(int tx = tileX - 1; tx < tileX + 2; ++tx)
+    {
+        for(int ty = tileY - 1; ty < tileY + 2; ++ty)
+        {
+            if(!hasTile(tx, ty) || (tx == tileX && ty == tileY) || !tileLoaded(tx, ty))
+                continue;
+
+            QFile file(QString("%1_%2_%3.qem").arg(projectData.mapName).arg(tx).arg(ty));
+
+            if(file.exists())
+                loadTile(tx, ty);
+        }
+    }
+
+    // unload tiles around
+    /*for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; tx < TILES; ++ty)
+        {
+            if(hasTile(tx, ty) && tileLoaded(tx, ty) && (tx > tileX + 1 || tx < tileX - 1) && (ty > tileY + 1 && ty < tileY - 1))
+            {
+                delete mapTiles[tx][ty].tile;
+
+                mapTiles[tx][ty].tile = NULL;
+            }
+        }
+    }*/
 }
 
 void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatrix, float triangles, QVector2D mousePosition, bool drawBrush, bool drawNewModel)
@@ -512,6 +568,18 @@ void World::paintVertexShading(float x, float z, float flow, QColor& color)
                     }
                 }
             }
+        }
+    }
+}
+
+void World::removeObject(float x, float z)
+{
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+                mapTiles[tx][ty].tile->deleteModel(x, z);
         }
     }
 }
@@ -879,6 +947,7 @@ void World::setDisplayMode(int displayMode)
     if(displayMode == SimpleWireFrame || displayMode == WorldHeight || displayMode == WorldTexturedWireframed)
     {
         terrainShader->bind();
+
         if(displayMode == WorldTexturedWireframed)
             terrainShader->setUniformValue("line.width", 0.5f);
         else
@@ -1012,4 +1081,8 @@ void World::test()
     QImage img = QImage(data, width, height, QImage::Format_RGBA8888);
 
     img.save("test.png");
+
+    /// Height fix
+    //mapTiles[0][0].tile->getChunk(3, 0)->test();
+    //mapTiles[0][0].tile->getChunk(2, 0)->test();
 }

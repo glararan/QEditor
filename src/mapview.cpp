@@ -41,23 +41,27 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , speed_mult(app().getSetting("speedMultiplier", 1.0f).toFloat())
 , screenSpaceErrorLevel(12.0f)
 , modelMatrix()
+, stereoscopic(false)
 , time(0.0f)
 , m_metersToUnits(4 * MathHelper::PI() / speed) // 500 units == 10 km => 0.05 units/m
 , fps(0)
 , leftButtonPressed(false)
 , rightButtonPressed(false)
+, changedMouseMode(false)
 , mouse_position(QPoint(0, 0))
 , terrain_pos()
 , shaping_speed(1.0f)
 , shaping_brush_type(1)
-, texturing_flow(0.5f)
+, texturing_flow(1.0f)
 , vertexShadingColor(QColor(255, 255, 255, 255))
 , shiftDown(false)
 , ctrlDown(false)
 , altDown(false)
 , escapeDown(false)
+, eMMode(Nothing)
 , eMode(Default)
 , eTerrain(Shaping)
+, eModel(Insertion)
 {
     setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
@@ -254,6 +258,40 @@ void MapView::update(float t)
     if(camera_zoom != camera->fieldOfView())
         camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 
+    // Update the mouse mode in MainWindow
+    if(!leftButtonPressed && !rightButtonPressed && (shiftDown || altDown || ctrlDown))
+    {
+        if(!changedMouseMode)
+        {
+            eMouseMode lastMMode = eMMode;
+
+            if(shiftDown && !altDown && !ctrlDown)
+                eMMode = ShiftOnly;
+            else if(ctrlDown && !shiftDown && !altDown)
+                eMMode = CtrlOnly;
+            else if(altDown && !shiftDown && !ctrlDown)
+                eMMode = AltOnly;
+            else if(shiftDown && ctrlDown && !altDown)
+                eMMode = ShiftCtrl;
+            else if(shiftDown && altDown && !ctrlDown)
+                eMMode = ShiftAlt;
+            else if(ctrlDown && altDown && !shiftDown)
+                eMMode = CtrlAlt;
+            else if(shiftDown && altDown && ctrlDown)
+                eMMode = ShiftCtrlAlt;
+
+            // if current is last set to nothing
+            if(lastMMode == eMMode)
+                eMMode = Nothing;
+
+            emit eMModeChanged(eMMode, eMode);
+
+            changedMouseMode = true;
+        }
+    }
+    else
+        changedMouseMode = false;
+
     // highlight and select chunk
     if(eMode == Default && altDown)
     {
@@ -271,10 +309,28 @@ void MapView::update(float t)
     // objects
     if(eMode == Object)
     {
-        world->updateNewModel(shiftDown, wasLeftButtonPressed);
+        switch(eModel)
+        {
+            case Insertion:
+                {
+                    world->updateNewModel(shiftDown, wasLeftButtonPressed);
 
-        if(escapeDown)
-            world->getModelManager()->setCurrentModel(-1);
+                    if(escapeDown)
+                        world->getModelManager()->setCurrentModel(-1);
+                }
+                break;
+
+            case Removal:
+                {
+                    if(leftButtonPressed && eMMode == ShiftOnly)
+                    {
+                        const QVector3D& position(terrain_pos);
+
+                        world->removeObject(position.x(), position.z());
+                    }
+                }
+                break;
+        }
     }
 
     // Change terrain
@@ -282,7 +338,7 @@ void MapView::update(float t)
     {
         const QVector3D& position(terrain_pos);
 
-        if(shiftDown)
+        if(eMMode == ShiftOnly)
         {
             switch(eMode)
             {
@@ -314,7 +370,7 @@ void MapView::update(float t)
                     break;
             }
         }
-        else if(ctrlDown)
+        else if(eMMode == CtrlOnly)
         {
             switch(eMode)
             {
@@ -410,17 +466,56 @@ void MapView::paintGL()
 {
     this->makeCurrent();
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if(!stereoscopic)
+    {
+        glDrawBuffer(GL_FRONT);
 
-    if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
-        world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
-    else if(eMode == Object)
-        world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+            world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
+        else if(eMode == Object && eModel == Insertion)
+            world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
+        else
+            world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
+
+        if(showCameraCurve)
+            camera->drawCurve(modelMatrix);
+    }
     else
-        world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
+    {
+        glDrawBuffer(GL_BACK_LEFT);
 
-    if(showCameraCurve)
-        camera->drawCurve(modelMatrix);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glFrustum(0.0 - 1.0, width() - 1.0, -0.75, 0.75, 0.65, 4.0);
+
+        if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+            world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
+        else if(eMode == Object && eModel == Insertion)
+            world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
+        else
+            world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
+
+        if(showCameraCurve)
+            camera->drawCurve(modelMatrix);
+
+        glDrawBuffer(GL_BACK_RIGHT);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glFrustum(0.0 + 1.0, width() + 1.0, -0.75, 0.75, 0.65, 4.0);
+
+        if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+            world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
+        else if(eMode == Object && eModel == Insertion)
+            world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
+        else
+            world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
+
+        if(showCameraCurve)
+            camera->drawCurve(modelMatrix);
+    }
 }
 
 void MapView::resizeGL(int w, int h)
@@ -593,6 +688,11 @@ void MapView::setBrushType(int type)
     world->getBrush()->setBrush(types);
 }
 
+void MapView::setBrushMode(int mode)
+{
+    eMMode = (eMouseMode)mode;
+}
+
 void MapView::setTexturingFlow(double flow)
 {
     texturing_flow = flow;
@@ -754,6 +854,11 @@ void MapView::setModelImpend(double value)
     app().setSetting("modelImpend", value);
 
     world->getObjectBrush()->impend = value;
+}
+
+void MapView::set3DStreoscopic(bool enable)
+{
+    stereoscopic = enable;
 }
 
 QVector3D MapView::getWorldCoordinates(float mouseX, float mouseY)

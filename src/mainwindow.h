@@ -87,6 +87,7 @@ private:
 
     QComboBox* t_terrain_mode;
     QComboBox* t_brush_type;
+    QComboBox* t_brush_mode;
 
     QCheckBox* t_terrain_maxHeight;
 
@@ -96,6 +97,7 @@ private:
 
     QLabel* t_brush_label;
     QLabel* t_brush_type_label;
+    QLabel* t_brush_mode_label;
 
     QLabel* t_outer_radius_label;
     QLabel* t_outer_radius_value_label;
@@ -130,8 +132,13 @@ private:
     QDSlider* t_impend;
     QDSlider* t_scale;
 
+    QButtonGroup* t_modelmode;
+
+    QPushButton* t_modelmode_insert;
+    QPushButton* t_modelmode_delete;
     QPushButton* t_reset_transform;
 
+    QLabel* t_model_mode_label;
     QLabel* t_rotationx_label;
     QLabel* t_rotationx_value_label;
     QLabel* t_rotationy_label;
@@ -174,6 +181,7 @@ signals:
     void setDisplayMode(int mode);
     void setModeEditing(int option);
     void setTerrainMode(int mode);
+    void setModelMode(int mode);
 
 private slots:
     void setSpeedMultiplier();
@@ -185,6 +193,8 @@ private slots:
     void setPaintMaximumAlphaState(int state);
 
     void setBrush(int unknown, bool unknown2);
+    void setBrushType(int type);
+    void setBrushMode(MapView::eMouseMode& mouseMode, MapView::eEditingMode& editingMode);
 
     void setBrushOuterRadius(double value);
     void setBrushInnerRadius(double value);
@@ -193,6 +203,7 @@ private slots:
     void resetModelBrush();
 
     void setTerrain_Mode(int index);
+    void setModel_Mode(int unknown, bool unknown2);
 
     void setProjectData(ProjectFileData& data);
 
@@ -208,6 +219,9 @@ private slots:
     void createMemoryProject(NewProjectData projectData);
 
     void loadNewProjectMapTilesIntoMemory();
+
+    void newProject();
+    void closeProject();
 
     void takeScreenshot();
     void takeScreenshotAndUpload();

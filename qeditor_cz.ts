@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.0" language="cs_CZ" sourcelanguage="cs_CZ">
+<TS version="2.1" language="cs_CZ" sourcelanguage="cs_CZ">
 <context>
     <name>About</name>
     <message>
@@ -18,10 +18,21 @@ QEditor sub-apps developers: Martin Hruška, Jindřich Jadrný.
 
 Powered by Qt 5.2 &amp; OpenGL 4.2.
 
-Version: Alpha 0.1
+Version: Alpha 0.1a
 
 License: GNU GPLv3</source>
-        <translation>QEditor - 3D editor terénu je software s otevřeným zdrojovým kódem.
+        <oldsource>QEditor is open source 3D terrain editor.
+
+QEditor developers: glararan(Lukáš Veteška), netix
+QEditor sub-apps developers: Martin Hruška, Jindřich Jadrný.
+
+
+Powered by Qt 5.2 &amp; OpenGL 4.2.
+
+Version: Alpha 0.1
+
+License: GNU GPLv3</oldsource>
+        <translation type="unfinished">QEditor - 3D editor terénu je software s otevřeným zdrojovým kódem.
 
 QEditor vývojáři: glararan(Lukáš Veteška), netix
 QEditor vývojáři ostatních aplikací: Martin Hruška, Jindřich Jadrný.
@@ -190,7 +201,7 @@ Licence: GNU GPLv3</translation>
     </message>
     <message>
         <source>Nástroj upravování objektů</source>
-        <translation>Nástroj upravování objektů</translation>
+        <translation type="vanished">Nástroj upravování objektů</translation>
     </message>
     <message>
         <location filename="src/mainwindow.ui" line="226"/>
@@ -244,7 +255,7 @@ Licence: GNU GPLv3</translation>
     </message>
     <message>
         <source>Nástroj upravování terénu</source>
-        <translation>Nástroj upravování terénu</translation>
+        <translation type="vanished">Nástroj upravování terénu</translation>
     </message>
     <message>
         <location filename="src/mainwindow.ui" line="218"/>
@@ -365,7 +376,7 @@ Licence: GNU GPLv3</translation>
     </message>
     <message>
         <location filename="src/mainwindow.ui" line="405"/>
-        <location filename="src/mainwindow.cpp" line="666"/>
+        <location filename="src/mainwindow.cpp" line="676"/>
         <source>Teleport</source>
         <translation type="unfinished"></translation>
     </message>
@@ -440,11 +451,11 @@ Licence: GNU GPLv3</translation>
     </message>
     <message>
         <source>Nástroj kreslení textur</source>
-        <translation>Nástroj kreslení textur</translation>
+        <translation type="vanished">Nástroj kreslení textur</translation>
     </message>
     <message>
         <source>Paint</source>
-        <translation>Kreslení</translation>
+        <translation type="vanished">Kreslení</translation>
     </message>
     <message>
         <location filename="src/mainwindow.ui" line="457"/>
@@ -494,11 +505,11 @@ Licence: GNU GPLv3</translation>
     </message>
     <message>
         <source>Nástroj barvení textur</source>
-        <translation>Nástroj barvení textur</translation>
+        <translation type="vanished">Nástroj barvení textur</translation>
     </message>
     <message>
         <location filename="src/mainwindow.ui" line="526"/>
-        <location filename="src/mainwindow.cpp" line="618"/>
+        <location filename="src/mainwindow.cpp" line="628"/>
         <source>Vertex Shading</source>
         <translation type="unfinished"></translation>
     </message>
@@ -519,20 +530,20 @@ Licence: GNU GPLv3</translation>
     </message>
     <message>
         <source>Nástroj voda</source>
-        <translation>Nástroj voda</translation>
+        <translation type="vanished">Nástroj voda</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="626"/>
+        <location filename="src/mainwindow.cpp" line="636"/>
         <source>Water</source>
         <translation>Voda</translation>
     </message>
     <message>
         <source>Nástroj objekt</source>
-        <translation>Nástroj objekty</translation>
+        <translation type="vanished">Nástroj objekty</translation>
     </message>
     <message>
         <source>Object</source>
-        <translation>Objekty</translation>
+        <translation type="vanished">Objekty</translation>
     </message>
     <message>
         <location filename="src/mainwindow.ui" line="580"/>
@@ -551,198 +562,209 @@ Licence: GNU GPLv3</translation>
     </message>
     <message>
         <source>Nástroj kamera</source>
-        <translation>Nástroj kamera</translation>
+        <translation type="vanished">Nástroj kamera</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="642"/>
+        <location filename="src/mainwindow.cpp" line="652"/>
         <source>Camera</source>
         <translation>Kamera</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="183"/>
+        <location filename="src/mainwindow.cpp" line="191"/>
         <source>UI in MainWindow was destroyed!</source>
         <translation>UI v MainWindow bylo zničeno!</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="200"/>
+        <location filename="src/mainwindow.cpp" line="208"/>
         <source>MainWindow was destroyed!</source>
         <translation>MainWindow bylo zničeno!</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="416"/>
+        <location filename="src/mainwindow.cpp" line="426"/>
         <source>Save screenshoot</source>
         <translation>Uložit screenshot</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="416"/>
+        <location filename="src/mainwindow.cpp" line="426"/>
         <source>Image (*.png *.jpg)</source>
         <translation>Obrázky (*.png *.jpg)</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="438"/>
+        <location filename="src/mainwindow.cpp" line="448"/>
         <source>Problem with saving screenshot! Try it again.</source>
         <translation>Problém s ukládáním screenshotu! Zkuste to znovu.</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="477"/>
+        <location filename="src/mainwindow.cpp" line="487"/>
         <source>Image is uploaded on server Imgur. Link is in Clipboard (Ctrl + V).</source>
         <translation>Obrázek byl odeslán na server Imgur. Odkaz je nyní v Clipboardu (Ctrl + V).</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="634"/>
+        <location filename="src/mainwindow.cpp" line="644"/>
         <source>Model Picker</source>
         <translation>Výběr modelů</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="671"/>
+        <location filename="src/mainwindow.cpp" line="681"/>
         <source>Settings</source>
         <translation>Nastavení</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="676"/>
+        <location filename="src/mainwindow.cpp" line="686"/>
         <source>Texture Picker</source>
         <translation>Výběr textur</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="788"/>
+        <location filename="src/mainwindow.cpp" line="798"/>
         <source>Circle Brush</source>
         <translation>Kulatý štětec</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="796"/>
+        <location filename="src/mainwindow.cpp" line="806"/>
         <source>Square Brush</source>
         <translation>Čtvercový štětec</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="803"/>
+        <location filename="src/mainwindow.cpp" line="813"/>
         <source>Reset Transform</source>
         <translation>Resetovat pozice </translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="808"/>
+        <location filename="src/mainwindow.cpp" line="818"/>
         <source>Select terrain mode</source>
         <translation>Výběr teréního módu</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="810"/>
+        <location filename="src/mainwindow.cpp" line="820"/>
         <source>Shaping</source>
         <translation>Tvarování</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="811"/>
+        <location filename="src/mainwindow.cpp" line="821"/>
         <source>Smoothing</source>
         <translation>Uhlazování</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="813"/>
-        <location filename="src/mainwindow.cpp" line="819"/>
+        <location filename="src/mainwindow.cpp" line="823"/>
+        <location filename="src/mainwindow.cpp" line="829"/>
         <source>Linear</source>
         <translation>Lineární</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="814"/>
-        <location filename="src/mainwindow.cpp" line="820"/>
+        <location filename="src/mainwindow.cpp" line="824"/>
+        <location filename="src/mainwindow.cpp" line="830"/>
         <source>Flat</source>
         <translation>Rovný</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="815"/>
-        <location filename="src/mainwindow.cpp" line="821"/>
+        <location filename="src/mainwindow.cpp" line="825"/>
+        <location filename="src/mainwindow.cpp" line="831"/>
         <source>Smooth</source>
         <translation>Hladký</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="816"/>
+        <location filename="src/mainwindow.cpp" line="826"/>
         <source>Unknown1</source>
         <translation>Hyperbola</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="817"/>
+        <location filename="src/mainwindow.cpp" line="827"/>
         <source>Unknown2</source>
         <translation>Kosínus</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="824"/>
+        <location filename="src/mainwindow.cpp" line="837"/>
+        <source>Insert</source>
+        <translation type="unfinished">Přidat</translation>
+    </message>
+    <message>
+        <location filename="src/mainwindow.cpp" line="845"/>
+        <source>Delete</source>
+        <translation type="unfinished">Odebrat</translation>
+    </message>
+    <message>
+        <location filename="src/mainwindow.cpp" line="852"/>
         <source>Select brush type</source>
         <translation>Výběr štětců</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="830"/>
+        <location filename="src/mainwindow.cpp" line="858"/>
         <source>Maximum height:</source>
         <translation>Maximální výška:</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="834"/>
+        <location filename="src/mainwindow.cpp" line="862"/>
         <source>Maximum alpha:</source>
         <translation>Maximální alfa:</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="858"/>
+        <location filename="src/mainwindow.cpp" line="886"/>
+        <location filename="src/mainwindow.cpp" line="900"/>
         <source>Mode:</source>
         <translation>Mód:</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="860"/>
+        <location filename="src/mainwindow.cpp" line="888"/>
         <source>Brushes:</source>
         <translation>Štětce:</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="861"/>
+        <location filename="src/mainwindow.cpp" line="889"/>
         <source>Brush type:</source>
         <translation>Typy štětců:</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="863"/>
+        <location filename="src/mainwindow.cpp" line="891"/>
         <source>Outer radius:</source>
         <translation>Vnější rádius:</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="865"/>
+        <location filename="src/mainwindow.cpp" line="893"/>
         <source>Inner radius:</source>
         <translation>Vnitřní rádius:</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="867"/>
+        <location filename="src/mainwindow.cpp" line="895"/>
         <source>Speed:</source>
         <translation>Rychlost:</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="869"/>
+        <location filename="src/mainwindow.cpp" line="897"/>
         <source>Flow:</source>
         <translation>Tok:</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="872"/>
+        <location filename="src/mainwindow.cpp" line="901"/>
         <source>Rotation X:</source>
         <translation>Rotace X:</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="874"/>
+        <location filename="src/mainwindow.cpp" line="903"/>
         <source>Rotation Y:</source>
         <translation>Rotace Y:</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="876"/>
+        <location filename="src/mainwindow.cpp" line="905"/>
         <source>Rotation Z:</source>
         <translation>Rotace Z:</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="878"/>
+        <location filename="src/mainwindow.cpp" line="907"/>
         <source>Impend:</source>
         <translation>Vznášení:</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="880"/>
+        <location filename="src/mainwindow.cpp" line="909"/>
         <source>Scale:</source>
         <translation>Škála:</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="1069"/>
+        <location filename="src/mainwindow.cpp" line="1102"/>
         <source>Brush is not ready yet.</source>
         <translation>Štětec ještě neni připraven.</translation>
     </message>
     <message>
-        <location filename="src/mainwindow.cpp" line="1142"/>
+        <location filename="src/mainwindow.cpp" line="1186"/>
         <source>This action is under development.</source>
         <translation>Tato akce je momentálně ve vývoji.</translation>
     </message>
@@ -750,7 +772,7 @@ Licence: GNU GPLv3</translation>
 <context>
     <name>MapView</name>
     <message>
-        <location filename="src/mapview.cpp" line="356"/>
+        <location filename="src/mapview.cpp" line="375"/>
         <source>Initialized!</source>
         <translation>Připraven!</translation>
     </message>
@@ -1151,43 +1173,43 @@ Licence: GNU GPLv3</translation>
         <translation>Nemohli jsme zkompilovat teselační evaluační shader. Log:</translation>
     </message>
     <message>
-        <location filename="src/world/world.cpp" line="532"/>
+        <location filename="src/world/world.cpp" line="570"/>
         <source>highlightMapChunkAt cx or cy is wrong calculated!</source>
         <translation>highlightMapChunkAt cx nebo cy je špatně vypočítáno!</translation>
     </message>
     <message>
-        <location filename="src/world/world.cpp" line="626"/>
+        <location filename="src/world/world.cpp" line="665"/>
         <source>getMapChunkAt cx or cy is wrong calculated!</source>
         <translation>getMapChunkAt cx nebo cy je špatně vypočítáno!</translation>
     </message>
     <message>
-        <location filename="src/world/world.cpp" line="668"/>
+        <location filename="src/world/world.cpp" line="707"/>
         <source>getWaterChunkAt cx or cy is wrong calculated!</source>
         <translation>getWaterChunkAt cx nebo cy je špatně vypočítáno!</translation>
     </message>
     <message>
-        <location filename="src/world/world.cpp" line="709"/>
-        <location filename="src/world/world.cpp" line="789"/>
+        <location filename="src/world/world.cpp" line="748"/>
+        <location filename="src/world/world.cpp" line="828"/>
         <source>We couldn&apos;t save project %1, because we can&apos;t open him.</source>
         <translation>Nemohli jsme uložit projekt %1, protože ho nemůžeme otevřít.</translation>
     </message>
     <message>
-        <location filename="src/world/world.cpp" line="729"/>
+        <location filename="src/world/world.cpp" line="768"/>
         <source>Save</source>
         <translation>Ukládání</translation>
     </message>
     <message>
-        <location filename="src/world/world.cpp" line="731"/>
+        <location filename="src/world/world.cpp" line="770"/>
         <source>Your project file is older, you have to upgrade your project file to save current work!</source>
         <translation>Váš projektový soubor je starší, musíte aktualizovat váš projektový soubor k uložení práce!</translation>
     </message>
     <message>
-        <location filename="src/world/world.cpp" line="732"/>
+        <location filename="src/world/world.cpp" line="771"/>
         <source>Warning: You not be able to open this project in older version of QEditor!</source>
         <translation>Varování: Nebudeme schopní otevřít tento projekt ve starší verzi QEditoru!</translation>
     </message>
     <message>
-        <location filename="src/world/world.cpp" line="745"/>
+        <location filename="src/world/world.cpp" line="784"/>
         <source>Your project file is newer, you cannot use older version of QEditor to edit!</source>
         <translation>Váš projektový soubor je novější, nemůžete použít starší verzi QEditoru k upravování!</translation>
     </message>

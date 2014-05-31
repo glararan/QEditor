@@ -25,6 +25,7 @@ TexturePicker::TexturePicker(QWidget* parent)
 , textureIconSize(QSize(78, 78))
 , textureIconMargin(QSize(0, 0))
 , columns(width() / (textureIconSize.width() + textureIconMargin.width()))
+, textureWell(NULL)
 {
     /// todo load textures from archive
     ui->setupUi(this);
@@ -61,7 +62,16 @@ void TexturePicker::initialize(TextureManager* manager)
         textures.append(qMakePair<QImage, QString>(pair.second->getImage(), pair.first));
 
     if(textures.count() < columns)
-        columns = textures.count();
+        columns = textures.count(); // careful with this!!!
+
+    if(textureWell)
+    {
+        delete textureWell;
+
+        textureWell = NULL;
+
+        columns = width() / (textureIconSize.width() + textureIconMargin.width());
+    }
 
     textureWell = new TextureWell(this, ceil(MathHelper::toDouble(textures.count()) / MathHelper::toDouble(columns)), columns, textureIconSize, textureIconMargin);
     textureWell->insertItems(textures);

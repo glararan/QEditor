@@ -71,6 +71,7 @@ public:
     void update(qreal time);
 
     void insertModel(MapObject* object);
+    void deleteModel(float x, float z);
     void updateModelHeight();
 
     bool isTile(int pX, int pY);

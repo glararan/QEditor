@@ -115,6 +115,8 @@ public:
     void paintTerrain(float x, float z, float flow);
     void paintVertexShading(float x, float z, float flow, QColor& color);
 
+    void removeObject(float x, float z);
+
     void highlightMapChunkAt(const QVector3D& position);
     void unHighlight();
 

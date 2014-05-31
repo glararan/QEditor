@@ -52,6 +52,21 @@ public:
     void setScreenSpaceError(float error) { screenSpaceErrorLevel = error; qDebug() << error; }
     float screenSpaceError() const        { return screenSpaceErrorLevel; }
 
+    enum eMouseMode
+    {
+        Nothing      = 0,
+        ShiftOnly    = 1,
+        CtrlOnly     = 2,
+        AltOnly      = 3,
+        ShiftCtrl    = 4,
+        ShiftAlt     = 5,
+        CtrlAlt      = 6,
+        ShiftCtrlAlt = 7
+    };
+
+    void setMouseMode(eMouseMode mouseMode) { eMMode = mouseMode; }
+    eMouseMode mouseMode() const            { return eMMode; }
+
     enum eEditingMode
     {
         Default       = 0,
@@ -72,6 +87,15 @@ public:
 
     void setTerrainMode(eTerrainMode terrainMode) { eTerrain = terrainMode; }
     eTerrainMode terrainMode() const              { return eTerrain; }
+
+    enum eModelMode
+    {
+        Insertion = 0,
+        Removal   = 1
+    };
+
+    void setModelMode(eModelMode modelMode) { eModel = modelMode; }
+    eModelMode modelMode() const            { return eModel; }
 
     QVector3D getWorldCoordinates(float mouseX, float mouseY);
 
@@ -143,6 +167,8 @@ private:
     // Terrain rendering controls
     QMatrix4x4 modelMatrix;
 
+    bool stereoscopic;
+
     // time
     float time;
 
@@ -154,6 +180,7 @@ private:
 
     // mouse
     bool leftButtonPressed, rightButtonPressed, wasLeftButtonPressed;
+    bool changedMouseMode;
 
     QPoint mouse_position;
 
@@ -172,8 +199,10 @@ private:
     QVector<const void*> sbDataList;
     QVector<QString>     sbDataTypeList;
 
+    eMouseMode   eMMode;
     eEditingMode eMode;
     eTerrainMode eTerrain;
+    eModelMode   eModel;
 
 public slots:
     void setSpeedMultiplier(float value);
@@ -185,6 +214,7 @@ public slots:
     void setBrushInnerRadius(double radius);
     void setBrush(int brush);
     void setBrushType(int type);
+    void setBrushMode(int mode);
     void setTexturingFlow(double flow);
     void setVertexShading(QColor color);
     void setCameraShowCurve(bool show);
@@ -203,6 +233,7 @@ public slots:
     void setModelRotationZ(double value);
     void setModelScale(double value);
     void setModelImpend(double value);
+    void set3DStreoscopic(bool enable);
 
     void resetCamera();
     void lockCamera(bool lock);
@@ -221,6 +252,8 @@ signals:
 
     void selectedMapChunk(MapChunk* chunk);
     void selectedWaterChunk(WaterChunk* chunk);
+
+    void eMModeChanged(MapView::eMouseMode& mouseMode, MapView::eEditingMode& editingMode);
 
     void initialized();
 };

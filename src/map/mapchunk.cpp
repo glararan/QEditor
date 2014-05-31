@@ -331,7 +331,8 @@ void MapChunk::test()
 
     chunkMaterial->setTextureUnitConfiguration(0, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));*/
 
-    terrainData->bind();
+    /// Fix NaN
+    /*terrainData->bind();
 
     for(int x = 0; x < MAP_WIDTH / CHUNKS; ++x)
     {
@@ -342,6 +343,27 @@ void MapChunk::test()
                 mapData[(MAP_WIDTH / CHUNKS) * y + x] = 0.0f;
 
                 terrainData->setHeight(0.0f, QVector2D(QPoint(x, y)));
+            }
+        }
+    }
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));*/
+
+    /// Fix height
+    terrainData->bind();
+
+    for(int x = 0; x < MAP_WIDTH / CHUNKS; ++x)
+    {
+        for(int y = 0; y < MAP_HEIGHT / CHUNKS; ++y)
+        {
+            if(x < 30 && y < 30)
+            {
+                if(x % 2 == 0 || y % 2 == 0)
+                    continue;
+
+                mapData[(MAP_WIDTH / CHUNKS) * y + x] = x;
+
+                terrainData->setHeight(x, QVector2D(QPoint(x, y)));
             }
         }
     }
