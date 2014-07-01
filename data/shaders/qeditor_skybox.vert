@@ -13,12 +13,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#include "ilight.h"
+#version 400
 
-ILight::ILight(QVector3D position, QVector3D ambient, QVector3D diffuse, QVector3D specular)
+uniform mat4 modelViewProjectionMatrix;
+
+in vec3 qt_Vertex;
+out vec3 vertexVector;
+
+void main()
 {
-    ILight::position = position;
-    ILight::ambient  = ambient;
-    ILight::diffuse  = diffuse;
-    ILight::specular = specular;
+    gl_Position = modelViewProjectionMatrix * vec4(qt_Vertex, 1.0);
+
+    vertexVector = qt_Vertex;
 }

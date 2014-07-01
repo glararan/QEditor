@@ -22,6 +22,7 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
 , waterSampler(sampler)
 , waterSurface(new Texture(QOpenGLTexture::Target2D))
 , data(false)
+, displaySubroutines(world->DisplayModeCount)
 , chunkX(x)
 , chunkY(y)
 , baseX(chunkX * CHUNKSIZE)
@@ -37,7 +38,9 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
     if(!world->getTextureManager()->hasTexture("waterTexture", "textures/water.png"))
         world->getTextureManager()->loadTexture("waterTexture", "textures/water.png");
 
-    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, world->getTextureManager()->getTexture("waterTexture"), world->getTextureManager()->getSampler(), QByteArrayLiteral("baseTexture"));
+    waterTexture = world->getTextureManager()->getTexture("waterTexture");
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, waterTexture, world->getTextureManager()->getSampler(), QByteArrayLiteral("baseTexture"));
 
     /// Water
     waterData = new float[CHUNK_ARRAY_UC_SIZE]; // chunk_array_size
@@ -65,6 +68,7 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
 , waterSampler(sampler)
 , waterSurface(new Texture(QOpenGLTexture::Target2D))
 , data(false)
+, displaySubroutines(world->DisplayModeCount)
 , chunkX(x)
 , chunkY(y)
 , baseX(chunkX * CHUNKSIZE)
@@ -79,7 +83,9 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
     if(!world->getTextureManager()->hasTexture("waterTexture", "textures/water.png"))
         world->getTextureManager()->loadTexture("waterTexture", "textures/water.png");
 
-    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, world->getTextureManager()->getTexture("waterTexture"), world->getTextureManager()->getSampler(), QByteArrayLiteral("baseTexture"));
+    waterTexture = world->getTextureManager()->getTexture("waterTexture");
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, waterTexture, world->getTextureManager()->getSampler(), QByteArrayLiteral("baseTexture"));
 
     /// Water - todo file load
     waterData = new float[CHUNK_ARRAY_UC_SIZE]; // chunk_array_size
@@ -161,6 +167,9 @@ void WaterChunk::draw(QOpenGLShaderProgram* shader, GLuint reflectionTexture, GL
         shader->setUniformValue("eyePos", world->getCamera()->position());
 
         chunkMaterial->bind(shader);
+
+        // Set the fragment shader display mode subroutine
+        world->getGLFunctions()->glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &getDisplaySubroutines());
 
         // Render the quad as a patch
         {
@@ -287,11 +296,11 @@ void WaterChunk::save()
 
 void WaterChunk::setReflectionTexture(GLuint reflectionTexture, GLuint depthTexture)
 {
-    world->getGLFunctions()->glBindTexture(GL_TEXTURE_2D, reflectionTexture);
+    /*world->getGLFunctions()->glBindTexture(GL_TEXTURE_2D, reflectionTexture);
 
     chunkMaterial->setFramebufferUnitConfiguration(ShaderUnits::Texture2, reflectionTexture, QByteArrayLiteral("reflectionTexture"));
 
     world->getGLFunctions()->glBindTexture(GL_TEXTURE_2D, depthTexture);
 
-    chunkMaterial->setFramebufferUnitConfiguration(ShaderUnits::Texture3, depthTexture, QByteArrayLiteral("depthTexture"));
+    chunkMaterial->setFramebufferUnitConfiguration(ShaderUnits::Texture3, depthTexture, QByteArrayLiteral("depthTexture"));*/
 }

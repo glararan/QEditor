@@ -26,6 +26,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "brush.h"
 #include "texturemanager.h"
 #include "framebuffer.h"
+#include "skybox.h"
 
 #include "model/imodelmanager.h"
 #include "model/imodel.h"
@@ -128,11 +129,13 @@ public:
     Brush*                     getBrush()          { return brush; }
     Camera*                    getCamera()         { return camera; }
     ObjectBrush*               getObjectBrush()    { return objectBrush; }
+    Skybox*                    getSkybox()         { return skybox; }
     TextureManager*            getTextureManager() { return textureManager; }
     IModelManager*             getModelManager()   { return modelManager; }
     QOpenGLShaderProgram*      getModelShader()    { return modelShader; }
     QOpenGLShaderProgram*      getTerrainShader()  { return terrainShader; }
     QOpenGLShaderProgram*      getWaterShader()    { return waterShader; }
+    QOpenGLShaderProgram*      getSkyboxShader()   { return skyboxShader; }
 
     const ProjectFileData getProjectData() const          { return projectData; }
     const int             getAlphamapSize() const         { return alphaMapSize; }
@@ -155,6 +158,8 @@ public:
     void setPaintMaximumAlpha(float value);
     void setPaintMaximumState(bool state);
 
+    void setVertexShadingSwitch(bool state);
+
     QVector3D getWorldCoordinates() const;
 
     void test();
@@ -167,6 +172,7 @@ private:
     Camera*         camera;
     Brush*          brush;
     ObjectBrush*    objectBrush;
+    Skybox*         skybox;
     TextureManager* textureManager;
     IModelManager*  modelManager;
     MapChunk*       highlightChunk;
@@ -189,6 +195,8 @@ private:
     float paintMaximumAlpha;
     bool  paintMaximumState;
 
+    bool shadingOff;
+
     // Angle of sun. 0 is directly overhead, 90 to the East, -90 to the West
     float sunTheta;
 
@@ -202,11 +210,15 @@ private:
     QOpenGLShaderProgram* modelShader;
     QOpenGLShaderProgram* terrainShader;
     QOpenGLShaderProgram* waterShader;
+    QOpenGLShaderProgram* skyboxShader;
 
     ProjectFileData projectData;
 
     //
     void createNeighbours();
+    void updateNeighboursHeightmapData();
+
+    void drawSkybox(IPipeline* pipeline, QVector2D& cameraDirection, QMatrix4x4& modelMatrix);
 
     // worldCoordinates
     QVector3D worldCoordinates;

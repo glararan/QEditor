@@ -17,7 +17,9 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #define IMESH_H
 
 #include <QtWidgets>
+
 #include <assimp/scene.h>
+
 #include "itexturemanager.h"
 
 struct MeshMaterial
@@ -25,17 +27,19 @@ struct MeshMaterial
     QVector3D mAmbient;
     QVector3D mDiffuse;
     QVector3D mSpecular;
+
     float shininess;
     float opacity;
 };
 
 struct MeshTextures
 {
-    MeshTextures() {
-        hasDiffuseTexture = false;
+    MeshTextures()
+    {
+        hasDiffuseTexture  = false;
         hasSpecularTexture = false;
-        hasNormalsTexture = false;
-        hasHeightTexture = false;
+        hasNormalsTexture  = false;
+        hasHeightTexture   = false;
     }
 
     bool hasDiffuseTexture;
@@ -54,28 +58,41 @@ struct MeshTextures
 class IMesh
 {
 public:
-    enum BufferName { Vertices = 0, Normals, TexCoords, Tangent, Bones, Weight, Index };
+    enum BufferName
+    {
+        Vertices   = 0,
+        Normals    = 1,
+        TexCoords  = 2,
+        Tangent    = 3,
+        Bones      = 4,
+        Weight     = 5,
+        Index      = 6
+    };
 
     IMesh();
     ~IMesh();
-    void createVertexArrayObject();
-    void createBuffer(BufferName name, void *data, int count);
-    void createAttributeArray(BufferName name, QOpenGLShaderProgram *shader, const char *location, GLenum type, int offset, int tupleSize);
-
-    MeshMaterial *getMeshMaterial() { return &meshMaterial; }
-    MeshTextures *getMeshTextures() { return &meshTextures; }
-    int getNumFaces() { return numFaces; }
-    void setNumFaces(int numFaces) { this->numFaces = numFaces; }
-
-    QOpenGLBuffer *getBuffer(BufferName name);
-    QOpenGLVertexArrayObject *getVertexArrayObject();
 
     void bind();
 
+    void createVertexArrayObject();
+    void createBuffer(BufferName name, void* data, int count);
+    void createAttributeArray(BufferName name, QOpenGLShaderProgram* shader, const char* location, GLenum type, int offset, int tupleSize);
+
+    MeshMaterial* getMeshMaterial() { return &meshMaterial; }
+    MeshTextures* getMeshTextures() { return &meshTextures; }
+
+    int getNumFaces()              { return numFaces; }
+    void setNumFaces(int numFaces) { this->numFaces = numFaces; }
+
+    QOpenGLBuffer*            getBuffer(BufferName name);
+    QOpenGLVertexArrayObject* getVertexArrayObject();
+
 private:
     int numFaces;
+
     MeshMaterial meshMaterial;
     MeshTextures meshTextures;
+
     QOpenGLBuffer buffers[7];
     QOpenGLVertexArrayObject vao;
 };
@@ -85,10 +102,14 @@ class IMeshes
 public:
     IMeshes();
     ~IMeshes();
-    void Add(IMesh *mesh);
+
+    void add(IMesh* mesh);
+
     IMesh* at(int index);
+
     int size();
-    void createAttributeArray(QOpenGLShaderProgram *shader);
+
+    void createAttributeArray(QOpenGLShaderProgram* shader);
 
 private:
     QList<IMesh*> meshes;

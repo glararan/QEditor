@@ -1,0 +1,106 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
+#version 400
+
+layout(quads, fractional_even_spacing, cw) in;
+
+in terrainVertex
+{
+    vec2 position;
+} In[];
+
+out worldVertex
+{
+    vec4 worldPosition;
+    vec3 worldNormal;
+    vec4 position;
+    vec3 normal;
+    vec2 texCoords;
+    vec4 lightVertexPosition;
+    vec3 lightPosition;
+    vec3 reflection;
+} Out;
+
+uniform vec3 cameraPosition;
+
+const float waveHeight = 1.0;
+const float waveSpeed  = 1.0;
+
+uniform float maxTessLevel;
+
+uniform float horizontalScale;
+uniform int maxTrianglesPerTexel;
+
+uniform mat4 modelMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat3 worldNormalMatrix;
+uniform mat3 normalMatrix;
+uniform mat4 modelViewProjectionMatrix;
+
+uniform mat4 lightModelViewProjectionMatrix;
+uniform mat4 lightMatrix;
+uniform vec3 lightPosition;
+
+uniform float delta;
+
+uniform sampler2D heightMap;
+
+void main()
+{
+    vec2 patchExtent = maxTessLevel / (textureSize(heightMap, 0) * maxTrianglesPerTexel);
+    Out.texCoords    = In[0].position.xy + gl_TessCoord.xy * patchExtent;
+
+    vec4 position;
+    position.xz = Out.texCoords * horizontalScale;
+    position.y  = texture(heightMap, Out.texCoords).r * waveHeight * 2 + delta * waveSpeed;
+
+    bool up = true;
+
+    while(position.y > waveHeight)
+    {
+        up = !up;
+
+        position.y -= waveHeight;
+    }
+
+    if(up)
+        position.y = waveHeight - position.y;
+
+    position.w  = 1.0;
+
+    Out.worldPosition       = modelMatrix * position;
+    Out.position            = modelViewMatrix * position;
+    Out.lightVertexPosition = lightModelViewProjectionMatrix * position;
+    Out.lightPosition       = vec3(lightMatrix * vec4(lightPosition, 1.0));
+
+    const ivec3 offset = ivec3(-1, 0, 1); // Texel offsets
+
+    float delta  = 2.0 * horizontalScale / textureSize(heightMap, 0).x; // Horizontal displacement in world coords
+    float left   = textureOffset(heightMap, Out.texCoords, offset.xy).r;
+    float right  = textureOffset(heightMap, Out.texCoords, offset.zy).r;
+    float top    = textureOffset(heightMap, Out.texCoords, offset.yz).r;
+    float bottom = textureOffset(heightMap, Out.texCoords, offset.yx).r;
+
+    vec3 x = normalize(vec3(delta, right - left, 0.0));
+    vec3 z = normalize(vec3(0.0, top - bottom, delta));
+    vec3 n = cross(z, x);
+
+    Out.worldNormal = worldNormalMatrix * n;
+    Out.normal      = normalMatrix * n;
+
+    gl_Position    = modelViewProjectionMatrix * position;
+    Out.reflection = reflect(Out.position.xyz/* - cameraPosition*/, n);
+}

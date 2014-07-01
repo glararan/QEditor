@@ -50,6 +50,8 @@ public:
     bool paintTerrain(float x      , float z, float flow, TexturePtr texture);
     bool paintVertexShading(float x, float z, float flow, QColor& color);
 
+    void updateNeighboursHeightmapData();
+
     /// Get
     const float getHeight(const float& x, const float& y) const;
     const float getHeight(const int& x, const int& y) const;

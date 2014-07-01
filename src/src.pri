@@ -61,7 +61,8 @@ SOURCES  += $$PWD/main.cpp \
             $$PWD/common/framebuffer.cpp \
             $$PWD/3rd-party/imgurAPI/fileupload.cpp \
             $$PWD/ui/camerawidget.cpp \
-    src/beziercurve.cpp
+    src/beziercurve.cpp \
+    src/skybox.cpp
 
 HEADERS  += $$PWD/mainwindow.h \
             $$PWD/ui/teleportwidget.h \
@@ -107,7 +108,8 @@ HEADERS  += $$PWD/mainwindow.h \
             $$PWD/common/framebuffer.h \
             $$PWD/3rd-party/imgurAPI/fileupload.h \
             $$PWD/ui/camerawidget.h \
-    src/beziercurve.h
+    src/beziercurve.h \
+    src/skybox.h
 
 FORMS    += $$PWD/mainwindow.ui \
             $$PWD/ui/teleportwidget.ui \

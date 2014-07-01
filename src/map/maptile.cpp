@@ -167,7 +167,7 @@ void MapTile::drawObjects(const float& distance, const QVector3D& camera, QMatri
 
 void MapTile::drawWater(const float& distance, const QVector3D& camera)
 {
-    fbo->bind();
+    /*fbo->bind();
 
     world->getGLFunctions()->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     world->getGLFunctions()->glDisable(GL_DEPTH_TEST);
@@ -177,7 +177,7 @@ void MapTile::drawWater(const float& distance, const QVector3D& camera)
     world->getGLFunctions()->glEnable(GL_DEPTH_TEST);
     world->getGLFunctions()->glClear(GL_DEPTH_BUFFER_BIT);
 
-    fbo->release();
+    fbo->release();*/
 
     QOpenGLShaderProgram* shader = world->getWaterShader();
     shader->bind();

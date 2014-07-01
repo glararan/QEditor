@@ -40,6 +40,7 @@ World::World(const ProjectFileData& projectFile)
 , terrainMaximumState(false)
 , paintMaximumAlpha(1.0f)
 , paintMaximumState(false)
+, shadingOff(false)
 , sunTheta(30.0f)
 , alphaMapSize(MAP_WIDTH / CHUNKS)
 , eDisplay(TexturedAndLit)
@@ -72,10 +73,12 @@ World::~World()
     delete textureManager;
     delete modelManager;
     delete objectBrush;
+    delete skybox;
     delete possibleModel;
     delete modelShader;
     delete terrainShader;
     delete waterShader;
+    delete skyboxShader;
 }
 
 void World::deleteMe()
@@ -190,7 +193,7 @@ void World::initialize(QOpenGLContext* context, QSize fboSize)
     if(!waterShader->addShaderFromSourceFile(QOpenGLShader::TessellationControl, ":/data/shaders/qeditor.tcs"))
         qCritical() << QObject::tr("Could not compile tessellation control shader. Log:") << waterShader->log();
 
-    if(!waterShader->addShaderFromSourceFile(QOpenGLShader::TessellationEvaluation, ":/data/shaders/qeditor.tes"))
+    if(!waterShader->addShaderFromSourceFile(QOpenGLShader::TessellationEvaluation, ":/data/shaders/qeditor_water.tes"))
         qCritical() << QObject::tr("Could not compile tessellation evaluation shader. Log:") << waterShader->log();
 
     if(!waterShader->addShaderFromSourceFile(QOpenGLShader::Geometry, ":/data/shaders/qeditor.geom"))
@@ -255,8 +258,31 @@ void World::initialize(QOpenGLContext* context, QSize fboSize)
     waterShader->setUniformValue("material.Ks", QVector3D(0.3f, 0.3f, 0.3f));
     waterShader->setUniformValue("material.shininess", 10.0f);
 
+    /// Skybox Shader
+    skyboxShader = new QOpenGLShaderProgram();
+
+    if(!skyboxShader->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/data/shaders/qeditor_skybox.vert"))
+        qCritical() << QObject::tr("Could not compile vertex shader. Log:") << skyboxShader->log();
+
+    if(!skyboxShader->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/data/shaders/qeditor_skybox.frag"))
+        qCritical() << QObject::tr("Could not compile fragment shader. Log:") << skyboxShader->log();
+
+    if(!skyboxShader->link())
+        qCritical() << QObject::tr("Could not link shader program. Log:") << skyboxShader->log();
+
+    /// Skybox
+    skybox = new Skybox(GLfuncs);
+    skybox->loadSide(QOpenGLTexture::CubeMapPositiveX, ":/data/skybox/right.png");
+    skybox->loadSide(QOpenGLTexture::CubeMapNegativeX, ":/data/skybox/left.png");
+    skybox->loadSide(QOpenGLTexture::CubeMapPositiveY, ":/data/skybox/top.png");
+    skybox->loadSide(QOpenGLTexture::CubeMapNegativeY, ":/data/skybox/bottom.png");
+    skybox->loadSide(QOpenGLTexture::CubeMapPositiveZ, ":/data/skybox/front.png");
+    skybox->loadSide(QOpenGLTexture::CubeMapNegativeZ, ":/data/skybox/back.png");
+    skybox->getMaterial()->bind(waterShader);
+
     /// MapChunk neighbours
-    createNeighbours();
+    //createNeighbours();
+    //updateNeighboursHeightmapData();
 }
 
 void World::update(float dt)
@@ -320,7 +346,14 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
 
     QVector4D lightDirection = worldToEyeNormal * worldLightDirection;
 
-    ///GLfuncs->glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+    // Get pipeline
+    IPipeline* pipeline = mapView->getPipeline();
+
+    /// draw Skybox
+    drawSkybox(pipeline, mapView->getCameraDirection(), mvp);
+
+    /// draw Environment
+    //GLfuncs->glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
     GLfuncs->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
     for(int i = 0; i < 2; ++i)
@@ -343,6 +376,9 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
 
         if(drawBrush && i == 0)
             brush->draw(shader, QVector2D(worldCoordinates.x(), worldCoordinates.z()));
+
+        if(i == 0)
+            shader->setUniformValue("shadingOff", shadingOff);
     }
 
     for(int tx = 0; tx < TILES; ++tx)
@@ -367,9 +403,10 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
             if(tileLoaded(tx, ty))
             {
                 GLfuncs->glEnable(GL_BLEND);
-                    GLfuncs->glDisable(GL_DEPTH_TEST);
+                GLfuncs->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                    //GLfuncs->glDisable(GL_DEPTH_TEST);
                     mapTiles[tx][ty].tile->drawWater(MAP_DRAW_DISTANCE, camera->position());
-                    GLfuncs->glEnable(GL_DEPTH_TEST);
+                    //GLfuncs->glEnable(GL_DEPTH_TEST);
                 GLfuncs->glDisable(GL_BLEND);
             }
         }
@@ -394,6 +431,66 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
     }
 
     //material->bind();
+}
+
+void World::drawSkybox(IPipeline* pipeline, QVector2D& cameraDirection, QMatrix4x4& modelMatrix)
+{
+    /*float vLRx = sin(MathHelper::degreesToRadians(cameraDirection.y() + 180.f));
+    float vLRz = -cos(MathHelper::degreesToRadians(cameraDirection.y() + 180.0f));
+    float vUDy = sin(MathHelper::degreesToRadians(cameraDirection.x()));
+    float vUDz = -cos(MathHelper::degreesToRadians(cameraDirection.x()));
+
+    float cX = vLRx * vUDz;
+    float cY = vUDy;
+    float cZ = vLRz * vUDz;
+
+    QMatrix4x4 viewMatrix = camera->viewMatrix();
+    viewMatrix.lookAt(QVector3D(), QVector3D(cX, cY, cZ), QVector3D(0.0f, 1.0f, 0.0f));
+
+    QVector3D& position = camera->position();
+
+    camera->setPosition(QVector3D());
+
+    GLfuncs->glDisable(GL_DEPTH_TEST);
+
+    skyboxShader->bind();
+
+    QMatrix4x4 mvp = camera->projectionMatrix() * viewMatrix * modelMatrix;
+
+    skyboxShader->setUniformValue("modelViewProjectionMatrix", mvp);
+
+    skybox->draw(skyboxShader);
+
+    GLfuncs->glEnable(GL_DEPTH_TEST);
+
+    camera->setPosition(position);*/
+
+    QMatrix4x4 rotateY = QMatrix4x4();
+    rotateY.rotate(cameraDirection.y(), -1.0f, 0.0f, 0.0f);
+
+    rotateY = modelMatrix * rotateY;
+
+    rotateY.setRow(0, QVector4D(0.741058f, 0.0f, 0.840735f, 0.16813f));
+    rotateY.setRow(1, QVector4D(0.225317f, 1.69847f, -0.106166f, -0.0212312f));
+    rotateY.setRow(2, QVector4D(1.12761f, -0.339388f, -0.531313f, -0.106252f));
+    rotateY.setRow(3, QVector4D(0.0f, 0.0f, -1.0f, 0.0f));
+
+    qDebug() << rotateY;
+
+    skyboxShader->bind();
+    skyboxShader->setUniformValue("modelViewProjectionMatrix", rotateY);
+
+    QVector3D& position = camera->position();
+
+    camera->setPosition(QVector3D());
+
+    GLfuncs->glDisable(GL_DEPTH_TEST);
+
+    skybox->draw(skyboxShader);
+
+    GLfuncs->glEnable(GL_DEPTH_TEST);
+
+    camera->setPosition(position);
 }
 
 inline bool okTile(int x, int y)
@@ -449,7 +546,7 @@ void World::loadNewProjectMapTilesIntoMemory(bool** mapCoords, QSize size)
         }
     }
 
-    createNeighbours();
+    //createNeighbours();
 }
 
 void World::changeTerrain(float x, float z, float change)
@@ -676,9 +773,7 @@ MapChunk* World::getMapChunkAt(const QVector3D& position) const
                     for(int cx = 0; cx < CHUNKS; ++cx)
                     {
                         for(int cy = 0; cy < CHUNKS; ++cy)
-                        {
                             mapTiles[tx][ty].tile->getChunk(cx, cy)->setSelected(false);
-                        }
                     }
                 }
             }
@@ -707,9 +802,7 @@ MapChunk* World::getMapChunkAt(const QVector3D& position) const
                 for(int cx = 0; cx < CHUNKS; ++cx)
                 {
                     for(int cy = 0; cy < CHUNKS; ++cy)
-                    {
                         mapTiles[tx][ty].tile->getChunk(cx, cy)->setSelected(false);
-                    }
                 }
             }
         }
@@ -942,6 +1035,11 @@ void World::setPaintMaximumState(bool state)
     paintMaximumState = state;
 }
 
+void World::setVertexShadingSwitch(bool state)
+{
+    shadingOff = state;
+}
+
 void World::setDisplayMode(int displayMode)
 {
     if(displayMode == SimpleWireFrame || displayMode == WorldHeight || displayMode == WorldTexturedWireframed)
@@ -1011,6 +1109,24 @@ void World::createNeighbours()
                         else
                             mapTiles[tx][ty].tile->getChunk(cx, cy)->setLeftNeighbour(0);
                     }
+                }
+            }
+        }
+    }
+}
+
+void World::updateNeighboursHeightmapData()
+{
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
+                for(int cx = 0; cx < CHUNKS; ++cx)
+                {
+                    for(int cy = 0; cy < CHUNKS; ++cy)
+                        mapTiles[tx][ty].tile->getChunk(cx, cy)->updateNeighboursHeightmapData();
                 }
             }
         }

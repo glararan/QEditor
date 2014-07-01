@@ -102,6 +102,7 @@ uniform float textureScaleNear = 0.4;
 uniform bool chunkLines = false;
 uniform bool highlight  = false;
 uniform bool selected   = false;
+uniform bool shadingOff = false;
 
 in wireFrameVertex
 {
@@ -378,14 +379,17 @@ vec4 shadeTexturedAndLit()
     vec4 diffuseColor = mix(layer1AndLayer2Color, layer3Color, texture(layer3Alpha, texCoords).r);
 
     // overlay effect
-    //diffuseColor += texture(vertexShading, texCoords);
+    if(!shadingOff)
+    {
+        //diffuseColor += texture(vertexShading, texCoords);
 
-    vec4 vertexShadingColor = texture(vertexShading, texCoords);
-    vertexShadingColor.rgb *= vertexShadingColor.a;
+        vec4 vertexShadingColor = texture(vertexShading, texCoords);
+        vertexShadingColor.rgb *= vertexShadingColor.a;
 
-    diffuseColor.rgb += vertexShadingColor.rgb;
+        diffuseColor.rgb += vertexShadingColor.rgb;
 
-    //diffuseColor.rgb = mix(diffuseColor.rgb, vertexShadingColor.rgb, vertexShadingColor.a);
+        //diffuseColor.rgb = mix(diffuseColor.rgb, vertexShadingColor.rgb, vertexShadingColor.a);
+    }
 
     // non overlay effect
     //diffuseColor = mix(diffuseColor, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
@@ -414,7 +418,7 @@ vec4 shadeHidden()
 
 vec4 ApplyCircle(vec4 colorIn, vec4 brushColor, vec2 distVec, float mouseDist, float maxRadius)
 {
-    if((maxRadius - mouseDist) > (maxRadius * 0.01f))
+    if((maxRadius - mouseDist) > (maxRadius * 0.01f) || mouseDist >= maxRadius)
         return colorIn;
 
     distVec = normalize(distVec);

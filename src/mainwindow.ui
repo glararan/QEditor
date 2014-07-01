@@ -57,6 +57,7 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="action_Switch_Vertex_Shading"/>
   </widget>
   <widget class="QToolBar" name="toolbar">
    <property name="styleSheet">
@@ -616,6 +617,21 @@
    </property>
    <property name="text">
     <string>3D Stereoscopic</string>
+   </property>
+  </action>
+  <action name="action_Switch_Vertex_Shading">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../qeditor.qrc">
+     <normaloff>:/vertexshading_turn_icon</normaloff>:/vertexshading_turn_icon</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Switch Vertex Shading</string>
+   </property>
+   <property name="toolTip">
+    <string>Turn on or off Vertex Shading</string>
    </property>
   </action>
  </widget>

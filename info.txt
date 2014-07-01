@@ -68,9 +68,6 @@ discuss features:
 - import/export heightmapy v určitém formátu (vyhodit ostatní nástroje jako textury atd..)
 - 3D stereoskopické
 
-List pro funkce:
-    Rozdělit MapView na třídy MapView[pouze ukazovat data], World[spravování objektů], Map(?)[spravování heightmapy a alphamap],
-
 Tessellation shader resources
 http://codeflow.org/entries/2010/nov/07/opengl-4-tessellation/
 https://github.com/tijutv/GPU-Terrain-Generation

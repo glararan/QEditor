@@ -21,13 +21,19 @@ IPipeline::IPipeline()
     modelMatrix.push_back(QMatrix4x4());
     viewMatrix.push_back(QMatrix4x4());
     projectionMatrix.push_back(QMatrix4x4());
+    skyboxMatrix.push_back(QMatrix4x4());
 
-    modelViewMatrix=QMatrix4x4();
-    modelViewProjectionMatrix=QMatrix4x4();
-    normalMatrix=QMatrix3x3();
-    worldNormalMatrix=QMatrix3x3();
-    matricesReady=true;
-    currentMatrix=0;
+    modelViewMatrix           = QMatrix4x4();
+    modelViewProjectionMatrix = QMatrix4x4();
+    normalMatrix              = QMatrix3x3();
+    worldNormalMatrix         = QMatrix3x3();
+    matricesReady             = true;
+    currentMatrix             = 0;
+
+    biasMatrix = QMatrix4x4(0.5f, 0.0f, 0.0f, 0.5f,
+                            0.0f, 0.5f, 0.0f, 0.5f,
+                            0.0f, 0.0f, 0.5f, 0.5f,
+                            0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 IPipeline::IPipeline(QMatrix4x4 model, QMatrix4x4 view, QMatrix4x4 projection)
@@ -36,109 +42,125 @@ IPipeline::IPipeline(QMatrix4x4 model, QMatrix4x4 view, QMatrix4x4 projection)
     viewMatrix.push_back(view);
     projectionMatrix.push_back(projection);
 
-    modelViewMatrix=QMatrix4x4();
-    modelViewProjectionMatrix=QMatrix4x4();
-    normalMatrix=QMatrix3x3();
-    worldNormalMatrix=QMatrix3x3();
-    matricesReady=true;
-    currentMatrix=0;
+    modelViewMatrix           = QMatrix4x4();
+    modelViewProjectionMatrix = QMatrix4x4();
+    normalMatrix              = QMatrix3x3();
+    worldNormalMatrix         = QMatrix3x3();
+    matricesReady             = true;
+    currentMatrix             = 0;
 }
 
 void IPipeline::loadIdentity()
 {
-    if(currentMatrix==MODEL_MATRIX || currentMatrix==VIEW_MATRIX)
+    if(currentMatrix == MODEL_MATRIX || currentMatrix == VIEW_MATRIX)
     {
-        modelMatrix[modelMatrix.size()-1]=QMatrix4x4();
-        viewMatrix[viewMatrix.size()-1]=QMatrix4x4();
-    }else
-        projectionMatrix[projectionMatrix.size()-1]=QMatrix4x4();
+        modelMatrix[modelMatrix.size() - 1] = QMatrix4x4();
+        viewMatrix[viewMatrix.size() - 1]   = QMatrix4x4();
+    }
+    else
+        projectionMatrix[projectionMatrix.size() - 1] = QMatrix4x4();
+
     matricesReady=false;
 }
 
 void IPipeline::matrixMode(int m)
 {
-    if(m==MODEL_MATRIX || m==VIEW_MATRIX || m==PROJECTION_MATRIX)
+    if(m == MODEL_MATRIX || m == VIEW_MATRIX || m == PROJECTION_MATRIX)
         currentMatrix=m;
 }
 
 void IPipeline::translate(float x, float y, float z)
 {
-    if(currentMatrix==MODEL_MATRIX)
-        modelMatrix[modelMatrix.size()-1].translate(x,y,z);
-    else if(currentMatrix==VIEW_MATRIX)
-        viewMatrix[viewMatrix.size()-1].translate(-x,-y,-z);
-    matricesReady=false;
+    if(currentMatrix == MODEL_MATRIX)
+        modelMatrix[modelMatrix.size() - 1].translate(x, y, z);
+
+    else if(currentMatrix == VIEW_MATRIX)
+        viewMatrix[viewMatrix.size() - 1].translate(-x, -y, -z);
+
+    matricesReady = false;
 }
 
 void IPipeline::scale(float x, float y, float z)
 {
-    if(currentMatrix==MODEL_MATRIX)
-        modelMatrix[modelMatrix.size()-1].scale(x,y,z);
-    else if(currentMatrix==VIEW_MATRIX)
-        viewMatrix[viewMatrix.size()-1].scale(x,y,z);
-    matricesReady=false;
+    if(currentMatrix == MODEL_MATRIX)
+        modelMatrix[modelMatrix.size() - 1].scale(x, y, z);
+    else if(currentMatrix == VIEW_MATRIX)
+        viewMatrix[viewMatrix.size() - 1].scale(x, y, z);
+
+    matricesReady = false;
 }
 
 void IPipeline::scale(float v)
 {
-    if(currentMatrix==MODEL_MATRIX)
-        modelMatrix[modelMatrix.size()-1].scale(v,v,v);
-    else if(currentMatrix==VIEW_MATRIX)
-        viewMatrix[viewMatrix.size()-1].scale(v,v,v);
-    matricesReady=false;
+    if(currentMatrix == MODEL_MATRIX)
+        modelMatrix[modelMatrix.size() - 1].scale(v, v, v);
+    else if(currentMatrix == VIEW_MATRIX)
+        viewMatrix[viewMatrix.size() - 1].scale(v, v, v);
+
+    matricesReady = false;
 }
 
 void IPipeline::rotateX(float angle)
 {
-    if(currentMatrix==MODEL_MATRIX)
-        modelMatrix[modelMatrix.size()-1].rotate(angle,1.0f,0.0f,0.0f);
-    else if(currentMatrix==VIEW_MATRIX)
-        viewMatrix[viewMatrix.size()-1].rotate(-angle,1.0f,0.0f,0.0f);
-    matricesReady=false;
+    if(currentMatrix == MODEL_MATRIX)
+        modelMatrix[modelMatrix.size() - 1].rotate(angle, 1.0f, 0.0f, 0.0f);
+    else if(currentMatrix == VIEW_MATRIX)
+        viewMatrix[viewMatrix.size() - 1].rotate(-angle, 1.0f, 0.0f, 0.0f);
+
+    matricesReady = false;
 }
 
 void IPipeline::rotateY(float angle)
 {
-    if(currentMatrix==MODEL_MATRIX)
-        modelMatrix[modelMatrix.size()-1].rotate(angle,0.0f,1.0f,0.0f);
-    else if(currentMatrix==VIEW_MATRIX)
-        viewMatrix[viewMatrix.size()-1].rotate(-angle,0.0f,1.0f,0.0f);
-    matricesReady=false;
+    if(currentMatrix == MODEL_MATRIX)
+        modelMatrix[modelMatrix.size() - 1].rotate(angle, 0.0f, 1.0f, 0.0f);
+    else if(currentMatrix == VIEW_MATRIX)
+        viewMatrix[viewMatrix.size() - 1].rotate(-angle, 0.0f, 1.0f, 0.0f);
+
+    matricesReady = false;
 }
 
 void IPipeline::rotateZ(float angle)
 {
-    if(currentMatrix==MODEL_MATRIX)
-        modelMatrix[modelMatrix.size()-1].rotate(angle,0.0f,0.0f,1.0f);
-    else if(currentMatrix==VIEW_MATRIX)
-        viewMatrix[viewMatrix.size()-1].rotate(-angle,0.0f,0.0f,1.0f);
-    matricesReady=false;
+    if(currentMatrix == MODEL_MATRIX)
+        modelMatrix[modelMatrix.size() - 1].rotate(angle, 0.0f, 0.0f, 1.0f);
+    else if(currentMatrix == VIEW_MATRIX)
+        viewMatrix[viewMatrix.size() - 1].rotate(-angle, 0.0f, 0.0f, 1.0f);
+
+    matricesReady = false;
 }
 
 void IPipeline::rotate(float angle, float x, float y, float z)
 {
-    if(currentMatrix==MODEL_MATRIX)
-        modelMatrix[modelMatrix.size()-1].rotate(angle,x,y,z);
-    else if(currentMatrix==VIEW_MATRIX)
-        viewMatrix[viewMatrix.size()-1].rotate(-angle,x,y,z);
-    matricesReady=false;
+    if(currentMatrix == MODEL_MATRIX)
+        modelMatrix[modelMatrix.size() - 1].rotate(angle, x, y, z);
+    else if(currentMatrix == VIEW_MATRIX)
+        viewMatrix[viewMatrix.size() - 1].rotate(-angle, x, y, z);
+
+    matricesReady = false;
 }
 
-void IPipeline::lookAt(const QVector3D &eye, const QVector3D &center, const QVector3D &up)
+void IPipeline::lookAt(const QVector3D& eye, const QVector3D& center, const QVector3D& up)
 {
-    viewMatrix[viewMatrix.size()-1].lookAt(eye,center,up);
-    matricesReady=false;
+    viewMatrix[viewMatrix.size() - 1].lookAt(eye, center, up);
+
+    matricesReady = false;
+
+    // calculate light matrix
+    lightMatrix = viewMatrix[viewMatrix.size() - 1] * lightModelMatrix;
 }
 
-void IPipeline::lookAt(QVector3D &position, QVector3D &direction)
+void IPipeline::lookAt(QVector3D& position, QVector3D& direction)
 {
     float angleUD = direction.x();
+
     if(angleUD > 89.9f)
         direction.setX(89.9f);
     if(angleUD < -89.9f)
         direction.setX(-89.9f);
 
     angleUD = direction.x();
+
     float angleLR = direction.y() + 180;
     //float angleCT = direction.getZ();
 
@@ -150,26 +172,33 @@ void IPipeline::lookAt(QVector3D &position, QVector3D &direction)
     float cY = position.y() + vUDy;
     float cZ = position.z() + (vLRz * vUDz);
 
-    this->lookAt(QVector3D(position.x(),position.y(),position.z()),QVector3D(cX,cY,cZ),QVector3D(0,1,0));
+    lookAt(QVector3D(position.x(), position.y(), position.z()), QVector3D(cX, cY, cZ), QVector3D(0, 1, 0));
+
+    skyboxMatrix[skyboxMatrix.size() - 1].setToIdentity();
+    skyboxMatrix[skyboxMatrix.size() - 1].translate(position.x(), position.y(), position.z());
+    skyboxMatrix[skyboxMatrix.size() - 1].rotate(direction.x(), 1.0f, 0.0f, 0.0f);
+    skyboxMatrix[skyboxMatrix.size() - 1].rotate(direction.y(), 0.0f, 1.0f, 0.0f);
 }
 
 void IPipeline::ortho(float left, float right, float bottom, float top, float nearPlane, float farPlane)
 {
-    projectionMatrix[projectionMatrix.size()-1].ortho(left,right,bottom,top,nearPlane,farPlane);
-    matricesReady=false;
+    projectionMatrix[projectionMatrix.size() - 1].ortho(left, right, bottom, top, nearPlane, farPlane);
+
+    matricesReady = false;
 }
 
 void IPipeline::perspective(float angle, float aRatio, float nearPlane, float farPlane)
 {
-    projectionMatrix[projectionMatrix.size()-1].perspective(angle,aRatio,nearPlane,farPlane);
-    matricesReady=false;
+    projectionMatrix[projectionMatrix.size() - 1].perspective(angle, aRatio, nearPlane, farPlane);
+
+    matricesReady = false;
 }
 
 void IPipeline::resize(int width, int height)
 {
     viewportSize = QVector2D(float(width), float(height));
 
-    float w2 = width / 2.0f;
+    float w2 = width  / 2.0f;
     float h2 = height / 2.0f;
 
     viewportMatrix.setToIdentity();
@@ -179,33 +208,51 @@ void IPipeline::resize(int width, int height)
     viewportMatrix.setColumn(3, QVector4D(w2, h2, 0.0f, 1.0f));
 }
 
+void IPipeline::setLight(QVector3D& position, QVector3D& direction)
+{
+    lightPosition = position;
+
+    lookAt(position, direction);
+
+    lightViewMatrix       = getViewMatrix();
+    lightProjectionMatrix = getProjectionMatrix();
+
+    lightModelMatrix.setToIdentity();
+    lightModelMatrix.translate(position.x(), position.y(), position.z());
+}
+
+bool IPipeline::isShadowEnabled()
+{
+    return false;
+}
+
 QMatrix4x4 IPipeline::getModelMatrix()
 {
-    return modelMatrix[modelMatrix.size()-1];
+    return modelMatrix[modelMatrix.size() - 1];
 }
 
 QMatrix4x4 IPipeline::getViewMatrix()
 {
-    return viewMatrix[viewMatrix.size()-1];
+    return viewMatrix[viewMatrix.size() - 1];
 }
 
 QMatrix4x4 IPipeline::getModelViewMatrix()
 {
     if(!matricesReady)
-        return viewMatrix[viewMatrix.size()-1]*modelMatrix[modelMatrix.size()-1];
+        return viewMatrix[viewMatrix.size() - 1] * modelMatrix[modelMatrix.size() - 1];
     else
         return modelViewMatrix;
 }
 
 QMatrix4x4 IPipeline::getProjectionMatrix()
 {
-    return projectionMatrix[projectionMatrix.size()-1];
+    return projectionMatrix[projectionMatrix.size() - 1];
 }
 
 QMatrix4x4 IPipeline::getModelViewProjectionMatrix()
 {
     if(!matricesReady)
-        return viewMatrix[viewMatrix.size()-1]*modelMatrix[modelMatrix.size()-1]*projectionMatrix[projectionMatrix.size()-1];
+        return viewMatrix[viewMatrix.size() - 1] * modelMatrix[modelMatrix.size() - 1] * projectionMatrix[projectionMatrix.size() - 1];
     else
         return modelViewProjectionMatrix;
 }
@@ -223,31 +270,35 @@ QVector2D IPipeline::getViewportSize()
 void IPipeline::pushMatrix()
 {
     QMatrix4x4 matrix;
-    if(currentMatrix==MODEL_MATRIX)
+
+    if(currentMatrix == MODEL_MATRIX)
     {
         matrix = getModelMatrix();
+
         modelMatrix.push_back(matrix);
     }
-    else if(currentMatrix==VIEW_MATRIX)
+    else if(currentMatrix == VIEW_MATRIX)
     {
         matrix = getViewMatrix();
+
         viewMatrix.push_back(matrix);
     }
     else
     {
         matrix = getProjectionMatrix();
+
         projectionMatrix.push_back(matrix);
     }
 }
 
 void IPipeline::popMatrix()
 {
-    if(currentMatrix==MODEL_MATRIX)
+    if(currentMatrix == MODEL_MATRIX)
     {
         if(modelMatrix.size() > 1)
             modelMatrix.pop_back();
     }
-    else if(currentMatrix==VIEW_MATRIX)
+    else if(currentMatrix == VIEW_MATRIX)
     {
         if(viewMatrix.size() > 1)
             viewMatrix.pop_back();
@@ -259,22 +310,33 @@ void IPipeline::popMatrix()
     }
 }
 
-void IPipeline::updateMatrices(QOpenGLShaderProgram *shader)
+void IPipeline::updateMatrices(QOpenGLShaderProgram* shader)
 {
     if(!matricesReady)
     {
-        modelViewMatrix=viewMatrix[viewMatrix.size()-1]*modelMatrix[modelMatrix.size()-1];
-        modelViewProjectionMatrix=projectionMatrix[projectionMatrix.size()-1]*viewMatrix[viewMatrix.size()-1]*modelMatrix[modelMatrix.size()-1];
-        normalMatrix=modelViewMatrix.normalMatrix();
-        worldNormalMatrix=modelMatrix[modelMatrix.size()-1].normalMatrix();
+        modelViewMatrix           = viewMatrix[viewMatrix.size() - 1] * modelMatrix[modelMatrix.size() - 1];
+        modelViewProjectionMatrix = projectionMatrix[projectionMatrix.size() - 1] * viewMatrix[viewMatrix.size() - 1] * modelMatrix[modelMatrix.size() - 1];
+        normalMatrix              = modelViewMatrix.normalMatrix();
+        worldNormalMatrix         = modelMatrix[modelMatrix.size() - 1].normalMatrix();
     }
-    shader->setUniformValue("modelMatrix",modelMatrix[modelMatrix.size()-1]);
-    shader->setUniformValue("viewMatrix",viewMatrix[viewMatrix.size()-1]);
-    shader->setUniformValue("projectionMatrix",projectionMatrix[projectionMatrix.size()-1]);
-    shader->setUniformValue("modelViewMatrix",modelViewMatrix);
-    shader->setUniformValue("modelViewProjectionMatrix",modelViewProjectionMatrix);
-    shader->setUniformValue("normalMatrix",normalMatrix);
-    shader->setUniformValue("viewportSize",viewportSize);
-    shader->setUniformValue("viewportMatrix",viewportMatrix);
-    shader->setUniformValue("worldNormalMatrix",worldNormalMatrix);
+
+    shader->setUniformValue("modelMatrix",               modelMatrix[modelMatrix.size() - 1]);
+    shader->setUniformValue("viewMatrix",                viewMatrix[viewMatrix.size() - 1]);
+    shader->setUniformValue("skyboxMatrix",              skyboxMatrix[skyboxMatrix.size() - 1]);
+    shader->setUniformValue("projectionMatrix",          projectionMatrix[projectionMatrix.size() - 1]);
+    shader->setUniformValue("modelViewMatrix",           modelViewMatrix);
+    shader->setUniformValue("modelViewProjectionMatrix", modelViewProjectionMatrix);
+    shader->setUniformValue("normalMatrix",              normalMatrix);
+    shader->setUniformValue("viewportSize",              viewportSize); // We need the viewport size to calculate tessellation levels and the geometry shader also needs the viewport matrix
+    shader->setUniformValue("viewportMatrix",            viewportMatrix);
+    shader->setUniformValue("worldNormalMatrix",         worldNormalMatrix);
+
+    shader->setUniformValue("shadowEnabled", isShadowEnabled());
+
+    if(isShadowEnabled())
+    {
+        shader->setUniformValue("lightModelViewProjectionMatrix", biasMatrix * lightProjectionMatrix * lightViewMatrix * modelMatrix[modelMatrix.size() - 1]);
+        shader->setUniformValue("lightPosition",                  lightPosition);
+        shader->setUniformValue("lightMatrix",                    lightMatrix);
+    }
 }

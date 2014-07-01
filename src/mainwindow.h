@@ -207,6 +207,8 @@ private slots:
 
     void setProjectData(ProjectFileData& data);
 
+    void setVertexShadingSwitch(bool state);
+
     void showTeleport();
     void showSettings();
     void showTexturePicker();

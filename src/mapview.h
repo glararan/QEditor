@@ -28,6 +28,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <QColor>
 
 class Camera;
+class IPipeline;
 
 class MapView : public QGLWidget
 {
@@ -99,6 +100,10 @@ public:
 
     QVector3D getWorldCoordinates(float mouseX, float mouseY);
 
+    QVector2D getCameraDirection() const { return QVector2D(panAngle, tiltAngle); }
+
+    IPipeline* getPipeline() const { return pipeline; }
+
 protected:
     void initializeGL();
     void resizeGL(int w, int h);
@@ -166,6 +171,7 @@ private:
 
     // Terrain rendering controls
     QMatrix4x4 modelMatrix;
+    IPipeline* pipeline;
 
     bool stereoscopic;
 
@@ -180,7 +186,7 @@ private:
 
     // mouse
     bool leftButtonPressed, rightButtonPressed, wasLeftButtonPressed;
-    bool changedMouseMode;
+    bool changedMouseMode, tabletMode;
 
     QPoint mouse_position;
 
@@ -227,6 +233,7 @@ public slots:
     void setTextureScaleOption_(int option);
     void setTextureScaleFar(float value);
     void setTextureScaleNear(float value);
+    void setTabletMode(bool enable);
     void setTurnChunkLines(bool on);
     void setModelRotationX(double value);
     void setModelRotationY(double value);

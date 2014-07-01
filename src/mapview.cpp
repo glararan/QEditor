@@ -18,6 +18,8 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "mathhelper.h"
 #include "qeditor.h"
 
+#include "ipipeline.h"
+
 #include <QKeyEvent>
 #include <QOpenGLContext>
 
@@ -26,6 +28,7 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , world(mWorld)
 , GLcontext(this->context()->contextHandle())
 , camera(new Camera(this))
+, pipeline(new IPipeline())
 , m_v()
 , viewCenterFixed(false)
 , showCameraCurve(false)
@@ -48,6 +51,7 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , leftButtonPressed(false)
 , rightButtonPressed(false)
 , changedMouseMode(false)
+, tabletMode(app().getSetting("tabletMode", false).toBool())
 , mouse_position(QPoint(0, 0))
 , terrain_pos()
 , shaping_speed(1.0f)
@@ -77,6 +81,7 @@ MapView::MapView(World* mWorld, QWidget* parent)
     GLcontext->create();
 
     modelMatrix.setToIdentity();
+    //pipeline->getModelMatrix().setToIdentity();
 
     // Initialize the camera position and orientation
     camera->setPosition(QVector3D(250.0f, 10.0f, 250.0f));
@@ -137,6 +142,7 @@ void MapView::initializeGL()
 void MapView::update(float t)
 {
     modelMatrix.setToIdentity();
+    //pipeline->getModelMatrix().setToIdentity();
 
     // Store the time
     const float dt = t - time;
@@ -187,7 +193,7 @@ void MapView::update(float t)
     }
 
     // Dynamic zoom
-    if(dynamicZoom.count() > 0)
+    /*if(dynamicZoom.count() > 0)
     {
         QVector<int> posIndexs;
         QVector<int> negIndexs;
@@ -252,14 +258,14 @@ void MapView::update(float t)
             camera_zoom = 25.0f;
         else if(camera_zoom < 20.0f)
             camera_zoom = 20.0f;
-    }
+    }*/
 
     // Update the camera perspective projection if camera zoom is changed
     if(camera_zoom != camera->fieldOfView())
         camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 
     // Update the mouse mode in MainWindow
-    if(!leftButtonPressed && !rightButtonPressed && (shiftDown || altDown || ctrlDown))
+    if(!leftButtonPressed && !rightButtonPressed && (shiftDown || altDown || ctrlDown) && tabletMode)
     {
         if(!changedMouseMode)
         {
@@ -338,7 +344,7 @@ void MapView::update(float t)
     {
         const QVector3D& position(terrain_pos);
 
-        if(eMMode == ShiftOnly)
+        if((eMMode == ShiftOnly && tabletMode) || shiftDown)
         {
             switch(eMode)
             {
@@ -370,7 +376,7 @@ void MapView::update(float t)
                     break;
             }
         }
-        else if(eMMode == CtrlOnly)
+        else if((eMMode == CtrlOnly && tabletMode) || ctrlDown)
         {
             switch(eMode)
             {
@@ -534,6 +540,9 @@ void MapView::resizeGL(int w, int h)
 
     // Update World FBO
     world->setFboSize(QSize(w, h));
+
+    // Update pipeline
+    //pipeline->resize(w, h);
 
     // Update the viewport matrix
     float w2 = w / 2.0f;
@@ -810,6 +819,13 @@ void MapView::setTextureScaleNear(float value)
     QOpenGLShaderProgram* shader = world->getTerrainShader();
     shader->bind();
     shader->setUniformValue("textureScaleNear", value);
+}
+
+void MapView::setTabletMode(bool enable)
+{
+    app().setSetting("tabletMode", enable);
+
+    tabletMode = enable;
 }
 
 void MapView::setTurnChunkLines(bool on)

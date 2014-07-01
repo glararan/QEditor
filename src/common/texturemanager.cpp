@@ -50,6 +50,8 @@ void TextureManager::loadTexture(QString textureName, QString texturePath)
 {
     QImage textureImage(texturePath);
 
+    //qDebug() << "Texture path exists:" << QFile(texturePath).exists() << QFileInfo(texturePath).absoluteFilePath();
+
     TexturePtr texture(new Texture(textureImage.mirrored(), texturePath));
 
     QPair<QString, TexturePtr> pair;

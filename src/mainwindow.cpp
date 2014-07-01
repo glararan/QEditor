@@ -308,6 +308,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(settingsW, SIGNAL(setTextureScaleOption(int)),         mapView, SLOT(setTextureScaleOption_(int)));
     connect(settingsW, SIGNAL(setTextureScaleFar(float)),          mapView, SLOT(setTextureScaleFar(float)));
     connect(settingsW, SIGNAL(setTextureScaleNear(float)),         mapView, SLOT(setTextureScaleNear(float)));
+    connect(settingsW, SIGNAL(setTabletMode(bool)),                mapView, SLOT(setTabletMode(bool)));
 
     // tools - test, stereoscopic
     connect(ui->action_3D_Stereoscopic, SIGNAL(triggered(bool)), mapView, SLOT(set3DStreoscopic(bool)));
@@ -332,6 +333,9 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(ui->action_mapview_m6, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
 
     connect(this, SIGNAL(setModeEditing(int)), mapView, SLOT(setModeEditing(int)));
+
+    // toolbar 2
+    connect(ui->action_Switch_Vertex_Shading, SIGNAL(toggled(bool)), this, SLOT(setVertexShadingSwitch(bool)));
 
     /// toolbar3
     connect(t_terrain_mode, SIGNAL(currentIndexChanged(int)), this   , SLOT(setTerrain_Mode(int)));
@@ -1300,6 +1304,11 @@ void MainWindow::actionIsInDevelopment()
 void MainWindow::setProjectData(ProjectFileData& data)
 {
     world->setProjectData(data);
+}
+
+void MainWindow::setVertexShadingSwitch(bool state)
+{
+    world->setVertexShadingSwitch(state);
 }
 
 void MainWindow::addToolbarAction(QWidget* widget, QList<QString>& parentList)

@@ -21,43 +21,57 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 class IBone
 {
 public:
-    friend class IBones;
     ~IBone();
-    void setId(int id);
-    int getId();
-    QMatrix4x4 getOffset();
 
-    void setNodeTransformation(QMatrix4x4 nodeTransformation);
+    void addChild(IBone* child);
+
+    void setId(int bone_id);
+    void setParent(IBone* bone_parent);
+    void setNodeTransformation(QMatrix4x4 bone_nodeTransformation);
+
+    int getId();
+
+    QMatrix4x4 getOffset();
     QMatrix4x4 getNodeTransformation();
 
-    void setParent(IBone *parent);
-    void addChild(IBone *child);
+    IBone*           getParent();
+    QVector<IBone*>* getChildren();
 
-    IBone *getParent();
-    QVector<IBone *> *getChildren();
+    friend class IBones; // move to private?
 
 private:
-    IBone(int id, QMatrix4x4 offset = QMatrix4x4());
+    IBone(int bone_id, QMatrix4x4 bone_offset = QMatrix4x4()); // shouldn't be in public?
+
+    IBone* parent;
+
     int id;
+
     QMatrix4x4 offset;
-    IBone *parent;
-    QVector<IBone *> children;
     QMatrix4x4 nodeTransformation;
+
+    QVector<IBone*> children;
 };
 
 class IBones
 {
 public:
     IBones();
-    void addBone(QString name, IBone *bone);
+
+    IBone* createEmptyBone(QString name, QMatrix4x4 offset = QMatrix4x4());
+
+    void addBone(QString name, IBone* bone);
+
     bool hasBone(QString name);
+
     IBone* getBone(QString name);
     IBone* getBone(int id);
+
     QVector<QString> getBoneNames();
+
     int getBoneCount();
-    IBone* createEmptyBone(QString name, QMatrix4x4 offset = QMatrix4x4());
+
 private:
-    QMap<QString, IBone *> bones;
+    QMap<QString, IBone*> bones;
 };
 
 #endif // IBONE_H

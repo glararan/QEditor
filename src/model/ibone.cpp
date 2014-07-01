@@ -15,16 +15,16 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "ibone.h"
 
-IBone::IBone(int id, QMatrix4x4 offset)
+IBone::IBone(int bone_id, QMatrix4x4 bone_offset)
 {
-    this->id = id;
-    this->offset = offset;
+    id     = bone_id;
+    offset = bone_offset;
     parent = NULL;
 }
 
-void IBone::setId(int id)
+void IBone::setId(int bone_id)
 {
-    this->id = id;
+    id = bone_id;
 }
 
 int IBone::getId()
@@ -37,9 +37,9 @@ QMatrix4x4 IBone::getOffset()
     return offset;
 }
 
-void IBone::setNodeTransformation(QMatrix4x4 nodeTransformation)
+void IBone::setNodeTransformation(QMatrix4x4 bone_nodeTransformation)
 {
-    this->nodeTransformation = nodeTransformation;
+    nodeTransformation = bone_nodeTransformation;
 }
 
 QMatrix4x4 IBone::getNodeTransformation()
@@ -47,36 +47,35 @@ QMatrix4x4 IBone::getNodeTransformation()
     return nodeTransformation;
 }
 
-void IBone::setParent(IBone *parent)
+void IBone::setParent(IBone* bone_parent)
 {
-    this->parent = parent;
+    parent = bone_parent;
 }
 
-void IBone::addChild(IBone *child)
+void IBone::addChild(IBone* child)
 {
     child->setParent(this);
+
     children.push_back(child);
 }
 
-IBone *IBone::getParent()
+IBone* IBone::getParent()
 {
     return parent;
 }
 
-QVector<IBone *> *IBone::getChildren()
+QVector<IBone*>* IBone::getChildren()
 {
     return &children;
 }
 
-
 IBones::IBones()
 {
-
 }
 
-void IBones::addBone(QString name, IBone *bone)
+void IBones::addBone(QString name, IBone* bone)
 {
-    bones.insert(name,bone);
+    bones.insert(name, bone);
 }
 
 bool IBones::hasBone(QString name)
@@ -84,18 +83,19 @@ bool IBones::hasBone(QString name)
     return bones.keys().contains(name);
 }
 
-IBone *IBones::getBone(QString name)
+IBone* IBones::getBone(QString name)
 {
     return bones.value(name);
 }
 
-IBone *IBones::getBone(int id)
+IBone* IBones::getBone(int id)
 {
     for(int i = 0; i < bones.values().size(); ++i)
     {
         if(bones.values().at(i)->getId() == id)
             return bones.values().at(i);
     }
+
     return 0;
 }
 
@@ -109,9 +109,11 @@ int IBones::getBoneCount()
     return bones.size();
 }
 
-IBone *IBones::createEmptyBone(QString name, QMatrix4x4 offset)
+IBone* IBones::createEmptyBone(QString name, QMatrix4x4 offset)
 {
-    IBone *bone = new IBone(bones.size(),offset);
-    addBone(name,bone);
+    IBone* bone = new IBone(bones.size(), offset);
+
+    addBone(name, bone);
+
     return bone;
 }
