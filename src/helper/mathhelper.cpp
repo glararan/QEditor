@@ -18,6 +18,10 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "beziercurve.h"
 
 #include <QVector3D>
+#include <QVector2D>
+#include <QMAtrix4x4>
+
+#include <limits.h>
 
 MathHelper::MathHelper()
 {
@@ -106,6 +110,32 @@ const QColor MathHelper::toColor(const QVector4D& color)
 const QVector4D MathHelper::toVector4D(const QColor& color)
 {
     return QVector4D(toFloat(color.red()) / 255.0f, toFloat(color.green()) / 255.0f, toFloat(color.blue()) / 255.0f, toFloat(color.alpha()) / 255.0f);
+}
+
+const QVector2D MathHelper::getDirections(const QMatrix4x4& matrix)
+{
+    double sinPitch, cosPitch, sinRoll, cosRoll, sinYaw, cosYaw;
+
+    sinPitch = -matrix.row(0).z();
+    cosPitch = sqrt(1 - sinPitch * sinPitch);
+
+    if(abs(cosPitch) > std::numeric_limits<double>::epsilon())
+    {
+        sinRoll = matrix.row(1).z() / cosPitch;
+        cosRoll = matrix.row(2).z() / cosPitch;
+        sinYaw  = matrix.row(0).y() / cosPitch;
+        cosYaw  = matrix.row(0).x() / cosPitch;
+    }
+    else
+    {
+        sinRoll = -matrix.row(1).z();
+        cosRoll =  matrix.row(1).y();
+        sinYaw  = 0;
+        cosYaw  = 1;
+    }
+
+    // pan, tilt
+    return QVector2D(atan2(sinPitch, cosPitch) * 180.0 / M_PI, atan2(sinRoll, cosRoll) * 180.0 / M_PI);
 }
 
 const float MathHelper::closerTo(const unsigned char value1, const qreal value2, const float formula)

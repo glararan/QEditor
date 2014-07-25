@@ -19,7 +19,6 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "mapchunk.h"
 #include "world.h"
 #include "mapheaders.h"
-#include "framebuffer.h"
 #include "model/imodelmanager.h"
 #include "model/imodel.h"
 
@@ -66,7 +65,7 @@ public:
 
     void draw(const float& distance, const QVector3D& camera);
     void drawObjects(const float& distance, const QVector3D& camera, QMatrix4x4 viewMatrix, QMatrix4x4 projectionMatrix);
-    void drawWater(const float& distance, const QVector3D& camera);
+    void drawWater(const float& distance, const QVector3D& camera, QOpenGLFramebufferObject* refraction);
 
     void update(qreal time);
 
@@ -75,8 +74,6 @@ public:
     void updateModelHeight();
 
     bool isTile(int pX, int pY);
-
-    void setFboSize(QSize size);
 
     void saveTile();
 
@@ -90,8 +87,6 @@ private:
     World* world;
 
     WaterTile* waterTile;
-
-    Framebuffer* fbo;
 
     SamplerPtr terrainSampler;
 

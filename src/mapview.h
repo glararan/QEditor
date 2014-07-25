@@ -100,8 +100,6 @@ public:
 
     QVector3D getWorldCoordinates(float mouseX, float mouseY);
 
-    QVector2D getCameraDirection() const { return QVector2D(panAngle, tiltAngle); }
-
     IPipeline* getPipeline() const { return pipeline; }
 
 protected:

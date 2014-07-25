@@ -75,6 +75,20 @@ void Material::bind(QOpenGLShaderProgram* shader)
         if(m_arraySamplerUniforms.contains(unit))
             shader->setUniformValue(m_arraySamplerUniforms.value(unit).constData(), unit);
     }
+
+    foreach(const GLuint unit, m_FramebufferUnitConfigs.keys())
+    {
+        const GLuint& config = m_FramebufferUnitConfigs.value(unit);
+
+        m_funcs->glActiveTexture(GL_TEXTURE0 + unit);
+
+        // Bind the framebuffer
+        m_funcs->glBindTexture(GL_TEXTURE_2D, config);
+
+        // Associate with sampler uniform in shader (if we know the name or location)
+        if(m_FramebufferByteUnitUniforms.contains(unit))
+            shader->setUniformValue(m_FramebufferByteUnitUniforms.value(unit).constData(), unit);
+    }
 }
 
 void Material::setTextureUnitConfiguration(GLuint unit, TexturePtr texture, SamplerPtr sampler)

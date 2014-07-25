@@ -15,6 +15,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "qeditor.h"
 
+#include "version.h"
 #include "mainwindow.h"
 
 #include <QTime>
@@ -23,10 +24,10 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 QEditor::QEditor(int& argc, char** argv)
 : QApplication(argc, argv)
 {
-    setOrganizationDomain("https://github.com/glararan/QEditor");
-    setOrganizationName("");
-    setApplicationName("QEditor");
-    setApplicationVersion("Alpha 0.1a");
+    setOrganizationDomain(QString(VER_COMPANYDOMAIN_STR));
+    setOrganizationName(QString(VER_COMPANYNAME_STR));
+    setApplicationName(QString(VER_PRODUCTNAME_STR));
+    setApplicationVersion(QString(VER_FILEVERSION_STR));
 
     settings = new QSettings(this);
 

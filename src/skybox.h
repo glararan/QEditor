@@ -32,7 +32,7 @@ public:
 
     void loadSide(QOpenGLTexture::CubeMapFace side, QString fileName);
 
-    Material* getMaterial() { return &material; }
+    Material* getMaterial() { return material; }
 
 private:
     QOpenGLFunctions_4_2_Core* GLfuncs;
@@ -42,7 +42,7 @@ private:
     SamplerPtr sampler;
     TexturePtr texture;
 
-    Material material;
+    Material* material;
 
     IMesh mesh;
 

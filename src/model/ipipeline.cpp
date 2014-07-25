@@ -322,7 +322,6 @@ void IPipeline::updateMatrices(QOpenGLShaderProgram* shader)
 
     shader->setUniformValue("modelMatrix",               modelMatrix[modelMatrix.size() - 1]);
     shader->setUniformValue("viewMatrix",                viewMatrix[viewMatrix.size() - 1]);
-    shader->setUniformValue("skyboxMatrix",              skyboxMatrix[skyboxMatrix.size() - 1]);
     shader->setUniformValue("projectionMatrix",          projectionMatrix[projectionMatrix.size() - 1]);
     shader->setUniformValue("modelViewMatrix",           modelViewMatrix);
     shader->setUniformValue("modelViewProjectionMatrix", modelViewProjectionMatrix);

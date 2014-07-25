@@ -56,6 +56,8 @@ public:
     static const QColor    toColor(const QVector4D& color);
     static const QVector4D toVector4D(const QColor& color);
 
+    static const QVector2D getDirections(const QMatrix4x4& matrix);
+
     static const float closerTo(const unsigned char value1, const qreal value2, const float formula);
 
     static const float toRGB(const qreal value);

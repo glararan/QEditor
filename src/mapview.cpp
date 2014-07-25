@@ -558,7 +558,7 @@ void MapView::resizeGL(int w, int h)
     shader->bind();
 
     // We need the viewport size to calculate tessellation levels and the geometry shader also needs the viewport matrix
-    shader->setUniformValue("viewportSize", viewportSize);
+    shader->setUniformValue("viewportSize",   viewportSize);
     shader->setUniformValue("viewportMatrix", viewportMatrix);
 }
 

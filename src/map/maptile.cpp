@@ -24,7 +24,6 @@ MapTile::MapTile(World* mWorld, const QString& mapFile, int x, int y) // Cache M
 : coordX(x)
 , coordY(y)
 , fileName(mapFile)
-, fbo(NULL)
 , terrainSampler(new Sampler)
 , world(mWorld) // todo objects
 {
@@ -55,7 +54,6 @@ MapTile::MapTile(World* mWorld, int x, int y, const QString& mapFile) // File ba
 : coordX(x)
 , coordY(y)
 , fileName(mapFile)
-, fbo(NULL)
 , terrainSampler(new Sampler)
 , world(mWorld) // todo objects
 {
@@ -165,20 +163,8 @@ void MapTile::drawObjects(const float& distance, const QVector3D& camera, QMatri
     }
 }
 
-void MapTile::drawWater(const float& distance, const QVector3D& camera)
+void MapTile::drawWater(const float& distance, const QVector3D& camera, QOpenGLFramebufferObject* refraction)
 {
-    /*fbo->bind();
-
-    world->getGLFunctions()->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    world->getGLFunctions()->glDisable(GL_DEPTH_TEST);
-
-    draw(distance, camera);
-
-    world->getGLFunctions()->glEnable(GL_DEPTH_TEST);
-    world->getGLFunctions()->glClear(GL_DEPTH_BUFFER_BIT);
-
-    fbo->release();*/
-
     QOpenGLShaderProgram* shader = world->getWaterShader();
     shader->bind();
 
@@ -187,19 +173,7 @@ void MapTile::drawWater(const float& distance, const QVector3D& camera)
         for(int y = 0; y < CHUNKS; ++y)
         {
             if(mapChunks[x][y]->isInVisibleRange(distance, camera))
-            {
-                /*fbo->bind();
-
-                world->getGLFunctions()->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                mapChunks[x][y]->draw();
-
-                fbo->release();*/
-
-                waterTile->getChunk(x, y)->draw(shader, fbo->texture(), fbo->depthTexture());
-
-                //waterTile->getChunk(x, y)->draw(0);
-            }
+                waterTile->getChunk(x, y)->draw(shader, refraction->texture(), NULL); // depthTexture missing
         }
     }
 }
@@ -220,31 +194,6 @@ MapChunk* MapTile::getChunk(int x, int y)
 bool MapTile::isTile(int pX, int pY)
 {
     return pX == coordX && pY == coordY;
-}
-
-void MapTile::setFboSize(QSize size)
-{
-    /*QOpenGLFramebufferObjectFormat format;
-    format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-    format.setMipmap(true); // http://www.opengl.org/wiki/Common_Mistakes#Render_To_Texture
-
-    if(fbo == NULL)
-        fbo = new QOpenGLFramebufferObject(size, format);
-    else
-    {
-        delete fbo;
-
-        fbo = new QOpenGLFramebufferObject(size, format);
-    }*/
-
-    if(fbo == NULL)
-        fbo = new Framebuffer(size.height(), size.height());//Framebuffer(size.width(), size.height());
-    else
-    {
-        delete fbo;
-
-        fbo = new Framebuffer(size.height(), size.height());//Framebuffer(size.width(), size.height());
-    }
 }
 
 void MapTile::saveTile()

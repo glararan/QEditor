@@ -169,7 +169,7 @@ void WaterChunk::draw(QOpenGLShaderProgram* shader, GLuint reflectionTexture, GL
         chunkMaterial->bind(shader);
 
         // Set the fragment shader display mode subroutine
-        world->getGLFunctions()->glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &getDisplaySubroutines());
+        //world->getGLFunctions()->glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &getDisplaySubroutines());
 
         // Render the quad as a patch
         {
@@ -296,11 +296,11 @@ void WaterChunk::save()
 
 void WaterChunk::setReflectionTexture(GLuint reflectionTexture, GLuint depthTexture)
 {
-    /*world->getGLFunctions()->glBindTexture(GL_TEXTURE_2D, reflectionTexture);
+    world->getGLFunctions()->glBindTexture(GL_TEXTURE_2D, reflectionTexture);
 
     chunkMaterial->setFramebufferUnitConfiguration(ShaderUnits::Texture2, reflectionTexture, QByteArrayLiteral("reflectionTexture"));
 
-    world->getGLFunctions()->glBindTexture(GL_TEXTURE_2D, depthTexture);
+    /*world->getGLFunctions()->glBindTexture(GL_TEXTURE_2D, depthTexture);
 
     chunkMaterial->setFramebufferUnitConfiguration(ShaderUnits::Texture3, depthTexture, QByteArrayLiteral("depthTexture"));*/
 }

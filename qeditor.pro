@@ -42,6 +42,8 @@ INCLUDEPATH += src
 
 RESOURCES += qeditor.qrc
 
+RC_FILE = resources.rc
+
 TRANSLATIONS += qeditor_cz.ts
 
 OTHER_FILES += info.txt \
@@ -58,7 +60,8 @@ OTHER_FILES += info.txt \
     data/shaders/qeditor_bezier.frag \
     data/shaders/qeditor_water.tes \
     data/shaders/qeditor_skybox.vert \
-    data/shaders/qeditor_skybox.frag
+    data/shaders/qeditor_skybox.frag \
+    resources.rc
 
 unix|win32: LIBS += -L$$PWD/ -lquazip
 

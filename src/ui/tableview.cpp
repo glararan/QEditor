@@ -34,12 +34,14 @@ TexturesArray::TexturesArray(int rows, int cols, QWidget* parent)
 
     setFocusPolicy(Qt::StrongFocus);
 
-    cellw  = textureSize.width();
-    cellh  = textureSize.height();
-    curCol = 0;
-    curRow = 0;
-    selCol = -1;
-    selRow = -1;
+    cellw     = textureSize.width();
+    cellh     = textureSize.height();
+    curCol    = 0;
+    curRow    = 0;
+    selCol    = -1;
+    selRow    = -1;
+    itemCount = 0;
+
     toolTipArray.resize(rows * cols);
 }
 
@@ -115,6 +117,11 @@ QSize TexturesArray::sizeHint() const
 
 void TexturesArray::paintCell(QPainter* p, int row, int col, const QRect& rect)
 {
+    int index = col + row * numCols();
+
+    if(index > itemCount)
+        return;
+
     int b = 2; //margin
 
     const QPalette& g = palette();
@@ -405,6 +412,7 @@ TextureWell::TextureWell(QWidget* parent, int row, int columns, QSize textureIco
 
     values.resize(row * columns);
 
+    setItemCount(0);
     setDefaultImages();
 }
 
@@ -413,6 +421,7 @@ void TextureWell::clear()
     values.clear();
     values.resize(numCols() * numRows());
 
+    setItemCount(0);
     setDefaultImages();
 
     TexturesArray::clear();
@@ -428,6 +437,8 @@ void TextureWell::insertItem(QImage image, QString toolTip, bool makeSpace)
         values[index].second.isFree = false;
 
         insertToolTip(index, toolTip);
+
+        setItemCount(index);
     }
     else if(makeSpace)
     {

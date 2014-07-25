@@ -29,6 +29,10 @@ out worldVertex
     vec4 position;
     vec3 normal;
     vec2 texCoords;
+    /*vec4 lightVertexPosition;
+    vec3 lightPosition;*/
+    vec3 reflection;
+    vec3 refraction;
 } Out;
 
 uniform sampler2D heightMap;
@@ -90,6 +94,8 @@ void main()
 
     Out.worldNormal = worldNormalMatrix * n;
     Out.normal      = normalMatrix * n;
+    Out.reflection  = reflect(Out.position.xyz, n);
+    Out.refraction  = refract(Out.position.xyz, n, 1.0 / 1.3333);
 
     // Transform to clip-space
     gl_Position = mvp * position;

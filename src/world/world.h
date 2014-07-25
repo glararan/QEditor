@@ -159,6 +159,7 @@ public:
     void setPaintMaximumState(bool state);
 
     void setVertexShadingSwitch(bool state);
+    void setSkyboxSwitch(bool state);
 
     QVector3D getWorldCoordinates() const;
 
@@ -178,7 +179,13 @@ private:
     MapChunk*       highlightChunk;
 
     QOpenGLFramebufferObject* fbo;
+    QOpenGLFramebufferObject* reflection_fbo;
+    QOpenGLFramebufferObject* refraction_fbo;
 
+    // reflection
+    QMatrix4x4 reflectionView;
+
+    //
     QSize viewportSize;
 
     bool tileLoaded(int x, int y) const;
@@ -195,7 +202,7 @@ private:
     float paintMaximumAlpha;
     bool  paintMaximumState;
 
-    bool shadingOff;
+    bool shadingOff, skyboxOff;
 
     // Angle of sun. 0 is directly overhead, 90 to the East, -90 to the West
     float sunTheta;
@@ -218,7 +225,9 @@ private:
     void createNeighbours();
     void updateNeighboursHeightmapData();
 
-    void drawSkybox(IPipeline* pipeline, QVector2D& cameraDirection, QMatrix4x4& modelMatrix);
+    void drawSkybox(QMatrix4x4& modelMatrix);
+    void drawReflection();
+    void drawRefraction();
 
     // worldCoordinates
     QVector3D worldCoordinates;

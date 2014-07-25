@@ -26,28 +26,25 @@ in wireFrameVertex
     vec4 worldPosition;
     vec3 worldNormal;
     vec4 position;
+    vec4 genericPosition;
     vec3 normal;
     vec2 texCoords;
-    vec4 lightVertexPosition;
-    vec3 lightPosition;
+    /*vec4 lightVertexPosition;
+    vec3 lightPosition;*/
     vec3 reflection;
+    vec3 refraction;
 };
 
-const int texCoordMultiplier = 2;
-
 uniform mat4 skyboxMatrix;
-uniform mat4 viewMatrix;
+uniform mat4 reflectionMatrix;
+uniform mat4 projMatrix;
+uniform mat4 modelMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat3 worldNormalMatrix;
-uniform mat4 modelViewProjectionMatrix;
-
-uniform int displayMode = 1;
-uniform vec3 cameraPosition;
-uniform float delta;
-
-uniform mat4 modelMatrix;
-uniform mat4 modelMatrix2;
 uniform mat3 normalMatrix;
+uniform mat4 mvp;
+
+uniform vec3 cameraPosition;
 
 uniform float horizontalScale = 533.33333;
 
@@ -62,6 +59,14 @@ uniform struct FogInfo
     float minAlphaDistance;
     float maxAlphaDistance;
 } fog;
+
+uniform struct LineInfo
+{
+  float width;
+
+  vec4 color;
+  vec4 color2;
+} line;
 
 uniform struct LightInfo
 {
@@ -83,14 +88,19 @@ uniform float deltaTime = 0.0;
 uniform sampler2D baseTexture;
 uniform sampler2D heightMap;
 
-uniform samplerCube reflectionTexture;
-uniform samplerCube depthTexture;
+uniform sampler2D reflectionTexture;
+/*uniform sampler2D depthTexture;*/
 
-uniform sampler2D shadowMap;
+//uniform sampler2D shadowMap;
 uniform samplerCube cubeMap;
 
-uniform mat4 lightModelViewProjectionMatrix;
-uniform mat4 lightMatrix;
+/*uniform mat4 lightModelViewProjectionMatrix;
+uniform mat4 lightMatrix;*/
+
+mat4 reflectionMat = mat4(0.5f, 0.0f, 0.0f, 0.5f,
+                          0.0f, 0.5f, 0.0f, 0.5f,
+                          0.0f, 0.0f, 0.0f, 0.5f,
+                          0.0f, 0.0f, 0.0f, 1.0f);
 
 vec4 linearGradient(const in float value, const in float limit1, const in float limit2, const in vec4 color1, const in vec4 color2)
 {
@@ -122,7 +132,7 @@ vec4 worldHeight(const in float t, const in float limit1, const in float limit2,
     return color;
 }
 
-vec4 wireFrame(const in vec4 color, const in vec4 wireFrameColor, const in float lineWidth)
+vec4 wireFrame(const in vec4 color, const in vec4 wireFrameColor)
 {
     // Find the smallest distance between the fragment and a triangle edge
     float d = min(edgeDistance.x, edgeDistance.y);
@@ -131,13 +141,13 @@ vec4 wireFrame(const in vec4 color, const in vec4 wireFrameColor, const in float
     // Blend between line color and triangle color
     float mixVal;
 
-    if(d < lineWidth - 0.5)
+    if(d < line.width - 0.5)
         mixVal = 1.0;
-    else if(d > lineWidth + 0.5)
+    else if(d > line.width + 0.5)
         mixVal = 0.0;
     else
     {
-        float x = d - (lineWidth - 1.0);
+        float x = d - (line.width - 1.0);
 
         mixVal = exp2(-2.0 * (x * x));
     }
@@ -181,7 +191,7 @@ float Fresnel(float NdotL, float bias, float power)
 
 float getTimeProgress(float speed)
 {
-    float time = delta * 1000.0;
+    float time = deltaTime * 1000.0;
     speed      = 10000.0 / speed;
 
     return float(int(time) / int(speed));
@@ -189,11 +199,11 @@ float getTimeProgress(float speed)
 
 void nearAndFarTexCoords(out vec2 uvNear, out vec2 uvFar)
 {
-    uvNear = texCoords * texCoordMultiplier;
-    uvFar  = texCoords * texCoordMultiplier;
+    uvNear = texCoords;
+    uvFar  = texCoords;
 }
 
-float getShadowValue()
+/*float getShadowValue()
 {
     float shadowValue = 0.0;
 
@@ -226,17 +236,17 @@ float getShadowValue()
     }
 
     return shadowValue / 9;
-}
+}*/
 
 subroutine(ShaderModelType)
 vec4 shadeTexture()
 {
         /*vec3 eye       = normalize(worldPosition.xyz - eyePos);
-    vec3 reflected = normalize(refract(eye, normalize(worldNormal), 1.1)); // 1.3330
+    vec3 reflected = normalize(refract(eye, normalize(worldNormal), 1.0 / 1.333)); // 1.3330
 
     vec4 diffuseColor = mix(vec4(0.0, 0.5, 1.0, 1.0), texture(reflectionTexture, reflected), 0.6);*/
 
-    vec4 diffuseColor = texture(baseTexture, texCoords + delta * 0.015);
+    vec4 diffuseColor = texture(baseTexture, texCoords + deltaTime * 0.015);
 
     // Calculate the lighting model, keeping the specular component separate
     vec3 ambientAndDiff, spec;
@@ -249,7 +259,22 @@ vec4 shadeTexture()
     float fogFactor   = clamp((fog.maxDistance - dist) / (fog.maxDistance - fog.minDistance), 0.0, 1.0);
     float alphaFactor = clamp(1.0 - ((fog.maxAlphaDistance - dist) / (fog.maxAlphaDistance - fog.minAlphaDistance)), 0.4, 1.0);
 
-    vec4 skyRefletion = texture(cubeMap, vec3(inverse(skyboxMatrix) * vec4 (reflection, 0.0)));
+    vec4 skyRefletion      = texture(cubeMap, vec3(inverse(skyboxMatrix) * vec4(reflection, 0.0)));
+    //vec4 terrainRefraction = texture(reflectionTexture, vec3(inverse(skyboxMatrix) * vec4(refraction, 0.0)));
+    //vec4 terrainReflection = texture(reflectionTexture, vec3(inverse(skyboxMatrix) * vec4(reflection, 0.0)));
+
+    mat4 reflectionViewProjection      = reflectionMatrix * projMatrix;
+    mat4 reflectionWorldViewProjection = modelMatrix * reflectionViewProjection;
+//----------------------------------------------------------------------------------------
+    vec4 pos = /*(position * projMatrix)*/ genericPosition * reflectionWorldViewProjection;
+
+    vec2 projectedTexcoords;
+    projectedTexcoords.x = pos.x / pos.w / 2.0f + 0.5f;
+    projectedTexcoords.y = pos.z / pos.w / 2.0f + 0.5f; // y/z
+
+    vec4 terrainReflection = texture(reflectionTexture, projectedTexcoords);
+
+    return mix(terrainReflection, vec4(0.5, 0.5, 0.5, 0.5), 0.5);
 
     if(cameraPosition.y >= 0.0)
         return (skyRefletion * skyRefletion) * 0.4 + vec4(mix(fog.color, color, fogFactor).rgb, alphaFactor) * 0.6;// = vec4(mix(fog.color, outColor, fogFactor).rgb, 1.0); vec4(color.rgb, 0.5)
@@ -260,13 +285,20 @@ vec4 shadeTexture()
 subroutine(ShaderModelType)
 vec4 shadeTextureWireFrame()
 {
-    return vec4(wireFrame(shadeTexture(), vec4(0.0, 0.0, 0.0, 1.0), 0.25).rgb, 1.0);
+    return wireFrame(shadeTexture(), line.color2);
 }
 
 subroutine(ShaderModelType)
 vec4 shadeSimpleWireFrame()
 {
-    return vec4(wireFrame(vec4(0.1, 0.1, 0.1, 1.0), vec4(0.9, 0.9, 0.9, 1.0), 1.0).rgb, 1.0);
+    vec4 color = vec4(0, 0, 0, 0);
+
+    vec4 outColor = wireFrame(color, line.color);
+
+    if(outColor == color)
+        discard;
+
+    return outColor;
 }
 
 subroutine(ShaderModelType)
@@ -274,7 +306,7 @@ vec4 shadeWorldHeight()
 {
     vec4 color = worldHeight(worldPosition.y, 0.0, 4.0, 8.0, 12.0);
 
-    return vec4(wireFrame(color, 0.7 * color, 0.5).rgb, 1.0);
+    return vec4(wireFrame(color, 0.7 * color).rgb, 1.0);
 }
 
 subroutine(ShaderModelType)
@@ -294,10 +326,10 @@ void main()
     //if(fog.discardDistance < abs(position.z + worldPosition.y))
     //    discard;
 
-    if(fog.discardDistance < abs(position.z) + worldPosition.y * worldPosition.y)
-        discard;
+    //if(fog.discardDistance < abs(position.z) + worldPosition.y * worldPosition.y)
+      //  discard;
 
-    vec4 outColor = shadeTexture();//shaderModel();
+    vec4 outColor = shaderModel();
 
     fragColor = outColor;
 }

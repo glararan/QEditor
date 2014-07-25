@@ -336,6 +336,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
 
     // toolbar 2
     connect(ui->action_Switch_Vertex_Shading, SIGNAL(toggled(bool)), this, SLOT(setVertexShadingSwitch(bool)));
+    connect(ui->action_Switch_Skybox,         SIGNAL(toggled(bool)), this, SLOT(setSkyboxSwitch(bool)));
 
     /// toolbar3
     connect(t_terrain_mode, SIGNAL(currentIndexChanged(int)), this   , SLOT(setTerrain_Mode(int)));
@@ -1309,6 +1310,11 @@ void MainWindow::setProjectData(ProjectFileData& data)
 void MainWindow::setVertexShadingSwitch(bool state)
 {
     world->setVertexShadingSwitch(state);
+}
+
+void MainWindow::setSkyboxSwitch(bool state)
+{
+    world->setSkyboxSwitch(state);
 }
 
 void MainWindow::addToolbarAction(QWidget* widget, QList<QString>& parentList)

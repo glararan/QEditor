@@ -37,17 +37,7 @@
         <locale language="Czech" country="CzechRepublic"/>
        </property>
        <property name="text">
-        <string>QEditor is open source 3D terrain editor.
-
-QEditor developers: glararan(Lukáš Veteška), netix
-QEditor sub-apps developers: Martin Hruška, Jindřich Jadrný.
-
-
-Powered by Qt 5.2 &amp; OpenGL 4.2.
-
-Version: Alpha 0.1a
-
-License: GNU GPLv3</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;QEditor&lt;/span&gt; is open source 3D terrain editor.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; text-decoration: underline;&quot;&gt;QEditor developers:&lt;/span&gt; glararan (Lukáš Veteška), netix&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; text-decoration: underline;&quot;&gt;Version:&lt;/span&gt; Alpha 0.1a&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; text-decoration: underline;&quot;&gt;License:&lt;/span&gt; GNU GPLv3&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Powered by &lt;span style=&quot; font-weight:600;&quot;&gt;Qt 5.2&lt;/span&gt; &amp;amp; &lt;span style=&quot; font-weight:600;&quot;&gt;OpenGL 4.2&lt;/span&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>

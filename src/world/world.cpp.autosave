@@ -541,8 +541,6 @@ void World::drawReflection()
 
     reflection_fbo->release(); // deactivate fbo
 
-    GLuint id = reflection_fbo->texture();
-
     GLfuncs->glBindTexture(GL_TEXTURE_2D, 0);
 
     // deinvert camera
@@ -550,27 +548,6 @@ void World::drawReflection()
 
     camera->invertY(terrainHeight);
     camera->translate(QVector3D(), Camera::TranslateViewCenter);
-
-    int width, height;
-
-    GLfuncs->glBindTexture(GL_TEXTURE_2D, id);
-
-    GLfuncs->glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH,  &width);
-    GLfuncs->glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
-
-    if(width <= 0 || height <= 0)
-        return;
-
-    GLint bytes = width * height * 4;
-
-    unsigned char* data = (unsigned char*)malloc(bytes);
-
-    GLfuncs->glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-    QImage img = QImage(data, width, height, QImage::Format_RGBA8888);
-
-    img.save("test.png");
-    img.detach();
 }
 
 void World::drawRefraction()

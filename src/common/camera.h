@@ -120,6 +120,8 @@ public:
 
     void resetRotation();
 
+    void invertY(const float& terrainHeight);
+
     void moveToPosition(const QVector3D& position);
 
     QMatrix4x4 viewMatrix() const;

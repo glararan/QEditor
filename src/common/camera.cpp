@@ -409,7 +409,7 @@ void Camera::translate(const QVector3D& vLocal, CameraTranslationOption option)
     d->m_viewMatrixDirty = true;
 }
 
-void Camera::translateWorld(const QVector3D& vWorld , CameraTranslationOption option)
+void Camera::translateWorld(const QVector3D& vWorld, CameraTranslationOption option)
 {
     Q_D(Camera);
 
@@ -541,6 +541,20 @@ void Camera::resetRotation()
     Cpos.setZ(Cpos.z() - 1.0f);
 
     setViewCenter(Cpos);
+}
+
+void Camera::invertY(const float& terrainHeight)
+{
+    Q_D(Camera);
+
+    float heightDiff = terrainHeight - d->m_position.y() * 2;
+
+    setPosition(QVector3D(d->m_position.x(), d->m_position.y() + heightDiff, d->m_position.z()));
+    setViewCenter(QVector3D(d->m_viewCenter.x(), d->m_viewCenter.y() + heightDiff, d->m_viewCenter.z()));
+
+    QVector2D direction = MathHelper::getDirections(d->m_viewMatrix);
+
+    tilt(-(direction.y() * 2));
 }
 
 void Camera::moveToPosition(const QVector3D& position)

@@ -27,45 +27,56 @@ out worldVertex
     vec4 worldPosition;
     vec3 worldNormal;
     vec4 position;
+    vec4 genericPosition;
     vec3 normal;
     vec2 texCoords;
-    vec4 lightVertexPosition;
-    vec3 lightPosition;
+    /*vec4 lightVertexPosition;
+    vec3 lightPosition;*/
     vec3 reflection;
+    vec3 refraction;
 } Out;
-
-uniform vec3 cameraPosition;
 
 const float waveHeight = 1.0;
 const float waveSpeed  = 1.0;
 
-uniform float maxTessLevel;
+const float maxTessLevel = 64.0;
 
-uniform float horizontalScale;
-uniform int maxTrianglesPerTexel;
+// The number of triangles created per height-map texel
+uniform int maxTrianglesPerTexel = 10;
 
+// Distance between each tessellation point at max tess level
+uniform float horizontalScale = 533.33333;
+
+// Transformation matrices
 uniform mat4 modelMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat3 worldNormalMatrix;
 uniform mat3 normalMatrix;
-uniform mat4 modelViewProjectionMatrix;
+uniform mat4 mvp;
 
-uniform mat4 lightModelViewProjectionMatrix;
+/*uniform mat4 lightModelViewProjectionMatrix;
 uniform mat4 lightMatrix;
-uniform vec3 lightPosition;
+uniform vec3 lightPosition;*/
 
-uniform float delta;
+uniform float deltaTime;
 
 uniform sampler2D heightMap;
 
+uniform float baseX = 0.0f;
+uniform float baseY = 0.0f;
+
 void main()
 {
+    // Calculate extent of this patch in texture coords [0,1]
     vec2 patchExtent = maxTessLevel / (textureSize(heightMap, 0) * maxTrianglesPerTexel);
-    Out.texCoords    = In[0].position.xy + gl_TessCoord.xy * patchExtent;
 
+    // Calculate the texture coordinates
+    Out.texCoords = In[0].position.xy + gl_TessCoord.xy * patchExtent;
+
+    // Calculate the model-space position
     vec4 position;
     position.xz = Out.texCoords * horizontalScale;
-    position.y  = texture(heightMap, Out.texCoords).r * waveHeight * 2 + delta * waveSpeed;
+    position.y  = texture(heightMap, Out.texCoords).r * waveHeight * 2 + deltaTime * waveSpeed;
 
     bool up = true;
 
@@ -80,11 +91,15 @@ void main()
         position.y = waveHeight - position.y;
 
     position.w  = 1.0;
+    position.x += baseX;
+    position.z += baseY;
 
+    // Transform the position to world coordinates and to eye space
     Out.worldPosition       = modelMatrix * position;
     Out.position            = modelViewMatrix * position;
-    Out.lightVertexPosition = lightModelViewProjectionMatrix * position;
-    Out.lightPosition       = vec3(lightMatrix * vec4(lightPosition, 1.0));
+    Out.genericPosition     = position;
+    /*Out.lightVertexPosition = lightModelViewProjectionMatrix * position;
+    Out.lightPosition       = vec3(lightMatrix * vec4(lightPosition, 1.0));*/
 
     const ivec3 offset = ivec3(-1, 0, 1); // Texel offsets
 
@@ -100,7 +115,8 @@ void main()
 
     Out.worldNormal = worldNormalMatrix * n;
     Out.normal      = normalMatrix * n;
+    Out.reflection  = reflect(Out.position.xyz, n);
+    Out.refraction  = refract(Out.position.xyz, n, 1.0 / 1.3333);
 
-    gl_Position    = modelViewProjectionMatrix * position;
-    Out.reflection = reflect(Out.position.xyz/* - cameraPosition*/, n);
+    gl_Position = mvp * position;
 }

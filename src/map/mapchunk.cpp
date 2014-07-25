@@ -562,29 +562,29 @@ bool MapChunk::changeTerrain(float x, float z, float change)
 
     if(changed)
     {
-        /*QVector<QPair<int, float>> horizontalData;
-        QVector<QPair<int, float>> verticalData;*/
+        QVector<QPair<int, float>> horizontalData;
+        QVector<QPair<int, float>> verticalData;
 
         terrainData->bind();
 
         for(int i = 0; i < changing.count(); ++i)
         {
-            /*if(changing.value(i).second.y() == 0)
+            if(changing.value(i).second.y() == 0)
                 horizontalData.append(QPair<int, float>(changing.value(i).second.x(), changing.value(i).first));
 
             if(changing.value(i).second.x() == 0)
-                verticalData.append(QPair<int, float>(changing.value(i).second.y(), changing.value(i).first));*/
+                verticalData.append(QPair<int, float>(changing.value(i).second.y(), changing.value(i).first));
 
             terrainData->setHeight(changing.value(i).first, changing.value(i).second);
         }
 
         chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
 
-        /*if(bottomNeighbour && !horizontalData.isEmpty())
+        if(bottomNeighbour && !horizontalData.isEmpty())
             bottomNeighbour->setBorder(Horizontal, horizontalData);
 
         if(leftNeighbour && !verticalData.isEmpty())
-            leftNeighbour->setBorder(Vertical, verticalData);*/
+            leftNeighbour->setBorder(Vertical, verticalData);
     }
 
     return changed;

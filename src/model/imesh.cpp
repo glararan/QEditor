@@ -45,7 +45,7 @@ void IMesh::createBuffer(BufferName name, void* data, int count)
     buffer->create();
     buffer->setUsagePattern(QOpenGLBuffer::StaticDraw);
     buffer->bind();
-    buffer->allocate(data,count);
+    buffer->allocate(data, count);
     buffer->release();
 }
 
@@ -53,6 +53,7 @@ void IMesh::createAttributeArray(BufferName name, QOpenGLShaderProgram* shader, 
 {
     QOpenGLBuffer* buffer = getBuffer(name);
     buffer->bind();
+
     shader->enableAttributeArray(location);
     shader->setAttributeBuffer(location, type, offset, tupleSize);
 }
