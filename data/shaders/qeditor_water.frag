@@ -62,10 +62,10 @@ uniform struct FogInfo
 
 uniform struct LineInfo
 {
-  float width;
+    float width;
 
-  vec4 color;
-  vec4 color2;
+    vec4 color;
+    vec4 color2;
 } line;
 
 uniform struct LightInfo

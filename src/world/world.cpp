@@ -385,8 +385,8 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
             shader->setUniformValue("shadingOff", shadingOff);
 
             // draw reflection, refraction
-            drawReflection();
-            drawRefraction();
+            //drawReflection();
+            //drawRefraction();
 
             // draw Skybox
             if(!skyboxOff)
@@ -470,9 +470,9 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
 void World::drawSkybox(QMatrix4x4& modelMatrix)
 {
     // keep camera in vars
-    QVector3D& position = camera->position();
-    QVector3D& center   = camera->viewCenter();
-    QVector3D& up       = camera->upVector();
+    QVector3D position = camera->position();
+    QVector3D center   = camera->viewCenter();
+    QVector3D up       = camera->upVector();
 
     /// set camera to zero
     camera->setPosition(QVector3D());

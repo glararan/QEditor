@@ -19,7 +19,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include <QVector3D>
 #include <QVector2D>
-#include <QMAtrix4x4>
+#include <QMatrix4x4>
 
 #include <limits.h>
 
