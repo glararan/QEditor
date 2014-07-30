@@ -429,14 +429,21 @@ void MapView::update(float t)
                 {
                     if(sbDataTypeList[i] == "bool")
                         sbData = *(bool*)sbDataList.at(i);
+#ifdef Q_OS_WIN32
                     else if(sbDataTypeList[i] == "byte")
                         sbData = *(byte*)sbDataList.at(i);
+#endif
                     else if(sbDataTypeList[i] == "char")
                         sbData = *(char*)sbDataList.at(i);
                     else if(sbDataTypeList[i] == "int")
                         sbData = *(int*)sbDataList.at(i);
+#ifdef Q_OS_WIN32
                     else if(sbDataTypeList[i] == "long")
                         sbData = *(long*)sbDataList.at(i);
+#elif defined(Q_OS_LINUX)
+                    else if(sbDataTypeList[i] == "long")
+                        sbData = *(qlonglong*)sbDataList.at(i);
+#endif
                     else if(sbDataTypeList[i] == "float")
                         sbData = *(float*)sbDataList.at(i);
                     else if(sbDataTypeList[i] == "double")
@@ -748,7 +755,7 @@ void MapView::setBrushColor(QColor* color, bool outer)
             {
                 world->getBrush()->setInnerColor(*color);
 
-                app().setSetting("outerBrushColor", *color);
+                app().setSetting("innerBrushColor", *color);
             }
             break;
     }

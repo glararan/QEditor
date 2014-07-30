@@ -24,6 +24,9 @@ class QDataStream;
 static const int TILES  = 64;
 static const int CHUNKS = 4;
 
+static const int TILES_TOTAL  = TILES * TILES;
+static const int CHUNKS_TOTAL = CHUNKS * CHUNKS;
+
 static const float TILESIZE  = 533.33333f;
 static const float CHUNKSIZE = TILESIZE / CHUNKS;
 static const float UNITSIZE  = CHUNKSIZE / 8.0f;
@@ -32,8 +35,14 @@ static const double CHUNK_DIAMETER = sqrt(pow(CHUNKSIZE, 2) + pow(CHUNKSIZE, 2))
 
 static const float MAP_DRAW_DISTANCE = 1000.0f;
 
-static const int MAP_WIDTH  = 1024;
-static const int MAP_HEIGHT = 1024;
+static const int MAP_WIDTH  = 1024; // Tile width, this become out of date
+static const int MAP_HEIGHT = 1024; // Tile height, this become out of date
+
+static const int TILE_WIDTH  = MAP_WIDTH;
+static const int TILE_HEIGHT = MAP_HEIGHT;
+
+static const int CHUNK_WIDTH  = MAP_WIDTH / CHUNKS;
+static const int CHUNK_HEIGHT = MAP_HEIGHT / CHUNKS;
 
 static const int CHUNK_ARRAY_SIZE    = MAP_WIDTH / CHUNKS * MAP_HEIGHT / CHUNKS * sizeof(float);
 static const int CHUNK_ARRAY_UC_SIZE = CHUNK_ARRAY_SIZE / sizeof(float); // Unsigned char array size
@@ -116,6 +125,19 @@ struct MapHeader
     quint32 version;
 
     MCIN* mcin;
+};
+
+struct MapGenerationData
+{
+    int seed;
+    int perlinNoiseMultiple;
+    int erodeSmoothenLevel;
+
+    float perlinNoiseLevel;
+    float perlinNoiseHeight;
+    float perturbFrequency;
+    float perturbD;
+    float erode;
 };
 
 struct ProjectFileData

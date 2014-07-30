@@ -222,7 +222,7 @@ bool TeleportWidget::checkCoords(QString coords)
         {
             if(coords[i] == allowedChars[j])
             {
-                if(allowedChars[j] == "." || allowedChars[j] == ",")
+                if(allowedChars[j] == '.' || allowedChars[j] == ',')
                 {
                     if(dotComma)
                     {

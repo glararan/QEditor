@@ -31,10 +31,18 @@ void BezierCurve::init()
         points[i].setY(qrand() % 150 + i);
         points[i].setZ(qrand() % 100 + i);
     }
+
+    /*mesh.createVertexArrayObject();
+    mesh.createBuffer(IMesh::Vertices, positionData.data(), 4 * sizeof(float));
+    mesh.setNumFaces(4);*/
 }
 
-void BezierCurve::drawControlPoints()
+void BezierCurve::drawControlPoints(QOpenGLShaderProgram* shader)
 {
+    /*mesh.bind();
+    mesh.createAttributeArray(IMesh::Vertices, shader, "position", GL_FLOAT, 0, 3);
+
+    glDrawArrays(GL_POINTS, 0, 4);*/
 }
 
 void BezierCurve::drawCurve(float r, float g, float b)

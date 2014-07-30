@@ -35,15 +35,24 @@ void Camera::drawCurve(QMatrix4x4 modelMatrix)
 
     QMatrix4x4 modelViewProject = projectionMatrix() * viewMatrix() * modelMatrix;
 
+    d->curveShader->bind();
+    d->curveShader->setUniformValue("mvp", modelViewProject);
+
     foreach(BezierCurve curve, d->curves)
     {
         d->curveShader->setUniformValue("detail", 1000);
-        d->curveShader->setUniformValue("mvp",    modelViewProject);
+
         d->curveShader->setUniformValue("point1", curve.points[1]);
         d->curveShader->setUniformValue("point2", curve.points[2]);
         d->curveShader->setUniformValue("point3", curve.points[3]);
         d->curveShader->setUniformValue("point4", curve.points[4]);
     }
+
+    d->curvePointsShader->bind();
+    d->curvePointsShader->setUniformValue("mvp", modelViewProject);
+
+    foreach(BezierCurve curve, d->curves)
+        curve.drawControlPoints(d->curvePointsShader);
 }
 
 Camera::ProjectionType Camera::projectionType() const

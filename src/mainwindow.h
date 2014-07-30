@@ -34,6 +34,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "ui/startup.h"
 #include "ui/waterwidget.h"
 #include "ui/camerawidget.h"
+#include "ui/heightmapwidget.h"
 
 #include "world.h"
 #include "mapview.h"
@@ -63,6 +64,7 @@ private:
     MapView_Settings* settingsW;
     TexturePicker*    texturepW;
     ModelPicker*      modelpickerW;
+    HeightmapWidget*  heightmapW;
 
     void addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area = Qt::RightDockWidgetArea);
 
@@ -205,7 +207,19 @@ private slots:
     void setTerrain_Mode(int index);
     void setModel_Mode(int unknown, bool unknown2);
 
+    void mapGenerationDataAccepted();
+    void mapGenerationDataRejected();
+
+    void setMapGenerationData(MapGenerationData& data);
     void setProjectData(ProjectFileData& data);
+
+    void heightmapWidgetAccepted();
+    void heightmapWidgetRejected();
+
+    void importingHeightmap(QString path, float scale);
+    void exportingHeightmap(QString path, float scale);
+
+    void setHeightmapScale(float scale);
 
     void setVertexShadingSwitch(bool state);
     void setSkyboxSwitch(bool state);
@@ -215,6 +229,8 @@ private slots:
     void showTexturePicker();
     void showAbout();
     void showProjectSettings();
+    void showMapGeneration();
+    void showHeightmap();
 
     void openWorld(ProjectFileData projectData);
     void postInitializeSubWorldWidgets();

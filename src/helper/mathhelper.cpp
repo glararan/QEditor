@@ -19,7 +19,8 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include <QVector3D>
 #include <QVector2D>
-#include <QMAtrix4x4>
+#include <QMatrix4x4>
+#include <QTime>
 
 #include <limits.h>
 
@@ -52,6 +53,11 @@ const int MathHelper::toInt(const long value)
     return static_cast<int>(value);
 }
 
+const int MathHelper::toInt(const unsigned int value)
+{
+    return static_cast<int>(value);
+}
+
 const double MathHelper::toDouble(const int value)
 {
     return static_cast<double>(value);
@@ -63,6 +69,11 @@ const double MathHelper::toDouble(const float value)
 }
 
 const double MathHelper::toDouble(const long value)
+{
+    return static_cast<double>(value);
+}
+
+const double MathHelper::toDouble(const unsigned int value)
 {
     return static_cast<double>(value);
 }
@@ -82,6 +93,11 @@ const float MathHelper::toFloat(const long value)
     return static_cast<float>(value);
 }
 
+const float MathHelper::toFloat(const unsigned int value)
+{
+    return static_cast<float>(value);
+}
+
 const unsigned char MathHelper::toUChar(const int value)
 {
     return static_cast<unsigned char>(value);
@@ -93,6 +109,11 @@ const unsigned char MathHelper::toUChar(const double value)
 }
 
 const unsigned char MathHelper::toUChar(const float value)
+{
+    return static_cast<unsigned char>(value);
+}
+
+const unsigned char MathHelper::toUChar(const unsigned int value)
 {
     return static_cast<unsigned char>(value);
 }
@@ -184,6 +205,39 @@ const int MathHelper::round(const int number, const int multiple)
     return ((number + multiple - 1) / multiple) * multiple;
 }
 
+const int MathHelper::random(const int minimum, int maximum, const bool withMaximum)
+{
+    if(!withMaximum)
+        maximum--;
+
+    return qrand() % ((maximum + 1) - minimum) + minimum;
+}
+
+const unsigned int MathHelper::randomUint(const unsigned int minimum, unsigned int maximum, const bool withMaximum)
+{
+    if(!withMaximum)
+        maximum--;
+
+    return qrand() % ((maximum + 1) - minimum) + minimum;
+}
+
+const double MathHelper::randomDouble(const double minimum, double maximum)
+{
+    double d = toDouble(qrand()) / RAND_MAX;
+
+    return minimum + d * (maximum - minimum);
+}
+
+const double MathHelper::randomDouble()
+{
+    return randomDouble(0.0, 1.0);
+}
+
+const float MathHelper::clamp(float value, float min, float max)
+{
+    return qMax(min, qMin(value, max));
+}
+
 const float MathHelper::lerp(const float v0, const float v1, const float t)
 {
     return v0 + (v1 - v0) * t;
@@ -240,4 +294,14 @@ void MathHelper::addKineticEnergy(float& step, float dt, float weight)
 const bool MathHelper::isNaN(const float value)
 {
     return value != value;
+}
+
+void MathHelper::setTimeSeed()
+{
+    qsrand((uint)QTime::currentTime().msec());
+}
+
+void MathHelper::setRandomSeed(int seed)
+{
+    qsrand(seed);
 }

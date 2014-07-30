@@ -73,6 +73,11 @@ public:
     void deleteModel(float x, float z);
     void updateModelHeight();
 
+    void generateMap(MapGenerationData& data);
+
+    void importHeightmap(QString path, float scale);
+    void exportHeightmap(QString path, float scale);
+
     bool isTile(int pX, int pY);
 
     void saveTile();

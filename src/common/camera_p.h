@@ -44,6 +44,7 @@ public:
     , m_viewMatrixDirty(true)
     , m_viewProjectionMatrixDirty(true)
     , curveShader(NULL)
+    , curvePointsShader(NULL)
     {
         updateOrthogonalProjection();
     }
@@ -85,6 +86,16 @@ public:
         if(!curveShader->link())
             qCritical() << QObject::tr("Could not link shader program. Log:") << curveShader->log();
 
+        curvePointsShader = new QOpenGLShaderProgram();
+
+        if(!curvePointsShader->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/data/shaders/qeditor_bezier_point.vert"))
+            qCritical() << QObject::tr("Could not compile vertex shader. Log:") << curvePointsShader->log();
+
+        if(!curvePointsShader->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/data/shaders/qeditor_bezier_point.frag"))
+            qCritical() << QObject::tr("Could not compile fragment shader. Log:") << curvePointsShader->log();
+
+        if(!curvePointsShader->link())
+            qCritical() << QObject::tr("Could not link shader program. Log:") << curvePointsShader->log();
     }
 
     Q_DECLARE_PUBLIC(Camera)
@@ -92,6 +103,7 @@ public:
     Camera* q_ptr;
 
     QOpenGLShaderProgram* curveShader;
+    QOpenGLShaderProgram* curvePointsShader;
 
     QVector<BezierCurve> curves;
 

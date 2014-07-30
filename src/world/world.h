@@ -123,6 +123,15 @@ public:
 
     void updateNewModel(bool shiftDown, bool leftButtonPressed);
 
+    void mapGenerationAccepted();
+    void mapGenerationRejected();
+
+    void heightmapWidgetAccepted();
+    void heightmapWidgetRejected();
+
+    void importHeightmap(QString path, float scale);
+    void exportHeightmap(QString path, float scale);
+
     void save();
 
     QOpenGLFunctions_4_2_Core* getGLFunctions()    { return GLfuncs; }
@@ -151,12 +160,15 @@ public:
     void setFboSize(QSize size);
     void setCamera(Camera* cam);
     void setProjectData(ProjectFileData& data);
+    void setMapGenerationData(MapGenerationData& data);
 
     void setTerrainMaximumHeight(float value);
     void setTerrainMaximumState(bool state);
 
     void setPaintMaximumAlpha(float value);
     void setPaintMaximumState(bool state);
+
+    void setHeightmapScale(float scale);
 
     void setVertexShadingSwitch(bool state);
     void setSkyboxSwitch(bool state);

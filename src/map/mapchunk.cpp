@@ -29,10 +29,13 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 : world(mWorld)
 , terrainSampler(tile->terrainSampler.data())
 , terrainData(new Texture(QOpenGLTexture::Target2D))
+, mapDataCache(NULL)
 , vertexShadingMap(NULL)
 , displaySubroutines(world->DisplayModeCount)
 , highlight(false)
 , selected(false)
+, mapGeneration(false)
+, mapScale(false)
 , bottomNeighbour(NULL)
 , leftNeighbour(NULL)
 , chunkX(x)
@@ -126,10 +129,13 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
 : world(mWorld)
 , terrainSampler(tile->terrainSampler.data())
 , terrainData(new Texture(QOpenGLTexture::Target2D))
+, mapDataCache(NULL)
 , vertexShadingMap(NULL)
 , displaySubroutines(world->DisplayModeCount)
 , highlight(false)
 , selected(false)
+, mapGeneration(false)
+, mapScale(false)
 , bottomNeighbour(NULL)
 , leftNeighbour(NULL)
 , chunkX(x)
@@ -269,6 +275,13 @@ MapChunk::~MapChunk()
     delete[] mapData;
 
     mapData = NULL;
+
+    if(mapDataCache != NULL)
+    {
+        delete[] mapDataCache;
+
+        mapDataCache = NULL;
+    }
 
     /*delete[] vertexShadingData;
 
@@ -1168,6 +1181,73 @@ void MapChunk::updateNeighboursHeightmapData()
     }
 }
 
+void MapChunk::generation(bool accepted)
+{
+    mapGeneration = false;
+
+    if(accepted)
+    {
+        delete[] mapDataCache;
+
+        mapDataCache = NULL;
+    }
+    else
+    {
+        delete[] mapData; // delete generated mapData, user don't want to use them
+
+        mapData = new float[CHUNK_ARRAY_UC_SIZE];
+
+        memcpy(mapData, mapDataCache, sizeof(float) * CHUNK_ARRAY_UC_SIZE); // copy cache to mapData
+
+        // delete cache
+        delete[] mapDataCache;
+
+        mapDataCache = NULL;
+
+        // set heightmap
+        world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Heightmap);
+
+        terrainData->bind();
+        terrainData->setHeightmap(mapData);
+
+        chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
+    }
+}
+
+void MapChunk::heightmapSettings(bool accepted)
+{
+    mapScale      = false;
+    mapGeneration = false;
+
+    if(accepted) // set scale or import
+    {
+        delete[] mapDataCache;
+
+        mapDataCache = NULL;
+    }
+    else
+    {
+        delete[] mapData; // delete scaled mapData or imported, user don't want to use them
+
+        mapData = new float[CHUNK_ARRAY_UC_SIZE];
+
+        memcpy(mapData, mapDataCache, sizeof(float) * CHUNK_ARRAY_UC_SIZE); // copy cache to mapData
+
+        // delete cache
+        delete[] mapDataCache;
+
+        mapDataCache = NULL;
+
+        // set heightmap
+        world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Heightmap);
+
+        terrainData->bind();
+        terrainData->setHeightmap(mapData);
+
+        chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
+    }
+}
+
 int MapChunk::horizToHMapSize(float position)
 {
     return MathHelper::toInt(position / TILESIZE * MathHelper::toFloat(MAP_WIDTH));
@@ -1305,6 +1385,72 @@ void MapChunk::setSelected(bool on)
         return;
 
     selected = on;
+}
+
+void MapChunk::setHeightmap(float* data)
+{
+    for(int i = 0; i < CHUNK_ARRAY_UC_SIZE; ++i)
+        mapData[i] = data[i];
+
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Heightmap);
+
+    terrainData->bind();
+    terrainData->setHeightmap(mapData);
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
+}
+
+void MapChunk::setGeneratedHeightmap(float* tileData)
+{
+    if(!mapGeneration)
+    {
+        mapGeneration = true;
+
+        // check if mapDataCache is allocated somehow(?!)
+        if(mapDataCache != NULL)
+            delete[] mapDataCache;
+
+        mapDataCache = new float[CHUNK_ARRAY_UC_SIZE];
+
+        memcpy(mapDataCache, mapData, sizeof(float) * CHUNK_ARRAY_UC_SIZE); // copy mapData to cache
+    }
+
+    memcpy(mapData, tileData, sizeof(float) * CHUNK_ARRAY_UC_SIZE); // copy generated map to mapData
+
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Heightmap);
+
+    terrainData->bind();
+    terrainData->setHeightmap(mapData);
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
+}
+
+void MapChunk::setHeightmapScale(float scale)
+{
+    if(!mapScale)
+    {
+        mapScale = true;
+
+        // check if mapDataCache is allocated somehow(?!)
+        if(mapDataCache != NULL)
+            delete[] mapDataCache;
+
+        mapDataCache = new float[CHUNK_ARRAY_UC_SIZE];
+
+        memcpy(mapDataCache, mapData, sizeof(float) * CHUNK_ARRAY_UC_SIZE); // copy mapData to cache
+    }
+    else
+        memcpy(mapData, mapDataCache, sizeof(float) * CHUNK_ARRAY_UC_SIZE); // clear scale from previous
+
+    for(int i = 0; i < CHUNK_ARRAY_UC_SIZE; ++i)
+        mapData[i] *= scale;
+
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Heightmap);
+
+    terrainData->bind();
+    terrainData->setHeightmap(mapData);
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
 }
 
 void MapChunk::save(MCNK* chunk)

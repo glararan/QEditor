@@ -151,6 +151,8 @@
     <addaction name="action_Texture_Picker"/>
     <addaction name="action_Settings"/>
     <addaction name="action_Teleport"/>
+    <addaction name="action_Map_Generator"/>
+    <addaction name="action_Heightmap"/>
     <addaction name="separator"/>
     <addaction name="action_Screenshot"/>
     <addaction name="action_Screenshot_upload"/>
@@ -651,6 +653,16 @@
    </property>
    <property name="toolTip">
     <string>Turn on or off Skybox</string>
+   </property>
+  </action>
+  <action name="action_Map_Generator">
+   <property name="text">
+    <string>Map Generator</string>
+   </property>
+  </action>
+  <action name="action_Heightmap">
+   <property name="text">
+    <string>Heightmap</string>
    </property>
   </action>
  </widget>

@@ -18,6 +18,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "ui/about.h"
 #include "ui/project_settings.h"
+#include "ui/mapgeneration.h"
 
 #include "3rd-party/imgurAPI/fileupload.h"
 
@@ -40,6 +41,7 @@ MainWindow::MainWindow(QWidget* parent)
 , settingsW(NULL)
 , texturepW(NULL)
 , modelpickerW(NULL)
+, heightmapW(NULL)
 , colorW(NULL)
 , waterW(NULL)
 , cameraW(NULL)
@@ -134,6 +136,7 @@ MainWindow::~MainWindow()
     delete colorW;
     delete waterW;
     delete cameraW;
+    delete heightmapW;
 
     deleteObject(t_outer_radius);
     deleteObject(t_inner_radius);
@@ -238,6 +241,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
     modelpickerW = new ModelPicker();
     waterW       = new WaterWidget();
     cameraW      = new CameraWidget(world->getCamera());
+    heightmapW   = new HeightmapWidget();
 
     // post initialize world sub widgets
     connect(mapView, SIGNAL(initialized()), this, SLOT(postInitializeSubWorldWidgets()));
@@ -293,10 +297,12 @@ void MainWindow::openWorld(ProjectFileData projectData)
     // tools - show chunk lines
     connect(ui->action_Show_Chunk_lines, SIGNAL(toggled(bool)), mapView, SLOT(setTurnChunkLines(bool)));
 
-    // tools - texture picker, settings, teleport, reset camera, lock camera
+    // tools - texture picker, settings, teleport, map generator, heightmap, reset camera, lock camera
     connect(ui->action_Texture_Picker, SIGNAL(triggered()),     this,    SLOT(showTexturePicker()));
     connect(ui->action_Settings,       SIGNAL(triggered()),     this,    SLOT(showSettings()));
     connect(ui->action_Teleport,       SIGNAL(triggered()),     this,    SLOT(showTeleport()));
+    connect(ui->action_Map_Generator,  SIGNAL(triggered()),     this,    SLOT(showMapGeneration()));
+    connect(ui->action_Heightmap,      SIGNAL(triggered()),     this,    SLOT(showHeightmap()));
     connect(ui->action_Reset_camera,   SIGNAL(triggered()),     mapView, SLOT(resetCamera()));
     connect(ui->action_Lock_camera,    SIGNAL(triggered(bool)), mapView, SLOT(lockCamera(bool)));
 
@@ -309,6 +315,12 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(settingsW, SIGNAL(setTextureScaleFar(float)),          mapView, SLOT(setTextureScaleFar(float)));
     connect(settingsW, SIGNAL(setTextureScaleNear(float)),         mapView, SLOT(setTextureScaleNear(float)));
     connect(settingsW, SIGNAL(setTabletMode(bool)),                mapView, SLOT(setTabletMode(bool)));
+
+    connect(heightmapW, SIGNAL(accepted()),                this, SLOT(heightmapWidgetAccepted()));
+    connect(heightmapW, SIGNAL(rejected()),                this, SLOT(heightmapWidgetRejected()));
+    connect(heightmapW, SIGNAL(setScale(float)),           this, SLOT(setHeightmapScale(float)));
+    connect(heightmapW, SIGNAL(importing(QString, float)), this, SLOT(importingHeightmap(QString, float)));
+    connect(heightmapW, SIGNAL(exporting(QString, float)), this, SLOT(exportingHeightmap(QString, float)));
 
     // tools - test, stereoscopic
     connect(ui->action_3D_Stereoscopic, SIGNAL(triggered(bool)), mapView, SLOT(set3DStreoscopic(bool)));
@@ -771,6 +783,22 @@ void MainWindow::showProjectSettings()
     connect(projectSettings, SIGNAL(projectDataChanged(ProjectFileData&)), this, SLOT(setProjectData(ProjectFileData&)));
 
     projectSettings->exec();
+}
+
+void MainWindow::showMapGeneration()
+{
+    MapGeneration* mapGeneration = new MapGeneration();
+
+    connect(mapGeneration, SIGNAL(generate(MapGenerationData&)), this, SLOT(setMapGenerationData(MapGenerationData&)));
+    connect(mapGeneration, SIGNAL(accepted()),                   this, SLOT(mapGenerationDataAccepted()));
+    connect(mapGeneration, SIGNAL(rejected()),                   this, SLOT(mapGenerationDataRejected()));
+
+    mapGeneration->show();
+}
+
+void MainWindow::showHeightmap()
+{
+    addDockWindow(tr("Heightmap settings"), heightmapW);
 }
 
 void MainWindow::addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area)
@@ -1302,9 +1330,53 @@ void MainWindow::actionIsInDevelopment()
     msg.exec();
 }
 
+void MainWindow::mapGenerationDataAccepted()
+{
+    world->mapGenerationAccepted();
+
+    QObject::sender()->deleteLater();
+}
+
+void MainWindow::mapGenerationDataRejected()
+{
+    world->mapGenerationRejected();
+
+    QObject::sender()->deleteLater();
+}
+
+void MainWindow::setMapGenerationData(MapGenerationData& data)
+{
+    world->setMapGenerationData(data);
+}
+
 void MainWindow::setProjectData(ProjectFileData& data)
 {
     world->setProjectData(data);
+}
+
+void MainWindow::heightmapWidgetAccepted()
+{
+    world->heightmapWidgetAccepted();
+}
+
+void MainWindow::heightmapWidgetRejected()
+{
+    world->heightmapWidgetRejected();
+}
+
+void MainWindow::importingHeightmap(QString path, float scale)
+{
+    world->importHeightmap(path, scale);
+}
+
+void MainWindow::exportingHeightmap(QString path, float scale)
+{
+    world->exportHeightmap(path, scale);
+}
+
+void MainWindow::setHeightmapScale(float scale)
+{
+    world->setHeightmapScale(scale);
 }
 
 void MainWindow::setVertexShadingSwitch(bool state)

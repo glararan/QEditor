@@ -13,31 +13,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#ifndef BEZIERCURVE_H
-#define BEZIERCURVE_H
+#version 400
 
-#include "mathhelper.h"
-#include "imesh.h"
+in vec4 position;
 
-class BezierCurve
+uniform mat4 mvp;
+
+void main(void)
 {
-public:
-    BezierCurve();
-    ~BezierCurve();
-
-    void init();
-
-    void drawControlPoints(QOpenGLShaderProgram* shader);
-    void drawCurve(float r, float g, float b);
-
-    void updateVertex();
-
-    QVector3D points[5];
-
-private:
-    //IMesh mesh;
-};
-
-extern BezierCurve* bezierCurve;
-
-#endif // BEZIERCURVE_H
+    gl_Position = mvp * position;
+}

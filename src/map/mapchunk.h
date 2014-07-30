@@ -52,6 +52,9 @@ public:
 
     void updateNeighboursHeightmapData();
 
+    void generation(bool accepted);
+    void heightmapSettings(bool accepted);
+
     /// Get
     const float getHeight(const float& x, const float& y) const;
     const float getHeight(const int& x, const int& y) const;
@@ -92,6 +95,11 @@ public:
     void setHighlight(bool on);
     void setSelected(bool on);
 
+    void setHeightmap(float* data);
+    void setGeneratedHeightmap(float* tileData);
+
+    void setHeightmapScale(float scale);
+
     /// ...
     void save(MCNK* chunk);
 
@@ -109,6 +117,7 @@ private:
     SamplerPtr terrainSampler;
 
     float* mapData;
+    float* mapDataCache;
 
     /// Textures, Alphamaps and Vertex Shading
     TexturePtr textures[MAX_TEXTURES];
@@ -129,6 +138,8 @@ private:
 
     bool highlight;
     bool selected;
+    bool mapGeneration;
+    bool mapScale;
 
     // Neighbour
     MapChunk* bottomNeighbour;
@@ -139,6 +150,8 @@ private:
     float HMapSizeToHoriz(int position);
 
     void initialize();
+
+    friend class MapTile;
 };
 
 #endif // MAPCHUNK_H

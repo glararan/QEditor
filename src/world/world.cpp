@@ -20,6 +20,8 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "mathhelper.h"
 #include "qeditor.h"
 #include "texturemanager.h"
+#include "fractalgeneration.h"
+#include "perlingenerator.h"
 
 // Recent projects
 #include "ui/startup.h"
@@ -385,8 +387,11 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
             shader->setUniformValue("shadingOff", shadingOff);
 
             // draw reflection, refraction
+#ifdef Q_OS_WIN32
+            // Seems problematic currently for Linux
             drawReflection();
             drawRefraction();
+#endif
 
             // draw Skybox
             if(!skyboxOff)
@@ -470,9 +475,9 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
 void World::drawSkybox(QMatrix4x4& modelMatrix)
 {
     // keep camera in vars
-    QVector3D& position = camera->position();
-    QVector3D& center   = camera->viewCenter();
-    QVector3D& up       = camera->upVector();
+    QVector3D position = camera->position();
+    QVector3D center   = camera->viewCenter();
+    QVector3D up       = camera->upVector();
 
     /// set camera to zero
     camera->setPosition(QVector3D());
@@ -541,8 +546,6 @@ void World::drawReflection()
 
     reflection_fbo->release(); // deactivate fbo
 
-    GLuint id = reflection_fbo->texture();
-
     GLfuncs->glBindTexture(GL_TEXTURE_2D, 0);
 
     // deinvert camera
@@ -550,27 +553,6 @@ void World::drawReflection()
 
     camera->invertY(terrainHeight);
     camera->translate(QVector3D(), Camera::TranslateViewCenter);
-
-    int width, height;
-
-    GLfuncs->glBindTexture(GL_TEXTURE_2D, id);
-
-    GLfuncs->glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH,  &width);
-    GLfuncs->glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
-
-    if(width <= 0 || height <= 0)
-        return;
-
-    GLint bytes = width * height * 4;
-
-    unsigned char* data = (unsigned char*)malloc(bytes);
-
-    GLfuncs->glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-    QImage img = QImage(data, width, height, QImage::Format_RGBA8888);
-
-    img.save("test.png");
-    img.detach();
 }
 
 void World::drawRefraction()
@@ -857,6 +839,92 @@ void World::updateNewModel(bool shiftDown, bool leftButtonPressed)
     }
 }
 
+void World::mapGenerationAccepted()
+{
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
+                for(int cx = 0; cx < CHUNKS; ++cx)
+                {
+                    for(int cy = 0; cy < CHUNKS; ++cy)
+                        mapTiles[tx][ty].tile->getChunk(cx, cy)->generation(true);
+                }
+            }
+        }
+    }
+}
+
+void World::mapGenerationRejected()
+{
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
+                for(int cx = 0; cx < CHUNKS; ++cx)
+                {
+                    for(int cy = 0; cy < CHUNKS; ++cy)
+                        mapTiles[tx][ty].tile->getChunk(cx, cy)->generation(false);
+                }
+            }
+        }
+    }
+}
+
+void World::heightmapWidgetAccepted()
+{
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
+                for(int cx = 0; cx < CHUNKS; ++cx)
+                {
+                    for(int cy = 0; cy < CHUNKS; ++cy)
+                        mapTiles[tx][ty].tile->getChunk(cx, cy)->heightmapSettings(true);
+                }
+            }
+        }
+    }
+}
+
+void World::heightmapWidgetRejected()
+{
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
+                for(int cx = 0; cx < CHUNKS; ++cx)
+                {
+                    for(int cy = 0; cy < CHUNKS; ++cy)
+                        mapTiles[tx][ty].tile->getChunk(cx, cy)->heightmapSettings(false);
+                }
+            }
+        }
+    }
+}
+
+void World::importHeightmap(QString path, float scale)
+{
+    // todo for each tile, heightmap_x_y.raw
+    if(tileLoaded(0, 0))
+        mapTiles[0][0].tile->importHeightmap(path, scale);
+}
+
+void World::exportHeightmap(QString path, float scale)
+{
+    // todo for each tile, heightmap_x_y.raw
+    if(tileLoaded(0, 0))
+        mapTiles[0][0].tile->exportHeightmap(path, scale);
+}
+
 MapChunk* World::getMapChunkAt(const QVector3D& position) const
 {
     int tx = floor(position.x() / TILESIZE);
@@ -1129,6 +1197,13 @@ void World::setProjectData(ProjectFileData& data)
     projectData = data;
 }
 
+void World::setMapGenerationData(MapGenerationData& data)
+{
+    // todo other tiles
+    if(tileLoaded(0, 0))
+        mapTiles[0][0].tile->generateMap(data);
+}
+
 void World::setTerrainMaximumHeight(float value)
 {
     terrainMaximumHeight = value;
@@ -1147,6 +1222,24 @@ void World::setPaintMaximumAlpha(float value)
 void World::setPaintMaximumState(bool state)
 {
     paintMaximumState = state;
+}
+
+void World::setHeightmapScale(float scale)
+{
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
+                for(int cx = 0; cx < CHUNKS; ++cx)
+                {
+                    for(int cy = 0; cy < CHUNKS; ++cy)
+                        mapTiles[tx][ty].tile->getChunk(cx, cy)->setHeightmapScale(scale);
+                }
+            }
+        }
+    }
 }
 
 void World::setVertexShadingSwitch(bool state)
@@ -1270,7 +1363,131 @@ void World::test()
         }
     }*/
 
-    reflection_fbo->toImage().save("test.png");
+    //FractalGeneration generation(MAP_WIDTH / CHUNKS, MAP_HEIGHT / CHUNKS, 32, 0.1f, 2.0f, 0.002f, 10.0f);
+    PerlinGenerator perlin(0);
+
+    MathHelper::setRandomSeed(perlin.getSeed());
+
+    float* mapData = new float[CHUNK_ARRAY_UC_SIZE];
+
+    for(int x = 0; x < MAP_WIDTH / CHUNKS; ++x)
+    {
+        for(int y = 0; y < MAP_HEIGHT / CHUNKS; ++y)
+            mapData[y * (MAP_WIDTH / CHUNKS) + x] = perlin.noise(QVector3D(4.0f * x / MathHelper::toFloat(MAP_WIDTH / CHUNKS),
+                                                                           4.0f * y / MathHelper::toFloat(MAP_HEIGHT / CHUNKS),
+                                                                           35.0f));
+    }
+
+    for(int i = 0; i < 3; ++i)
+    {
+        for(int x = 0; x < MAP_WIDTH / CHUNKS; ++x)
+        {
+            for(int y = 0; y < MAP_HEIGHT / CHUNKS; ++y)
+                mapData[y * (MAP_WIDTH / CHUNKS) + x] += perlin.noise(QVector3D(4.0f * x / MathHelper::toFloat(MAP_WIDTH / CHUNKS),
+                                                                                4.0f * y / MathHelper::toFloat(MAP_HEIGHT / CHUNKS),
+                                                                                35.0f));
+        }
+    }
+
+    float* tempData = new float[CHUNK_ARRAY_UC_SIZE];
+
+    float f = 32.0f;
+    float d = 32.0f;
+
+    int u, v;
+
+    for(int x = 0; x < MAP_WIDTH / CHUNKS; ++x)
+    {
+        for(int y = 0; y < MAP_HEIGHT / CHUNKS; ++y)
+        {
+            u = x + MathHelper::toInt(perlin.noise(QVector3D(f * x / MathHelper::toFloat(MAP_WIDTH / CHUNKS),
+                                                             f * y / MathHelper::toFloat(MAP_HEIGHT / CHUNKS),
+                                                             0.0f)) * d);
+            v = y + MathHelper::toInt(perlin.noise(QVector3D(f * x / MathHelper::toFloat(MAP_WIDTH / CHUNKS),
+                                                             f * y / MathHelper::toFloat(MAP_HEIGHT / CHUNKS),
+                                                             1.0f)) * d);
+
+            if(u < 0)
+                u = 0;
+
+            if(u >= MAP_WIDTH / CHUNKS)
+                u = MAP_WIDTH / CHUNKS - 1;
+
+            if(v < 0)
+                v = 0;
+
+            if(v >= MAP_HEIGHT / CHUNKS)
+                v = MAP_HEIGHT / CHUNKS - 1;
+
+            tempData[(MAP_WIDTH / CHUNKS) * y + x] = mapData[(MAP_WIDTH / CHUNKS) * v + u];
+        }
+    }
+
+    mapData = tempData;
+
+    float smoothness = 16.0f;
+
+    for(int i = 0; i < 10; ++i)
+    {
+        for(int x = 1; x < MAP_WIDTH / CHUNKS - 1; ++x)
+        {
+            for(int y = 1; y < MAP_WIDTH / CHUNKS - 1; ++y)
+            {
+                float d_max = 0.0f;
+
+                int match[] = {0, 0};
+
+                for(int U = -1; U <= 1; ++U)
+                {
+                    for(int V = -1; V <= 1; ++V)
+                    {
+                        if(abs(U) + abs(V) > 0)
+                        {
+                            float d_i = mapData[(MAP_WIDTH / CHUNKS) * y + x] - mapData[(MAP_WIDTH / CHUNKS) * (y + V) + (x + U)];
+
+                            if(d_i > d_max)
+                            {
+                                d_max = d_i;
+
+                                match[0] = U;
+                                match[1] = V;
+                            }
+                        }
+                    }
+                }
+
+                if(0 < d_max && d_max <= (smoothness / MathHelper::toFloat(MAP_WIDTH / CHUNKS)))
+                {
+                    float d_h = 0.5f * d_max;
+
+                    mapData[(MAP_WIDTH / CHUNKS) * y + x] -= d_h;
+                    mapData[(MAP_WIDTH / CHUNKS) * (y + match[1]) + (x + match[0])] += d_h;
+                }
+            }
+        }
+
+        for(int x = 1; x < MAP_WIDTH / CHUNKS - 1; ++x)
+        {
+            for(int y = 1; y < MAP_WIDTH / CHUNKS - 1; ++y)
+            {
+                float total = 0.0f;
+
+                for(int U = -1; U <= 1; ++U)
+                {
+                    for(int V = -1; V <= 1; ++V)
+                        total += mapData[(MAP_WIDTH / CHUNKS) * (y + V) + (x + U)];
+                }
+
+                mapData[(MAP_WIDTH / CHUNKS) * y + x] = total / 8.0f;
+            }
+        }
+    }
+
+    MathHelper::setTimeSeed();
+
+    mapTiles[0][0].tile->getChunk(1, 3)->setHeightmap(mapData);
+
+    delete[] mapData;
 
     /// Fix NaN values in heightmap
     /*MapChunk* chunk = getMapChunkAt(worldCoordinates);

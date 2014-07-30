@@ -46,26 +46,27 @@ MapChunk:
     1. flatten tool uhel a směr
     2. voda
 
+in development, in near future(code is almost ready):
+- water display (wireframe, ..)
+- camera record (myšleno tak, že se naplanuje trasa a kamera po ní pojede)
+- texture scale pro ostatni textury
+- 3D printer support
+- 3D stereoscopic
+
 discuss features:
 - player camera (first person[netix], third person camera)
 - prechody mezi chunky
-- water display (wireframe, ..)
 - zkouska vetsiho rozliseni pro alphamapy (mozna jen floating point?), pro vertex shading stejne(spis floating point)
-- texture scale pro ostatni textury
 - novy tool vybrani plochy
  - posunutí
  - zneviditelneni
  - skopirovani
-- camera record (myšleno tak, že se naplanuje trasa a kamera po ní pojede)
 
 // tipy od lidí
 - při založení projektu maximální výška
 - při založení projektu už voda v -X hloubce
-- generace terénu
 - generování objektů po určené textuře
 - automatická textura podle výšky (checkbox)
-- import/export heightmapy v určitém formátu (vyhodit ostatní nástroje jako textury atd..)
-- 3D stereoskopické
 
 Tessellation shader resources
 http://codeflow.org/entries/2010/nov/07/opengl-4-tessellation/

@@ -35,6 +35,8 @@
         <file>data/shaders/qeditor_skybox.frag</file>
         <file>data/shaders/qeditor_skybox.vert</file>
         <file alias="skybox_turn_icon">data/images/skybox.png</file>
+        <file>data/shaders/qeditor_bezier_point.frag</file>
+        <file>data/shaders/qeditor_bezier_point.vert</file>
     </qresource>
     <qresource prefix="/textures">
         <file>textures/grass.png</file>

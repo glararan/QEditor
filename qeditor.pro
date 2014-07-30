@@ -61,12 +61,22 @@ OTHER_FILES += info.txt \
     data/shaders/qeditor_water.tes \
     data/shaders/qeditor_skybox.vert \
     data/shaders/qeditor_skybox.frag \
-    resources.rc
+    resources.rc \
+    data/shaders/qeditor_bezier_point.vert \
+    data/shaders/qeditor_bezier_point.frag
 
-unix|win32: LIBS += -L$$PWD/ -lquazip
+#unix|
+win32: LIBS += -L$$PWD/ -lquazip
 
-INCLUDEPATH += $$PWD/dep\include
-LIBS += $$PWD/dep\lib\assimp_release-dll_x64\assimp.lib
+win32:INCLUDEPATH += $$PWD/dep\include
+win32:LIBS        += $$PWD/dep\lib\assimp_release-dll_x64\assimp.lib
+
+#unix:INCLUDEPATH += "/QEditor/github/dep/include"  # change!!!
+#unix:LIBS += "/usr/local/lib/libassimp.a"  # change!!!
+
+unix:INCLUDEPATH += "/home/debian/Stažené/assimp/include"  # change!!!
+unix:LIBS += "/home/debian/Stažené/assimp/lib/libassimp.a" # change!!!
+unix:LIBS += "/home/debian/Stažené/assimp/lib/libz.a"      # change !!!
 
 INCLUDEPATH += $$PWD/
 DEPENDPATH += $$PWD/
@@ -85,4 +95,4 @@ win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/libQt5Platform
 else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/libQt5PlatformSupportd.a
 else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/Qt5PlatformSupport.lib
 else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/Qt5PlatformSupportd.lib
-else:unix: PRE_TARGETDEPS += $$PWD/libQt5PlatformSupport.a
+#else:unix: PRE_TARGETDEPS += $$PWD/libQt5PlatformSupport.a

@@ -16,9 +16,12 @@
 INCLUDEPATH += src/common \
                src/helper \
                src/map \
+               src/map/generation \
                src/model \
                src/world \
-               src/3rd-party/imageshackAPI
+               src/3rd-party/imageshackAPI \
+               src/3rd-party/hmstl \
+               src/3rd-party/libtrix
 
 SOURCES  += $$PWD/main.cpp \
             $$PWD/mainwindow.cpp \
@@ -62,7 +65,15 @@ SOURCES  += $$PWD/main.cpp \
             $$PWD/3rd-party/imgurAPI/fileupload.cpp \
             $$PWD/ui/camerawidget.cpp \
             $$PWD/beziercurve.cpp \
-            $$PWD/skybox.cpp
+            $$PWD/skybox.cpp \
+            $$PWD/map/generation/fractalgeneration.cpp \
+            $$PWD/map/generation/perlingenerator.cpp \
+            $$PWD/ui/mapgeneration.cpp \
+            $$PWD/ui/heightmapwidget.cpp
+            #$$PWD/3rd-party/libtrix/libtrix.cpp \
+            #$$PWD/3rd-party/hmstl/stb_image.cpp \
+            #$$PWD/3rd-party/hmstl/heightmap.cpp
+            #$$PWD/3rd-party/hmstl/htmstl.cpp
 
 HEADERS  += $$PWD/mainwindow.h \
             $$PWD/ui/teleportwidget.h \
@@ -110,7 +121,15 @@ HEADERS  += $$PWD/mainwindow.h \
             $$PWD/ui/camerawidget.h \
             $$PWD/beziercurve.h \
             $$PWD/skybox.h \
-            $$PWD/version.h
+            $$PWD/version.h \
+            $$PWD/map/generation/fractalgeneration.h \
+            $$PWD/map/generation/perlingenerator.h \
+            $$PWD/ui/mapgeneration.h \
+            $$PWD/ui/heightmapwidget.h
+            #$$PWD/3rd-party/libtrix/libtrix.h \
+            #$$PWD/3rd-party/hmstl/stb_image.h \
+            #$$PWD/3rd-party/hmstl/heightmap.h \
+            #$$PWD/3rd-party/hmstl/htmstl.h
 
 FORMS    += $$PWD/mainwindow.ui \
             $$PWD/ui/teleportwidget.ui \
@@ -121,4 +140,6 @@ FORMS    += $$PWD/mainwindow.ui \
             $$PWD/ui/project_settings.ui \
             $$PWD/ui/waterwidget.ui \
             $$PWD/ui/modelpicker.ui \
-            $$PWD/ui/camerawidget.ui
+            $$PWD/ui/camerawidget.ui \
+            $$PWD/ui/mapgeneration.ui \
+            $$PWD/ui/heightmapwidget.ui

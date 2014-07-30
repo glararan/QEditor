@@ -238,7 +238,7 @@ void CameraWidget::play()
             curve.points[4] = positions[i * 4];
         }
 
-        curves.append(curve);
+        //curves.append(curve);
     }
 
     //camera->play(curves);
