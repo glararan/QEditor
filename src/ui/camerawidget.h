@@ -46,10 +46,20 @@ private:
         PositionX = 1,
         PositionY = 2,
         PositionZ = 3,
-        Count,
+        Count
     };
 
+    QVector<QVector3D> viewCenter;
+    QVector<QVector3D> upVector;
+
+    void generateBezierCurves(int row);
+
+public slots:
+    void selectPoint(const QVector3D& position);
+
 private slots:
+    void itemChanged(QTableWidgetItem* item);
+
     void setShowPath(int state);
 
     void addPosition();
@@ -62,6 +72,8 @@ private slots:
 
 signals:
     void showPath(bool);
+
+    void selectedPoint(QVector<QTableWidgetItem*>& item);
 };
 
 #endif // CAMERAWIDGET_H

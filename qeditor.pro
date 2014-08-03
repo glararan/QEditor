@@ -56,14 +56,15 @@ OTHER_FILES += info.txt \
     data/shaders/model.frag \
     data/shaders/model.vert \
     data/shaders/qeditor_bezier.vert \
-    data/shaders/qeditor_bezier.geom \
     data/shaders/qeditor_bezier.frag \
     data/shaders/qeditor_water.tes \
     data/shaders/qeditor_skybox.vert \
     data/shaders/qeditor_skybox.frag \
     resources.rc \
     data/shaders/qeditor_bezier_point.vert \
-    data/shaders/qeditor_bezier_point.frag
+    data/shaders/qeditor_bezier_point.frag \
+    data/shaders/qeditor_bezier.tcs \
+    data/shaders/qeditor_bezier.tes
 
 #unix|
 win32: LIBS += -L$$PWD/ -lquazip

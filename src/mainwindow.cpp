@@ -255,6 +255,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(mapView, SIGNAL(updateBrushInnerRadius(double)),  this,          SLOT(setBrushInnerRadius(double)));
     connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)),     texturepW,     SLOT(setChunk(MapChunk*)));
     connect(mapView, SIGNAL(selectedWaterChunk(WaterChunk*)), waterW,        SLOT(setChunk(WaterChunk*)));
+    connect(mapView, SIGNAL(getCameraCurvePoint(QVector3D)),  cameraW,       SLOT(selectPoint(QVector3D)));
 
     connect(mapView, SIGNAL(eMModeChanged(MapView::eMouseMode&, MapView::eEditingMode&)),
             this,    SLOT(setBrushMode(MapView::eMouseMode&, MapView::eEditingMode&)));
@@ -394,7 +395,8 @@ void MainWindow::openWorld(ProjectFileData projectData)
 
     connect(colorW, SIGNAL(currentColorChanged(QColor)), mapView, SLOT(setVertexShading(QColor)));
 
-    connect(cameraW, SIGNAL(showPath(bool)), mapView, SLOT(setCameraShowCurve(bool)));
+    connect(cameraW, SIGNAL(showPath(bool)),                             mapView, SLOT(setCameraShowCurve(bool)));
+    connect(cameraW, SIGNAL(selectedPoint(QVector<QTableWidgetItem*>&)), mapView, SLOT(setCameraCurvePoint(QVector<QTableWidgetItem*>&)));
 }
 
 void MainWindow::postInitializeSubWorldWidgets()

@@ -22,8 +22,9 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <QQuaternion>
 #include <QVector3D>
 
+#include "beziercurve.h"
+
 class CameraPrivate;
-class BezierCurve;
 
 class Camera : public QObject
 {
@@ -47,7 +48,7 @@ class Camera : public QObject
 
     Q_PROPERTY(bool locked READ lock WRITE setLock)
 
-    Q_PROPERTY(QVector<BezierCurve> curves WRITE setCurves)
+    Q_PROPERTY(QVector<BezierCurve*> curves WRITE setCurves)
 
     Q_ENUMS(ProjectionType)
 
@@ -113,10 +114,14 @@ public:
     void setLock(const bool& lock);
     bool lock() const;
 
-    void setCurves(const QVector<BezierCurve>& BCurves);
+    void setCurves(const QVector<BezierCurve*>& BCurves);
+    void deleteCurves();
 
-    void play();
+    void play(const int& secs);
+    void playSequence();
     void stop();
+
+    bool playing() const;
 
     void resetRotation();
 

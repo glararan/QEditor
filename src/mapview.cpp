@@ -53,7 +53,10 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , changedMouseMode(false)
 , tabletMode(app().getSetting("tabletMode", false).toBool())
 , mouse_position(QPoint(0, 0))
+, mousePosZ(0)
+, prevMousePosZ(0)
 , terrain_pos()
+, object_move()
 , shaping_speed(1.0f)
 , shaping_brush_type(1)
 , texturing_flow(1.0f)
@@ -264,6 +267,10 @@ void MapView::update(float t)
     if(camera_zoom != camera->fieldOfView())
         camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 
+    // Move camera when playing
+    if(camera->playing())
+        camera->playSequence();
+
     // Update the mouse mode in MainWindow
     if(!leftButtonPressed && !rightButtonPressed && (shiftDown || altDown || ctrlDown) && tabletMode)
     {
@@ -374,6 +381,15 @@ void MapView::update(float t)
                         world->paintVertexShading(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f), vertexShadingColor);
                     }
                     break;
+
+                case CameraCurves:
+                    {
+                        if(cameraCurvePoint.count() == 0) // select point
+                            emit getCameraCurvePoint(position);
+                        else // move with selected point
+                            setCameraCurvePointPosition(cameraCurvePoint, object_move);
+                    }
+                    break;
             }
         }
         else if((eMMode == CtrlOnly && tabletMode) || ctrlDown)
@@ -409,6 +425,9 @@ void MapView::update(float t)
             }
         }
     }
+
+    if(object_move != QVector3D())
+        object_move = QVector3D();
 
     wasLeftButtonPressed = false;
 
@@ -485,15 +504,15 @@ void MapView::paintGL()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        if(showCameraCurve)
+            camera->drawCurve(modelMatrix);
+
         if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
         else if(eMode == Object && eModel == Insertion)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
         else
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
-
-        if(showCameraCurve)
-            camera->drawCurve(modelMatrix);
     }
     else
     {
@@ -503,15 +522,15 @@ void MapView::paintGL()
 
         glFrustum(0.0 - 1.0, width() - 1.0, -0.75, 0.75, 0.65, 4.0);
 
+        if(showCameraCurve)
+            camera->drawCurve(modelMatrix);
+
         if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
         else if(eMode == Object && eModel == Insertion)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
         else
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
-
-        if(showCameraCurve)
-            camera->drawCurve(modelMatrix);
 
         glDrawBuffer(GL_BACK_RIGHT);
 
@@ -519,15 +538,15 @@ void MapView::paintGL()
 
         glFrustum(0.0 + 1.0, width() + 1.0, -0.75, 0.75, 0.65, 4.0);
 
+        if(showCameraCurve)
+            camera->drawCurve(modelMatrix);
+
         if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
         else if(eMode == Object && eModel == Insertion)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
         else
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
-
-        if(showCameraCurve)
-            camera->drawCurve(modelMatrix);
     }
 }
 
@@ -621,6 +640,7 @@ void MapView::setModeEditing(int option)
         case Texturing:
         case VertexShading:
         case Object:
+        case CameraCurves:
             eMode = (eEditingMode)option;
             break;
 
@@ -660,6 +680,18 @@ void MapView::resetCamera()
 void MapView::lockCamera(bool lock)
 {
     camera->setLock(lock);
+}
+
+void MapView::setCameraCurvePoint(QVector<QTableWidgetItem*>& item)
+{
+    cameraCurvePoint = item;
+}
+
+void MapView::setCameraCurvePointPosition(QVector<QTableWidgetItem*>& item, const QVector3D& position)
+{
+    item.at(0)->setData(Qt::DisplayRole, item.at(0)->data(Qt::DisplayRole).toFloat() + position.x()); // X
+    item.at(1)->setData(Qt::DisplayRole, item.at(1)->data(Qt::DisplayRole).toFloat() + position.z()); // Y
+    item.at(2)->setData(Qt::DisplayRole, item.at(2)->data(Qt::DisplayRole).toFloat() + position.y()); // Z
 }
 
 void MapView::setBrushSpeed(double speed)
@@ -1121,6 +1153,9 @@ void MapView::mouseReleaseEvent(QMouseEvent* e)
 
         if(m_v.z() > 0.0f)
             setForwardSpeed(0.0f);
+
+        if(cameraCurvePoint.count() != 0)
+            cameraCurvePoint.clear();
     }
 
     if(e->button() == Qt::RightButton)
@@ -1136,10 +1171,12 @@ void MapView::mouseReleaseEvent(QMouseEvent* e)
 
 void MapView::mouseMoveEvent(QMouseEvent* e)
 {
-    mousePos = e->pos();
+    mousePos  = e->pos();
+    mousePosZ = terrain_pos.z();
 
     float dx =  0.4f * (mousePos.x() - prevMousePos.x());
     float dy = -0.4f * (mousePos.y() - prevMousePos.y());
+    float dz =  0.4f * (mousePosZ    - prevMousePosZ);
 
     if((leftButtonPressed || rightButtonPressed) && !shiftDown && !altDown && !ctrlDown && !camera->lock())
     {
@@ -1157,7 +1194,9 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
             updateBrushInnerRadius(dx);
     }
 
-    prevMousePos = mousePos;
+    prevMousePos  = mousePos;
+    prevMousePosZ = mousePosZ;
+    object_move   = QVector3D(dx / 40.0f, dy / 40.0f, dz / 40.0f);
 
     mouse_position = this->mapFromGlobal(QCursor::pos());
 

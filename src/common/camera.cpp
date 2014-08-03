@@ -18,6 +18,8 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "beziercurve.h"
 
+#include <QtAlgorithms>
+
 Camera::Camera(QObject* parent) : QObject(parent), d_ptr(new CameraPrivate(this))
 {
 }
@@ -38,21 +40,14 @@ void Camera::drawCurve(QMatrix4x4 modelMatrix)
     d->curveShader->bind();
     d->curveShader->setUniformValue("mvp", modelViewProject);
 
-    foreach(BezierCurve curve, d->curves)
-    {
-        d->curveShader->setUniformValue("detail", 1000);
-
-        d->curveShader->setUniformValue("point1", curve.points[1]);
-        d->curveShader->setUniformValue("point2", curve.points[2]);
-        d->curveShader->setUniformValue("point3", curve.points[3]);
-        d->curveShader->setUniformValue("point4", curve.points[4]);
-    }
+    foreach(BezierCurve* curve, d->curves)
+        curve->drawCurve(d->curveShader);
 
     d->curvePointsShader->bind();
     d->curvePointsShader->setUniformValue("mvp", modelViewProject);
 
-    foreach(BezierCurve curve, d->curves)
-        curve.drawControlPoints(d->curvePointsShader);
+    foreach(BezierCurve* curve, d->curves)
+        curve->drawControlPoints(d->curvePointsShader);
 }
 
 Camera::ProjectionType Camera::projectionType() const
@@ -324,21 +319,70 @@ bool Camera::lock() const
     return d->locked;
 }
 
-void Camera::setCurves(const QVector<BezierCurve>& BCurves)
+void Camera::setCurves(const QVector<BezierCurve*>& BCurves)
 {
     Q_D(Camera);
 
     d->curves = BCurves;
 }
 
-void Camera::play()
+void Camera::deleteCurves()
 {
+    Q_D(Camera);
 
+    qDeleteAll(d->curves); // delete BezierCurves pointers, thanks to QtAlgorithms
+
+    d->curves.clear();
+}
+
+void Camera::play(const int& secs)
+{
+    Q_D(Camera);
+
+    d->play_ticks = MathHelper::toInt(floor(MathHelper::toFloat(secs) * 1000.0f / 16.0f));
+    d->play_tick  = 0;
+    d->play       = true;
+    d->locked     = true;
+}
+
+void Camera::playSequence()
+{
+    Q_D(Camera);
+
+    int curveIndex = MathHelper::toInt(floor(MathHelper::toFloat(d->play_tick) / MathHelper::toFloat(d->play_ticks / d->curves.count())));
+    int playTicks  = d->play_ticks / d->curves.count();
+    int playTick   = d->play_tick - (playTicks * curveIndex);
+
+    if(curveIndex >= d->curves.count())
+        stop();
+
+    BezierCurve* curve = d->curves.at(curveIndex);
+
+    ++d->play_tick;
+
+    float t = 1.0f / playTicks * playTick;
+
+    setPosition(curve->calculatePoint(t));
+    setViewCenter(curve->calculateViewCenter(t));
+    setUpVector(curve->calculateUpVector(t));
+
+    if(d->play_tick == d->play_ticks)
+        stop();
 }
 
 void Camera::stop()
 {
+    Q_D(Camera);
 
+    d->play   = false;
+    d->locked = false;
+}
+
+bool Camera::playing() const
+{
+    Q_D(const Camera);
+
+    return d->play;
 }
 
 QMatrix4x4 Camera::viewMatrix() const

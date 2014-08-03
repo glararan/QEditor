@@ -26,6 +26,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <QStringList>
 #include <QTime>
 #include <QColor>
+#include <QTableWidgetItem>
 
 class Camera;
 class IPipeline;
@@ -74,7 +75,8 @@ public:
         Terrain       = 1,
         Texturing     = 2,
         VertexShading = 3,
-        Object        = 5
+        Object        = 5,
+        CameraCurves  = 6
     };
 
     void setEditingMode(eEditingMode editingMode) { eMode = editingMode; }
@@ -145,6 +147,8 @@ private:
 
     Camera* camera;
 
+    QVector<QTableWidgetItem*> cameraCurvePoint;
+
     QVector3D m_v;
 
     bool viewCenterFixed;
@@ -191,7 +195,10 @@ private:
     QPoint prevMousePos;
     QPoint mousePos;
 
+    int mousePosZ, prevMousePosZ;
+
     QVector3D terrain_pos;
+    QVector3D object_move;
 
     QVector<float> dynamicZoom;
 
@@ -213,6 +220,8 @@ public slots:
     void setDisplayMode(int mode);
     void setModeEditing(int option);
     void setCameraPosition(QVector3D* position);
+    void setCameraCurvePoint(QVector<QTableWidgetItem*>& item);
+    void setCameraCurvePointPosition(QVector<QTableWidgetItem*>& item, const QVector3D& position);
     void setBrushSpeed(double speed);
     void setBrushOuterRadius(double radius);
     void setBrushInnerRadius(double radius);
@@ -259,6 +268,8 @@ signals:
     void selectedWaterChunk(WaterChunk* chunk);
 
     void eMModeChanged(MapView::eMouseMode& mouseMode, MapView::eEditingMode& editingMode);
+
+    void getCameraCurvePoint(const QVector3D& position);
 
     void initialized();
 };

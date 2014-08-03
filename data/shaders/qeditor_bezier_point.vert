@@ -15,11 +15,11 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #version 400
 
-in vec4 position;
+in vec3 position;
 
 uniform mat4 mvp;
 
 void main(void)
 {
-    gl_Position = mvp * position;
+    gl_Position = mvp * vec4(position, 1.0);
 }

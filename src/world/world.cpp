@@ -357,8 +357,7 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
     QVector4D lightDirection = worldToEyeNormal * worldLightDirection;
 
     /// draw Environment
-    //GLfuncs->glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
-    GLfuncs->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    GLfuncs->glBlendFunc(GL_ONE, GL_ZERO);
 
     // set shader settings + little draws
     for(int i = 0; i < 2; ++i)
@@ -451,7 +450,7 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
     }
 
     GLfuncs->glDisable(GL_BLEND);
-    GLfuncs->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GLfuncs->glBlendFunc(GL_ONE, GL_ZERO); // reset blend func
 
     if(possibleModel && drawNewModel && modelManager->isModelSelected() && getTileAt(worldCoordinates.x(), worldCoordinates.z()))
     {
