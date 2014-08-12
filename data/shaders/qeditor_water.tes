@@ -76,11 +76,13 @@ void main()
     // Calculate the model-space position
     vec4 position;
     position.xz = Out.texCoords * horizontalScale;
-    position.y  = texture(heightMap, Out.texCoords).r * waveHeight * 2 + deltaTime * waveSpeed;
+    position.y  = texture(heightMap, Out.texCoords).r;// * waveHeight * 2 + deltaTime * waveSpeed;
 
-    bool up = true;
+    /*bool up = true;
 
-    while(position.y > waveHeight)
+    float _waveHeight = position.y - waveHeight;
+
+    while(position.y > _waveHeight)
     {
         up = !up;
 
@@ -88,7 +90,7 @@ void main()
     }
 
     if(up)
-        position.y = waveHeight - position.y;
+        position.y = waveHeight + position.y;*/
 
     position.w  = 1.0;
     position.x += baseX;

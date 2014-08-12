@@ -48,7 +48,6 @@ MapChunk:
 
 in development, in near future(code is almost ready):
 - water display (wireframe, ..)
-- camera record (myšleno tak, že se naplanuje trasa a kamera po ní pojede)
 - texture scale pro ostatni textury
 - 3D printer support
 - 3D stereoscopic
@@ -61,6 +60,7 @@ discuss features:
  - posunutí
  - zneviditelneni
  - skopirovani
+- textures (2Dsampler) to textureArray => better performance.. faster, more textures..
 
 // tipy od lidí
 - při založení projektu maximální výška
@@ -79,6 +79,7 @@ texture painting
 - smudge: rozmazání
 - blur: přechod
 - border: na okraji se kreslí nějaká další textura
+- override upper layers (checkbox)
 
 voda
 - přidání
@@ -98,11 +99,6 @@ olistění
  - 0-20? na čtvereček
  - velikost přidání
 - odebrání
-
-/// Done list
-- Teren 32bit float point rendering
-- Zvyseni/Snizeni terenu
-- Archiv na bazi .zip
 
 GLSL:
 http://en.wikibooks.org/wiki/GLSL_Programming/Vector_and_Matrix_Operations

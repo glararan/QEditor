@@ -49,7 +49,7 @@ void Material::bind(QOpenGLShaderProgram* shader)
         m_funcs->glActiveTexture(GL_TEXTURE0 + unit);
 
         // Bind the texture
-        config.texture()->bind(GL_TEXTURE0 + unit);
+        config.texture()->bind(unit);
 
         // Bind the sampler
         config.sampler()->bind(unit);

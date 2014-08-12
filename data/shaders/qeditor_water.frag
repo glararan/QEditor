@@ -97,6 +97,8 @@ uniform samplerCube cubeMap;
 /*uniform mat4 lightModelViewProjectionMatrix;
 uniform mat4 lightMatrix;*/
 
+uniform vec2 viewportSize;
+
 mat4 reflectionMat = mat4(0.5f, 0.0f, 0.0f, 0.5f,
                           0.0f, 0.5f, 0.0f, 0.5f,
                           0.0f, 0.0f, 0.0f, 0.5f,
@@ -271,8 +273,13 @@ vec4 shadeTexture()
     vec2 projectedTexcoords;
     projectedTexcoords.x = pos.x / pos.w / 2.0f + 0.5f;
     projectedTexcoords.y = pos.z / pos.w / 2.0f + 0.5f; // y/z
+    projectedTexcoords  /= viewportSize;
 
-    vec4 terrainReflection = texture(reflectionTexture, projectedTexcoords);
+    vec4 pos2 = pos;
+    pos2.xy /= viewportSize;
+    pos2.z /= viewportSize.y;
+
+    vec4 terrainReflection = texture(reflectionTexture, pos2.xz);
 
     return mix(terrainReflection, vec4(0.5, 0.5, 0.5, 0.5), 0.5);
 

@@ -231,6 +231,8 @@ void WaterChunk::updateData()
             }
         }
 
+        world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Heightmap);
+
         waterSurface->bind();
         waterSurface->setHeightmap(waterData);
 
