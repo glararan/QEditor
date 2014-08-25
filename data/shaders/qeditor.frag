@@ -94,10 +94,10 @@ uniform float baseY = 0.0f;
 uniform int chunkX = 0;
 uniform int chunkY = 0;
 
-uniform int textureScaleOption = 0;
+uniform vec4 textureScaleOption = vec4(0, 0, 0, 0);
 
-uniform float textureScaleFar  = 0.4;
-uniform float textureScaleNear = 0.4;
+uniform vec4 textureScaleFar  = vec4(0.4, 0.4, 0.4, 0.4);
+uniform vec4 textureScaleNear = vec4(0.4, 0.4, 0.4, 0.4);
 
 uniform bool chunkLines = false;
 uniform bool highlight  = false;
@@ -210,20 +210,100 @@ void nearAndFarTexCoords(out vec2 uvNear, out vec2 uvFar)
 
     /// Not sure if AMD supports switch cases on all drivers => IFs
     // multiply near
-    if(textureScaleOption == 0 || textureScaleOption == 3)
-        uvNear *= textureScaleNear;
+    if(textureScaleOption.x == 0 || textureScaleOption.x == 3)
+        uvNear *= textureScaleNear.x;
 
     // multiply far
-    if(textureScaleOption == 0 || textureScaleOption == 2)
-        uvFar *= textureScaleFar;
+    if(textureScaleOption.x == 0 || textureScaleOption.x == 2)
+        uvFar *= textureScaleFar.x;
 
     // divide near
-    if(textureScaleOption == 1 || textureScaleOption == 2)
-        uvNear /= textureScaleNear;
+    if(textureScaleOption.x == 1 || textureScaleOption.x == 2)
+        uvNear /= textureScaleNear.x;
 
     // divide far
-    if(textureScaleOption == 1 || textureScaleOption == 3)
-        uvFar /= textureScaleFar;
+    if(textureScaleOption.x == 1 || textureScaleOption.x == 3)
+        uvFar /= textureScaleFar.x;
+}
+
+void nearAndFarTexCoords(out vec2 uvNear, out vec2 uvFar, int layer)
+{
+    uvNear = texCoords * 100.0;
+    uvFar  = texCoords * 10.0;
+
+    /// Not sure if AMD supports switch cases on all drivers => IFs
+    if(layer == 0)
+    {
+        // multiply near
+        if(textureScaleOption.x == 0 || textureScaleOption.x == 3)
+            uvNear *= textureScaleNear.x;
+
+        // multiply far
+        if(textureScaleOption.x == 0 || textureScaleOption.x == 2)
+            uvFar *= textureScaleFar.x;
+
+        // divide near
+        if(textureScaleOption.x == 1 || textureScaleOption.x == 2)
+            uvNear /= textureScaleNear.x;
+
+        // divide far
+        if(textureScaleOption.x == 1 || textureScaleOption.x == 3)
+            uvFar /= textureScaleFar.x;
+    }
+    else if(layer == 1)
+    {
+        // multiply near
+        if(textureScaleOption.y == 0 || textureScaleOption.y == 3)
+            uvNear *= textureScaleNear.y;
+
+        // multiply far
+        if(textureScaleOption.y == 0 || textureScaleOption.y == 2)
+            uvFar *= textureScaleFar.y;
+
+        // divide near
+        if(textureScaleOption.y == 1 || textureScaleOption.y == 2)
+            uvNear /= textureScaleNear.y;
+
+        // divide far
+        if(textureScaleOption.y == 1 || textureScaleOption.y == 3)
+            uvFar /= textureScaleFar.y;
+    }
+    else if(layer == 2)
+    {
+        // multiply near
+        if(textureScaleOption.z == 0 || textureScaleOption.z == 3)
+            uvNear *= textureScaleNear.z;
+
+        // multiply far
+        if(textureScaleOption.z == 0 || textureScaleOption.z == 2)
+            uvFar *= textureScaleFar.z;
+
+        // divide near
+        if(textureScaleOption.z == 1 || textureScaleOption.z == 2)
+            uvNear /= textureScaleNear.z;
+
+        // divide far
+        if(textureScaleOption.z == 1 || textureScaleOption.z == 3)
+            uvFar /= textureScaleFar.z;
+    }
+    else if(layer == 3)
+    {
+        // multiply near
+        if(textureScaleOption.w == 0 || textureScaleOption.w == 3)
+            uvNear *= textureScaleNear.w;
+
+        // multiply far
+        if(textureScaleOption.w == 0 || textureScaleOption.w == 2)
+            uvFar *= textureScaleFar.w;
+
+        // divide near
+        if(textureScaleOption.w == 1 || textureScaleOption.w == 2)
+            uvNear /= textureScaleNear.w;
+
+        // divide far
+        if(textureScaleOption.w == 1 || textureScaleOption.w == 3)
+            uvFar /= textureScaleFar.w;
+    }
 }
 
 // ShaderModelType Subroutines
@@ -345,7 +425,7 @@ vec4 shadeTexturedAndLit()
 {
     vec2 uvNear, uvFar;
 
-    nearAndFarTexCoords(uvNear, uvFar);
+    nearAndFarTexCoords(uvNear, uvFar, 0);
 
     float textureDistanceFactor = textureDistanceBlendFactor();
 
@@ -354,15 +434,21 @@ vec4 shadeTexturedAndLit()
     vec4 baseFar   = texture(baseTexture, texCoords);
     vec4 baseColor = mix(baseNear, baseFar, textureDistanceFactor);
 
+    nearAndFarTexCoords(uvNear, uvFar, 1);
+
     /// Get layer 1 texture color
     vec4 layer1Near  = texture(layer1Texture, uvNear);
     vec4 layer1Far   = texture(layer1Texture, uvFar);
     vec4 layer1Color = mix(layer1Near, layer1Far, textureDistanceFactor);
 
+    nearAndFarTexCoords(uvNear, uvFar, 2);
+
     /// Get layer 2 texture color
     vec4 layer2Near  = texture(layer2Texture, uvNear);
     vec4 layer2Far   = texture(layer2Texture, uvFar);
     vec4 layer2Color = mix(layer2Near, layer2Far, textureDistanceFactor);
+
+    nearAndFarTexCoords(uvNear, uvFar, 3);
 
     /// Get layer 3 texture color
     vec4 layer3Near  = texture(layer3Texture, uvNear);

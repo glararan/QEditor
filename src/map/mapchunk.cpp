@@ -110,6 +110,14 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 
     chunkMaterial->setTextureUnitConfiguration(ShaderUnits::VertexShading, vertexShadingMap, terrainSampler, "vertexShading");
 
+    /// Texture scale
+    for(int i = 0; i < MAX_TEXTURES; ++i)
+    {
+        textureScaleFar[i]    = app().getSetting("textureScaleFarSlider", 0.4).toFloat();
+        textureScaleNear[i]   = app().getSetting("textureScaleNearSlider", 0.4).toFloat();
+        textureScaleOption[i] = (TextureScaleOption)app().getSetting("textureScaleOption").toInt();
+    }
+
     /// Terrain
     mapData = new float[CHUNK_ARRAY_UC_SIZE]; // chunk_array_size
 
@@ -177,6 +185,14 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
         /// Load Vertex Shading
         vertexShadingData = tile->getHeader().mcin->entries[chunkIndex()].mcnk->terrainOffset->vertexShading;
 
+        /// Load Texture scale
+        for(int i = 0; i < MAX_TEXTURES; ++i)
+        {
+            textureScaleFar[i]    = tile->getHeader().mcin->entries[chunkIndex()].mcnk->terrainOffset->textureScaleFar[i];
+            textureScaleNear[i]   = tile->getHeader().mcin->entries[chunkIndex()].mcnk->terrainOffset->textureScaleNear[i];
+            textureScaleOption[i] = tile->getHeader().mcin->entries[chunkIndex()].mcnk->terrainOffset->textureScale[i];
+        }
+
         /// Load Heightmap
         mapData = tile->getHeader().mcin->entries[chunkIndex()].mcnk->terrainOffset->height;
     }
@@ -214,6 +230,14 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
         vertexShadingData = new unsigned char[CHUNK_ARRAY_SIZE];
 
         memset(vertexShadingData, 0, CHUNK_ARRAY_SIZE);
+
+        /// Load Texture scale
+        for(int i = 0; i < MAX_TEXTURES; ++i)
+        {
+            textureScaleFar[i]    = app().getSetting("textureScaleFarSlider", 0.4).toFloat();
+            textureScaleNear[i]   = app().getSetting("textureScaleNearSlider", 0.4).toFloat();
+            textureScaleOption[i] = (TextureScaleOption)app().getSetting("textureScaleOption", 0).toInt();
+        }
 
         /// Load Heightmap
         mapData = new float[CHUNK_ARRAY_UC_SIZE]; // chunk_array_size
@@ -403,9 +427,13 @@ void MapChunk::draw(QOpenGLShaderProgram* shader)
 
     shader->setUniformValue("chunkLines", app().getSetting("chunkLines", false).toBool());
 
-    shader->setUniformValue("textureScaleOption", app().getSetting("textureScaleOption", 0).toInt());
+    /*shader->setUniformValue("textureScaleOption", app().getSetting("textureScaleOption", 0).toInt());
     shader->setUniformValue("textureScaleFar",    app().getSetting("textureScaleFar",    0.4f).toFloat());
-    shader->setUniformValue("textureScaleNear",   app().getSetting("textureScaleNear",   0.4f).toFloat());
+    shader->setUniformValue("textureScaleNear",   app().getSetting("textureScaleNear",   0.4f).toFloat());*/
+
+    shader->setUniformValue("textureScaleOption", QVector4D(textureScaleOption[0], textureScaleOption[1], textureScaleOption[2], textureScaleOption[3]));
+    shader->setUniformValue("textureScaleFar",    QVector4D(textureScaleFar[0],    textureScaleFar[1],    textureScaleFar[2],    textureScaleFar[3]));
+    shader->setUniformValue("textureScaleNear",   QVector4D(textureScaleNear[0],   textureScaleNear[1],   textureScaleNear[2],   textureScaleNear[3]));
 
     // Set the fragment shader display mode subroutine
     world->getGLFunctions()->glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &getDisplaySubroutines());
@@ -472,6 +500,21 @@ const float MapChunk::getMapData(const int& index) const
 const int MapChunk::chunkIndex() const
 {
     return (chunkY * CHUNKS) + chunkX;
+}
+
+const int MapChunk::getTextureScaleOption(int texture) const
+{
+    return (int)textureScaleOption[texture];
+}
+
+const float MapChunk::getTextureScaleFar(int texture) const
+{
+    return textureScaleFar[texture];
+}
+
+const float MapChunk::getTextureScaleNear(int texture) const
+{
+    return textureScaleNear[texture];
 }
 
 bool MapChunk::changeTerrain(float x, float z, float change)
@@ -593,11 +636,11 @@ bool MapChunk::changeTerrain(float x, float z, float change)
 
         chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
 
-        if(bottomNeighbour && !horizontalData.isEmpty())
+        /*if(bottomNeighbour && !horizontalData.isEmpty())
             bottomNeighbour->setBorder(Horizontal, horizontalData);
 
         if(leftNeighbour && !verticalData.isEmpty())
-            leftNeighbour->setBorder(Vertical, verticalData);
+            leftNeighbour->setBorder(Vertical, verticalData);*/
     }
 
     return changed;
@@ -1453,6 +1496,21 @@ void MapChunk::setHeightmapScale(float scale)
     chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
 }
 
+void MapChunk::setTextureScaleOption(int option, int layer)
+{
+    textureScaleOption[layer] = (TextureScaleOption)option;
+}
+
+void MapChunk::setTextureScaleFar(double value, int layer)
+{
+    textureScaleFar[layer] = MathHelper::toFloat(value);
+}
+
+void MapChunk::setTextureScaleNear(double value, int layer)
+{
+    textureScaleNear[layer] = MathHelper::toFloat(value);
+}
+
 void MapChunk::save(MCNK* chunk)
 {
     chunk->areaID  = 0;
@@ -1482,4 +1540,12 @@ void MapChunk::save(MCNK* chunk)
     // Textures
     for(int i = 0; i < MAX_TEXTURES; ++i)
         chunk->terrainOffset->textures[i] = textures[i]->getPath();
+
+    // Texture scale
+    for(int i = 0; i < MAX_TEXTURES; ++i)
+    {
+        chunk->terrainOffset->textureScale[i]     = textureScaleOption[i];
+        chunk->terrainOffset->textureScaleFar[i]  = textureScaleFar[i];
+        chunk->terrainOffset->textureScaleNear[i] = textureScaleNear[i];
+    }
 }

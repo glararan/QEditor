@@ -193,6 +193,14 @@ inline QDataStream& operator<<(QDataStream& dataStream, const MapHeader& mapHead
         // Textures
         for(int j = 0; j < MAX_TEXTURES; ++j)
             dataStream << mapHeader.mcin->entries[i].mcnk->terrainOffset->textures[j];
+
+        // Texture scale
+        for(int j = 0; j < MAX_TEXTURES; ++j)
+        {
+            dataStream << mapHeader.mcin->entries[i].mcnk->terrainOffset->textureScale[j]
+                       << mapHeader.mcin->entries[i].mcnk->terrainOffset->textureScaleFar[j]
+                       << mapHeader.mcin->entries[i].mcnk->terrainOffset->textureScaleNear[j];
+        }
     }
 
     return dataStream;
@@ -235,6 +243,18 @@ inline QDataStream& operator>>(QDataStream& dataStream, MapHeader& mapHeader)
         // Textures
         for(int j = 0; j < MAX_TEXTURES; ++j)
             dataStream >> mapHeader.mcin->entries[i].mcnk->terrainOffset->textures[j];
+
+        // Texture scale
+        for(int j = 0; j < MAX_TEXTURES; ++j)
+        {
+            int option = 0;
+
+            dataStream >> option
+                       >> mapHeader.mcin->entries[i].mcnk->terrainOffset->textureScaleFar[j]
+                       >> mapHeader.mcin->entries[i].mcnk->terrainOffset->textureScaleNear[j];
+
+            mapHeader.mcin->entries[i].mcnk->terrainOffset->textureScale[j] = (TextureScaleOption)option;
+        }
     }
 
     return dataStream;

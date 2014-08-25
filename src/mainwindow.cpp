@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget* parent)
 , DisplayMode("action_Default")
 , ToolBarItem("action_mapview_m0")
 , teleportW(NULL)
+, chunkSettingsW(NULL)
 , settingsW(NULL)
 , texturepW(NULL)
 , modelpickerW(NULL)
@@ -130,6 +131,7 @@ MainWindow::~MainWindow()
     delete ui;
 
     delete teleportW;
+    delete chunkSettingsW;
     delete settingsW;
     delete texturepW;
     delete modelpickerW;
@@ -235,13 +237,14 @@ void MainWindow::openWorld(ProjectFileData projectData)
     ui->menu_Tools->menuAction()->setVisible(true);
 
     // menu dialogs constructors
-    teleportW    = new TeleportWidget();
-    settingsW    = new MapView_Settings();
-    texturepW    = new TexturePicker();
-    modelpickerW = new ModelPicker();
-    waterW       = new WaterWidget();
-    cameraW      = new CameraWidget(world->getCamera());
-    heightmapW   = new HeightmapWidget();
+    teleportW      = new TeleportWidget();
+    chunkSettingsW = new MapChunk_Settings();
+    settingsW      = new MapView_Settings();
+    texturepW      = new TexturePicker();
+    modelpickerW   = new ModelPicker();
+    waterW         = new WaterWidget();
+    cameraW        = new CameraWidget(world->getCamera());
+    heightmapW     = new HeightmapWidget();
 
     // post initialize world sub widgets
     connect(mapView, SIGNAL(initialized()), this, SLOT(postInitializeSubWorldWidgets()));
@@ -250,12 +253,13 @@ void MainWindow::openWorld(ProjectFileData projectData)
     initMode();
 
     /// map view
-    connect(mapView, SIGNAL(statusBar(QString)),              ui->statusbar, SLOT(showMessage(QString)));
-    connect(mapView, SIGNAL(updateBrushOuterRadius(double)),  this,          SLOT(setBrushOuterRadius(double)));
-    connect(mapView, SIGNAL(updateBrushInnerRadius(double)),  this,          SLOT(setBrushInnerRadius(double)));
-    connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)),     texturepW,     SLOT(setChunk(MapChunk*)));
-    connect(mapView, SIGNAL(selectedWaterChunk(WaterChunk*)), waterW,        SLOT(setChunk(WaterChunk*)));
-    connect(mapView, SIGNAL(getCameraCurvePoint(QVector3D)),  cameraW,       SLOT(selectPoint(QVector3D)));
+    connect(mapView, SIGNAL(statusBar(QString)),              ui->statusbar,  SLOT(showMessage(QString)));
+    connect(mapView, SIGNAL(updateBrushOuterRadius(double)),  this,           SLOT(setBrushOuterRadius(double)));
+    connect(mapView, SIGNAL(updateBrushInnerRadius(double)),  this,           SLOT(setBrushInnerRadius(double)));
+    connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)),     texturepW,      SLOT(setChunk(MapChunk*)));
+    connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)),     chunkSettingsW, SLOT(setChunk(MapChunk*)));
+    connect(mapView, SIGNAL(selectedWaterChunk(WaterChunk*)), waterW,         SLOT(setChunk(WaterChunk*)));
+    connect(mapView, SIGNAL(getCameraCurvePoint(QVector3D)),  cameraW,        SLOT(selectPoint(QVector3D)));
 
     connect(mapView, SIGNAL(eMModeChanged(MapView::eMouseMode&, MapView::eEditingMode&)),
             this,    SLOT(setBrushMode(MapView::eMouseMode&, MapView::eEditingMode&)));
@@ -300,6 +304,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
 
     // tools - texture picker, settings, teleport, map generator, heightmap, reset camera, lock camera
     connect(ui->action_Texture_Picker, SIGNAL(triggered()),     this,    SLOT(showTexturePicker()));
+    connect(ui->action_Chunk_settings, SIGNAL(triggered()),     this,    SLOT(showChunkSettings()));
     connect(ui->action_Settings,       SIGNAL(triggered()),     this,    SLOT(showSettings()));
     connect(ui->action_Teleport,       SIGNAL(triggered()),     this,    SLOT(showTeleport()));
     connect(ui->action_Map_Generator,  SIGNAL(triggered()),     this,    SLOT(showMapGeneration()));
@@ -758,6 +763,11 @@ void MainWindow::setFullscreen(bool checked)
 void MainWindow::showTeleport()
 {
     addDockWindow(tr("Teleport"), teleportW);
+}
+
+void MainWindow::showChunkSettings()
+{
+    addDockWindow(tr("Chunk settings"), chunkSettingsW);
 }
 
 void MainWindow::showSettings()

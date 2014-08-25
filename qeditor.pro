@@ -64,7 +64,9 @@ OTHER_FILES += info.txt \
     data/shaders/qeditor_bezier_point.vert \
     data/shaders/qeditor_bezier_point.frag \
     data/shaders/qeditor_bezier.tcs \
-    data/shaders/qeditor_bezier.tes
+    data/shaders/qeditor_bezier.tes \
+    data/shaders/qeditor_cleft.tcs \
+    data/shaders/qeditor_cleft.tes
 
 #unix|
 win32: LIBS += -L$$PWD/ -lquazip

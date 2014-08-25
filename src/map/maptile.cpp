@@ -16,7 +16,9 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "maptile.h"
 
 #include "watertile.h"
+#include "mapcleft.h"
 #include "perlingenerator.h"
+#include "qeditor.h"
 
 #include <QImage>
 #include <QRgb>
@@ -47,6 +49,29 @@ MapTile::MapTile(World* mWorld, const QString& mapFile, int x, int y) // Cache M
         mapChunks[i / CHUNKS][i % CHUNKS] = new MapChunk(world, this, i / CHUNKS, i % CHUNKS);
 
         qDebug() << QString(QObject::tr("chunk[%1, %2]: %3 bases: [%4, %5]")).arg(i / CHUNKS).arg(i % CHUNKS).arg(i).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().x()).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().y());
+    }
+
+    /// create map clefts
+    // horizontal
+    for(int x = 0; x < CHUNKS; ++x)
+    {
+        for(int y = 0; y < CHUNKS - 1; ++y)
+        {
+            mapCleftHorizontal[x][y] = new MapCleft(world, this, MapChunk::Horizontal, mapChunks[x][y], mapChunks[x][y + 1]);
+
+            qDebug() << QString(QObject::tr("cleft[%1, %2] - horizontal")).arg(x).arg(y);
+        }
+    }
+
+    // vertical
+    for(int x = 0; x < CHUNKS - 1; ++x)
+    {
+        for(int y = 0; y < CHUNKS; ++y)
+        {
+            mapCleftVertical[x][y] = new MapCleft(world, this, MapChunk::Vertical, mapChunks[x][y], mapChunks[x + 1][y]);
+
+            qDebug() << QString(QObject::tr("cleft[%1, %2] - vertical")).arg(x).arg(y);
+        }
     }
 
     waterTile = new WaterTile(this);
@@ -91,6 +116,29 @@ MapTile::MapTile(World* mWorld, int x, int y, const QString& mapFile) // File ba
         qDebug() << QString(QObject::tr("chunk[%1, %2]: %3 bases: [%4, %5]")).arg(i / CHUNKS).arg(i % CHUNKS).arg(i).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().x()).arg(mapChunks[i / CHUNKS][i % CHUNKS]->getBases().y());
     }
 
+    /// create map clefts
+    // horizontal
+    for(int x = 0; x < CHUNKS; ++x)
+    {
+        for(int y = 0; y < CHUNKS - 1; ++y)
+        {
+            mapCleftHorizontal[x][y] = new MapCleft(world, this, MapChunk::Horizontal, mapChunks[x][y], mapChunks[x][y + 1]);
+
+            qDebug() << QString(QObject::tr("cleft[%1, %2] - horizontal")).arg(x).arg(y);
+        }
+    }
+
+    // vertical
+    for(int x = 0; x < CHUNKS - 1; ++x)
+    {
+        for(int y = 0; y < CHUNKS; ++y)
+        {
+            mapCleftVertical[x][y] = new MapCleft(world, this, MapChunk::Vertical, mapChunks[x][y], mapChunks[x + 1][y]);
+
+            qDebug() << QString(QObject::tr("cleft[%1, %2] - vertical")).arg(x).arg(y);
+        }
+    }
+
     waterTile = new WaterTile(this, file);
 
     file.close();
@@ -101,6 +149,32 @@ MapTile::~MapTile()
     qDebug() << QObject::tr("Unloading tile:") << coordX << coordY;
 
     terrainSampler->destroy();
+
+    for(int x = 0; x < CHUNKS; ++x)
+    {
+        for(int y = 0; y < CHUNKS - 1; ++y)
+        {
+            if(mapCleftHorizontal[x][y])
+            {
+                delete mapCleftHorizontal[x][y];
+
+                mapCleftHorizontal[x][y] = NULL;
+            }
+        }
+    }
+
+    for(int x = 0; x < CHUNKS - 1; ++x)
+    {
+        for(int y = 0; y < CHUNKS; ++y)
+        {
+            if(mapCleftVertical[x][y])
+            {
+                delete mapCleftVertical[x][y];
+
+                mapCleftVertical[x][y] = NULL;
+            }
+        }
+    }
 
     for(int x = 0; x < CHUNKS; ++x)
     {
@@ -130,6 +204,44 @@ void MapTile::draw(const float& distance, const QVector3D& camera)
         {
             if(mapChunks[x][y]->isInVisibleRange(distance, camera))
                 mapChunks[x][y]->draw(shader);
+        }
+    }
+
+    QOpenGLShaderProgram* shader2 = world->getCleftShader();
+    shader2->bind();
+
+    // horiz & vertical settings
+    shader2->setUniformValue("textureScaleOption", QVector4D(0, 0, 0, 0));
+    shader2->setUniformValue("textureScaleFar",    QVector4D(0.4f, 0.4f, 0.4f, 0.4f));
+    shader2->setUniformValue("textureScaleNear",   QVector4D(0.4f, 0.4f, 0.4f, 0.4f));
+
+    // horizontal settings
+    shader2->setUniformValue("horizontalScaleX", CHUNKSIZE);
+    shader2->setUniformValue("horizontalScaleY", 0.01f);
+    shader2->setUniformValue("vertical",         false);
+
+    // horizontal draw
+    for(int x = 0; x < CHUNKS; ++x)
+    {
+        for(int y = 0; y < CHUNKS - 1; ++y)
+        {
+            if(mapCleftHorizontal[x][y]->isInVisibleRange(distance, camera))
+                mapCleftHorizontal[x][y]->draw(shader2);
+        }
+    }
+
+    // vertical settings
+    shader2->setUniformValue("horizontalScaleX", 0.01f);//CHUNKSIZE / CHUNK_WIDTH);
+    shader2->setUniformValue("horizontalScaleY", CHUNKSIZE);
+    //shader2->setUniformValue("vertical",         true);
+
+    // vertical draw
+    for(int x = 0; x < CHUNKS - 1; ++x)
+    {
+        for(int y = 0; y < CHUNKS; ++y)
+        {
+            if(mapCleftVertical[x][y]->isInVisibleRange(distance, camera))
+                mapCleftVertical[x][y]->draw(shader2);
         }
     }
 }

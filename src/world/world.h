@@ -143,6 +143,7 @@ public:
     IModelManager*             getModelManager()   { return modelManager; }
     QOpenGLShaderProgram*      getModelShader()    { return modelShader; }
     QOpenGLShaderProgram*      getTerrainShader()  { return terrainShader; }
+    QOpenGLShaderProgram*      getCleftShader()    { return cleftShader; }
     QOpenGLShaderProgram*      getWaterShader()    { return waterShader; }
     QOpenGLShaderProgram*      getSkyboxShader()   { return skyboxShader; }
 
@@ -228,6 +229,7 @@ private:
 
     QOpenGLShaderProgram* modelShader;
     QOpenGLShaderProgram* terrainShader;
+    QOpenGLShaderProgram* cleftShader;
     QOpenGLShaderProgram* waterShader;
     QOpenGLShaderProgram* skyboxShader;
 

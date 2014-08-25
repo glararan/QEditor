@@ -69,7 +69,9 @@ SOURCES  += $$PWD/main.cpp \
             $$PWD/map/generation/fractalgeneration.cpp \
             $$PWD/map/generation/perlingenerator.cpp \
             $$PWD/ui/mapgeneration.cpp \
-            $$PWD/ui/heightmapwidget.cpp
+            $$PWD/ui/heightmapwidget.cpp \
+            $$PWD/map/mapcleft.cpp \
+            $$PWD/ui/mapchunk_settings.cpp
             #$$PWD/3rd-party/libtrix/libtrix.cpp \
             #$$PWD/3rd-party/hmstl/stb_image.cpp \
             #$$PWD/3rd-party/hmstl/heightmap.cpp
@@ -125,7 +127,9 @@ HEADERS  += $$PWD/mainwindow.h \
             $$PWD/map/generation/fractalgeneration.h \
             $$PWD/map/generation/perlingenerator.h \
             $$PWD/ui/mapgeneration.h \
-            $$PWD/ui/heightmapwidget.h
+            $$PWD/ui/heightmapwidget.h \
+            $$PWD/map/mapcleft.h \
+            $$PWD/ui/mapchunk_settings.h
             #$$PWD/3rd-party/libtrix/libtrix.h \
             #$$PWD/3rd-party/hmstl/stb_image.h \
             #$$PWD/3rd-party/hmstl/heightmap.h \
@@ -142,4 +146,5 @@ FORMS    += $$PWD/mainwindow.ui \
             $$PWD/ui/modelpicker.ui \
             $$PWD/ui/camerawidget.ui \
             $$PWD/ui/mapgeneration.ui \
-            $$PWD/ui/heightmapwidget.ui
+            $$PWD/ui/heightmapwidget.ui \
+            $$PWD/ui/mapchunk_settings.ui

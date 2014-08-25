@@ -28,6 +28,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "ui/qdslider.h"
 #include "ui/teleportwidget.h"
+#include "ui/mapchunk_settings.h"
 #include "ui/mapview_settings.h"
 #include "ui/texturepicker.h"
 #include "ui/modelpicker.h"
@@ -60,11 +61,12 @@ private:
     QString DisplayMode;
     QString ToolBarItem;
 
-    TeleportWidget*   teleportW;
-    MapView_Settings* settingsW;
-    TexturePicker*    texturepW;
-    ModelPicker*      modelpickerW;
-    HeightmapWidget*  heightmapW;
+    TeleportWidget*    teleportW;
+    MapChunk_Settings* chunkSettingsW;
+    MapView_Settings*  settingsW;
+    TexturePicker*     texturepW;
+    ModelPicker*       modelpickerW;
+    HeightmapWidget*   heightmapW;
 
     void addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area = Qt::RightDockWidgetArea);
 
@@ -225,6 +227,7 @@ private slots:
     void setSkyboxSwitch(bool state);
 
     void showTeleport();
+    void showChunkSettings();
     void showSettings();
     void showTexturePicker();
     void showAbout();

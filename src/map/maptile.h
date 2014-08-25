@@ -26,6 +26,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <QOpenGLFramebufferObject>
 
 class WaterTile;
+class MapCleft;
 
 struct MapObject
 {
@@ -89,6 +90,9 @@ private:
 
     MapChunk* mapChunks[CHUNKS][CHUNKS];
 
+    MapCleft* mapCleftHorizontal[CHUNKS][(CHUNKS) - 1];
+    MapCleft* mapCleftVertical[CHUNKS - 1][CHUNKS];
+
     World* world;
 
     WaterTile* waterTile;
@@ -99,6 +103,7 @@ private:
 
     friend class WaterTile;
     friend class MapChunk;
+    friend class MapCleft;
 
     //
     MapChunk* getChunkAt(float x, float z);

@@ -88,6 +88,12 @@ MapView_Settings::MapView_Settings(QWidget* parent)
 MapView_Settings::~MapView_Settings()
 {
     delete ui;
+
+    delete textureScaleFarSlider;
+    delete textureScaleNearSlider;
+
+    delete colorDialog;
+    delete wireframeColorDialog;
 }
 
 void MapView_Settings::initializeComponents()

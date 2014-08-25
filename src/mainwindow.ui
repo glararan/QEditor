@@ -149,6 +149,7 @@
     <addaction name="action_Show_Chunk_lines"/>
     <addaction name="separator"/>
     <addaction name="action_Texture_Picker"/>
+    <addaction name="action_Chunk_settings"/>
     <addaction name="action_Settings"/>
     <addaction name="action_Teleport"/>
     <addaction name="action_Map_Generator"/>
@@ -663,6 +664,11 @@
   <action name="action_Heightmap">
    <property name="text">
     <string>Heightmap</string>
+   </property>
+  </action>
+  <action name="action_Chunk_settings">
+   <property name="text">
+    <string>&amp;Chunk settings</string>
    </property>
   </action>
  </widget>

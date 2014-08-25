@@ -85,6 +85,7 @@ World::~World()
     delete possibleModel;
     delete modelShader;
     delete terrainShader;
+    delete cleftShader;
     delete waterShader;
     delete skyboxShader;
 }
@@ -190,6 +191,27 @@ void World::initialize(QOpenGLContext* context, QSize fboSize)
     if(!terrainShader->link())
         qCritical() << QObject::tr("Could not link shader program. Log:") << terrainShader->log();
 
+    /// Cleft Shader
+    cleftShader = new QOpenGLShaderProgram();
+
+    if(!cleftShader->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/data/shaders/qeditor.vert"))
+        qCritical() << QObject::tr("Could not compile vertex shader. Log:") << cleftShader->log();
+
+    if(!cleftShader->addShaderFromSourceFile(QOpenGLShader::TessellationControl, ":/data/shaders/qeditor_cleft.tcs"))
+        qCritical() << QObject::tr("Could not compile tessellation control shader. Log:") << cleftShader->log();
+
+    if(!cleftShader->addShaderFromSourceFile(QOpenGLShader::TessellationEvaluation, ":/data/shaders/qeditor_cleft.tes"))
+        qCritical() << QObject::tr("Could not compile tessellation evaluation shader. Log:") << cleftShader->log();
+
+    if(!cleftShader->addShaderFromSourceFile(QOpenGLShader::Geometry, ":/data/shaders/qeditor.geom"))
+        qCritical() << QObject::tr("Could not compile geometry shader. Log:") << cleftShader->log();
+
+    if(!cleftShader->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/data/shaders/qeditor.frag"))
+        qCritical() << QObject::tr("Could not compile fragment shader. Log:") << cleftShader->log();
+
+    if(!cleftShader->link())
+        qCritical() << QObject::tr("Could not link shader program. Log:") << cleftShader->log();
+
     /// Water Shader
     waterShader = new QOpenGLShaderProgram();
 
@@ -238,6 +260,36 @@ void World::initialize(QOpenGLContext* context, QSize fboSize)
     terrainShader->setUniformValue("material.Ks", QVector3D(0.3f, 0.3f, 0.3f));
     terrainShader->setUniformValue("material.shininess", 10.0f);
 
+    /// Shader data - cleft
+    cleftShader->bind();
+
+    // Set line parameters
+    cleftShader->setUniformValue("line.width", 0.2f);
+    cleftShader->setUniformValue("line.color", app().getSetting("wireframe", QVector4D(0.5f, 1.0f, 0.0f, 1.0f)).value<QVector4D>());
+    //cleftShader->setUniformValue("line.color", QVector4D(0.17f, 0.50f, 1.0f, 1.0f)); // blue
+    cleftShader->setUniformValue("line.color2", app().getSetting("terrainWireframe", QVector4D(0.0f, 0.0f, 0.0f, 0.0f)).value<QVector4D>());
+
+    // Set the fog parameters
+    cleftShader->setUniformValue("fog.color"      , QVector4D(0.65f, 0.77f, 1.0f, 1.0f));
+    cleftShader->setUniformValue("fog.minDistance", app().getSetting("environmentDistance", 256.0f).toFloat() / 2.0f);
+    cleftShader->setUniformValue("fog.maxDistance", app().getSetting("environmentDistance", 256.0f).toFloat() - 32.0f);
+
+    // Set the chunkLines to false, we will never draw it because it is so small (using same fragment shader as terrain)
+    cleftShader->setUniformValue("chunkLines", false);
+
+    // Set the highlight and selected, same reason as prev
+    cleftShader->setUniformValue("highlight", false);
+    cleftShader->setUniformValue("selected",  false);
+
+    // Set the lighting parameters
+    cleftShader->setUniformValue("light.intensity", QVector3D(1.0f, 1.0f, 1.0f));
+
+    // Set the material properties
+    cleftShader->setUniformValue("material.Ka", QVector3D(0.1f, 0.1f, 0.1f));
+    cleftShader->setUniformValue("material.Kd", QVector3D(1.0f, 1.0f, 1.0f));
+    cleftShader->setUniformValue("material.Ks", QVector3D(0.3f, 0.3f, 0.3f));
+    cleftShader->setUniformValue("material.shininess", 10.0f);
+
     /// Shader data - water
     waterShader->bind();
 
@@ -248,7 +300,7 @@ void World::initialize(QOpenGLContext* context, QSize fboSize)
     waterShader->setUniformValue("line.color2", app().getSetting("terrainWireframe", QVector4D(0.0f, 0.0f, 0.0f, 0.0f)).value<QVector4D>());
 
     // Set the fog parameters
-    waterShader->setUniformValue("fog.color"          , QVector4D(0.65f, 0.77f, 1.0f, 1.0f));
+    waterShader->setUniformValue("fog.color"           , QVector4D(0.65f, 0.77f, 1.0f, 1.0f));
     waterShader->setUniformValue("fog.minDistance"     , app().getSetting("environmentDistance", 256.0f).toFloat() / 2.0f);
     waterShader->setUniformValue("fog.maxDistance"     , app().getSetting("environmentDistance", 256.0f).toFloat() - 32.0f);
     waterShader->setUniformValue("fog.minAlphaDistance", 32.0f + camera->position().y()); // height coordinate
@@ -302,10 +354,15 @@ void World::update(float dt)
 
     shader->setUniformValue("deltaTime", dt);
 
-    shader = getTerrainShader();
-    shader->bind();
+    QOpenGLShaderProgram* shader2 = getTerrainShader();
+    shader2->bind();
 
-    shader->setUniformValue("deltaTime", dt);
+    shader2->setUniformValue("deltaTime", dt);
+
+    QOpenGLShaderProgram* shader3 = getCleftShader();
+    shader3->bind();
+
+    shader3->setUniformValue("deltaTime", dt);
 
     // load tiles around + load neighbours
     int tileX = MathHelper::toInt(camera->pos().x() / TILESIZE);
@@ -360,9 +417,26 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
     GLfuncs->glBlendFunc(GL_ONE, GL_ZERO);
 
     // set shader settings + little draws
-    for(int i = 0; i < 2; ++i)
+    for(int i = 0; i < 3; ++i)
     {
-        QOpenGLShaderProgram* shader = (i == 0) ? getTerrainShader() : getWaterShader();
+        QOpenGLShaderProgram* shader;
+
+        switch(i)
+        {
+            default:
+            case 0:
+                shader = getTerrainShader();
+                break;
+
+            case 1:
+                shader = getWaterShader();
+                break;
+
+            case 2:
+                shader = getCleftShader();
+                break;
+        }
+
         shader->bind();
 
         // Set the horizontal and vertical scales applied in the tess eval shader
@@ -378,11 +452,11 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
         // Set the lighting parameters
         shader->setUniformValue("light.position", lightDirection);
 
-        if(drawBrush && i == 0)
-            brush->draw(shader, QVector2D(worldCoordinates.x(), worldCoordinates.z()));
-
-        if(i == 0)
+        if(i == 0) // terrain
         {
+            if(drawBrush)
+                brush->draw(shader, QVector2D(worldCoordinates.x(), worldCoordinates.z()));
+
             shader->setUniformValue("shadingOff", shadingOff);
 
             // draw reflection, refraction
@@ -396,7 +470,7 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
             if(!skyboxOff)
                 drawSkybox(modelMatrix);
         }
-        else
+        else if(i == 1) // water
         {
             shader->setUniformValue("cameraPosition", camera->position());
 

@@ -64,6 +64,10 @@ public:
 
     const int chunkIndex() const;
 
+    const int   getTextureScaleOption(int texture) const;
+    const float getTextureScaleFar(int texture) const;
+    const float getTextureScaleNear(int texture) const;
+
     const QVector2D  getBases() const              { return QVector2D(baseX, baseY); }
     const GLuint&    getDisplaySubroutines() const { return displaySubroutines[world->displayMode()]; }
     const bool       getHighlight() const          { return highlight; }
@@ -100,6 +104,10 @@ public:
 
     void setHeightmapScale(float scale);
 
+    void setTextureScaleOption(int option, int layer);
+    void setTextureScaleNear(double value, int layer);
+    void setTextureScaleFar(double value, int layer);
+
     /// ...
     void save(MCNK* chunk);
 
@@ -119,7 +127,7 @@ private:
     float* mapData;
     float* mapDataCache;
 
-    /// Textures, Alphamaps and Vertex Shading
+    /// Textures, Alphamaps, Vertex Shading and Texture scale
     TexturePtr textures[MAX_TEXTURES];
     TexturePtr alphaMaps[ALPHAMAPS];
 
@@ -127,6 +135,11 @@ private:
 
     unsigned char* alphaMapsData[ALPHAMAPS];
     unsigned char* vertexShadingData;
+
+    float textureScaleNear[MAX_TEXTURES];
+    float textureScaleFar[MAX_TEXTURES];
+
+    TextureScaleOption textureScaleOption[MAX_TEXTURES];
 
     /// Chunk data
     QVector<GLuint> displaySubroutines;
@@ -152,6 +165,7 @@ private:
     void initialize();
 
     friend class MapTile;
+    friend class MapCleft;
 };
 
 #endif // MAPCHUNK_H
