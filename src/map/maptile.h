@@ -19,7 +19,6 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "mapchunk.h"
 #include "world.h"
 #include "mapheaders.h"
-#include "framebuffer.h"
 #include "model/imodelmanager.h"
 #include "model/imodel.h"
 
@@ -27,6 +26,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <QOpenGLFramebufferObject>
 
 class WaterTile;
+class MapCleft;
 
 struct MapObject
 {
@@ -66,7 +66,7 @@ public:
 
     void draw(const float& distance, const QVector3D& camera);
     void drawObjects(const float& distance, const QVector3D& camera, QMatrix4x4 viewMatrix, QMatrix4x4 projectionMatrix);
-    void drawWater(const float& distance, const QVector3D& camera);
+    void drawWater(const float& distance, const QVector3D& camera, QOpenGLFramebufferObject* refraction);
 
     void update(qreal time);
 
@@ -74,9 +74,12 @@ public:
     void deleteModel(float x, float z);
     void updateModelHeight();
 
-    bool isTile(int pX, int pY);
+    void generateMap(MapGenerationData& data);
 
-    void setFboSize(QSize size);
+    void importHeightmap(QString path, float scale);
+    void exportHeightmap(QString path, float scale);
+
+    bool isTile(int pX, int pY);
 
     void saveTile();
 
@@ -87,11 +90,12 @@ private:
 
     MapChunk* mapChunks[CHUNKS][CHUNKS];
 
+    MapCleft* mapCleftHorizontal[CHUNKS][(CHUNKS) - 1];
+    MapCleft* mapCleftVertical[CHUNKS - 1][CHUNKS];
+
     World* world;
 
     WaterTile* waterTile;
-
-    Framebuffer* fbo;
 
     SamplerPtr terrainSampler;
 
@@ -99,6 +103,7 @@ private:
 
     friend class WaterTile;
     friend class MapChunk;
+    friend class MapCleft;
 
     //
     MapChunk* getChunkAt(float x, float z);

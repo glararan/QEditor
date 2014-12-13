@@ -36,7 +36,7 @@ private:
 
     bool checkCoords(QString coords);
 
-    void writeToBookmarks(QString name, QVector3D location);
+    bool writeToBookmarks(QString name, QVector3D location);
     bool readFromBookmarks(QString search, QVector3D& location);
 
     void loadBookmarks();

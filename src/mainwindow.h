@@ -28,12 +28,15 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "ui/qdslider.h"
 #include "ui/teleportwidget.h"
+#include "ui/mapchunk_settings.h"
 #include "ui/mapview_settings.h"
 #include "ui/texturepicker.h"
 #include "ui/modelpicker.h"
 #include "ui/startup.h"
 #include "ui/waterwidget.h"
 #include "ui/camerawidget.h"
+#include "ui/heightmapwidget.h"
+#include "ui/basic_settings.h"
 
 #include "world.h"
 #include "mapview.h"
@@ -59,10 +62,13 @@ private:
     QString DisplayMode;
     QString ToolBarItem;
 
-    TeleportWidget*   teleportW;
-    MapView_Settings* settingsW;
-    TexturePicker*    texturepW;
-    ModelPicker*      modelpickerW;
+    TeleportWidget*    teleportW;
+    MapChunk_Settings* chunkSettingsW;
+    MapView_Settings*  settingsW;
+    TexturePicker*     texturepW;
+    ModelPicker*       modelpickerW;
+    HeightmapWidget*   heightmapW;
+    Basic_Settings*    basicSettingsW;
 
     void addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area = Qt::RightDockWidgetArea);
 
@@ -92,6 +98,7 @@ private:
     QCheckBox* t_terrain_maxHeight;
 
     QDoubleSpinBox* t_terrain_maximum_height;
+    QDoubleSpinBox* t_terrain_uniform_height;
 
     QLabel* t_terrain_mode_label;
 
@@ -205,13 +212,31 @@ private slots:
     void setTerrain_Mode(int index);
     void setModel_Mode(int unknown, bool unknown2);
 
+    void mapGenerationDataAccepted();
+    void mapGenerationDataRejected();
+
+    void setMapGenerationData(MapGenerationData& data);
     void setProjectData(ProjectFileData& data);
 
+    void heightmapWidgetAccepted();
+    void heightmapWidgetRejected();
+
+    void importingHeightmap(QString path, float scale);
+    void exportingHeightmap(QString path, float scale);
+
+    void setHeightmapScale(float scale);
+
+    void setVertexShadingSwitch(bool state);
+    void setSkyboxSwitch(bool state);
+
     void showTeleport();
+    void showChunkSettings();
     void showSettings();
     void showTexturePicker();
     void showAbout();
     void showProjectSettings();
+    void showMapGeneration();
+    void showHeightmap();
 
     void openWorld(ProjectFileData projectData);
     void postInitializeSubWorldWidgets();

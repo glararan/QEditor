@@ -16,7 +16,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #ifndef MAPVIEW_H
 #define MAPVIEW_H
 
-#include <QGLWidget>
+#include <QOpenGLWidget>
 #include <QWidget>
 
 #include "world.h"
@@ -26,10 +26,12 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <QStringList>
 #include <QTime>
 #include <QColor>
+#include <QTableWidgetItem>
 
 class Camera;
+class IPipeline;
 
-class MapView : public QGLWidget
+class MapView : public QOpenGLWidget, protected QOpenGLFunctions_4_2_Core
 {
     Q_OBJECT
 
@@ -73,7 +75,8 @@ public:
         Terrain       = 1,
         Texturing     = 2,
         VertexShading = 3,
-        Object        = 5
+        Object        = 5,
+        CameraCurves  = 6
     };
 
     void setEditingMode(eEditingMode editingMode) { eMode = editingMode; }
@@ -82,7 +85,8 @@ public:
     enum eTerrainMode
     {
         Shaping   = 0,
-        Smoothing = 1
+        Smoothing = 1,
+        Uniform   = 2
     };
 
     void setTerrainMode(eTerrainMode terrainMode) { eTerrain = terrainMode; }
@@ -99,6 +103,8 @@ public:
 
     QVector3D getWorldCoordinates(float mouseX, float mouseY);
 
+    IPipeline* getPipeline() const { return pipeline; }
+
 protected:
     void initializeGL();
     void resizeGL(int w, int h);
@@ -111,6 +117,8 @@ protected:
     void mousePressEvent(QMouseEvent* e);
     void mouseReleaseEvent(QMouseEvent* e);
     void mouseMoveEvent(QMouseEvent* e);
+
+    void tabletEvent(QTabletEvent* e);
 
     void wheelEvent(QWheelEvent* e);
     void timerEvent(QTimerEvent*);
@@ -131,6 +139,8 @@ private:
     float shaping_speed;
     int   shaping_brush_type;
 
+    float uniform_height;
+
     /// Texturing parameters
     float texturing_flow;
 
@@ -142,10 +152,13 @@ private:
 
     Camera* camera;
 
+    QVector<QTableWidgetItem*> cameraCurvePoint;
+
     QVector3D m_v;
 
     bool viewCenterFixed;
     bool showCameraCurve;
+    bool repeatCameraPlay;
 
     float m_panAngle;
     float m_tiltAngle;
@@ -166,6 +179,7 @@ private:
 
     // Terrain rendering controls
     QMatrix4x4 modelMatrix;
+    IPipeline* pipeline;
 
     bool stereoscopic;
 
@@ -180,16 +194,32 @@ private:
 
     // mouse
     bool leftButtonPressed, rightButtonPressed, wasLeftButtonPressed;
-    bool changedMouseMode;
+    bool changedMouseMode, tabletMode, tablet;
 
     QPoint mouse_position;
 
     QPoint prevMousePos;
     QPoint mousePos;
 
+    int mousePosZ, prevMousePosZ;
+
     QVector3D terrain_pos;
+    QVector3D object_move;
 
     QVector<float> dynamicZoom;
+
+    struct Tablet
+    {
+        qreal pressure;
+        qreal rotation;
+        qreal tangentialPressure;
+
+        int x, xTilt;
+        int y, yTilt;
+
+        QTabletEvent::TabletDevice device;
+        QTabletEvent::PointerType  pointer;
+    } wacom;
 
     // keyboard
     bool shiftDown, ctrlDown, altDown, escapeDown;
@@ -209,6 +239,8 @@ public slots:
     void setDisplayMode(int mode);
     void setModeEditing(int option);
     void setCameraPosition(QVector3D* position);
+    void setCameraCurvePoint(QVector<QTableWidgetItem*>& item);
+    void setCameraCurvePointPosition(QVector<QTableWidgetItem*>& item, const QVector3D& position);
     void setBrushSpeed(double speed);
     void setBrushOuterRadius(double radius);
     void setBrushInnerRadius(double radius);
@@ -218,7 +250,9 @@ public slots:
     void setTexturingFlow(double flow);
     void setVertexShading(QColor color);
     void setCameraShowCurve(bool show);
+    void setCameraRepeatPlay(bool repeat);
     void setTerrainMaximumHeight(double value);
+    void setTerrainUniformHeight(double value);
     void setPaintMaximumAlpha(double value);
     void setTerrainMode(int mode);
     void setBrushColor(QColor* color, bool outer);
@@ -227,6 +261,7 @@ public slots:
     void setTextureScaleOption_(int option);
     void setTextureScaleFar(float value);
     void setTextureScaleNear(float value);
+    void setTabletMode(bool enable);
     void setTurnChunkLines(bool on);
     void setModelRotationX(double value);
     void setModelRotationY(double value);
@@ -254,6 +289,8 @@ signals:
     void selectedWaterChunk(WaterChunk* chunk);
 
     void eMModeChanged(MapView::eMouseMode& mouseMode, MapView::eEditingMode& editingMode);
+
+    void getCameraCurvePoint(const QVector3D& position);
 
     void initialized();
 };

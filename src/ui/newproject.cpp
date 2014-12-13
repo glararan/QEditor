@@ -23,6 +23,8 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <QGraphicsSceneMouseEvent>
 #include <QSpacerItem>
 #include <QFileDialog>
+#include <QApplication>
+#include <QDesktopWidget>
 
 NewProject::NewProject(QWidget* parent)
 : QWizard(parent)
@@ -234,28 +236,14 @@ ProjectMapPage::ProjectMapPage(QWidget* parent) : QWizardPage(parent)
 
 void ProjectMapPage::checkAllBoxs()
 {
-    for(int y = 0; y < TILES; ++y)
-    {
-        for(int x = 0; x < TILES; ++x)
-        {
-            if(!mapCoords[x][y])
-                mapCoords[x][y] = true;
-        }
-    }
+    memset(mapCoords, 1, sizeof(bool) * TILES * TILES);
 
     applyBrush();
 }
 
 void ProjectMapPage::uncheckAllBoxs()
 {
-    for(int y = 0; y < TILES; ++y)
-    {
-        for(int x = 0; x < TILES; ++x)
-        {
-            if(mapCoords[x][y])
-                mapCoords[x][y] = false;
-        }
-    }
+    memset(mapCoords, 0, sizeof(bool) * TILES * TILES);
 
     applyBrush();
 }
@@ -303,6 +291,8 @@ void ProjectMapPage::initializePage()
 
     setSubTitle(tr("Select how many Map Tiles for project '%1' you will use. "
                    "For each Map Tile will be created file '%2_x_y.map'.").arg(projectName).arg(mapName));
+
+    wizard()->move(QApplication::desktop()->screen()->rect().center().x() - rect().center().x(), QApplication::desktop()->screen()->rect().height() / 2 - (wizard()->height() + rect().height()) / 2);
 }
 
 bool ProjectMapPage::validatePage()

@@ -65,7 +65,7 @@ public:
     SamplerPtr sampler() const                { return second; }
 };
 
-class QOpenGLFunctions_3_1;
+class QOpenGLFunctions_4_2_Core;
 
 class Material
 {
@@ -103,7 +103,7 @@ private:
     QMap<GLuint, GLuint>     m_FramebufferUnitConfigs;
     QMap<GLuint, QByteArray> m_FramebufferByteUnitUniforms;
 
-    QOpenGLFunctions_3_1* m_funcs;
+    QOpenGLFunctions_4_2_Core* m_funcs;
 };
 
 typedef QSharedPointer<Material> MaterialPtr;

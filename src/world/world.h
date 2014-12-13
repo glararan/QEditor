@@ -26,6 +26,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "brush.h"
 #include "texturemanager.h"
 #include "framebuffer.h"
+#include "skybox.h"
 
 #include "model/imodelmanager.h"
 #include "model/imodel.h"
@@ -111,6 +112,7 @@ public:
     void changeTerrain(float x, float z, float change);
     void flattenTerrain(float x, float z, float y, float change);
     void blurTerrain(float x, float z, float change);
+    void uniformTerrain(float x, float z, float height);
 
     void paintTerrain(float x, float z, float flow);
     void paintVertexShading(float x, float z, float flow, QColor& color);
@@ -122,17 +124,29 @@ public:
 
     void updateNewModel(bool shiftDown, bool leftButtonPressed);
 
+    void mapGenerationAccepted();
+    void mapGenerationRejected();
+
+    void heightmapWidgetAccepted();
+    void heightmapWidgetRejected();
+
+    void importHeightmap(QString path, float scale);
+    void exportHeightmap(QString path, float scale);
+
     void save();
 
     QOpenGLFunctions_4_2_Core* getGLFunctions()    { return GLfuncs; }
     Brush*                     getBrush()          { return brush; }
     Camera*                    getCamera()         { return camera; }
     ObjectBrush*               getObjectBrush()    { return objectBrush; }
+    Skybox*                    getSkybox()         { return skybox; }
     TextureManager*            getTextureManager() { return textureManager; }
     IModelManager*             getModelManager()   { return modelManager; }
     QOpenGLShaderProgram*      getModelShader()    { return modelShader; }
     QOpenGLShaderProgram*      getTerrainShader()  { return terrainShader; }
+    QOpenGLShaderProgram*      getCleftShader()    { return cleftShader; }
     QOpenGLShaderProgram*      getWaterShader()    { return waterShader; }
+    QOpenGLShaderProgram*      getSkyboxShader()   { return skyboxShader; }
 
     const ProjectFileData getProjectData() const          { return projectData; }
     const int             getAlphamapSize() const         { return alphaMapSize; }
@@ -148,12 +162,19 @@ public:
     void setFboSize(QSize size);
     void setCamera(Camera* cam);
     void setProjectData(ProjectFileData& data);
+    void setMapGenerationData(MapGenerationData& data);
+    void setBasicSettings(BasicSettingsData& data);
 
     void setTerrainMaximumHeight(float value);
     void setTerrainMaximumState(bool state);
 
     void setPaintMaximumAlpha(float value);
     void setPaintMaximumState(bool state);
+
+    void setHeightmapScale(float scale);
+
+    void setVertexShadingSwitch(bool state);
+    void setSkyboxSwitch(bool state);
 
     QVector3D getWorldCoordinates() const;
 
@@ -167,12 +188,19 @@ private:
     Camera*         camera;
     Brush*          brush;
     ObjectBrush*    objectBrush;
+    Skybox*         skybox;
     TextureManager* textureManager;
     IModelManager*  modelManager;
     MapChunk*       highlightChunk;
 
     QOpenGLFramebufferObject* fbo;
+    QOpenGLFramebufferObject* reflection_fbo;
+    QOpenGLFramebufferObject* refraction_fbo;
 
+    // reflection
+    QMatrix4x4 reflectionView;
+
+    //
     QSize viewportSize;
 
     bool tileLoaded(int x, int y) const;
@@ -189,6 +217,8 @@ private:
     float paintMaximumAlpha;
     bool  paintMaximumState;
 
+    bool shadingOff, skyboxOff;
+
     // Angle of sun. 0 is directly overhead, 90 to the East, -90 to the West
     float sunTheta;
 
@@ -201,12 +231,19 @@ private:
 
     QOpenGLShaderProgram* modelShader;
     QOpenGLShaderProgram* terrainShader;
+    QOpenGLShaderProgram* cleftShader;
     QOpenGLShaderProgram* waterShader;
+    QOpenGLShaderProgram* skyboxShader;
 
     ProjectFileData projectData;
 
     //
     void createNeighbours();
+    void updateNeighboursHeightmapData();
+
+    void drawSkybox(QMatrix4x4& modelMatrix);
+    void drawReflection();
+    void drawRefraction();
 
     // worldCoordinates
     QVector3D worldCoordinates;

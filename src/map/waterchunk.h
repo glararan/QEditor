@@ -42,8 +42,9 @@ public:
         float top, right, bottom, left;
     };
 
-    const QVector2D getBases() const       { return QVector2D(baseX, baseY); }
-    const BorderHeights getHeights() const { return heights; }
+    const QVector2D     getBases() const              { return QVector2D(baseX, baseY); }
+    const BorderHeights getHeights() const            { return heights; }
+    const GLuint&       getDisplaySubroutines() const { return displaySubroutines[world->displayMode()]; }
 
     float getHeight() const;
     float getHeight(int x, int y) const;
@@ -67,6 +68,8 @@ private:
     TexturePtr waterSurface;
     SamplerPtr waterSampler;
 
+    TexturePtr waterTexture;
+
     float* waterData;
 
     BorderHeights heights;
@@ -74,6 +77,8 @@ private:
     bool data;
 
     /// Chunk data
+    QVector<GLuint> displaySubroutines;
+
     int chunkX, chunkY;
 
     float baseX, baseY;

@@ -23,8 +23,13 @@ in worldVertex
     vec4 worldPosition;
     vec3 worldNormal;
     vec4 position;
+    vec4 genericPosition;
     vec3 normal;
     vec2 texCoords;
+    /*vec4 lightVertexPosition;
+    vec3 lightPosition;*/
+    vec3 reflection;
+    vec3 refraction;
 } In[];
 
 out wireFrameVertex
@@ -33,8 +38,13 @@ out wireFrameVertex
     vec4 worldPosition;
     vec3 worldNormal;
     vec4 position;
+    vec4 genericPosition;
     vec3 normal;
     vec2 texCoords;
+    /*vec4 lightVertexPosition;
+    vec3 lightPosition;*/
+    vec3 reflection;
+    vec3 refraction;
 } Out;
 
 uniform mat4 viewportMatrix;
@@ -64,36 +74,48 @@ void main()
     // the position calculated in the vertex shader.
 
     // Vertex 0 (a)
-    Out.edgeDistance  = vec3(ha, 0, 0);
-    Out.worldPosition = In[0].worldPosition;
-    Out.worldNormal   = In[0].worldNormal;
-    Out.position      = In[0].position;
-    Out.normal        = In[0].normal;
-    Out.texCoords     = In[0].texCoords;
+    Out.edgeDistance        = vec3(ha, 0, 0);
+    Out.worldPosition       = In[0].worldPosition;
+    Out.worldNormal         = In[0].worldNormal;
+    Out.position            = In[0].position;
+    Out.genericPosition     = In[0].genericPosition;
+    Out.normal              = In[0].normal;
+    Out.texCoords           = In[0].texCoords;
+    /*Out.lightVertexPosition = In[0].lightVertexPosition;
+    Out.lightPosition	    = In[0].lightPosition;*/
+    Out.reflection          = In[0].reflection;
 
     gl_Position = gl_in[0].gl_Position;
 
     EmitVertex();
 
     // Vertex 1 (b)
-    Out.edgeDistance  = vec3(0, hb, 0);
-    Out.worldPosition = In[1].worldPosition;
-    Out.worldNormal   = In[1].worldNormal;
-    Out.position      = In[1].position;
-    Out.normal        = In[1].normal;
-    Out.texCoords     = In[1].texCoords;
+    Out.edgeDistance        = vec3(0, hb, 0);
+    Out.worldPosition       = In[1].worldPosition;
+    Out.worldNormal         = In[1].worldNormal;
+    Out.position            = In[1].position;
+    Out.genericPosition     = In[1].genericPosition;
+    Out.normal              = In[1].normal;
+    Out.texCoords           = In[1].texCoords;
+    /*Out.lightVertexPosition = In[1].lightVertexPosition;
+    Out.lightPosition	    = In[1].lightPosition;*/
+    Out.reflection          = In[1].reflection;
 
     gl_Position = gl_in[1].gl_Position;
 
     EmitVertex();
 
     // Vertex 2 (c)
-    Out.edgeDistance  = vec3(0, 0, hc);
-    Out.worldPosition = In[2].worldPosition;
-    Out.worldNormal   = In[2].worldNormal;
-    Out.position      = In[2].position;
-    Out.normal        = In[2].normal;
-    Out.texCoords     = In[2].texCoords;
+    Out.edgeDistance        = vec3(0, 0, hc);
+    Out.worldPosition       = In[2].worldPosition;
+    Out.worldNormal         = In[2].worldNormal;
+    Out.position            = In[2].position;
+    Out.genericPosition     = In[2].genericPosition;
+    Out.normal              = In[2].normal;
+    Out.texCoords           = In[2].texCoords;
+    /*Out.lightVertexPosition = In[2].lightVertexPosition;
+    Out.lightPosition	    = In[2].lightPosition;*/
+    Out.reflection          = In[2].reflection;
 
     gl_Position = gl_in[2].gl_Position;
 

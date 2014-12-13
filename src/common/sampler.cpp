@@ -16,7 +16,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "sampler.h"
 
 #include <QOpenGLContext>
-#include <QOpenGLFunctions_3_3_Core>
+#include <QOpenGLFunctions_4_2_Core>
 
 Sampler::Sampler()
 {
@@ -32,7 +32,7 @@ void Sampler::create()
 
     Q_ASSERT(context);
 
-    m_funcs = context->versionFunctions<QOpenGLFunctions_3_3_Core>();
+    m_funcs = context->versionFunctions<QOpenGLFunctions_4_2_Core>();
     m_funcs->initializeOpenGLFunctions();
     m_funcs->glGenSamplers(1, &m_samplerId);
 }

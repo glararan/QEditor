@@ -19,7 +19,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <qopengl.h>
 #include <QSharedPointer>
 
-class QOpenGLFunctions_3_3_Core;
+class QOpenGLFunctions_4_2_Core;
 
 class Sampler
 {
@@ -47,7 +47,7 @@ public:
 
 private:
     GLuint m_samplerId;
-    QOpenGLFunctions_3_3_Core* m_funcs;
+    QOpenGLFunctions_4_2_Core* m_funcs;
 };
 
 typedef QSharedPointer<Sampler> SamplerPtr;

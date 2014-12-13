@@ -15,16 +15,18 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "itexturemanager.h"
 
-#include <qopenglfunctions_3_1.h>
+#include <QOpenGLFunctions_3_1>
 
 ITextureManager::ITextureManager()
 {
     m_funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_3_1>();
+
     if(!m_funcs)
     {
         qWarning() << "Requires multi-texturing support";
         exit(-1);
     }
+
     m_funcs->initializeOpenGLFunctions();
 
     sampler.create();
@@ -44,7 +46,9 @@ ITextureManager::~ITextureManager()
     for(int i = 0; i < values.size(); ++i)
     {
         Texture* texture = values.at(i);
+
         delete texture;
+
         texture = 0;
     }
 }
@@ -55,12 +59,14 @@ bool ITextureManager::loadTexture(QString texturePath)
         return false;
 
     QImage img;
+
     if(!img.load(texturePath))
         return false;
 
-    Texture *texture = new Texture(img.mirrored(), texturePath);
+    Texture* texture = new Texture(img.mirrored(), texturePath);
 
-    textures.insert(texturePath,texture);
+    textures.insert(texturePath, texture);
+
     return true;
 }
 
@@ -71,6 +77,7 @@ int ITextureManager::getIndex(QString texturePath)
         if(textures.keys().at(i) == texturePath)
             return i;
     }
+
     return -1;
 }
 
@@ -79,12 +86,12 @@ bool ITextureManager::hasTexture(QString texturePath)
     return textures.keys().contains(texturePath);
 }
 
-Sampler *ITextureManager::getSampler()
+Sampler* ITextureManager::getSampler()
 {
     return &sampler;
 }
 
-Texture *ITextureManager::getTexture(int index)
+Texture* ITextureManager::getTexture(int index)
 {
     return textures.values().at(index);
 }

@@ -15,6 +15,8 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #version 400
 
+#extension GL_EXT_texture_array : enable
+
 layout (location = 0) out vec4 fragColor;
 
 subroutine vec4 ShaderModelType();
@@ -30,10 +32,10 @@ uniform struct FogInfo
 
 uniform struct LineInfo
 {
-  float width;
+    float width;
 
-  vec4 color;
-  vec4 color2;
+    vec4 color;
+    vec4 color2;
 } line;
 
 uniform struct LightInfo
@@ -59,6 +61,11 @@ uniform sampler2D layer3Texture;
 uniform sampler2D layer1Alpha;
 uniform sampler2D layer2Alpha;
 uniform sampler2D layer3Alpha;
+
+//
+uniform sampler2DArray textures;
+uniform sampler2DArray depthTextures;
+uniform sampler2DArray alphamaps;
 
 uniform sampler2D vertexShading;
 
@@ -94,14 +101,18 @@ uniform float baseY = 0.0f;
 uniform int chunkX = 0;
 uniform int chunkY = 0;
 
-uniform int textureScaleOption = 0;
+uniform vec4 textureScaleOption = vec4(0, 0, 0, 0);
+uniform vec4 textureScaleFar    = vec4(0.4, 0.4, 0.4, 0.4);
+uniform vec4 textureScaleNear   = vec4(0.4, 0.4, 0.4, 0.4);
 
-uniform float textureScaleFar  = 0.4;
-uniform float textureScaleNear = 0.4;
+uniform vec3 automaticTexture      = vec3(0, 0, 0);
+uniform vec3 automaticTextureStart = vec3(0, 0, 0);
+uniform vec3 automaticTextureEnd   = vec3(0, 0, 0);
 
 uniform bool chunkLines = false;
 uniform bool highlight  = false;
 uniform bool selected   = false;
+uniform bool shadingOff = false;
 
 in wireFrameVertex
 {
@@ -209,20 +220,139 @@ void nearAndFarTexCoords(out vec2 uvNear, out vec2 uvFar)
 
     /// Not sure if AMD supports switch cases on all drivers => IFs
     // multiply near
-    if(textureScaleOption == 0 || textureScaleOption == 3)
-        uvNear *= textureScaleNear;
+    if(textureScaleOption.x == 0 || textureScaleOption.x == 3)
+        uvNear *= textureScaleNear.x;
 
     // multiply far
-    if(textureScaleOption == 0 || textureScaleOption == 2)
-        uvFar *= textureScaleFar;
+    if(textureScaleOption.x == 0 || textureScaleOption.x == 2)
+        uvFar *= textureScaleFar.x;
 
     // divide near
-    if(textureScaleOption == 1 || textureScaleOption == 2)
-        uvNear /= textureScaleNear;
+    if(textureScaleOption.x == 1 || textureScaleOption.x == 2)
+        uvNear /= textureScaleNear.x;
 
     // divide far
-    if(textureScaleOption == 1 || textureScaleOption == 3)
-        uvFar /= textureScaleFar;
+    if(textureScaleOption.x == 1 || textureScaleOption.x == 3)
+        uvFar /= textureScaleFar.x;
+}
+
+void nearAndFarTexCoords(out vec2 uvNear, out vec2 uvFar, int layer)
+{
+    uvNear = texCoords * 100.0;
+    uvFar  = texCoords * 10.0;
+
+    /// Not sure if AMD supports switch cases on all drivers => IFs
+    if(layer == 0)
+    {
+        // multiply near
+        if(textureScaleOption.x == 0 || textureScaleOption.x == 3)
+            uvNear *= textureScaleNear.x;
+
+        // multiply far
+        if(textureScaleOption.x == 0 || textureScaleOption.x == 2)
+            uvFar *= textureScaleFar.x;
+
+        // divide near
+        if(textureScaleOption.x == 1 || textureScaleOption.x == 2)
+            uvNear /= textureScaleNear.x;
+
+        // divide far
+        if(textureScaleOption.x == 1 || textureScaleOption.x == 3)
+            uvFar /= textureScaleFar.x;
+    }
+    else if(layer == 1)
+    {
+        // multiply near
+        if(textureScaleOption.y == 0 || textureScaleOption.y == 3)
+            uvNear *= textureScaleNear.y;
+
+        // multiply far
+        if(textureScaleOption.y == 0 || textureScaleOption.y == 2)
+            uvFar *= textureScaleFar.y;
+
+        // divide near
+        if(textureScaleOption.y == 1 || textureScaleOption.y == 2)
+            uvNear /= textureScaleNear.y;
+
+        // divide far
+        if(textureScaleOption.y == 1 || textureScaleOption.y == 3)
+            uvFar /= textureScaleFar.y;
+    }
+    else if(layer == 2)
+    {
+        // multiply near
+        if(textureScaleOption.z == 0 || textureScaleOption.z == 3)
+            uvNear *= textureScaleNear.z;
+
+        // multiply far
+        if(textureScaleOption.z == 0 || textureScaleOption.z == 2)
+            uvFar *= textureScaleFar.z;
+
+        // divide near
+        if(textureScaleOption.z == 1 || textureScaleOption.z == 2)
+            uvNear /= textureScaleNear.z;
+
+        // divide far
+        if(textureScaleOption.z == 1 || textureScaleOption.z == 3)
+            uvFar /= textureScaleFar.z;
+    }
+    else if(layer == 3)
+    {
+        // multiply near
+        if(textureScaleOption.w == 0 || textureScaleOption.w == 3)
+            uvNear *= textureScaleNear.w;
+
+        // multiply far
+        if(textureScaleOption.w == 0 || textureScaleOption.w == 2)
+            uvFar *= textureScaleFar.w;
+
+        // divide near
+        if(textureScaleOption.w == 1 || textureScaleOption.w == 2)
+            uvNear /= textureScaleNear.w;
+
+        // divide far
+        if(textureScaleOption.w == 1 || textureScaleOption.w == 3)
+            uvFar /= textureScaleFar.w;
+    }
+}
+
+// blend function
+vec4 blend(vec4 baseTexture, vec4 texture2, vec4 baseDepth, vec4 depth2, float alpha)
+{
+    float baseAlpha = 1.0f - alpha;
+
+    float ma = max(baseDepth.a + baseAlpha, depth2.a + alpha) - 0.2;
+
+    float b1 = max(baseDepth.a + baseAlpha - ma, 0);
+    float b2 = max(depth2.a    + alpha     - ma, 0);
+
+    return vec4((baseTexture.rgb * b1 + texture2.rgb * b2) / (b1 + b2), 1.0);
+}
+
+vec4 blend2(vec4 baseTexture, vec4 texture1, vec4 texture2, vec4 texture3, float alpha1, float alpha2, float alpha3, vec4 baseDepth, vec4 depth1, vec4 depth2, vec4 depth3)
+{
+    float baseAlpha = 1.0f - alpha2;//- alpha1 - alpha2 - alpha3;
+
+    float ma = max(baseDepth.a + baseAlpha, depth2.a + alpha2) - 0.2;
+
+    float b1 = max(baseDepth.a + baseAlpha - ma, 0);
+    float b2 = max(depth2.a    + alpha2    - ma, 0);
+
+    return vec4((baseTexture.rgb * b1 + texture2.rgb * b2) / (b1 + b2), 1.0);
+}
+
+vec4 blendAll(vec4 baseTexture, vec4 texture1, vec4 texture2, vec4 texture3, float alpha1, float alpha2, float alpha3, vec4 baseDepth, vec4 depth1, vec4 depth2, vec4 depth3)
+{
+    float baseAlpha = 1.0f - alpha1 - alpha2 - alpha3;
+
+    float ma1 = max(max(baseDepth.a + baseAlpha, depth1.a + alpha1), max(depth2.a + alpha2, depth3.a + alpha3)) - 0.2;
+
+    float b1 = max(baseDepth.a + baseAlpha - ma1, 0);
+    float b2 = max(depth1.a    + alpha1    - ma1, 0);
+    float b3 = max(depth2.a    + alpha2    - ma1, 0);
+    float b4 = max(depth3.a    + alpha3    - ma1, 0);
+
+    return normalize(vec4((baseTexture.rgb * b1 + texture1.rgb * b2 + texture2.rgb * b3 + texture3.rgb * b4) / (b1 + b2 + b3 + b4), 1.0));
 }
 
 // ShaderModelType Subroutines
@@ -344,48 +474,96 @@ vec4 shadeTexturedAndLit()
 {
     vec2 uvNear, uvFar;
 
-    nearAndFarTexCoords(uvNear, uvFar);
+    nearAndFarTexCoords(uvNear, uvFar, 0);
 
     float textureDistanceFactor = textureDistanceBlendFactor();
 
     /// Get base texture color
-    vec4 baseNear  = texture(baseTexture, uvNear);
-    vec4 baseFar   = texture(baseTexture, texCoords);
+    vec4 baseNear  = texture2DArray(textures, vec3(uvNear, 0));
+    vec4 baseFar   = texture2DArray(textures, vec3(texCoords, 0));
     vec4 baseColor = mix(baseNear, baseFar, textureDistanceFactor);
 
+    // Get base texture depth
+    vec4 baseDNear  = texture2DArray(depthTextures, vec3(uvNear, 0));
+    vec4 baseDFar   = texture2DArray(depthTextures, vec3(texCoords, 0));
+    vec4 baseDColor = mix(baseDNear, baseDFar, textureDistanceFactor);
+
+    nearAndFarTexCoords(uvNear, uvFar, 1);
+
     /// Get layer 1 texture color
-    vec4 layer1Near  = texture(layer1Texture, uvNear);
-    vec4 layer1Far   = texture(layer1Texture, uvFar);
+    vec4 layer1Near  = texture2DArray(textures, vec3(uvNear, 1));
+    vec4 layer1Far   = texture2DArray(textures, vec3(uvFar, 1));
     vec4 layer1Color = mix(layer1Near, layer1Far, textureDistanceFactor);
 
+    /// Get layer 1 texture depth
+    vec4 layer1DNear  = texture2DArray(depthTextures, vec3(uvNear, 1));
+    vec4 layer1DFar   = texture2DArray(depthTextures, vec3(uvFar, 1));
+    vec4 layer1DColor = mix(layer1DNear, layer1DFar, textureDistanceFactor);
+
+    nearAndFarTexCoords(uvNear, uvFar, 2);
+
     /// Get layer 2 texture color
-    vec4 layer2Near  = texture(layer2Texture, uvNear);
-    vec4 layer2Far   = texture(layer2Texture, uvFar);
+    vec4 layer2Near  = texture2DArray(textures, vec3(uvNear, 2));
+    vec4 layer2Far   = texture2DArray(textures, vec3(uvFar, 2));
     vec4 layer2Color = mix(layer2Near, layer2Far, textureDistanceFactor);
 
+    /// Get layer 2 texture depth
+    vec4 layer2DNear  = texture2DArray(depthTextures, vec3(uvNear, 2));
+    vec4 layer2DFar   = texture2DArray(depthTextures, vec3(uvFar, 2));
+    vec4 layer2DColor = mix(layer2DNear, layer2DFar, textureDistanceFactor);
+
+    nearAndFarTexCoords(uvNear, uvFar, 3);
+
     /// Get layer 3 texture color
-    vec4 layer3Near  = texture(layer3Texture, uvNear);
-    vec4 layer3Far   = texture(layer3Texture, 5.0 * uvFar);
+    vec4 layer3Near  = texture2DArray(textures, vec3(uvNear, 3));
+    vec4 layer3Far   = texture2DArray(textures, vec3(uvFar, 3));
     vec4 layer3Color = mix(layer3Near, layer3Far, textureDistanceFactor);
 
+    /// Get layer 1 texture depth
+    vec4 layer3DNear  = texture2DArray(depthTextures, vec3(uvNear, 3));
+    vec4 layer3DFar   = texture2DArray(depthTextures, vec3(uvFar, 3));
+    vec4 layer3DColor = mix(layer3DNear, layer3DFar, textureDistanceFactor);
+
     /// Blend layer 1 and base texture based upon alphamap
-    vec4 baseAndLayer1Color = mix(baseColor, layer1Color, texture(layer1Alpha, texCoords).r);
+    vec4 baseAndLayer1Color = vec4(0, 0, 0, 0);
+
+    if(automaticTexture.x == 0)
+        baseAndLayer1Color = mix(baseColor, layer1Color, texture(layer1Alpha, texCoords).r);
+    else
+        baseAndLayer1Color = mix(baseColor, layer1Color, smoothstep(automaticTextureStart.x, automaticTextureEnd.x, worldPosition.y));
 
     /// Blend baseAndLayer1Color and layer 1 based upon alphamap
-    vec4 layer1AndLayer2Color = mix(baseAndLayer1Color, layer2Color, texture(layer2Alpha, texCoords).r);
+    vec4 layer1AndLayer2Color = vec4(0, 0, 0, 0);
+
+    if(automaticTexture.y == 0)
+        layer1AndLayer2Color = mix(baseAndLayer1Color, layer2Color, texture(layer2Alpha, texCoords).r);
+    else
+        layer1AndLayer2Color = mix(baseAndLayer1Color, layer2Color, smoothstep(automaticTextureStart.y, automaticTextureEnd.y, worldPosition.y));
 
     /// Now blend with layer 3 based upon alphamap
-    vec4 diffuseColor = mix(layer1AndLayer2Color, layer3Color, texture(layer3Alpha, texCoords).r);
+    vec4 diffuseColor = vec4(0, 0, 0, 0);
+
+    if(automaticTexture.z == 0)
+        diffuseColor = mix(layer1AndLayer2Color, layer3Color, texture(layer3Alpha, texCoords).r);
+    else
+        diffuseColor = mix(layer1AndLayer2Color, layer3Color, smoothstep(automaticTextureStart.z, automaticTextureEnd.z, worldPosition.y));
+
+    if(automaticTexture == vec3(0, 0, 0))
+        diffuseColor = blendAll(baseColor, layer1Color, layer2Color, layer3Color, texture(layer1Alpha, texCoords).r, texture(layer2Alpha, texCoords).r, texture(layer3Alpha, texCoords).r,
+                                baseDColor, layer1DColor, layer2DColor, layer3DColor);
 
     // overlay effect
-    //diffuseColor += texture(vertexShading, texCoords);
+    if(!shadingOff)
+    {
+        //diffuseColor += texture(vertexShading, texCoords);
 
-    vec4 vertexShadingColor = texture(vertexShading, texCoords);
-    vertexShadingColor.rgb *= vertexShadingColor.a;
+        vec4 vertexShadingColor = texture(vertexShading, texCoords);
+        vertexShadingColor.rgb *= vertexShadingColor.a;
 
-    diffuseColor.rgb += vertexShadingColor.rgb;
+        diffuseColor.rgb += vertexShadingColor.rgb;
 
-    //diffuseColor.rgb = mix(diffuseColor.rgb, vertexShadingColor.rgb, vertexShadingColor.a);
+        //diffuseColor.rgb = mix(diffuseColor.rgb, vertexShadingColor.rgb, vertexShadingColor.a);
+    }
 
     // non overlay effect
     //diffuseColor = mix(diffuseColor, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
@@ -414,7 +592,7 @@ vec4 shadeHidden()
 
 vec4 ApplyCircle(vec4 colorIn, vec4 brushColor, vec2 distVec, float mouseDist, float maxRadius)
 {
-    if((maxRadius - mouseDist) > (maxRadius * 0.01f))
+    if((maxRadius - mouseDist) > (maxRadius * 0.01f) || mouseDist >= maxRadius)
         return colorIn;
 
     distVec = normalize(distVec);

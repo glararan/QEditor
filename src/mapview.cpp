@@ -18,14 +18,18 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "mathhelper.h"
 #include "qeditor.h"
 
+#include "ipipeline.h"
+
 #include <QKeyEvent>
+#include <QTabletEvent>
 #include <QOpenGLContext>
 
 MapView::MapView(World* mWorld, QWidget* parent)
-: QGLWidget(parent)
+: QOpenGLWidget(parent)
 , world(mWorld)
-, GLcontext(this->context()->contextHandle())
+, GLcontext(this->context())
 , camera(new Camera(this))
+, pipeline(new IPipeline())
 , m_v()
 , viewCenterFixed(false)
 , showCameraCurve(false)
@@ -48,10 +52,16 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , leftButtonPressed(false)
 , rightButtonPressed(false)
 , changedMouseMode(false)
+, tabletMode(app().getSetting("tabletMode", false).toBool())
+, tablet(false)
 , mouse_position(QPoint(0, 0))
+, mousePosZ(0)
+, prevMousePosZ(0)
 , terrain_pos()
+, object_move()
 , shaping_speed(1.0f)
 , shaping_brush_type(1)
+, uniform_height(0.0f)
 , texturing_flow(1.0f)
 , vertexShadingColor(QColor(255, 255, 255, 255))
 , shiftDown(false)
@@ -73,10 +83,10 @@ MapView::MapView(World* mWorld, QWidget* parent)
     format.setSamples(4);
     format.setProfile(QSurfaceFormat::CoreProfile);
 
-    GLcontext->setFormat(format);
-    GLcontext->create();
+    QSurfaceFormat::setDefaultFormat(format);
 
     modelMatrix.setToIdentity();
+    //pipeline->getModelMatrix().setToIdentity();
 
     // Initialize the camera position and orientation
     camera->setPosition(QVector3D(250.0f, 10.0f, 250.0f));
@@ -85,6 +95,9 @@ MapView::MapView(World* mWorld, QWidget* parent)
 
     // Assign camera to World
     world->setCamera(camera);
+
+    // tablet initial
+    wacom.pressure = 1.0f;
 
     AddStatusBarMessage("FPS: "             , &fps           , "int");
     AddStatusBarMessage("speed multiplier: ", &speed_mult    , "float");
@@ -101,6 +114,8 @@ MapView::MapView(World* mWorld, QWidget* parent)
 MapView::~MapView()
 {
     delete camera;
+
+    //delete GLcontext;
 }
 
 void MapView::timerEvent(QTimerEvent*)
@@ -110,15 +125,26 @@ void MapView::timerEvent(QTimerEvent*)
     const qreal time = m_Utime.elapsed() / 1000.0f;
 
     update(time);
-    updateGL();
+    //updateGL();
 }
 
 void MapView::initializeGL()
 {
     this->makeCurrent();
 
+    initializeOpenGLFunctions();
+
+    QSurfaceFormat format;
+    format.setDepthBufferSize(24);
+    format.setMajorVersion(4);
+    format.setMinorVersion(3);
+    format.setSamples(4);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+
+    this->context()->setFormat(format);
+
     // Initialize World
-    world->initialize(GLcontext, size());
+    world->initialize(/*GLcontext*/this->context(), size());
 
     // Initialize camera shader
     camera->initialize();
@@ -126,6 +152,8 @@ void MapView::initializeGL()
     // Enable depth testing
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+
+    glDepthFunc(GL_LEQUAL); // just testing new depth func
 
     glClearColor(0.65f, 0.77f, 1.0f, 1.0f);
 
@@ -137,6 +165,7 @@ void MapView::initializeGL()
 void MapView::update(float t)
 {
     modelMatrix.setToIdentity();
+    //pipeline->getModelMatrix().setToIdentity();
 
     // Store the time
     const float dt = t - time;
@@ -187,7 +216,7 @@ void MapView::update(float t)
     }
 
     // Dynamic zoom
-    if(dynamicZoom.count() > 0)
+    /*if(dynamicZoom.count() > 0)
     {
         QVector<int> posIndexs;
         QVector<int> negIndexs;
@@ -252,14 +281,18 @@ void MapView::update(float t)
             camera_zoom = 25.0f;
         else if(camera_zoom < 20.0f)
             camera_zoom = 20.0f;
-    }
+    }*/
 
     // Update the camera perspective projection if camera zoom is changed
     if(camera_zoom != camera->fieldOfView())
         camera->setPerspectiveProjection(camera_zoom, aspectRatio, nearPlane, farPlane);
 
+    // Move camera when playing
+    if(camera->playing())
+        camera->playSequence();
+
     // Update the mouse mode in MainWindow
-    if(!leftButtonPressed && !rightButtonPressed && (shiftDown || altDown || ctrlDown))
+    if(!leftButtonPressed && !rightButtonPressed && (shiftDown || altDown || ctrlDown) && tabletMode)
     {
         if(!changedMouseMode)
         {
@@ -334,11 +367,11 @@ void MapView::update(float t)
     }
 
     // Change terrain
-    if(leftButtonPressed)
+    if(leftButtonPressed || tablet)
     {
         const QVector3D& position(terrain_pos);
 
-        if(eMMode == ShiftOnly)
+        if((eMMode == ShiftOnly && tabletMode) || (eMMode == ShiftOnly && tablet) || shiftDown)
         {
             switch(eMode)
             {
@@ -347,11 +380,15 @@ void MapView::update(float t)
                         switch(eTerrain)
                         {
                             case Shaping:
-                                world->changeTerrain(position.x(), position.z(), 7.5f * dt * shaping_speed);
+                                world->changeTerrain(position.x(), position.z(), 7.5f * dt * shaping_speed * wacom.pressure);
                                 break;
 
                             case Smoothing:
-                                world->flattenTerrain(position.x(), position.z(), position.y(), pow(0.2f, dt) * shaping_speed);
+                                world->flattenTerrain(position.x(), position.z(), position.y(), pow(0.2f, dt) * shaping_speed * wacom.pressure);
+                                break;
+
+                            case Uniform:
+                                world->uniformTerrain(position.x(), position.z(), uniform_height);
                                 break;
                         }
                     }
@@ -359,18 +396,27 @@ void MapView::update(float t)
 
                 case Texturing:
                     {
-                        world->paintTerrain(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f));
+                        world->paintTerrain(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f) * wacom.pressure);
                     }
                     break;
 
                 case VertexShading:
                     {
-                        world->paintVertexShading(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f), vertexShadingColor);
+                        world->paintVertexShading(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f) * wacom.pressure, vertexShadingColor);
+                    }
+                    break;
+
+                case CameraCurves:
+                    {
+                        if(cameraCurvePoint.count() == 0) // select point
+                            emit getCameraCurvePoint(position);
+                        else // move with selected point
+                            setCameraCurvePointPosition(cameraCurvePoint, object_move);
                     }
                     break;
             }
         }
-        else if(eMMode == CtrlOnly)
+        else if((eMMode == CtrlOnly && tabletMode) || (eMMode == CtrlOnly && tablet) || ctrlDown)
         {
             switch(eMode)
             {
@@ -379,11 +425,15 @@ void MapView::update(float t)
                         switch(eTerrain)
                         {
                             case Shaping:
-                                world->changeTerrain(position.x(), position.z(), -7.5f * dt * shaping_speed);
+                                world->changeTerrain(position.x(), position.z(), -7.5f * dt * shaping_speed * wacom.pressure);
                                 break;
 
                             case Smoothing:
-                                world->blurTerrain(position.x(), position.z(), pow(0.2f, dt) * shaping_speed);
+                                world->blurTerrain(position.x(), position.z(), pow(0.2f, dt) * shaping_speed * wacom.pressure);
+                                break;
+
+                            case Uniform:
+                                world->uniformTerrain(position.x(), position.z(), uniform_height);
                                 break;
                         }
                     }
@@ -391,18 +441,21 @@ void MapView::update(float t)
 
                 case Texturing:
                     {
-                        world->paintTerrain(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f));
+                        world->paintTerrain(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f) * wacom.pressure);
                     }
                     break;
 
                 case VertexShading:
                     {
-                        world->paintVertexShading(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f), vertexShadingColor);
+                        world->paintVertexShading(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f) * wacom.pressure, vertexShadingColor);
                     }
                     break;
             }
         }
     }
+
+    if(object_move != QVector3D())
+        object_move = QVector3D();
 
     wasLeftButtonPressed = false;
 
@@ -423,14 +476,21 @@ void MapView::update(float t)
                 {
                     if(sbDataTypeList[i] == "bool")
                         sbData = *(bool*)sbDataList.at(i);
+#ifdef Q_OS_WIN32
                     else if(sbDataTypeList[i] == "byte")
                         sbData = *(byte*)sbDataList.at(i);
+#endif
                     else if(sbDataTypeList[i] == "char")
                         sbData = *(char*)sbDataList.at(i);
                     else if(sbDataTypeList[i] == "int")
                         sbData = *(int*)sbDataList.at(i);
+#ifdef Q_OS_WIN32
                     else if(sbDataTypeList[i] == "long")
                         sbData = *(long*)sbDataList.at(i);
+#elif defined(Q_OS_LINUX)
+                    else if(sbDataTypeList[i] == "long")
+                        sbData = *(qlonglong*)sbDataList.at(i);
+#endif
                     else if(sbDataTypeList[i] == "float")
                         sbData = *(float*)sbDataList.at(i);
                     else if(sbDataTypeList[i] == "double")
@@ -472,15 +532,15 @@ void MapView::paintGL()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        if(showCameraCurve)
+            camera->drawCurve(modelMatrix);
+
         if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
         else if(eMode == Object && eModel == Insertion)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
         else
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
-
-        if(showCameraCurve)
-            camera->drawCurve(modelMatrix);
     }
     else
     {
@@ -490,15 +550,15 @@ void MapView::paintGL()
 
         glFrustum(0.0 - 1.0, width() - 1.0, -0.75, 0.75, 0.65, 4.0);
 
+        if(showCameraCurve)
+            camera->drawCurve(modelMatrix);
+
         if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
         else if(eMode == Object && eModel == Insertion)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
         else
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
-
-        if(showCameraCurve)
-            camera->drawCurve(modelMatrix);
 
         glDrawBuffer(GL_BACK_RIGHT);
 
@@ -506,15 +566,15 @@ void MapView::paintGL()
 
         glFrustum(0.0 + 1.0, width() + 1.0, -0.75, 0.75, 0.65, 4.0);
 
+        if(showCameraCurve)
+            camera->drawCurve(modelMatrix);
+
         if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
         else if(eMode == Object && eModel == Insertion)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
         else
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
-
-        if(showCameraCurve)
-            camera->drawCurve(modelMatrix);
     }
 }
 
@@ -535,6 +595,9 @@ void MapView::resizeGL(int w, int h)
     // Update World FBO
     world->setFboSize(QSize(w, h));
 
+    // Update pipeline
+    //pipeline->resize(w, h);
+
     // Update the viewport matrix
     float w2 = w / 2.0f;
     float h2 = h / 2.0f;
@@ -549,7 +612,7 @@ void MapView::resizeGL(int w, int h)
     shader->bind();
 
     // We need the viewport size to calculate tessellation levels and the geometry shader also needs the viewport matrix
-    shader->setUniformValue("viewportSize", viewportSize);
+    shader->setUniformValue("viewportSize",   viewportSize);
     shader->setUniformValue("viewportMatrix", viewportMatrix);
 }
 
@@ -605,6 +668,7 @@ void MapView::setModeEditing(int option)
         case Texturing:
         case VertexShading:
         case Object:
+        case CameraCurves:
             eMode = (eEditingMode)option;
             break;
 
@@ -644,6 +708,18 @@ void MapView::resetCamera()
 void MapView::lockCamera(bool lock)
 {
     camera->setLock(lock);
+}
+
+void MapView::setCameraCurvePoint(QVector<QTableWidgetItem*>& item)
+{
+    cameraCurvePoint = item;
+}
+
+void MapView::setCameraCurvePointPosition(QVector<QTableWidgetItem*>& item, const QVector3D& position)
+{
+    item.at(0)->setData(Qt::DisplayRole, item.at(0)->data(Qt::DisplayRole).toFloat() + position.x()); // X
+    item.at(1)->setData(Qt::DisplayRole, item.at(1)->data(Qt::DisplayRole).toFloat() + position.z()); // Y
+    item.at(2)->setData(Qt::DisplayRole, item.at(2)->data(Qt::DisplayRole).toFloat() + position.y()); // Z
 }
 
 void MapView::setBrushSpeed(double speed)
@@ -708,9 +784,19 @@ void MapView::setCameraShowCurve(bool show)
     showCameraCurve = show;
 }
 
+void MapView::setCameraRepeatPlay(bool repeat)
+{
+    camera->setPlayRepeat(repeat);
+}
+
 void MapView::setTerrainMaximumHeight(double value)
 {
     world->setTerrainMaximumHeight(MathHelper::toFloat(value));
+}
+
+void MapView::setTerrainUniformHeight(double value)
+{
+    uniform_height = MathHelper::toFloat(value);
 }
 
 void MapView::setPaintMaximumAlpha(double value)
@@ -739,7 +825,7 @@ void MapView::setBrushColor(QColor* color, bool outer)
             {
                 world->getBrush()->setInnerColor(*color);
 
-                app().setSetting("outerBrushColor", *color);
+                app().setSetting("innerBrushColor", *color);
             }
             break;
     }
@@ -810,6 +896,13 @@ void MapView::setTextureScaleNear(float value)
     QOpenGLShaderProgram* shader = world->getTerrainShader();
     shader->bind();
     shader->setUniformValue("textureScaleNear", value);
+}
+
+void MapView::setTabletMode(bool enable)
+{
+    app().setSetting("tabletMode", enable);
+
+    tabletMode = enable;
 }
 
 void MapView::setTurnChunkLines(bool on)
@@ -1003,7 +1096,7 @@ void MapView::keyPressEvent(QKeyEvent* e)
             break;
 
         default:
-            QGLWidget::keyPressEvent(e);
+            QOpenGLWidget::keyPressEvent(e);
     }
 }
 
@@ -1067,7 +1160,7 @@ void MapView::keyReleaseEvent(QKeyEvent* e)
             break;
 
         default:
-            QGLWidget::keyReleaseEvent(e);
+            QOpenGLWidget::keyReleaseEvent(e);
     }
 }
 
@@ -1087,7 +1180,7 @@ void MapView::mousePressEvent(QMouseEvent* e)
 
     mousePos = prevMousePos = e->pos();
 
-    QGLWidget::mousePressEvent(e);
+    QOpenGLWidget::mousePressEvent(e);
 }
 
 void MapView::mouseReleaseEvent(QMouseEvent* e)
@@ -1098,6 +1191,9 @@ void MapView::mouseReleaseEvent(QMouseEvent* e)
 
         if(m_v.z() > 0.0f)
             setForwardSpeed(0.0f);
+
+        if(cameraCurvePoint.count() != 0)
+            cameraCurvePoint.clear();
     }
 
     if(e->button() == Qt::RightButton)
@@ -1108,15 +1204,17 @@ void MapView::mouseReleaseEvent(QMouseEvent* e)
             setForwardSpeed(0.0f);
     }
 
-    QGLWidget::mouseReleaseEvent(e);
+    QOpenGLWidget::mouseReleaseEvent(e);
 }
 
 void MapView::mouseMoveEvent(QMouseEvent* e)
 {
-    mousePos = e->pos();
+    mousePos  = e->pos();
+    mousePosZ = terrain_pos.z();
 
     float dx =  0.4f * (mousePos.x() - prevMousePos.x());
     float dy = -0.4f * (mousePos.y() - prevMousePos.y());
+    float dz =  0.4f * (mousePosZ    - prevMousePosZ);
 
     if((leftButtonPressed || rightButtonPressed) && !shiftDown && !altDown && !ctrlDown && !camera->lock())
     {
@@ -1134,11 +1232,77 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
             updateBrushInnerRadius(dx);
     }
 
-    prevMousePos = mousePos;
+    prevMousePos  = mousePos;
+    prevMousePosZ = mousePosZ;
+    object_move   = QVector3D(dx / 40.0f, dy / 40.0f, dz / 40.0f);
 
     mouse_position = this->mapFromGlobal(QCursor::pos());
 
-    QGLWidget::mouseMoveEvent(e);
+    QOpenGLWidget::mouseMoveEvent(e);
+}
+
+void MapView::tabletEvent(QTabletEvent* e)
+{
+    if(e->device() != QTabletEvent::Stylus)
+        return;
+
+    if(e->type() == QEvent::TabletPress)
+    {
+        tablet = true;
+
+        wacom.device  = e->device();
+        wacom.pointer = e->pointerType();
+    }
+    else if(e->type() == QEvent::TabletRelease)
+    {
+        tablet = false;
+
+        wacom.pressure = 1.0f;
+    }
+    else if(e->type() == QEvent::TabletMove)
+    {
+        wacom.pressure           = e->pressure();
+        wacom.rotation           = e->rotation();
+        wacom.tangentialPressure = e->tangentialPressure();
+        wacom.x                  = e->x();
+        wacom.y                  = e->y();
+        wacom.xTilt              = e->xTilt();
+        wacom.yTilt              = e->yTilt();
+
+        mousePos  = e->pos();
+        mousePosZ = terrain_pos.z();
+
+        float dx =  0.4f * (mousePos.x() - prevMousePos.x());
+        float dy = -0.4f * (mousePos.y() - prevMousePos.y());
+        float dz =  0.4f * (mousePosZ    - prevMousePosZ);
+
+        if(e->pointerType() == QTabletEvent::Cursor)
+        {
+            if(rightButtonPressed && !shiftDown && !altDown && !ctrlDown && !camera->lock())
+            {
+                pan(dx);
+                tilt(dy);
+            }
+            else if(altDown)
+            {
+                if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+                    updateBrushOuterRadius(dx);
+            }
+            else if(rightButtonPressed && altDown)
+            {
+                if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+                    updateBrushInnerRadius(dx);
+            }
+        }
+
+        prevMousePos  = mousePos;
+        prevMousePosZ = mousePosZ;
+        object_move   = QVector3D(dx / 40.0f, dy / 40.0f, dz / 40.0f);
+
+        mouse_position = this->mapFromGlobal(QCursor::pos());
+    }
+
+    QOpenGLWidget::tabletEvent(e);
 }
 
 void MapView::wheelEvent(QWheelEvent* e)
@@ -1146,7 +1310,7 @@ void MapView::wheelEvent(QWheelEvent* e)
     if(!shiftDown && !altDown && !ctrlDown)
         dynamicZoom.push_back(-(MathHelper::toFloat(e->delta()) / 240));
 
-    QGLWidget::wheelEvent(e);
+    QOpenGLWidget::wheelEvent(e);
 }
 
 void MapView::focusInEvent(QFocusEvent* e)
@@ -1162,7 +1326,7 @@ void MapView::focusInEvent(QFocusEvent* e)
     setSideSpeed(0.0f);
     setVerticalSpeed(0.0f);
 
-    QGLWidget::focusInEvent(e);
+    QOpenGLWidget::focusInEvent(e);
 }
 
 void MapView::focusOutEvent(QFocusEvent* e)
@@ -1178,5 +1342,5 @@ void MapView::focusOutEvent(QFocusEvent* e)
     setSideSpeed(0.0f);
     setVerticalSpeed(0.0f);
 
-    QGLWidget::focusOutEvent(e);
+    QOpenGLWidget::focusOutEvent(e);
 }

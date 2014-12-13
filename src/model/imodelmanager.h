@@ -17,17 +17,19 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #define IMODELMANAGER_H
 
 #include <QtCore>
+
 #include "imodelinterface.h"
 #include "itexturemanager.h"
 
 struct IModelData
 {
-    IModelData(QString category, QImage image, IModelInterface *modelInterface)
+    IModelData(QString Category, QImage Image, IModelInterface* ModelInterface)
     {
-        this->category = category;
-        this->image = image;
-        this->modelInterface = modelInterface;
+        category       = Category;
+        image          = Image;
+        modelInterface = ModelInterface;
     }
+
     ~IModelData()
     {
         delete modelInterface;
@@ -35,7 +37,8 @@ struct IModelData
 
     QString category;
     QImage image;
-    IModelInterface *modelInterface;
+
+    IModelInterface* modelInterface;
 };
 
 class IModelManager
@@ -43,22 +46,30 @@ class IModelManager
 public:
     IModelManager();
     ~IModelManager();
+
+    bool isModelSelected() { return current >= 0; }
+
     bool loadModel(QString category, QString file);
     void loadModels(QString modelsDirectory);
+
     QVector<QString> getCategories();
     QVector<QString> getNames();
     QVector<QString> getNames(QString category);
+
     int getIndex(QString modelPath);
-    IModelData *getModel(int index);
-    ITextureManager *getTextureManager();
     int getCurrentModel() { return current; }
+
+    IModelData*      getModel(int index);
+    ITextureManager* getTextureManager();
+
     void setCurrentModel(int index) { current = index; }
-    bool isModelSelected() { return current >= 0; }
 
 private:
+    ITextureManager* textureManager;
+
     QMap<QString, IModelData*> data;
-    QVector<QString> categories;
-    ITextureManager *textureManager;
+    QVector<QString>           categories;
+
     int current;
 };
 

@@ -18,6 +18,8 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "beziercurve.h"
 
+#include <QtAlgorithms>
+
 Camera::Camera(QObject* parent) : QObject(parent), d_ptr(new CameraPrivate(this))
 {
 }
@@ -35,15 +37,17 @@ void Camera::drawCurve(QMatrix4x4 modelMatrix)
 
     QMatrix4x4 modelViewProject = projectionMatrix() * viewMatrix() * modelMatrix;
 
-    foreach(BezierCurve curve, d->curves)
-    {
-        d->curveShader->setUniformValue("detail", 1000);
-        d->curveShader->setUniformValue("mvp",    modelViewProject);
-        d->curveShader->setUniformValue("point1", curve.points[1]);
-        d->curveShader->setUniformValue("point2", curve.points[2]);
-        d->curveShader->setUniformValue("point3", curve.points[3]);
-        d->curveShader->setUniformValue("point4", curve.points[4]);
-    }
+    d->curveShader->bind();
+    d->curveShader->setUniformValue("mvp", modelViewProject);
+
+    foreach(BezierCurve* curve, d->curves)
+        curve->drawCurve(d->curveShader);
+
+    d->curvePointsShader->bind();
+    d->curvePointsShader->setUniformValue("mvp", modelViewProject);
+
+    foreach(BezierCurve* curve, d->curves)
+        curve->drawControlPoints(d->curvePointsShader);
 }
 
 Camera::ProjectionType Camera::projectionType() const
@@ -315,21 +319,89 @@ bool Camera::lock() const
     return d->locked;
 }
 
-void Camera::setCurves(const QVector<BezierCurve>& BCurves)
+void Camera::setPlayRepeat(const bool& repeat)
+{
+    Q_D(Camera);
+
+    d->repeatPlay = repeat;
+}
+
+bool Camera::playRepeat() const
+{
+    Q_D(const Camera);
+
+    return d->repeatPlay;
+}
+
+void Camera::setCurves(const QVector<BezierCurve*>& BCurves)
 {
     Q_D(Camera);
 
     d->curves = BCurves;
 }
 
-void Camera::play()
+void Camera::deleteCurves()
 {
+    Q_D(Camera);
 
+    qDeleteAll(d->curves); // delete BezierCurves pointers, thanks to QtAlgorithms
+
+    d->curves.clear();
 }
 
-void Camera::stop()
+void Camera::play(const int& secs)
 {
+    Q_D(Camera);
 
+    d->play_ticks = MathHelper::toInt(floor(MathHelper::toFloat(secs) * 1000.0f / 16.0f));
+    d->play_tick  = 0;
+    d->play       = true;
+    d->locked     = true;
+}
+
+void Camera::playSequence()
+{
+    Q_D(Camera);
+
+    int curveIndex = MathHelper::toInt(floor(MathHelper::toFloat(d->play_tick) / MathHelper::toFloat(d->play_ticks / d->curves.count())));
+    int playTicks  = d->play_ticks / d->curves.count();
+    int playTick   = d->play_tick - (playTicks * curveIndex);
+
+    if(curveIndex >= d->curves.count())
+        stop();
+
+    BezierCurve* curve = d->curves.at(curveIndex);
+
+    ++d->play_tick;
+
+    float t = 1.0f / playTicks * playTick;
+
+    setPosition(curve->calculatePoint(t));
+    setViewCenter(curve->calculateViewCenter(t));
+    setUpVector(curve->calculateUpVector(t));
+
+    if(d->play_tick == d->play_ticks)
+        stop(false);
+}
+
+void Camera::stop(bool override)
+{
+    Q_D(Camera);
+
+    if(!d->repeatPlay || override)
+    {
+        d->play   = false;
+        d->locked = false;
+    }
+    else if(d->repeatPlay && !override)
+        d->play_tick = 0;
+}
+
+bool Camera::playing() const
+{
+    Q_D(const Camera);
+
+    return d->play;
 }
 
 QMatrix4x4 Camera::viewMatrix() const
@@ -409,7 +481,7 @@ void Camera::translate(const QVector3D& vLocal, CameraTranslationOption option)
     d->m_viewMatrixDirty = true;
 }
 
-void Camera::translateWorld(const QVector3D& vWorld , CameraTranslationOption option)
+void Camera::translateWorld(const QVector3D& vWorld, CameraTranslationOption option)
 {
     Q_D(Camera);
 
@@ -541,6 +613,20 @@ void Camera::resetRotation()
     Cpos.setZ(Cpos.z() - 1.0f);
 
     setViewCenter(Cpos);
+}
+
+void Camera::invertY(const float& terrainHeight)
+{
+    Q_D(Camera);
+
+    float heightDiff = terrainHeight - d->m_position.y() * 2;
+
+    setPosition(QVector3D(d->m_position.x(), d->m_position.y() + heightDiff, d->m_position.z()));
+    setViewCenter(QVector3D(d->m_viewCenter.x(), d->m_viewCenter.y() + heightDiff, d->m_viewCenter.z()));
+
+    QVector2D direction = MathHelper::getDirections(d->m_viewMatrix);
+
+    tilt(-(direction.y() * 2));
 }
 
 void Camera::moveToPosition(const QVector3D& position)

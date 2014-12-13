@@ -60,7 +60,7 @@ void TeleportWidget::bookmarksAdd()
 
         if(i != 0)
         {
-            if(checkCoords(list[i]))
+            if(!checkCoords(list[i]))
             {
                 QMessageBox msg;
                 msg.setDefaultButton(QMessageBox::Ok);
@@ -75,14 +75,15 @@ void TeleportWidget::bookmarksAdd()
 
     QVector3D location = QVector3D(ui->bookmarksX->text().toFloat(), ui->bookmarksZ->text().toFloat(), ui->bookmarksY->text().toFloat());
 
-    writeToBookmarks(ui->bookmarksLocation->text(), location);
+    if(writeToBookmarks(ui->bookmarksLocation->text(), location))
+    {
+        ui->bookmarksList->addItem(ui->bookmarksLocation->text(), location);
 
-    ui->bookmarksList->addItem(ui->bookmarksLocation->text(), location);
-
-    ui->bookmarksLocation->text().clear();
-    ui->bookmarksX->text().clear();
-    ui->bookmarksY->text().clear();
-    ui->bookmarksZ->text().clear();
+        ui->bookmarksLocation->clear();
+        ui->bookmarksX->clear();
+        ui->bookmarksY->clear();
+        ui->bookmarksZ->clear();
+    }
 }
 
 void TeleportWidget::bookmarksGo()
@@ -201,10 +202,10 @@ void TeleportWidget::bookmarksTeleport()
         }
     }
 
-    ui->bookmarksLocation->text().clear();
-    ui->bookmarksX->text().clear();
-    ui->bookmarksY->text().clear();
-    ui->bookmarksZ->text().clear();
+    ui->bookmarksLocation->clear();
+    ui->bookmarksX->clear();
+    ui->bookmarksY->clear();
+    ui->bookmarksZ->clear();
 
     emit TeleportTo(&location);
 }
@@ -222,7 +223,7 @@ bool TeleportWidget::checkCoords(QString coords)
         {
             if(coords[i] == allowedChars[j])
             {
-                if(allowedChars[j] == "." || allowedChars[j] == ",")
+                if(allowedChars[j] == '.' || allowedChars[j] == ',')
                 {
                     if(dotComma)
                     {
@@ -251,8 +252,11 @@ bool TeleportWidget::checkCoords(QString coords)
     return true;
 }
 
-void TeleportWidget::writeToBookmarks(QString name, QVector3D location)
+bool TeleportWidget::writeToBookmarks(QString name, QVector3D location)
 {
+    if(location == QVector3D())
+        location = QVector3D(0.001f, 0.001f, 0.001f);
+
     if(readFromBookmarks(name, location))
     {
         QMessageBox msg;
@@ -261,7 +265,7 @@ void TeleportWidget::writeToBookmarks(QString name, QVector3D location)
         msg.setWindowTitle("Error");
         msg.exec();
 
-        return;
+        return false;
     }
 
     while(name.endsWith(' '))
@@ -278,9 +282,12 @@ void TeleportWidget::writeToBookmarks(QString name, QVector3D location)
     file.open(QIODevice::WriteOnly | QIODevice::Append);
 
     QTextStream tStream(&file);
-    tStream << name << " " << location.x() << " " << location.z() << " " << location.y() << "\n";
+    tStream << name << "\t" << location.x() << "\t" << location.z() << "\t" << location.y() << "\n";
 
+    file.flush();
     file.close();
+
+    return true;
 }
 
 bool TeleportWidget::readFromBookmarks(QString search, QVector3D& location)
@@ -301,7 +308,7 @@ bool TeleportWidget::readFromBookmarks(QString search, QVector3D& location)
     {
         foreach(QString line, bookmarksLines)
         {
-            QStringList fields = line.split(" ");
+            QStringList fields = line.split("\t");
 
             if(line.length() <= 0 || fields.count() != 4)
                 continue;
@@ -341,7 +348,7 @@ void TeleportWidget::loadBookmarks()
         {
             foreach(QString line, bookmarksLines)
             {
-                QStringList fields = line.split(" ");
+                QStringList fields = line.split("\t");
 
                 if(line.length() <= 0 || fields.count() != 4)
                     continue;

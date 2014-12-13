@@ -67,6 +67,7 @@ private slots:
     void moveLayerDown();
     void deleteLayer();
     void loadAllTextures();
+    void addTextures();
 
     void handleLayerGUI(QTableWidgetItem* item);
 

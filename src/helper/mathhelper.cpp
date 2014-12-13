@@ -18,6 +18,11 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "beziercurve.h"
 
 #include <QVector3D>
+#include <QVector2D>
+#include <QMatrix4x4>
+#include <QTime>
+
+#include <limits.h>
 
 MathHelper::MathHelper()
 {
@@ -48,6 +53,11 @@ const int MathHelper::toInt(const long value)
     return static_cast<int>(value);
 }
 
+const int MathHelper::toInt(const unsigned int value)
+{
+    return static_cast<int>(value);
+}
+
 const double MathHelper::toDouble(const int value)
 {
     return static_cast<double>(value);
@@ -59,6 +69,11 @@ const double MathHelper::toDouble(const float value)
 }
 
 const double MathHelper::toDouble(const long value)
+{
+    return static_cast<double>(value);
+}
+
+const double MathHelper::toDouble(const unsigned int value)
 {
     return static_cast<double>(value);
 }
@@ -78,6 +93,11 @@ const float MathHelper::toFloat(const long value)
     return static_cast<float>(value);
 }
 
+const float MathHelper::toFloat(const unsigned int value)
+{
+    return static_cast<float>(value);
+}
+
 const unsigned char MathHelper::toUChar(const int value)
 {
     return static_cast<unsigned char>(value);
@@ -89,6 +109,11 @@ const unsigned char MathHelper::toUChar(const double value)
 }
 
 const unsigned char MathHelper::toUChar(const float value)
+{
+    return static_cast<unsigned char>(value);
+}
+
+const unsigned char MathHelper::toUChar(const unsigned int value)
 {
     return static_cast<unsigned char>(value);
 }
@@ -106,6 +131,32 @@ const QColor MathHelper::toColor(const QVector4D& color)
 const QVector4D MathHelper::toVector4D(const QColor& color)
 {
     return QVector4D(toFloat(color.red()) / 255.0f, toFloat(color.green()) / 255.0f, toFloat(color.blue()) / 255.0f, toFloat(color.alpha()) / 255.0f);
+}
+
+const QVector2D MathHelper::getDirections(const QMatrix4x4& matrix)
+{
+    double sinPitch, cosPitch, sinRoll, cosRoll, sinYaw, cosYaw;
+
+    sinPitch = -matrix.row(0).z();
+    cosPitch = sqrt(1 - sinPitch * sinPitch);
+
+    if(abs(cosPitch) > std::numeric_limits<double>::epsilon())
+    {
+        sinRoll = matrix.row(1).z() / cosPitch;
+        cosRoll = matrix.row(2).z() / cosPitch;
+        sinYaw  = matrix.row(0).y() / cosPitch;
+        cosYaw  = matrix.row(0).x() / cosPitch;
+    }
+    else
+    {
+        sinRoll = -matrix.row(1).z();
+        cosRoll =  matrix.row(1).y();
+        sinYaw  = 0;
+        cosYaw  = 1;
+    }
+
+    // pan, tilt
+    return QVector2D(atan2(sinPitch, cosPitch) * 180.0 / M_PI, atan2(sinRoll, cosRoll) * 180.0 / M_PI);
 }
 
 const float MathHelper::closerTo(const unsigned char value1, const qreal value2, const float formula)
@@ -152,6 +203,39 @@ const int MathHelper::round(const int number, const int multiple)
     return number + multiple - remainder;*/
 
     return ((number + multiple - 1) / multiple) * multiple;
+}
+
+const int MathHelper::random(const int minimum, int maximum, const bool withMaximum)
+{
+    if(!withMaximum)
+        maximum--;
+
+    return qrand() % ((maximum + 1) - minimum) + minimum;
+}
+
+const unsigned int MathHelper::randomUint(const unsigned int minimum, unsigned int maximum, const bool withMaximum)
+{
+    if(!withMaximum)
+        maximum--;
+
+    return qrand() % ((maximum + 1) - minimum) + minimum;
+}
+
+const double MathHelper::randomDouble(const double minimum, double maximum)
+{
+    double d = toDouble(qrand()) / RAND_MAX;
+
+    return minimum + d * (maximum - minimum);
+}
+
+const double MathHelper::randomDouble()
+{
+    return randomDouble(0.0, 1.0);
+}
+
+const float MathHelper::clamp(float value, float min, float max)
+{
+    return qMax(min, qMin(value, max));
 }
 
 const float MathHelper::lerp(const float v0, const float v1, const float t)
@@ -210,4 +294,14 @@ void MathHelper::addKineticEnergy(float& step, float dt, float weight)
 const bool MathHelper::isNaN(const float value)
 {
     return value != value;
+}
+
+void MathHelper::setTimeSeed()
+{
+    qsrand((uint)QTime::currentTime().msec());
+}
+
+void MathHelper::setRandomSeed(int seed)
+{
+    qsrand(seed);
 }

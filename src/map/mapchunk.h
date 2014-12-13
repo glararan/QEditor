@@ -46,9 +46,15 @@ public:
     bool changeTerrain(float x , float z, float change);
     bool flattenTerrain(float x, float z, float y, float change);
     bool blurTerrain(float x   , float z, float change);
+    bool uniformTerrain(float x, float z, float height);
 
     bool paintTerrain(float x      , float z, float flow, TexturePtr texture);
     bool paintVertexShading(float x, float z, float flow, QColor& color);
+
+    void updateNeighboursHeightmapData();
+
+    void generation(bool accepted);
+    void heightmapSettings(bool accepted);
 
     /// Get
     const float getHeight(const float& x, const float& y) const;
@@ -58,6 +64,14 @@ public:
     const float getMapData(const int& index) const;
 
     const int chunkIndex() const;
+
+    const int   getTextureScaleOption(int layer) const;
+    const float getTextureScaleFar(int layer) const;
+    const float getTextureScaleNear(int layer) const;
+
+    const bool  getAutomaticTexture(int layer) const;
+    const float getAutomaticTextureStart(int layer) const;
+    const float getAutomaticTextureEnd(int layer) const;
 
     const QVector2D  getBases() const              { return QVector2D(baseX, baseY); }
     const GLuint&    getDisplaySubroutines() const { return displaySubroutines[world->displayMode()]; }
@@ -90,6 +104,19 @@ public:
     void setHighlight(bool on);
     void setSelected(bool on);
 
+    void setHeightmap(float* data);
+    void setGeneratedHeightmap(float* tileData);
+
+    void setHeightmapScale(float scale);
+
+    void setTextureScaleOption(int option, int layer);
+    void setTextureScaleNear(double value, int layer);
+    void setTextureScaleFar(double value, int layer);
+
+    void setAutomaticTexture(bool enabled, int layer);
+    void setAutomaticTextureStart(double value, int layer);
+    void setAutomaticTextureEnd(double value, int layer);
+
     /// ...
     void save(MCNK* chunk);
 
@@ -107,15 +134,31 @@ private:
     SamplerPtr terrainSampler;
 
     float* mapData;
+    float* mapDataCache;
 
-    /// Textures, Alphamaps and Vertex Shading
+    /// Textures, Alphamaps, Vertex Shading and Texture scale
     TexturePtr textures[MAX_TEXTURES];
+    TexturePtr depthTextures[MAX_TEXTURES];
     TexturePtr alphaMaps[ALPHAMAPS];
+
+    TexturePtr textureArray;
+    TexturePtr depthTextureArray;
+    TexturePtr alphaArray;
 
     TexturePtr vertexShadingMap;
 
     unsigned char* alphaMapsData[ALPHAMAPS];
     unsigned char* vertexShadingData;
+
+    float textureScaleNear[MAX_TEXTURES];
+    float textureScaleFar[MAX_TEXTURES];
+
+    TextureScaleOption textureScaleOption[MAX_TEXTURES];
+
+    bool automaticTexture[MAX_TEXTURES - 1];
+
+    float automaticTextureStart[MAX_TEXTURES - 1];
+    float automaticTextureEnd[MAX_TEXTURES - 1];
 
     /// Chunk data
     QVector<GLuint> displaySubroutines;
@@ -127,6 +170,8 @@ private:
 
     bool highlight;
     bool selected;
+    bool mapGeneration;
+    bool mapScale;
 
     // Neighbour
     MapChunk* bottomNeighbour;
@@ -137,6 +182,9 @@ private:
     float HMapSizeToHoriz(int position);
 
     void initialize();
+
+    friend class MapTile;
+    friend class MapCleft;
 };
 
 #endif // MAPCHUNK_H

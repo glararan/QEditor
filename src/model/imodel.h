@@ -28,28 +28,32 @@ class QOpenGLFunctions_3_1;
 class IModel
 {
 public:
-    IModel(IModelManager *modelManager, int index);
+    IModel(IModelManager* modelManager, int index);
     ~IModel();
 
-    void draw(QOpenGLShaderProgram *shader);
-    bool isAnimationEnabled();
+    void draw(QOpenGLShaderProgram* shader);
+
     void enableAnimations();
     void disableAnimations();
 
-    IModelInterface *getModelInterface();
-    IAnimationState *getAnimationState();
+    bool isAnimationEnabled();
+
+    IModelInterface* getModelInterface();
+    IAnimationState* getAnimationState();
 
 private:
-    QOpenGLFunctions_3_1 *m_funcs;
-    QOpenGLShaderProgram *lastShader;
-    ITextureManager *texture_manager;
-    IModelInterface *model_interface;
-    IAnimationState *animation_state;
-    bool animations_enabled;
+    QOpenGLFunctions_3_1* m_funcs;
+    QOpenGLShaderProgram* lastShader;
+
+    ITextureManager* texture_manager;
+    IModelInterface* model_interface;
+    IAnimationState* animation_state;
+
     ILight Light;
 
-private:
-    void createAttributeArray(QOpenGLShaderProgram *shader);
+    bool animations_enabled;
+
+    void createAttributeArray(QOpenGLShaderProgram* shader);
 };
 
 #endif // IMODEL_H

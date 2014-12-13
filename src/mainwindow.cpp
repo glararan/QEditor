@@ -18,6 +18,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "ui/about.h"
 #include "ui/project_settings.h"
+#include "ui/mapgeneration.h"
 
 #include "3rd-party/imgurAPI/fileupload.h"
 
@@ -37,9 +38,12 @@ MainWindow::MainWindow(QWidget* parent)
 , DisplayMode("action_Default")
 , ToolBarItem("action_mapview_m0")
 , teleportW(NULL)
+, chunkSettingsW(NULL)
 , settingsW(NULL)
 , texturepW(NULL)
 , modelpickerW(NULL)
+, heightmapW(NULL)
+, basicSettingsW(NULL)
 , colorW(NULL)
 , waterW(NULL)
 , cameraW(NULL)
@@ -57,6 +61,7 @@ MainWindow::MainWindow(QWidget* parent)
 , t_terrain_maxHeight(NULL)
 , t_paint_maxAlpha(NULL)
 , t_terrain_maximum_height(NULL)
+, t_terrain_uniform_height(NULL)
 , t_paint_maximum_alpha(NULL)
 , t_modelmode(NULL)
 , t_modelmode_insert(NULL)
@@ -128,12 +133,15 @@ MainWindow::~MainWindow()
     delete ui;
 
     delete teleportW;
+    delete chunkSettingsW;
     delete settingsW;
     delete texturepW;
     delete modelpickerW;
     delete colorW;
     delete waterW;
     delete cameraW;
+    delete heightmapW;
+    delete basicSettingsW;
 
     deleteObject(t_outer_radius);
     deleteObject(t_inner_radius);
@@ -162,6 +170,7 @@ MainWindow::~MainWindow()
 
     deleteObject(t_terrain_maxHeight);
     deleteObject(t_terrain_maximum_height);
+    deleteObject(t_terrain_uniform_height);
 
     deleteObject(t_paint_maxAlpha);
     deleteObject(t_paint_maximum_alpha);
@@ -232,12 +241,14 @@ void MainWindow::openWorld(ProjectFileData projectData)
     ui->menu_Tools->menuAction()->setVisible(true);
 
     // menu dialogs constructors
-    teleportW    = new TeleportWidget();
-    settingsW    = new MapView_Settings();
-    texturepW    = new TexturePicker();
-    modelpickerW = new ModelPicker();
-    waterW       = new WaterWidget();
-    cameraW      = new CameraWidget(world->getCamera());
+    teleportW      = new TeleportWidget();
+    chunkSettingsW = new MapChunk_Settings();
+    settingsW      = new MapView_Settings();
+    texturepW      = new TexturePicker();
+    modelpickerW   = new ModelPicker();
+    waterW         = new WaterWidget();
+    cameraW        = new CameraWidget(world->getCamera());
+    heightmapW     = new HeightmapWidget();
 
     // post initialize world sub widgets
     connect(mapView, SIGNAL(initialized()), this, SLOT(postInitializeSubWorldWidgets()));
@@ -246,11 +257,13 @@ void MainWindow::openWorld(ProjectFileData projectData)
     initMode();
 
     /// map view
-    connect(mapView, SIGNAL(statusBar(QString)),              ui->statusbar, SLOT(showMessage(QString)));
-    connect(mapView, SIGNAL(updateBrushOuterRadius(double)),  this,          SLOT(setBrushOuterRadius(double)));
-    connect(mapView, SIGNAL(updateBrushInnerRadius(double)),  this,          SLOT(setBrushInnerRadius(double)));
-    connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)),     texturepW,     SLOT(setChunk(MapChunk*)));
-    connect(mapView, SIGNAL(selectedWaterChunk(WaterChunk*)), waterW,        SLOT(setChunk(WaterChunk*)));
+    connect(mapView, SIGNAL(statusBar(QString)),              ui->statusbar,  SLOT(showMessage(QString)));
+    connect(mapView, SIGNAL(updateBrushOuterRadius(double)),  this,           SLOT(setBrushOuterRadius(double)));
+    connect(mapView, SIGNAL(updateBrushInnerRadius(double)),  this,           SLOT(setBrushInnerRadius(double)));
+    connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)),     texturepW,      SLOT(setChunk(MapChunk*)));
+    connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)),     chunkSettingsW, SLOT(setChunk(MapChunk*)));
+    connect(mapView, SIGNAL(selectedWaterChunk(WaterChunk*)), waterW,         SLOT(setChunk(WaterChunk*)));
+    connect(mapView, SIGNAL(getCameraCurvePoint(QVector3D)),  cameraW,        SLOT(selectPoint(QVector3D)));
 
     connect(mapView, SIGNAL(eMModeChanged(MapView::eMouseMode&, MapView::eEditingMode&)),
             this,    SLOT(setBrushMode(MapView::eMouseMode&, MapView::eEditingMode&)));
@@ -293,10 +306,13 @@ void MainWindow::openWorld(ProjectFileData projectData)
     // tools - show chunk lines
     connect(ui->action_Show_Chunk_lines, SIGNAL(toggled(bool)), mapView, SLOT(setTurnChunkLines(bool)));
 
-    // tools - texture picker, settings, teleport, reset camera, lock camera
+    // tools - texture picker, settings, teleport, map generator, heightmap, reset camera, lock camera
     connect(ui->action_Texture_Picker, SIGNAL(triggered()),     this,    SLOT(showTexturePicker()));
+    connect(ui->action_Chunk_settings, SIGNAL(triggered()),     this,    SLOT(showChunkSettings()));
     connect(ui->action_Settings,       SIGNAL(triggered()),     this,    SLOT(showSettings()));
     connect(ui->action_Teleport,       SIGNAL(triggered()),     this,    SLOT(showTeleport()));
+    connect(ui->action_Map_Generator,  SIGNAL(triggered()),     this,    SLOT(showMapGeneration()));
+    connect(ui->action_Heightmap,      SIGNAL(triggered()),     this,    SLOT(showHeightmap()));
     connect(ui->action_Reset_camera,   SIGNAL(triggered()),     mapView, SLOT(resetCamera()));
     connect(ui->action_Lock_camera,    SIGNAL(triggered(bool)), mapView, SLOT(lockCamera(bool)));
 
@@ -308,6 +324,13 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(settingsW, SIGNAL(setTextureScaleOption(int)),         mapView, SLOT(setTextureScaleOption_(int)));
     connect(settingsW, SIGNAL(setTextureScaleFar(float)),          mapView, SLOT(setTextureScaleFar(float)));
     connect(settingsW, SIGNAL(setTextureScaleNear(float)),         mapView, SLOT(setTextureScaleNear(float)));
+    connect(settingsW, SIGNAL(setTabletMode(bool)),                mapView, SLOT(setTabletMode(bool)));
+
+    connect(heightmapW, SIGNAL(accepted()),                this, SLOT(heightmapWidgetAccepted()));
+    connect(heightmapW, SIGNAL(rejected()),                this, SLOT(heightmapWidgetRejected()));
+    connect(heightmapW, SIGNAL(setScale(float)),           this, SLOT(setHeightmapScale(float)));
+    connect(heightmapW, SIGNAL(importing(QString, float)), this, SLOT(importingHeightmap(QString, float)));
+    connect(heightmapW, SIGNAL(exporting(QString, float)), this, SLOT(exportingHeightmap(QString, float)));
 
     // tools - test, stereoscopic
     connect(ui->action_3D_Stereoscopic, SIGNAL(triggered(bool)), mapView, SLOT(set3DStreoscopic(bool)));
@@ -333,6 +356,10 @@ void MainWindow::openWorld(ProjectFileData projectData)
 
     connect(this, SIGNAL(setModeEditing(int)), mapView, SLOT(setModeEditing(int)));
 
+    // toolbar 2
+    connect(ui->action_Switch_Vertex_Shading, SIGNAL(toggled(bool)), this, SLOT(setVertexShadingSwitch(bool)));
+    connect(ui->action_Switch_Skybox,         SIGNAL(toggled(bool)), this, SLOT(setSkyboxSwitch(bool)));
+
     /// toolbar3
     connect(t_terrain_mode, SIGNAL(currentIndexChanged(int)), this   , SLOT(setTerrain_Mode(int)));
     connect(this,           SIGNAL(setTerrainMode(int))     , mapView, SLOT(setTerrainMode(int)));
@@ -348,6 +375,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
 
     connect(t_terrain_maxHeight,      SIGNAL(stateChanged(int)),    this,    SLOT(setTerrainMaximumHeightState(int)));
     connect(t_terrain_maximum_height, SIGNAL(valueChanged(double)), mapView, SLOT(setTerrainMaximumHeight(double)));
+    connect(t_terrain_uniform_height, SIGNAL(valueChanged(double)), mapView, SLOT(setTerrainUniformHeight(double)));
 
     connect(t_paint_maxAlpha,      SIGNAL(stateChanged(int)),    this,    SLOT(setPaintMaximumAlphaState(int)));
     connect(t_paint_maximum_alpha, SIGNAL(valueChanged(double)), mapView, SLOT(setPaintMaximumAlpha(double)));
@@ -377,7 +405,9 @@ void MainWindow::openWorld(ProjectFileData projectData)
 
     connect(colorW, SIGNAL(currentColorChanged(QColor)), mapView, SLOT(setVertexShading(QColor)));
 
-    connect(cameraW, SIGNAL(showPath(bool)), mapView, SLOT(setCameraShowCurve(bool)));
+    connect(cameraW, SIGNAL(showPath(bool)),                             mapView, SLOT(setCameraShowCurve(bool)));
+    connect(cameraW, SIGNAL(repeatPlay(bool)),                           mapView, SLOT(setCameraRepeatPlay(bool)));
+    connect(cameraW, SIGNAL(selectedPoint(QVector<QTableWidgetItem*>&)), mapView, SLOT(setCameraCurvePoint(QVector<QTableWidgetItem*>&)));
 }
 
 void MainWindow::postInitializeSubWorldWidgets()
@@ -419,6 +449,12 @@ void MainWindow::createMemoryProject(NewProjectData projectData)
         closeProject();
 
     openWorld(projectFile);
+
+    basicSettingsW = new Basic_Settings(world);
+    basicSettingsW->show();
+
+    connect(basicSettingsW, SIGNAL(openTerrainGeneration()),   this, SLOT(showMapGeneration()));
+    connect(basicSettingsW, SIGNAL(openTerrainImportExport()), this, SLOT(showHeightmap()));
 
     connect(mapView, SIGNAL(initialized()), this, SLOT(loadNewProjectMapTilesIntoMemory()));
 }
@@ -497,7 +533,7 @@ void MainWindow::takeScreenshot()
 
     QRect centralRect = QRect(0, 0, centralWidget()->width(), centralWidget()->height());
 
-    QImage mapViewImage = mapView->grabFrameBuffer();
+    QImage mapViewImage = mapView->grabFramebuffer();
 
     QPainter painter;
     painter.begin(&mainWindowPixmap);
@@ -527,7 +563,7 @@ void MainWindow::takeScreenshotAndUpload()
 
     QRect centralRect = QRect(0, 0, centralWidget()->width(), centralWidget()->height());
 
-    QImage mapViewImage = mapView->grabFrameBuffer();
+    QImage mapViewImage = mapView->grabFramebuffer();
 
     QPainter painter;
     painter.begin(&mainWindowPixmap);
@@ -677,6 +713,8 @@ void MainWindow::setToolBarItem()
         emit setModeEditing(1);
 
         showMode(mode1Actions);
+
+        setTerrain_Mode(t_terrain_mode->currentIndex());
     }
     else if(iName == "action_mapview_m2")
     {
@@ -741,6 +779,11 @@ void MainWindow::showTeleport()
     addDockWindow(tr("Teleport"), teleportW);
 }
 
+void MainWindow::showChunkSettings()
+{
+    addDockWindow(tr("Chunk settings"), chunkSettingsW);
+}
+
 void MainWindow::showSettings()
 {
     addDockWindow(tr("Settings"), settingsW);
@@ -766,6 +809,22 @@ void MainWindow::showProjectSettings()
     connect(projectSettings, SIGNAL(projectDataChanged(ProjectFileData&)), this, SLOT(setProjectData(ProjectFileData&)));
 
     projectSettings->exec();
+}
+
+void MainWindow::showMapGeneration()
+{
+    MapGeneration* mapGeneration = new MapGeneration();
+
+    connect(mapGeneration, SIGNAL(generate(MapGenerationData&)), this, SLOT(setMapGenerationData(MapGenerationData&)));
+    connect(mapGeneration, SIGNAL(accepted()),                   this, SLOT(mapGenerationDataAccepted()));
+    connect(mapGeneration, SIGNAL(rejected()),                   this, SLOT(mapGenerationDataRejected()));
+
+    mapGeneration->show();
+}
+
+void MainWindow::showHeightmap()
+{
+    addDockWindow(tr("Heightmap settings"), heightmapW);
 }
 
 void MainWindow::addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area)
@@ -884,6 +943,7 @@ void MainWindow::initMode()
     t_terrain_mode->setObjectName("t_terrain_mode");
     t_terrain_mode->addItem(tr("Shaping")  , 0);
     t_terrain_mode->addItem(tr("Smoothing"), 1);
+    t_terrain_mode->addItem(tr("Uniform")  , 2);
 
     t_terrain_mode_0.append(qMakePair<QString, QVariant>(tr("Linear")  , 1));
     t_terrain_mode_0.append(qMakePair<QString, QVariant>(tr("Flat")    , 2));
@@ -941,6 +1001,13 @@ void MainWindow::initMode()
     t_terrain_maximum_height->setMaximum(MathHelper::toDouble(std::numeric_limits<float>::max()));
     t_terrain_maximum_height->setObjectName("t_terrain_maximum_height");
     t_terrain_maximum_height->setEnabled(false);
+
+    t_terrain_uniform_height = new QDoubleSpinBox();
+    t_terrain_uniform_height->setDecimals(2);
+    t_terrain_uniform_height->setMinimum(MathHelper::toDouble(std::numeric_limits<float>::min()));
+    t_terrain_uniform_height->setMaximum(MathHelper::toDouble(std::numeric_limits<float>::max()));
+    t_terrain_uniform_height->setObjectName("t_terrain_uniform_height");
+    t_terrain_uniform_height->setVisible(false);
 
     t_paint_maximum_alpha = new QDoubleSpinBox();
     t_paint_maximum_alpha->setDecimals(2);
@@ -1034,6 +1101,7 @@ void MainWindow::initMode()
     addToolbarAction(t_brush_type              , mode1Actions);
     addToolbarAction(t_brush_mode_label        , mode1Actions);
     addToolbarAction(t_brush_mode              , mode1Actions);
+    addToolbarAction(t_terrain_uniform_height  , mode1Actions);
     addToolbarAction(t_outer_radius_label      , mode1Actions);
     addToolbarAction(t_outer_radius            , mode1Actions);
     addToolbarAction(t_outer_radius_value_label, mode1Actions);
@@ -1260,6 +1328,25 @@ void MainWindow::setTerrain_Mode(int index)
 
                 for(int i = 0; i < t_terrain_mode_0.count(); ++i)
                     t_brush_type->addItem(t_terrain_mode_0.at(i).first, t_terrain_mode_0.at(i).second);
+
+                QList<QAction*> actions = ui->toolbar3->actions();
+
+                for(int i = 0; i < actions.count(); ++i)
+                {
+                    if(actions[i]->objectName() == "t_terrain_uniform_height")
+                        actions[i]->setVisible(false);
+
+                    if(actions[i]->objectName() == "t_brush_mode_label"
+                    || actions[i]->objectName() == "t_brush_mode"
+                    || actions[i]->objectName() == "t_brush_type_label"
+                    || actions[i]->objectName() == "t_brush_type"
+                    || actions[i]->objectName() == "t_speed"
+                    || actions[i]->objectName() == "t_speed_label"
+                    || actions[i]->objectName() == "t_speed_value_label"
+                    || actions[i]->objectName() == "t_terrain_maxHeight"
+                    || actions[i]->objectName() == "t_terrain_maximum_height")
+                        actions[i]->setVisible(true);
+                }
             }
             break;
 
@@ -1269,6 +1356,48 @@ void MainWindow::setTerrain_Mode(int index)
 
                 for(int i = 0; i < t_terrain_mode_1.count(); ++i)
                     t_brush_type->addItem(t_terrain_mode_1.at(i).first, t_terrain_mode_1.at(i).second);
+
+                QList<QAction*> actions = ui->toolbar3->actions();
+
+                for(int i = 0; i < actions.count(); ++i)
+                {
+                    if(actions[i]->objectName() == "t_terrain_uniform_height")
+                        actions[i]->setVisible(false);
+
+                    if(actions[i]->objectName() == "t_brush_mode_label"
+                    || actions[i]->objectName() == "t_brush_mode"
+                    || actions[i]->objectName() == "t_brush_type_label"
+                    || actions[i]->objectName() == "t_brush_type"
+                    || actions[i]->objectName() == "t_speed"
+                    || actions[i]->objectName() == "t_speed_label"
+                    || actions[i]->objectName() == "t_speed_value_label"
+                    || actions[i]->objectName() == "t_terrain_maxHeight"
+                    || actions[i]->objectName() == "t_terrain_maximum_height")
+                        actions[i]->setVisible(true);
+                }
+            }
+            break;
+
+        case 2:
+            {
+                QList<QAction*> actions = ui->toolbar3->actions();
+
+                for(int i = 0; i < actions.count(); ++i)
+                {
+                    if(actions[i]->objectName() == "t_terrain_uniform_height")
+                        actions[i]->setVisible(true);
+
+                    if(actions[i]->objectName() == "t_brush_mode_label"
+                    || actions[i]->objectName() == "t_brush_mode"
+                    || actions[i]->objectName() == "t_brush_type_label"
+                    || actions[i]->objectName() == "t_brush_type"
+                    || actions[i]->objectName() == "t_speed"
+                    || actions[i]->objectName() == "t_speed_label"
+                    || actions[i]->objectName() == "t_speed_value_label"
+                    || actions[i]->objectName() == "t_terrain_maxHeight"
+                    || actions[i]->objectName() == "t_terrain_maximum_height")
+                        actions[i]->setVisible(false);
+                }
             }
             break;
     }
@@ -1297,9 +1426,63 @@ void MainWindow::actionIsInDevelopment()
     msg.exec();
 }
 
+void MainWindow::mapGenerationDataAccepted()
+{
+    world->mapGenerationAccepted();
+
+    QObject::sender()->deleteLater();
+}
+
+void MainWindow::mapGenerationDataRejected()
+{
+    world->mapGenerationRejected();
+
+    QObject::sender()->deleteLater();
+}
+
+void MainWindow::setMapGenerationData(MapGenerationData& data)
+{
+    world->setMapGenerationData(data);
+}
+
 void MainWindow::setProjectData(ProjectFileData& data)
 {
     world->setProjectData(data);
+}
+
+void MainWindow::heightmapWidgetAccepted()
+{
+    world->heightmapWidgetAccepted();
+}
+
+void MainWindow::heightmapWidgetRejected()
+{
+    world->heightmapWidgetRejected();
+}
+
+void MainWindow::importingHeightmap(QString path, float scale)
+{
+    world->importHeightmap(path, scale);
+}
+
+void MainWindow::exportingHeightmap(QString path, float scale)
+{
+    world->exportHeightmap(path, scale);
+}
+
+void MainWindow::setHeightmapScale(float scale)
+{
+    world->setHeightmapScale(scale);
+}
+
+void MainWindow::setVertexShadingSwitch(bool state)
+{
+    world->setVertexShadingSwitch(state);
+}
+
+void MainWindow::setSkyboxSwitch(bool state)
+{
+    world->setSkyboxSwitch(state);
 }
 
 void MainWindow::addToolbarAction(QWidget* widget, QList<QString>& parentList)

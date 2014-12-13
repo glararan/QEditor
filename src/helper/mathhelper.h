@@ -38,23 +38,29 @@ public:
     static const int toInt(const float value);
     static const int toInt(const double value);
     static const int toInt(const long value);
+    static const int toInt(const unsigned int value);
 
     static const double toDouble(const int value);
     static const double toDouble(const float value);
     static const double toDouble(const long value);
+    static const double toDouble(const unsigned int value);
 
     static const float toFloat(const int value);
     static const float toFloat(const double value);
     static const float toFloat(const long value);
+    static const float toFloat(const unsigned int value);
 
     static const unsigned char toUChar(const int value);
     static const unsigned char toUChar(const double value);
     static const unsigned char toUChar(const float value);
+    static const unsigned char toUChar(const unsigned int value);
 
     static const GLuint toGLuint(const int value);
 
     static const QColor    toColor(const QVector4D& color);
     static const QVector4D toVector4D(const QColor& color);
+
+    static const QVector2D getDirections(const QMatrix4x4& matrix);
 
     static const float closerTo(const unsigned char value1, const qreal value2, const float formula);
 
@@ -62,6 +68,13 @@ public:
     static const int   toRGBInt(const qreal value);
 
     static const int round(const int number, const int multiple);
+
+    static const int          random(const int minimum, int maximum, const bool withMaximum = false);
+    static const unsigned int randomUint(const unsigned int minimum, unsigned int maximum, const bool withMaximum = false);
+    static const double       randomDouble(const double minimum, double maximum);
+    static const double       randomDouble(); // returns between 0.0 and 1.0
+
+    static const float clamp(float value, float min, float max);
 
     static const float lerp(const float v0, const float v1, const float t);
     static void lerp(QVector3D& dest, const QVector3D& a, const QVector3D& b, const float t);
@@ -73,6 +86,9 @@ public:
     static void addKineticEnergy(float& step, float dt, float weight = 50.0f); // 50.0f == 50kg
 
     static const bool isNaN(const float value);
+
+    static void setTimeSeed();
+    static void setRandomSeed(int seed);
 
 private:
     MathHelper();

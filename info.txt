@@ -46,47 +46,35 @@ MapChunk:
     1. flatten tool uhel a směr
     2. voda
 
-discuss features:
-- player camera (first person[netix], third person camera)
-- prechody mezi chunky
-- skyboxs (netix)
+in development, in near future(code is almost ready):
 - water display (wireframe, ..)
+- 3D printer support
+- 3D stereoscopic
+
+discuss features:
+- player camera (first person[netix], third person camera) (first todo better object support and use test box as player model)
+- prechody mezi chunky (cleft)
 - zkouska vetsiho rozliseni pro alphamapy (mozna jen floating point?), pro vertex shading stejne(spis floating point)
-- texture scale pro ostatni textury
 - novy tool vybrani plochy
  - posunutí
  - zneviditelneni
  - skopirovani
-- camera record (myšleno tak, že se naplanuje trasa a kamera po ní pojede)
+- textures (2Dsampler) to textureArray => better performance.. faster, more textures..
 
 // tipy od lidí
-- při založení projektu maximální výška
-- při založení projektu už voda v -X hloubce
-- generace terénu
-- generování objektů po určené textuře
-- automatická textura podle výšky (checkbox)
-- import/export heightmapy v určitém formátu (vyhodit ostatní nástroje jako textury atd..)
-- 3D stereoskopické
-
-List pro funkce:
-    Rozdělit MapView na třídy MapView[pouze ukazovat data], World[spravování objektů], Map(?)[spravování heightmapy a alphamap],
+- generování objektů po určené textuře (first todo better object support)
 
 Tessellation shader resources
 http://codeflow.org/entries/2010/nov/07/opengl-4-tessellation/
 https://github.com/tijutv/GPU-Terrain-Generation
 
-editace terénu
-- uniform: nastaví okamžitě výšku térénu na X
-
 texture painting
 - smudge: rozmazání
 - blur: přechod
 - border: na okraji se kreslí nějaká další textura
+- override upper layers (checkbox)
 
 voda
-- přidání
-- odebrání
-- výška
 - upravení
   - RGBA
   - Typ (lava, ocean, reka)
@@ -98,14 +86,9 @@ omezení
 olistění
 - přidání
  - generace olistění
- - 0-20? na čtvereček
+ - 0-20? na chunk
  - velikost přidání
 - odebrání
-
-/// Done list
-- Teren 32bit float point rendering
-- Zvyseni/Snizeni terenu
-- Archiv na bazi .zip
 
 GLSL:
 http://en.wikibooks.org/wiki/GLSL_Programming/Vector_and_Matrix_Operations
@@ -148,6 +131,9 @@ Lag Troubleshooter:
 
 2.5) Terrain laggs
     be carefull with glActiveTexture
+
+2.5.1) Black everything
+    glActiveTexture is wrong placed! Remove as soon is possible!
 
 3) Black terrain
     ex: rly bad using QOpenGLTexture for loading texture :)

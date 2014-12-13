@@ -71,11 +71,14 @@ public:
         return cellw * column;
     }
 
-    inline int numRows() const { return nrows; }
-    inline int numCols() const { return ncols; }
+    inline int numRows() const  { return nrows; }
+    inline int numCols() const  { return ncols; }
+    inline int numItems() const { return itemCount; }
 
-    void setRows(const int count) { nrows = count; toolTipArray.resize(nrows*ncols); }
-    void setCols(const int count) { ncols = count; toolTipArray.resize(nrows*ncols); }
+    void setRows(const int count) { nrows = count; toolTipArray.resize(nrows * ncols); }
+    void setCols(const int count) { ncols = count; toolTipArray.resize(nrows * ncols); }
+
+    void setItemCount(const int count) { itemCount = count; }
 
     void clear()
     {
@@ -134,6 +137,7 @@ private:
     int curCol;
     int selRow;
     int selCol;
+    int itemCount;
 
     QSize textureSize;
     QSize textureMargin;

@@ -15,12 +15,16 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "material.h"
 
-#include <QOpenGLFunctions_3_1>
+#include <QOpenGLFunctions_4_2_Core>
 #include <QOpenGLShaderProgram>
 
 Material::Material()
 {
-    m_funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_3_1>();
+    QOpenGLContext* context = QOpenGLContext::currentContext();
+
+    Q_ASSERT(context);
+
+    m_funcs = context->versionFunctions<QOpenGLFunctions_4_2_Core>();
 
     if(!m_funcs)
     {
@@ -49,7 +53,7 @@ void Material::bind(QOpenGLShaderProgram* shader)
         m_funcs->glActiveTexture(GL_TEXTURE0 + unit);
 
         // Bind the texture
-        config.texture()->bind(GL_TEXTURE0 + unit);
+        config.texture()->bind(unit);
 
         // Bind the sampler
         config.sampler()->bind(unit);
@@ -74,6 +78,20 @@ void Material::bind(QOpenGLShaderProgram* shader)
         // Associate with sampler uniform in shader (if we know the name or location)
         if(m_arraySamplerUniforms.contains(unit))
             shader->setUniformValue(m_arraySamplerUniforms.value(unit).constData(), unit);
+    }
+
+    foreach(const GLuint unit, m_FramebufferUnitConfigs.keys())
+    {
+        const GLuint& config = m_FramebufferUnitConfigs.value(unit);
+
+        m_funcs->glActiveTexture(GL_TEXTURE0 + unit);
+
+        // Bind the framebuffer
+        m_funcs->glBindTexture(GL_TEXTURE_2D, config);
+
+        // Associate with sampler uniform in shader (if we know the name or location)
+        if(m_FramebufferByteUnitUniforms.contains(unit))
+            shader->setUniformValue(m_FramebufferByteUnitUniforms.value(unit).constData(), unit);
     }
 }
 

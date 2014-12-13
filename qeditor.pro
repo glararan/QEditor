@@ -42,6 +42,8 @@ INCLUDEPATH += src
 
 RESOURCES += qeditor.qrc
 
+RC_FILE = resources.rc
+
 TRANSLATIONS += qeditor_cz.ts
 
 OTHER_FILES += info.txt \
@@ -54,13 +56,35 @@ OTHER_FILES += info.txt \
     data/shaders/model.frag \
     data/shaders/model.vert \
     data/shaders/qeditor_bezier.vert \
-    data/shaders/qeditor_bezier.geom \
-    data/shaders/qeditor_bezier.frag
+    data/shaders/qeditor_bezier.frag \
+    data/shaders/qeditor_water.tes \
+    data/shaders/qeditor_skybox.vert \
+    data/shaders/qeditor_skybox.frag \
+    resources.rc \
+    data/shaders/qeditor_bezier_point.vert \
+    data/shaders/qeditor_bezier_point.frag \
+    data/shaders/qeditor_bezier.tcs \
+    data/shaders/qeditor_bezier.tes \
+    data/shaders/qeditor_cleft.tcs \
+    data/shaders/qeditor_cleft.tes \
+    data/shaders/qeditor_cleft2.vert \
+    data/shaders/qeditor_cleft2.geom \
+    data/shaders/qeditor_cleft2.tcs \
+    data/shaders/qeditor_cleft2.tes \
+    data/shaders/qeditor_cleft2.frag
 
-unix|win32: LIBS += -L$$PWD/ -lquazip
+#unix|
+win32: LIBS += -L$$PWD/ -lquazip
 
-INCLUDEPATH += $$PWD/dep\include
-LIBS += $$PWD/dep\lib\assimp_release-dll_x64\assimp.lib
+win32:INCLUDEPATH += $$PWD/dep\include
+win32:LIBS        += $$PWD/dep\lib\assimp_release-dll_x64\assimp.lib
+
+#unix:INCLUDEPATH += "/QEditor/github/dep/include"  # change!!!
+#unix:LIBS += "/usr/local/lib/libassimp.a"  # change!!!
+
+unix:INCLUDEPATH += "/home/debian/Stažené/assimp/include"  # change!!!
+unix:LIBS += "/home/debian/Stažené/assimp/lib/libassimp.a" # change!!!
+unix:LIBS += "/home/debian/Stažené/assimp/lib/libz.a"      # change !!!
 
 INCLUDEPATH += $$PWD/
 DEPENDPATH += $$PWD/
@@ -79,4 +103,4 @@ win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/libQt5Platform
 else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/libQt5PlatformSupportd.a
 else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/Qt5PlatformSupport.lib
 else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/Qt5PlatformSupportd.lib
-else:unix: PRE_TARGETDEPS += $$PWD/libQt5PlatformSupport.a
+#else:unix: PRE_TARGETDEPS += $$PWD/libQt5PlatformSupport.a

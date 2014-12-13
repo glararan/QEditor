@@ -140,6 +140,11 @@ void Texture::setVertexShading(const void* data)
     GLfuncs->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width(), height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 }
 
+void Texture::setTexture(const void* data, int layer)
+{
+    GLfuncs->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, width(), height(), layers(), GL_RGBA, GL_UNSIGNED_BYTE, data);
+}
+
 const QImage Texture::getImage()
 {
     int width, height;
@@ -159,6 +164,38 @@ const QImage Texture::getImage()
     GLfuncs->glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
     QImage img = QImage(data, width, height, QImage::Format_RGBA8888);
+
+    //free(data); // ! investigate memory leaks if this is commented => uncommented => crash cause QImage using data as pointer
+
+    return img;
+}
+
+const QImage Texture::getImage(int layer)
+{
+    /* TODOOOOOOOOOOOOOOO */
+    int width, height;
+
+    bind();
+
+    /*GLfuncs->glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_WIDTH,  &width);
+    GLfuncs->glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_HEIGHT, &height);
+
+    qDebug() << width << height;
+
+    if(width <= 0 || height <= 0)
+        return QImage();
+*/
+    GLint bytes = /*width * height*/ 1024 * 1024 * 4 * layers();
+
+    unsigned char* data = (unsigned char*)malloc(bytes);
+
+    glGetTexImage(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+    unsigned char* layerData = (unsigned char*)malloc(1024 * 1024 * 4);
+
+    memcpy(&layerData[0], &data[1024 * 1024 * 4 * layer], 1024 * 1024 * 4);
+
+    QImage img = QImage(layerData, /*width, height*/1024, 1024, QImage::Format_RGBA8888);
 
     //free(data); // ! investigate memory leaks if this is commented => uncommented => crash cause QImage using data as pointer
 

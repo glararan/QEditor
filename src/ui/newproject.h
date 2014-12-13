@@ -33,7 +33,7 @@ class IntroPage : public QWizardPage
     Q_OBJECT
 
 public:
-    IntroPage(QWidget* parent = 0);
+    explicit IntroPage(QWidget* parent = 0);
 
 private:
     QLabel* label;
@@ -44,7 +44,7 @@ class ProjectInfoPage : public QWizardPage
     Q_OBJECT
 
 public:
-    ProjectInfoPage(QWidget* parent = 0);
+    explicit ProjectInfoPage(QWidget* parent = 0);
 
 protected:
     bool validatePage();
@@ -107,7 +107,7 @@ class ProjectMapPage : public QWizardPage
     Q_OBJECT
 
 public:
-    ProjectMapPage(QWidget* parent = 0);
+    explicit ProjectMapPage(QWidget* parent = 0);
 
     bool** MapCoords() const { return mapCoords; }
 
@@ -145,7 +145,7 @@ class FinishPage : public QWizardPage
     Q_OBJECT
 
 public:
-    FinishPage(QWidget* parent = 0);
+    explicit FinishPage(QWidget* parent = 0);
 
 protected:
     void initializePage();
@@ -159,7 +159,7 @@ class NewProject : public QWizard
     Q_OBJECT
 
 public:
-    NewProject(QWidget* parent = 0);
+    explicit NewProject(QWidget* parent = 0);
 
     void accept();
 

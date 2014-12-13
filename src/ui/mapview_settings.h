@@ -87,6 +87,8 @@ private slots:
     void setTextureScaleFar(double scale);
     void setTextureScaleNear(double scale);
 
+    void setTabletMode(int state);
+
 signals:
     void setColorOfBrush(QColor* color, bool outer);
     void setColorOfWireframe(QColor* color, bool terrain);
@@ -96,6 +98,8 @@ signals:
     void setTextureScaleOption(int option);
     void setTextureScaleFar(float value);
     void setTextureScaleNear(float value);
+
+    void setTabletMode(bool enabled);
 };
 
 #endif // MAPVIEW_SETTINGS_H

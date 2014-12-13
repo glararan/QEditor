@@ -20,10 +20,31 @@
         <file alias="reset">data/images/reset.png</file>
         <file alias="camera_icon">data/images/camera.png</file>
         <file>data/shaders/qeditor_bezier.frag</file>
-        <file>data/shaders/qeditor_bezier.geom</file>
         <file>data/shaders/qeditor_bezier.vert</file>
         <file alias="insert_icon">data/images/insert.png</file>
         <file alias="remove_icon">data/images/remove.png</file>
+        <file alias="vertexshading_turn_icon">data/images/vertexshading_turn.png</file>
+        <file>data/shaders/qeditor_water.tes</file>
+        <file>data/skybox/back.png</file>
+        <file>data/skybox/bottom.png</file>
+        <file>data/skybox/front.png</file>
+        <file>data/skybox/left.png</file>
+        <file>data/skybox/right.png</file>
+        <file>data/skybox/top.png</file>
+        <file>data/shaders/qeditor_skybox.frag</file>
+        <file>data/shaders/qeditor_skybox.vert</file>
+        <file alias="skybox_turn_icon">data/images/skybox.png</file>
+        <file>data/shaders/qeditor_bezier_point.frag</file>
+        <file>data/shaders/qeditor_bezier_point.vert</file>
+        <file>data/shaders/qeditor_bezier.tcs</file>
+        <file>data/shaders/qeditor_bezier.tes</file>
+        <file>data/shaders/qeditor_cleft.tcs</file>
+        <file>data/shaders/qeditor_cleft.tes</file>
+        <file>data/shaders/qeditor_cleft2.geom</file>
+        <file>data/shaders/qeditor_cleft2.tcs</file>
+        <file>data/shaders/qeditor_cleft2.tes</file>
+        <file>data/shaders/qeditor_cleft2.vert</file>
+        <file>data/shaders/qeditor_cleft2.frag</file>
     </qresource>
     <qresource prefix="/textures">
         <file>textures/grass.png</file>

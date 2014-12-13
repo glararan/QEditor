@@ -1,0 +1,38 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
+#version 400
+
+layout(isolines, equal_spacing) in;
+
+uniform mat4 mvp;
+
+void main(void)
+{
+    vec4 p0 = gl_in[0].gl_Position;
+    vec4 p1 = gl_in[1].gl_Position;
+    vec4 p2 = gl_in[2].gl_Position;
+    vec4 p3 = gl_in[3].gl_Position;
+
+    float u = gl_TessCoord.x;
+
+    // the basis functions:
+    float b0 = (1.0 - u) * (1.0 - u) * (1.0 - u);
+    float b1 = 3.0 * u * (1.0 - u) * (1.0 - u);
+    float b2 = 3.0 * u * u * (1.0 - u);
+    float b3 = u * u * u;
+
+    gl_Position = b0 * p0 + b1 * p1 + b2 * p2 + b3 * p3;
+}

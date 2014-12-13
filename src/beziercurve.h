@@ -17,21 +17,38 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #define BEZIERCURVE_H
 
 #include "mathhelper.h"
+#include "imesh.h"
+
+#include <QVector3D>
+#include <QVector2D>
 
 class BezierCurve
 {
 public:
-    BezierCurve();
+    BezierCurve(QVector3D& point1, QVector3D& point1viewCenter, QVector3D& point1upVector,
+                QVector3D& point2, QVector3D& point2viewCenter, QVector3D& point2upVector,
+                QVector3D& point3 = QVector3D(), QVector3D& point3viewCenter = QVector3D(), QVector3D& point3upVector = QVector3D(),
+                QVector3D& point4 = QVector3D(), QVector3D& point4viewCenter = QVector3D(), QVector3D& point4upVector = QVector3D());
     ~BezierCurve();
 
     void init();
 
-    void drawControlPoints();
-    void drawCurve(float r, float g, float b);
+    void drawControlPoints(QOpenGLShaderProgram* shader);
+    void drawCurve(QOpenGLShaderProgram* shader);
 
-    void updateVertex();
+    QVector3D calculatePoint(float t) const;
+    QVector3D calculateViewCenter(float t) const;
+    QVector3D calculateUpVector(float t) const;
 
-    QVector3D points[5];
+    QVector3D points[4];
+    QVector3D viewCenter[4];
+    QVector3D upVector[4];
+
+private:
+    IMesh mesh;
+    IMesh mesh2;
+
+    int usedPoints;
 };
 
 extern BezierCurve* bezierCurve;

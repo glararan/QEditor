@@ -41,6 +41,7 @@ TexturePicker::TexturePicker(QWidget* parent)
     connect(ui->layerDownButton,       SIGNAL(clicked()), this, SLOT(moveLayerDown()));
     connect(ui->deleteLayerButton,     SIGNAL(clicked()), this, SLOT(deleteLayer()));
     connect(ui->loadAllTexturesButton, SIGNAL(clicked()), this, SLOT(loadAllTextures()));
+    connect(ui->loadTexturesButton,    SIGNAL(clicked()), this, SLOT(addTextures()));
 
     connect(ui->tableWidget, SIGNAL(itemClicked(QTableWidgetItem*)), this, SLOT(handleLayerGUI(QTableWidgetItem*)));
 }
@@ -200,8 +201,46 @@ void TexturePicker::loadAllTextures()
 
         qDebug() << texts.count();
 
+        int rowHeight = textureWell->height() / textureWell->numRows();
+        int rows      = ceil(MathHelper::toDouble(textureManager->getTextures().count()) / MathHelper::toDouble(columns));
+
         textureWell->insertItems(texts);
+        textureWell->setRows(rows);
+
+        textureWell->setMinimumHeight(rowHeight * rows);
     }
+}
+
+void TexturePicker::addTextures()
+{
+    QStringList textures = QFileDialog::getOpenFileNames(this, tr("Choose textures"), QString(), tr("Texture files (*.png)"));
+
+    QVector<QPair<QImage, QString>> texts;
+
+    for(int i = 0; i < textures.count(); ++i)
+    {
+        QFile f(textures.at(i));
+
+        if(!f.exists())
+            continue;
+
+        if(!textureManager->hasTexture(QFileInfo(f.fileName()).baseName() + "Texture", QFileInfo(f).filePath()))
+        {
+            textureManager->loadTexture(QFileInfo(f.fileName()).baseName() + "Texture", QFileInfo(f).filePath());
+
+            QImage img(QFileInfo(f).filePath());
+
+            texts.append(qMakePair<QImage, QString>(img, QFileInfo(f.fileName()).baseName() + "Texture"));
+        }
+    }
+
+    int rowHeight = textureWell->height() / textureWell->numRows();
+    int rows      = ceil(MathHelper::toDouble(textureManager->getTextures().count()) / MathHelper::toDouble(columns));
+
+    textureWell->insertItems(texts);
+    textureWell->setRows(rows);
+
+    textureWell->setMinimumHeight(rowHeight * rows);
 }
 
 void TexturePicker::handleLayerGUI(QTableWidgetItem* item)

@@ -56,6 +56,9 @@ MapView_Settings::MapView_Settings(QWidget* parent)
     ui->gridLayout->addWidget(textureScaleFarSlider,  6, 1, 1, 2);
     ui->gridLayout->addWidget(textureScaleNearSlider, 7, 1, 1, 2);
 
+    // tablet mode
+    ui->tabletModeBox->setChecked(app().getSetting("tabletMode", false).toBool());
+
     // connects
     connect(ui->outerBrushColorButton, SIGNAL(clicked()), this, SLOT(showColorDialog()));
     connect(ui->innerBrushColorButton, SIGNAL(clicked()), this, SLOT(showColorDialog()));
@@ -78,11 +81,19 @@ MapView_Settings::MapView_Settings(QWidget* parent)
     connect(ui->textureScaleOptions, SIGNAL(currentIndexChanged(int)), this, SLOT(setTextureScaleOpt(int)));
     connect(textureScaleFarSlider,   SIGNAL(valueChanged(double)),     this, SLOT(setTextureScaleFar(double)));
     connect(textureScaleNearSlider,  SIGNAL(valueChanged(double)),     this, SLOT(setTextureScaleNear(double)));
+
+    connect(ui->tabletModeBox, SIGNAL(stateChanged(int)), this, SLOT(setTabletMode(int)));
 }
 
 MapView_Settings::~MapView_Settings()
 {
     delete ui;
+
+    delete textureScaleFarSlider;
+    delete textureScaleNearSlider;
+
+    delete colorDialog;
+    delete wireframeColorDialog;
 }
 
 void MapView_Settings::initializeComponents()
@@ -220,4 +231,18 @@ void MapView_Settings::setTextureScaleNear(double scale)
     emit setTextureScaleNear(MathHelper::toFloat(scale));
 
     app().setSetting("textureScaleNearSlider", scale);
+}
+
+void MapView_Settings::setTabletMode(int state)
+{
+    switch(state)
+    {
+        case 0: // Unchecked
+            emit setTabletMode(false);
+            break;
+
+        default: // PartiallyChecked + Checked
+            emit setTabletMode(true);
+            break;
+    }
 }

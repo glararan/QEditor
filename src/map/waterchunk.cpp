@@ -22,6 +22,7 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
 , waterSampler(sampler)
 , waterSurface(new Texture(QOpenGLTexture::Target2D))
 , data(false)
+, displaySubroutines(world->DisplayModeCount)
 , chunkX(x)
 , chunkY(y)
 , baseX(chunkX * CHUNKSIZE)
@@ -37,7 +38,9 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
     if(!world->getTextureManager()->hasTexture("waterTexture", "textures/water.png"))
         world->getTextureManager()->loadTexture("waterTexture", "textures/water.png");
 
-    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, world->getTextureManager()->getTexture("waterTexture"), world->getTextureManager()->getSampler(), QByteArrayLiteral("baseTexture"));
+    waterTexture = world->getTextureManager()->getTexture("waterTexture");
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, waterTexture, world->getTextureManager()->getSampler(), QByteArrayLiteral("baseTexture"));
 
     /// Water
     waterData = new float[CHUNK_ARRAY_UC_SIZE]; // chunk_array_size
@@ -46,7 +49,7 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
 
     world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Heightmap);
 
-    waterSurface->setSize(MAP_WIDTH / CHUNKS, MAP_HEIGHT / CHUNKS);
+    waterSurface->setSize(TILE_WIDTH / CHUNKS, TILE_HEIGHT / CHUNKS);
     waterSurface->setHeightmap(waterData);
 
     chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, waterSurface, waterSampler, QByteArrayLiteral("heightMap"));
@@ -65,6 +68,7 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
 , waterSampler(sampler)
 , waterSurface(new Texture(QOpenGLTexture::Target2D))
 , data(false)
+, displaySubroutines(world->DisplayModeCount)
 , chunkX(x)
 , chunkY(y)
 , baseX(chunkX * CHUNKSIZE)
@@ -79,7 +83,9 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
     if(!world->getTextureManager()->hasTexture("waterTexture", "textures/water.png"))
         world->getTextureManager()->loadTexture("waterTexture", "textures/water.png");
 
-    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, world->getTextureManager()->getTexture("waterTexture"), world->getTextureManager()->getSampler(), QByteArrayLiteral("baseTexture"));
+    waterTexture = world->getTextureManager()->getTexture("waterTexture");
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, waterTexture, world->getTextureManager()->getSampler(), QByteArrayLiteral("baseTexture"));
 
     /// Water - todo file load
     waterData = new float[CHUNK_ARRAY_UC_SIZE]; // chunk_array_size
@@ -88,7 +94,7 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
 
     world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Heightmap);
 
-    waterSurface->setSize(MAP_WIDTH / CHUNKS, MAP_HEIGHT / CHUNKS);
+    waterSurface->setSize(TILE_WIDTH / CHUNKS, TILE_HEIGHT / CHUNKS);
     waterSurface->setHeightmap(waterData);
 
     chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, waterSurface, waterSampler, QByteArrayLiteral("heightMap"));
@@ -115,8 +121,8 @@ void WaterChunk::initialize()
     const int maxTessellationLevel     = 64;
     const int trianglesPerHeightSample = 10;
 
-    const int xDivisions = trianglesPerHeightSample * MAP_WIDTH  / CHUNKS / maxTessellationLevel;
-    const int zDivisions = trianglesPerHeightSample * MAP_HEIGHT / CHUNKS / maxTessellationLevel;
+    const int xDivisions = trianglesPerHeightSample * TILE_WIDTH  / CHUNKS / maxTessellationLevel;
+    const int zDivisions = trianglesPerHeightSample * TILE_HEIGHT / CHUNKS / maxTessellationLevel;
 
     int patchCount = xDivisions * zDivisions;
 
@@ -162,6 +168,9 @@ void WaterChunk::draw(QOpenGLShaderProgram* shader, GLuint reflectionTexture, GL
 
         chunkMaterial->bind(shader);
 
+        // Set the fragment shader display mode subroutine
+        //world->getGLFunctions()->glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &getDisplaySubroutines());
+
         // Render the quad as a patch
         {
             Mesh.bind();
@@ -189,7 +198,7 @@ void WaterChunk::updateData()
         float botright = (bot + right) / 2;
 
         // row column
-        int rc = MAP_WIDTH / CHUNKS;
+        int rc = TILE_WIDTH / CHUNKS;
 
         // calc row min to row max, cell min to cell max first and last index
         for(int y = 0; y < rc; ++y)
@@ -222,6 +231,8 @@ void WaterChunk::updateData()
             }
         }
 
+        world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Heightmap);
+
         waterSurface->bind();
         waterSurface->setHeightmap(waterData);
 
@@ -248,10 +259,10 @@ float WaterChunk::getHeight() const
 
 float WaterChunk::getHeight(int x, int y) const
 {
-    int X = x % MAP_WIDTH;
-    int Y = y % MAP_HEIGHT;
+    int X = x % TILE_WIDTH;
+    int Y = y % TILE_HEIGHT;
 
-    int index = (Y * MAP_WIDTH / CHUNKS) + X;
+    int index = (Y * TILE_WIDTH / CHUNKS) + X;
 
     return waterData[index * sizeof(float)];
 }
@@ -268,7 +279,7 @@ void WaterChunk::setHeight(float height)
 
 void WaterChunk::setHeight(int x, int y, float height)
 {
-    waterData[y * MAP_WIDTH / CHUNKS + x] = height;
+    waterData[y * TILE_WIDTH / CHUNKS + x] = height;
 
     waterSurface->setHeight(height, QVector2D(x, y), true);
 
@@ -291,7 +302,7 @@ void WaterChunk::setReflectionTexture(GLuint reflectionTexture, GLuint depthText
 
     chunkMaterial->setFramebufferUnitConfiguration(ShaderUnits::Texture2, reflectionTexture, QByteArrayLiteral("reflectionTexture"));
 
-    world->getGLFunctions()->glBindTexture(GL_TEXTURE_2D, depthTexture);
+    /*world->getGLFunctions()->glBindTexture(GL_TEXTURE_2D, depthTexture);
 
-    chunkMaterial->setFramebufferUnitConfiguration(ShaderUnits::Texture3, depthTexture, QByteArrayLiteral("depthTexture"));
+    chunkMaterial->setFramebufferUnitConfiguration(ShaderUnits::Texture3, depthTexture, QByteArrayLiteral("depthTexture"));*/
 }

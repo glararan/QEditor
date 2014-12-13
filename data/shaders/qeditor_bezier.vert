@@ -15,18 +15,11 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #version 400
 
-layout (location = 0) in vec3 vertexPosition;
+in vec3 vertexPosition;
 
 uniform mat4 mvp;
 
-out curveVertex
-{
-    vec3 position;
-} Out;
-
 void main(void)
 {
-    Out.position = vertexPosition;
-
     gl_Position = mvp * vec4(vertexPosition, 1.0);
 }
