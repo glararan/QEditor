@@ -85,13 +85,6 @@ MapView::MapView(World* mWorld, QWidget* parent)
 
     QSurfaceFormat::setDefaultFormat(format);
 
-    /*GLcontext = new QOpenGLContext();
-    GLcontext->create();
-    GLcontext->setFormat(format);
-    GLcontext->setShareContext(QOpenGLContext::currentContext());*/
-
-    //QOpenGLContext::currentContext()->setShareContext(GLcontext);
-
     modelMatrix.setToIdentity();
     //pipeline->getModelMatrix().setToIdentity();
 
