@@ -15,16 +15,13 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #version 400
 
-uniform mat4 modelViewProjectionMatrix;
+in vec3 vertexPosition;
 
-in vec3 qt_Vertex;
-out vec3 vertexVector;
+out vec3 vPosition;
 
 void main()
 {
-    vec4 a = modelViewProjectionMatrix * vec4(qt_Vertex, 1.0);
+    vPosition = vertexPosition;
 
-    gl_Position = vec4(a.xyz, a.z + 0.000001);//modelViewProjectionMatrix * vec4(qt_Vertex, 1.0);
-
-    vertexVector = qt_Vertex;
+    gl_Position.xz = vPosition.xz;
 }

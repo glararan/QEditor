@@ -15,16 +15,21 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #version 400
 
-uniform mat4 modelViewProjectionMatrix;
+layout(quads) in; // , fractional_even_spacing, cw
 
-in vec3 qt_Vertex;
-out vec3 vertexVector;
+in vec3 tcPosition[];
 
-void main()
+uniform mat4 mvp;
+
+void main(void)
 {
-    vec4 a = modelViewProjectionMatrix * vec4(qt_Vertex, 1.0);
+    float u = gl_TessCoord.x;
+    float v = gl_TessCoord.y;
 
-    gl_Position = vec4(a.xyz, a.z + 0.000001);//modelViewProjectionMatrix * vec4(qt_Vertex, 1.0);
+    vec3 a = mix(tcPosition[0], tcPosition[1], u);
+    vec3 b = mix(tcPosition[3], tcPosition[2], u);
 
-    vertexVector = qt_Vertex;
+    vec3 tePosition = mix(a, b, v);
+
+    gl_Position = mvp * vec4(tePosition, 1);
 }

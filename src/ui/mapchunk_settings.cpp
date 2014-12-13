@@ -101,6 +101,18 @@ MapChunk_Settings::MapChunk_Settings(QWidget* parent)
     connect(textureScaleNearSlider1, SIGNAL(valueChanged(double)), this, SLOT(setTextureScaleNear(double)));
     connect(textureScaleNearSlider2, SIGNAL(valueChanged(double)), this, SLOT(setTextureScaleNear(double)));
     connect(textureScaleNearSlider3, SIGNAL(valueChanged(double)), this, SLOT(setTextureScaleNear(double)));
+
+    connect(ui->automaticTexture1, SIGNAL(stateChanged(int)), this, SLOT(setAutomaticStartEndEnabled(int)));
+    connect(ui->automaticTexture2, SIGNAL(stateChanged(int)), this, SLOT(setAutomaticStartEndEnabled(int)));
+    connect(ui->automaticTexture3, SIGNAL(stateChanged(int)), this, SLOT(setAutomaticStartEndEnabled(int)));
+
+    connect(ui->startHeight1, SIGNAL(valueChanged(double)), this, SLOT(setAutomaticStartEndCorrection(double)));
+    connect(ui->startHeight2, SIGNAL(valueChanged(double)), this, SLOT(setAutomaticStartEndCorrection(double)));
+    connect(ui->startHeight3, SIGNAL(valueChanged(double)), this, SLOT(setAutomaticStartEndCorrection(double)));
+
+    connect(ui->endHeight1, SIGNAL(valueChanged(double)), this, SLOT(setAutomaticEnd(double)));
+    connect(ui->endHeight2, SIGNAL(valueChanged(double)), this, SLOT(setAutomaticEnd(double)));
+    connect(ui->endHeight3, SIGNAL(valueChanged(double)), this, SLOT(setAutomaticEnd(double)));
 }
 
 MapChunk_Settings::~MapChunk_Settings()
@@ -147,6 +159,77 @@ void MapChunk_Settings::setTextureScaleNear(double scale)
     chunk->setTextureScaleNear(scale, index);
 }
 
+void MapChunk_Settings::setAutomaticStartEndEnabled(int state)
+{
+    QString name = qobject_cast<QCheckBox*>(this->sender())->objectName();
+
+    int index = QString(name.at(name.size() - 1)).toInt();
+
+    bool status = false;
+
+    if(state == 2)
+        status = true;
+
+    switch(index)
+    {
+        case 1:
+            {
+                ui->startHeight1->setEnabled(status);
+                ui->endHeight1->setEnabled(status);
+            }
+            break;
+
+        case 2:
+            {
+                ui->startHeight2->setEnabled(status);
+                ui->endHeight2->setEnabled(status);
+            }
+            break;
+
+        case 3:
+            {
+                ui->startHeight3->setEnabled(status);
+                ui->endHeight3->setEnabled(status);
+            }
+            break;
+    }
+
+    chunk->setAutomaticTexture(status, index);
+}
+
+void MapChunk_Settings::setAutomaticStartEndCorrection(double value)
+{
+    QString name = qobject_cast<QDoubleSpinBox*>(this->sender())->objectName();
+
+    int index = QString(name.at(name.size() - 1)).toInt();
+
+    switch(index)
+    {
+        case 1:
+            ui->endHeight1->setMinimum(value);
+            break;
+
+        case 2:
+            ui->endHeight2->setMinimum(value);
+            break;
+
+        case 3:
+            ui->endHeight3->setMinimum(value);
+            break;
+    }
+
+    chunk->setAutomaticTextureStart(value, index);
+}
+
+void MapChunk_Settings::setAutomaticEnd(double value)
+{
+    QString name = qobject_cast<QDoubleSpinBox*>(this->sender())->objectName();
+
+    int index = QString(name.at(name.size() - 1)).toInt();
+
+    chunk->setAutomaticTextureEnd(value, index);
+}
+
 void MapChunk_Settings::setChunk(MapChunk* mapChunk)
 {
     if(chunk == mapChunk)
@@ -181,4 +264,52 @@ void MapChunk_Settings::setChunk(MapChunk* mapChunk)
     textureScaleNearSlider1->setValue(MathHelper::toDouble(chunk->getTextureScaleNear(1)));
     textureScaleNearSlider2->setValue(MathHelper::toDouble(chunk->getTextureScaleNear(2)));
     textureScaleNearSlider3->setValue(MathHelper::toDouble(chunk->getTextureScaleNear(3)));
+
+    if(chunk->getAutomaticTexture(1))
+    {
+        ui->automaticTexture1->setChecked(true);
+        ui->startHeight1->setEnabled(true);
+        ui->endHeight1->setEnabled(true);
+    }
+    else
+    {
+        ui->automaticTexture1->setChecked(false);
+        ui->startHeight1->setEnabled(false);
+        ui->endHeight1->setEnabled(false);
+    }
+
+    ui->startHeight1->setValue(chunk->getAutomaticTextureStart(1));
+    ui->endHeight1->setValue(chunk->getAutomaticTextureEnd(1));
+
+    if(chunk->getAutomaticTexture(2))
+    {
+        ui->automaticTexture2->setChecked(true);
+        ui->startHeight2->setEnabled(true);
+        ui->endHeight2->setEnabled(true);
+    }
+    else
+    {
+        ui->automaticTexture2->setChecked(false);
+        ui->startHeight2->setEnabled(false);
+        ui->endHeight2->setEnabled(false);
+    }
+
+    ui->startHeight2->setValue(chunk->getAutomaticTextureStart(2));
+    ui->endHeight2->setValue(chunk->getAutomaticTextureEnd(2));
+
+    if(chunk->getAutomaticTexture(3))
+    {
+        ui->automaticTexture3->setChecked(true);
+        ui->startHeight3->setEnabled(true);
+        ui->endHeight3->setEnabled(true);
+    }
+    else
+    {
+        ui->automaticTexture3->setChecked(false);
+        ui->startHeight3->setEnabled(false);
+        ui->endHeight3->setEnabled(false);
+    }
+
+    ui->startHeight3->setValue(chunk->getAutomaticTextureStart(3));
+    ui->endHeight3->setValue(chunk->getAutomaticTextureEnd(3));
 }

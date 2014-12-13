@@ -248,7 +248,26 @@ vec4 shadeTexture()
 
     vec4 diffuseColor = mix(vec4(0.0, 0.5, 1.0, 1.0), texture(reflectionTexture, reflected), 0.6);*/
 
-    vec4 diffuseColor = texture(baseTexture, texCoords + deltaTime * 0.015);
+    /*vec4 diffuseColor = texture(baseTexture, texCoords + deltaTime * 0.015);
+
+    // Calculate the lighting model, keeping the specular component separate
+    vec3 ambientAndDiff, spec;
+
+    phongModel(ambientAndDiff, spec);
+
+    vec4 color = vec4(ambientAndDiff, 1.0) * diffuseColor + vec4(spec, 1.0);*/
+
+    // ripple effect start
+    float t = clamp(deltaTime / 6, 0.0, 1.0);
+
+    vec2 dir = texCoords - vec2(0.5);
+
+    float _dist = distance(texCoords, vec2(0.5));
+
+    vec2 offset   = dir * (sin(_dist * 80.0 - deltaTime * 8.0) + 0.5) / 30.0;
+    vec2 texCoord = texCoords + offset;
+
+    vec4 diffuseColor = texture(baseTexture, texCoord * 5);
 
     // Calculate the lighting model, keeping the specular component separate
     vec3 ambientAndDiff, spec;
@@ -256,6 +275,7 @@ vec4 shadeTexture()
     phongModel(ambientAndDiff, spec);
 
     vec4 color = vec4(ambientAndDiff, 1.0) * diffuseColor + vec4(spec, 1.0);
+    // ripple effect end
 
     float dist        = abs(position.z);
     float fogFactor   = clamp((fog.maxDistance - dist) / (fog.maxDistance - fog.minDistance), 0.0, 1.0);
@@ -281,7 +301,7 @@ vec4 shadeTexture()
 
     vec4 terrainReflection = texture(reflectionTexture, pos2.xz);
 
-    return mix(terrainReflection, vec4(0.5, 0.5, 0.5, 0.5), 0.5);
+    //return mix(terrainReflection, vec4(0.5, 0.5, 0.5, 0.5), 0.5);
 
     if(cameraPosition.y >= 0.0)
         return (skyRefletion * skyRefletion) * 0.4 + vec4(mix(fog.color, color, fogFactor).rgb, alphaFactor) * 0.6;// = vec4(mix(fog.color, outColor, fogFactor).rgb, 1.0); vec4(color.rgb, 0.5)

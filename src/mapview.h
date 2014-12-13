@@ -16,7 +16,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #ifndef MAPVIEW_H
 #define MAPVIEW_H
 
-#include <QGLWidget>
+#include <QOpenGLWidget>
 #include <QWidget>
 
 #include "world.h"
@@ -31,7 +31,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 class Camera;
 class IPipeline;
 
-class MapView : public QGLWidget
+class MapView : public QOpenGLWidget, protected QOpenGLFunctions_4_2_Core
 {
     Q_OBJECT
 
@@ -85,7 +85,8 @@ public:
     enum eTerrainMode
     {
         Shaping   = 0,
-        Smoothing = 1
+        Smoothing = 1,
+        Uniform   = 2
     };
 
     void setTerrainMode(eTerrainMode terrainMode) { eTerrain = terrainMode; }
@@ -117,6 +118,8 @@ protected:
     void mouseReleaseEvent(QMouseEvent* e);
     void mouseMoveEvent(QMouseEvent* e);
 
+    void tabletEvent(QTabletEvent* e);
+
     void wheelEvent(QWheelEvent* e);
     void timerEvent(QTimerEvent*);
 
@@ -136,6 +139,8 @@ private:
     float shaping_speed;
     int   shaping_brush_type;
 
+    float uniform_height;
+
     /// Texturing parameters
     float texturing_flow;
 
@@ -153,6 +158,7 @@ private:
 
     bool viewCenterFixed;
     bool showCameraCurve;
+    bool repeatCameraPlay;
 
     float m_panAngle;
     float m_tiltAngle;
@@ -188,7 +194,7 @@ private:
 
     // mouse
     bool leftButtonPressed, rightButtonPressed, wasLeftButtonPressed;
-    bool changedMouseMode, tabletMode;
+    bool changedMouseMode, tabletMode, tablet;
 
     QPoint mouse_position;
 
@@ -201,6 +207,19 @@ private:
     QVector3D object_move;
 
     QVector<float> dynamicZoom;
+
+    struct Tablet
+    {
+        qreal pressure;
+        qreal rotation;
+        qreal tangentialPressure;
+
+        int x, xTilt;
+        int y, yTilt;
+
+        QTabletEvent::TabletDevice device;
+        QTabletEvent::PointerType  pointer;
+    } wacom;
 
     // keyboard
     bool shiftDown, ctrlDown, altDown, escapeDown;
@@ -231,7 +250,9 @@ public slots:
     void setTexturingFlow(double flow);
     void setVertexShading(QColor color);
     void setCameraShowCurve(bool show);
+    void setCameraRepeatPlay(bool repeat);
     void setTerrainMaximumHeight(double value);
+    void setTerrainUniformHeight(double value);
     void setPaintMaximumAlpha(double value);
     void setTerrainMode(int mode);
     void setBrushColor(QColor* color, bool outer);

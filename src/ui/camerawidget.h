@@ -61,6 +61,7 @@ private slots:
     void itemChanged(QTableWidgetItem* item);
 
     void setShowPath(int state);
+    void setRepeat(int state);
 
     void addPosition();
     void setPosition();
@@ -72,6 +73,7 @@ private slots:
 
 signals:
     void showPath(bool);
+    void repeatPlay(bool);
 
     void selectedPoint(QVector<QTableWidgetItem*>& item);
 };

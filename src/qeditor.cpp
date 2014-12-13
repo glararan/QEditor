@@ -24,6 +24,8 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 QEditor::QEditor(int& argc, char** argv)
 : QApplication(argc, argv)
 {
+    setAttribute(Qt::AA_ShareOpenGLContexts);
+
     setOrganizationDomain(QString(VER_COMPANYDOMAIN_STR));
     setOrganizationName(QString(VER_COMPANYNAME_STR));
     setApplicationName(QString(VER_PRODUCTNAME_STR));

@@ -41,6 +41,7 @@ public:
     , m_bottom(-0.5f)
     , m_top(0.5f)
     , locked(false)
+    , repeatPlay(false)
     , play(false)
     , play_ticks(0)
     , play_tick(0)
@@ -137,6 +138,7 @@ public:
     float m_top;
 
     bool locked;
+    bool repeatPlay;
     bool play;
 
     int play_ticks; // total play sequences

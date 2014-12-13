@@ -46,6 +46,7 @@ public:
     bool changeTerrain(float x , float z, float change);
     bool flattenTerrain(float x, float z, float y, float change);
     bool blurTerrain(float x   , float z, float change);
+    bool uniformTerrain(float x, float z, float height);
 
     bool paintTerrain(float x      , float z, float flow, TexturePtr texture);
     bool paintVertexShading(float x, float z, float flow, QColor& color);
@@ -64,9 +65,13 @@ public:
 
     const int chunkIndex() const;
 
-    const int   getTextureScaleOption(int texture) const;
-    const float getTextureScaleFar(int texture) const;
-    const float getTextureScaleNear(int texture) const;
+    const int   getTextureScaleOption(int layer) const;
+    const float getTextureScaleFar(int layer) const;
+    const float getTextureScaleNear(int layer) const;
+
+    const bool  getAutomaticTexture(int layer) const;
+    const float getAutomaticTextureStart(int layer) const;
+    const float getAutomaticTextureEnd(int layer) const;
 
     const QVector2D  getBases() const              { return QVector2D(baseX, baseY); }
     const GLuint&    getDisplaySubroutines() const { return displaySubroutines[world->displayMode()]; }
@@ -108,6 +113,10 @@ public:
     void setTextureScaleNear(double value, int layer);
     void setTextureScaleFar(double value, int layer);
 
+    void setAutomaticTexture(bool enabled, int layer);
+    void setAutomaticTextureStart(double value, int layer);
+    void setAutomaticTextureEnd(double value, int layer);
+
     /// ...
     void save(MCNK* chunk);
 
@@ -129,7 +138,12 @@ private:
 
     /// Textures, Alphamaps, Vertex Shading and Texture scale
     TexturePtr textures[MAX_TEXTURES];
+    TexturePtr depthTextures[MAX_TEXTURES];
     TexturePtr alphaMaps[ALPHAMAPS];
+
+    TexturePtr textureArray;
+    TexturePtr depthTextureArray;
+    TexturePtr alphaArray;
 
     TexturePtr vertexShadingMap;
 
@@ -140,6 +154,11 @@ private:
     float textureScaleFar[MAX_TEXTURES];
 
     TextureScaleOption textureScaleOption[MAX_TEXTURES];
+
+    bool automaticTexture[MAX_TEXTURES - 1];
+
+    float automaticTextureStart[MAX_TEXTURES - 1];
+    float automaticTextureEnd[MAX_TEXTURES - 1];
 
     /// Chunk data
     QVector<GLuint> displaySubroutines;

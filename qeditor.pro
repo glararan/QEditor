@@ -66,7 +66,12 @@ OTHER_FILES += info.txt \
     data/shaders/qeditor_bezier.tcs \
     data/shaders/qeditor_bezier.tes \
     data/shaders/qeditor_cleft.tcs \
-    data/shaders/qeditor_cleft.tes
+    data/shaders/qeditor_cleft.tes \
+    data/shaders/qeditor_cleft2.vert \
+    data/shaders/qeditor_cleft2.geom \
+    data/shaders/qeditor_cleft2.tcs \
+    data/shaders/qeditor_cleft2.tes \
+    data/shaders/qeditor_cleft2.frag
 
 #unix|
 win32: LIBS += -L$$PWD/ -lquazip

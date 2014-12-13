@@ -87,8 +87,6 @@ void BezierCurve::drawControlPoints(QOpenGLShaderProgram* shader)
     mesh.bind();
     mesh.createAttributeArray(IMesh::Vertices, shader, "position", GL_FLOAT, 0, 3);
 
-    shader->setPatchVertexCount(0);
-
     glPointSize(15.0f);
     glDrawArrays(GL_POINTS, 0, mesh.getNumFaces()); // draw 4 points
 }

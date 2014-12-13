@@ -319,6 +319,20 @@ bool Camera::lock() const
     return d->locked;
 }
 
+void Camera::setPlayRepeat(const bool& repeat)
+{
+    Q_D(Camera);
+
+    d->repeatPlay = repeat;
+}
+
+bool Camera::playRepeat() const
+{
+    Q_D(const Camera);
+
+    return d->repeatPlay;
+}
+
 void Camera::setCurves(const QVector<BezierCurve*>& BCurves)
 {
     Q_D(Camera);
@@ -367,15 +381,20 @@ void Camera::playSequence()
     setUpVector(curve->calculateUpVector(t));
 
     if(d->play_tick == d->play_ticks)
-        stop();
+        stop(false);
 }
 
-void Camera::stop()
+void Camera::stop(bool override)
 {
     Q_D(Camera);
 
-    d->play   = false;
-    d->locked = false;
+    if(!d->repeatPlay || override)
+    {
+        d->play   = false;
+        d->locked = false;
+    }
+    else if(d->repeatPlay && !override)
+        d->play_tick = 0;
 }
 
 bool Camera::playing() const

@@ -42,61 +42,121 @@ MapCleft::MapCleft(World* mWorld, MapTile* tile, MapChunk::Border orient, MapChu
     // fill data
     if(orientation == MapChunk::Horizontal)
     {
-        cleftData = new float[2 * CHUNK_WIDTH];
-
-        /*// top line
-        for(int i = 0; i < CHUNK_WIDTH; ++i)
-            cleftData[i] = previous->getHeight(i, CHUNK_HEIGHT - 2);
-
-        for(int i = 0; i < CHUNK_WIDTH; ++i)
-            cleftData[i + CHUNK_WIDTH] = previous->getHeight(i, CHUNK_HEIGHT - 1);
-
-        // bottom line
-        for(int i = 0; i < CHUNK_WIDTH; ++i)
-            cleftData[i + CHUNK_WIDTH * 2] = next->getHeight(i, 0);
-
-        for(int i = 0; i < CHUNK_WIDTH; ++i)
-            cleftData[i + CHUNK_WIDTH * 3] = next->getHeight(i, 1);*/
+        cleftData = new float[14 * CHUNK_WIDTH];
 
         // top line
         for(int i = 0; i < CHUNK_WIDTH; ++i)
+            cleftData[i] = previous->getHeight(i, CHUNK_HEIGHT - 7);
+
+        for(int i = 0; i < CHUNK_WIDTH; ++i)
+            cleftData[i + CHUNK_WIDTH] = previous->getHeight(i, CHUNK_HEIGHT - 6);
+
+        for(int i = 0; i < CHUNK_WIDTH; ++i)
+            cleftData[i + CHUNK_WIDTH * 2] = previous->getHeight(i, CHUNK_HEIGHT - 5);
+
+        for(int i = 0; i < CHUNK_WIDTH; ++i)
+            cleftData[i + CHUNK_WIDTH * 3] = previous->getHeight(i, CHUNK_HEIGHT - 4);
+
+        for(int i = 0; i < CHUNK_WIDTH; ++i)
+            cleftData[i + CHUNK_WIDTH * 7] = previous->getHeight(i, CHUNK_HEIGHT - 3);
+
+        for(int i = 0; i < CHUNK_WIDTH; ++i)
+            cleftData[i + CHUNK_WIDTH * 5] = previous->getHeight(i, CHUNK_HEIGHT - 2);
+
+        for(int i = 0; i < CHUNK_WIDTH; ++i)
+            cleftData[i + CHUNK_WIDTH * 6] = previous->getHeight(i, CHUNK_HEIGHT - 1);
+
+        // bottom line
+        for(int i = 0; i < CHUNK_WIDTH; ++i)
+            cleftData[i + CHUNK_WIDTH * 7] = next->getHeight(i, 0);
+
+        for(int i = 0; i < CHUNK_WIDTH; ++i)
+            cleftData[i + CHUNK_WIDTH * 8] = next->getHeight(i, 1);
+
+        for(int i = 0; i < CHUNK_WIDTH; ++i)
+            cleftData[i + CHUNK_WIDTH * 9] = next->getHeight(i, 2);
+
+        for(int i = 0; i < CHUNK_WIDTH; ++i)
+            cleftData[i + CHUNK_WIDTH * 10] = next->getHeight(i, 3);
+
+        for(int i = 0; i < CHUNK_WIDTH; ++i)
+            cleftData[i + CHUNK_WIDTH * 11] = next->getHeight(i, 4);
+
+        for(int i = 0; i < CHUNK_WIDTH; ++i)
+            cleftData[i + CHUNK_WIDTH * 12] = next->getHeight(i, 5);
+
+        for(int i = 0; i < CHUNK_WIDTH; ++i)
+            cleftData[i + CHUNK_WIDTH * 13] = next->getHeight(i, 6);
+
+        // top line
+        /*for(int i = 0; i < CHUNK_WIDTH; ++i)
             cleftData[i] = previous->getHeight(i, CHUNK_HEIGHT - 1);
 
         // bottom line
         for(int i = 0; i < CHUNK_WIDTH; ++i)
-            cleftData[i + CHUNK_WIDTH] = next->getHeight(i, 0);
+            cleftData[i + CHUNK_WIDTH] = next->getHeight(i, 0);*/
     }
     else // verticall
     {
-        cleftData = new float[2 * CHUNK_HEIGHT];
-
-        /*// left line
-        for(int i = 0; i < CHUNK_HEIGHT; ++i)
-            cleftData[i * 4] = previous->getHeight(CHUNK_WIDTH - 2, i);
-
-        for(int i = 0; i < CHUNK_HEIGHT; ++i)
-            cleftData[i * 4 + 1] = previous->getHeight(CHUNK_WIDTH - 1, i);
-
-        // right line
-        for(int i = 0; i < CHUNK_HEIGHT; ++i)
-            cleftData[i * 4 + 2] = next->getHeight(0, i);
-
-        for(int i = 0; i < CHUNK_HEIGHT; ++i)
-            cleftData[i * 4 + 3] = next->getHeight(1, i);*/
+        cleftData = new float[14 * CHUNK_HEIGHT];
 
         // left line
         for(int i = 0; i < CHUNK_HEIGHT; ++i)
+            cleftData[i * 14] = previous->getHeight(CHUNK_WIDTH - 7, i);
+
+        for(int i = 0; i < CHUNK_HEIGHT; ++i)
+            cleftData[i * 14 + 1] = previous->getHeight(CHUNK_WIDTH - 6, i);
+
+        for(int i = 0; i < CHUNK_HEIGHT; ++i)
+            cleftData[i * 14 + 2] = previous->getHeight(CHUNK_WIDTH - 5, i);
+
+        for(int i = 0; i < CHUNK_HEIGHT; ++i)
+            cleftData[i * 14 + 3] = previous->getHeight(CHUNK_WIDTH - 4, i);
+
+        for(int i = 0; i < CHUNK_HEIGHT; ++i)
+            cleftData[i * 14 + 4] = previous->getHeight(CHUNK_WIDTH - 3, i);
+
+        for(int i = 0; i < CHUNK_HEIGHT; ++i)
+            cleftData[i * 14 + 5] = previous->getHeight(CHUNK_WIDTH - 2, i);
+
+        for(int i = 0; i < CHUNK_HEIGHT; ++i)
+            cleftData[i * 14 + 6] = previous->getHeight(CHUNK_WIDTH - 1, i);
+
+        // right line
+        for(int i = 0; i < CHUNK_HEIGHT; ++i)
+            cleftData[i * 14 + 7] = next->getHeight(0, i);
+
+        for(int i = 0; i < CHUNK_HEIGHT; ++i)
+            cleftData[i * 14 + 8] = next->getHeight(1, i);
+
+        for(int i = 0; i < CHUNK_HEIGHT; ++i)
+            cleftData[i * 14 + 9] = next->getHeight(2, i);
+
+        for(int i = 0; i < CHUNK_HEIGHT; ++i)
+            cleftData[i * 14 + 10] = next->getHeight(3, i);
+
+        for(int i = 0; i < CHUNK_HEIGHT; ++i)
+            cleftData[i * 14 + 11] = next->getHeight(4, i);
+
+        for(int i = 0; i < CHUNK_HEIGHT; ++i)
+            cleftData[i * 14 + 12] = next->getHeight(5, i);
+
+        for(int i = 0; i < CHUNK_HEIGHT; ++i)
+            cleftData[i * 14 + 13] = next->getHeight(6, i);
+
+        // left line
+        /*for(int i = 0; i < CHUNK_HEIGHT; ++i)
             cleftData[i * 2] = previous->getHeight(CHUNK_WIDTH - 1, i);
 
         // right line
         for(int i = 0; i < CHUNK_HEIGHT; ++i)
-            cleftData[i * 2 + 1] = next->getHeight(0, i);
+            cleftData[i * 2 + 1] = next->getHeight(0, i);*/
     }
 
     world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Heightmap);
 
-    const int width  = orientation == MapChunk::Horizontal ? CHUNK_WIDTH  : 2;
-    const int height = orientation == MapChunk::Vertical   ? CHUNK_HEIGHT : 2;
+    const int width  = orientation == MapChunk::Horizontal ? CHUNK_WIDTH  : 14;
+    const int height = orientation == MapChunk::Vertical   ? CHUNK_HEIGHT : 14;
 
     terrainData->setSize(width, height);
     terrainData->setHeightmap(cleftData);
@@ -116,11 +176,11 @@ MapCleft::~MapCleft()
 void MapCleft::initialize()
 {
     /// Create a Vertex Buffers
-    const int maxTessellationLevel     = 64;
+    /*const int maxTessellationLevel     = 64;
     const int trianglesPerHeightSample = 10;
 
-    const int width  = orientation == MapChunk::Horizontal ? CHUNK_WIDTH  : 2;
-    const int height = orientation == MapChunk::Vertical   ? CHUNK_HEIGHT : 2;
+    const int width  = CHUNK_WIDTH;//orientation == MapChunk::Horizontal ? CHUNK_WIDTH  : 2;
+    const int height = CHUNK_HEIGHT;//orientation == MapChunk::Vertical   ? CHUNK_HEIGHT : 2;
 
     int xDivisions = trianglesPerHeightSample * width  / maxTessellationLevel;
     int zDivisions = trianglesPerHeightSample * height / maxTessellationLevel;
@@ -152,25 +212,100 @@ void MapCleft::initialize()
             positionData[index]     = x;
             positionData[index + 1] = z;
         }
+    }*/
+
+    const int size = orientation == MapChunk::Horizontal ? CHUNK_WIDTH : CHUNK_HEIGHT;
+
+    QVector<float> positionData(size * 4 * 3); // 3 floats per vertex, top and bottom * 2
+
+    if(orientation == MapChunk::Horizontal)
+    {
+        for(int i = 0; i < size * 4; i += 4)
+        {
+            // prev data left
+            positionData[i * 3]     = next->chunkBaseX + (CHUNKSIZE / CHUNK_WIDTH * (i / 4));
+            positionData[i * 3 + 1] = previous->getHeight(i / 4, CHUNK_HEIGHT - 1);
+            positionData[i * 3 + 2] = next->chunkBaseY;
+
+            // prev data right
+            positionData[(i + 1) * 3]     = next->chunkBaseX + (CHUNKSIZE / CHUNK_WIDTH * (i / 4 + 1));
+            positionData[(i + 1) * 3 + 1] = previous->getHeight(i / 4 + 1, CHUNK_HEIGHT - 1);
+            positionData[(i + 1) * 3 + 2] = next->chunkBaseY;
+
+            // next data right
+            positionData[(i + 2) * 3]     = next->chunkBaseX + (CHUNKSIZE / CHUNK_WIDTH * (i / 4 + 1));
+            positionData[(i + 2) * 3 + 1] = next->getHeight(i / 4 + 1, 0);
+            positionData[(i + 2) * 3 + 2] = next->chunkBaseY;
+
+            // next data left
+            positionData[(i + 3) * 3]     = next->chunkBaseX + (CHUNKSIZE / CHUNK_WIDTH * (i / 4));
+            positionData[(i + 3) * 3 + 1] = next->getHeight(i / 4, 0);
+            positionData[(i + 3) * 3 + 2] = next->chunkBaseY;
+
+        }
     }
+    else
+    {
+        for(int i = 0; i < size * 4; i += 4)
+        {
+            // prev data top
+            positionData[i * 3]     = next->chunkBaseX;
+            positionData[i * 3 + 1] = previous->getHeight(CHUNK_WIDTH - 1, i / 4);
+            positionData[i * 3 + 2] = next->chunkBaseY + (CHUNKSIZE / CHUNK_HEIGHT * (i / 4));
+
+            // prev data bot
+            positionData[(i + 1) * 3]     = next->chunkBaseX;
+            positionData[(i + 1) * 3 + 1] = previous->getHeight(CHUNK_WIDTH - 1, i / 4 + 1);
+            positionData[(i + 1) * 3 + 2] = next->chunkBaseY + (CHUNKSIZE / CHUNK_HEIGHT * (i / 4 + 1));
+
+            // next data bot
+            positionData[(i + 2) * 3]     = next->chunkBaseX;
+            positionData[(i + 2) * 3 + 1] = next->getHeight(0, i / 4 + 1);
+            positionData[(i + 2) * 3 + 2] = next->chunkBaseY + (CHUNKSIZE / CHUNK_HEIGHT * (i / 4 + 1));
+
+            // next data top
+            positionData[(i + 3) * 3]     = next->chunkBaseX;
+            positionData[(i + 3) * 3 + 1] = next->getHeight(0, i / 4);
+            positionData[(i + 3) * 3 + 2] = next->chunkBaseY + (CHUNKSIZE / CHUNK_HEIGHT * (i / 4));
+        }
+    }
+
+    /*QVector<float> positionData(12);
+
+    positionData[0] = 0.0f;
+    positionData[1] = 15.0f;
+    positionData[2] = 0.0f;
+
+    positionData[3] = 133.0f;
+    positionData[4] = 15.0f;
+    positionData[5] = 0.0f;
+
+    positionData[6] = 133.0f;
+    positionData[7] = 15.0f;
+    positionData[8] = 133.0f;
+
+    positionData[9] = 0.0f;
+    positionData[10] = 15.0f;
+    positionData[11] = 133.0f;*/
 
     mesh.createVertexArrayObject();
     mesh.createBuffer(IMesh::Vertices, positionData.data(), positionData.size() * sizeof(float));
-    mesh.setNumFaces(patchCount);
+    mesh.setNumFaces(size * 4);
+    //mesh.setNumFaces(4);
 }
 
 void MapCleft::draw(QOpenGLShaderProgram* shader)
 {
-    chunkMaterial->bind(shader);
+    /*chunkMaterial->bind(shader);
 
     if(orientation == MapChunk::Horizontal)
     {
         shader->setUniformValue("baseX", next->chunkBaseX);
-        shader->setUniformValue("baseY", next->chunkBaseY - 0.005f);
+        shader->setUniformValue("baseY", next->chunkBaseY - (CHUNKSIZE / CHUNK_HEIGHT * 7));//- 0.005f);
     }
     else
     {
-        shader->setUniformValue("baseX", next->chunkBaseX - 0.001f);//(CHUNKSIZE / CHUNK_WIDTH * 4));
+        shader->setUniformValue("baseX", next->chunkBaseX - (CHUNKSIZE / CHUNK_WIDTH * 7));//- 0.001f);//(CHUNKSIZE / CHUNK_WIDTH * 4));
         shader->setUniformValue("baseY", next->chunkBaseY);
     }
 
@@ -182,16 +317,17 @@ void MapCleft::draw(QOpenGLShaderProgram* shader)
         displaySubroutines[i] = world->getGLFunctions()->glGetSubroutineIndex(shader->programId(), GL_FRAGMENT_SHADER, world->displayName(i).toLatin1());
 
     // Set the fragment shader display mode subroutine
-    world->getGLFunctions()->glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &getDisplaySubroutines());
+    world->getGLFunctions()->glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &getDisplaySubroutines());*/
 
     //if(world->displayMode() != world->Hidden)
     //{
         // Render the quad as a patch
         {
             mesh.bind();
-            mesh.createAttributeArray(IMesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 2);
+            //mesh.createAttributeArray(IMesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 2);
+            mesh.createAttributeArray(IMesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 3);
 
-            shader->setPatchVertexCount(1);
+            shader->setPatchVertexCount(4);
 
             world->getGLFunctions()->glDrawArrays(GL_PATCHES, 0, mesh.getNumFaces());
         }

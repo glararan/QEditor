@@ -15,16 +15,17 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #version 400
 
-uniform mat4 modelViewProjectionMatrix;
+layout(triangles) in;
+layout(triangle_strip, max_vertices = 3) out;
 
-in vec3 qt_Vertex;
-out vec3 vertexVector;
-
-void main()
+void main(void)
 {
-    vec4 a = modelViewProjectionMatrix * vec4(qt_Vertex, 1.0);
+    for(int i = 0; i < gl_in.length(); ++i)
+    {
+        gl_Position = gl_in[i].gl_Position;
 
-    gl_Position = vec4(a.xyz, a.z + 0.000001);//modelViewProjectionMatrix * vec4(qt_Vertex, 1.0);
+        EmitVertex();
+    }
 
-    vertexVector = qt_Vertex;
+    EndPrimitive();
 }

@@ -112,6 +112,7 @@ public:
     void changeTerrain(float x, float z, float change);
     void flattenTerrain(float x, float z, float y, float change);
     void blurTerrain(float x, float z, float change);
+    void uniformTerrain(float x, float z, float height);
 
     void paintTerrain(float x, float z, float flow);
     void paintVertexShading(float x, float z, float flow, QColor& color);
@@ -162,6 +163,7 @@ public:
     void setCamera(Camera* cam);
     void setProjectData(ProjectFileData& data);
     void setMapGenerationData(MapGenerationData& data);
+    void setBasicSettings(BasicSettingsData& data);
 
     void setTerrainMaximumHeight(float value);
     void setTerrainMaximumState(bool state);

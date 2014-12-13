@@ -30,17 +30,22 @@ public:
     TextureManager(World* world, float antialiasing = 1.0f);
     ~TextureManager();
 
-    void loadTexture(QString textureName, QString texturePath);
+    void loadTexture(QString textureName, QString texturePath, bool depth = false, QString extension = QString("_h"));
+    void loadDepthTexture(QString textureName, QString texturePath);
 
     bool hasTexture(QString textureName, QString texturePath);
     //bool hasTexture(QString texturePath);
+    bool hasDepthTexture(QString textureName, QString texturePath);
 
     const SamplerPtr getSampler() const;
     const TexturePtr getTexture(QString textureName) const;
     const TexturePtr getTexture(QString textureName, QString texturePath) const;
+    const TexturePtr getDepthTexture(QString textureName) const;
+    const TexturePtr getDepthTexture(QString textureName, QString texturePath, QString extension = QString("_h")) const;
     const TexturePtr getSelectedTexture();
 
-    const QVector<QPair<QString, TexturePtr>> getTextures() const { return textures; }
+    const QVector<QPair<QString, TexturePtr>> getTextures() const      { return textures; }
+    const QVector<QPair<QString, TexturePtr>> getDepthTextures() const { return depthTextures; }
 
     void setAntialiasing(World* world, const float antialiasing);
     void setSelectedTexture(int index);
@@ -48,7 +53,7 @@ public:
 private:
     SamplerPtr sampler;
 
-    QVector<QPair<QString, TexturePtr>> textures;
+    QVector<QPair<QString, TexturePtr>> textures, depthTextures;
 
     TexturePtr selectedTexture;
 };

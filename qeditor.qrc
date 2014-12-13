@@ -40,6 +40,11 @@
         <file>data/shaders/qeditor_bezier.tes</file>
         <file>data/shaders/qeditor_cleft.tcs</file>
         <file>data/shaders/qeditor_cleft.tes</file>
+        <file>data/shaders/qeditor_cleft2.geom</file>
+        <file>data/shaders/qeditor_cleft2.tcs</file>
+        <file>data/shaders/qeditor_cleft2.tes</file>
+        <file>data/shaders/qeditor_cleft2.vert</file>
+        <file>data/shaders/qeditor_cleft2.frag</file>
     </qresource>
     <qresource prefix="/textures">
         <file>textures/grass.png</file>

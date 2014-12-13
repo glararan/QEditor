@@ -44,19 +44,48 @@ TextureManager::~TextureManager()
 
     for(int i = 0; i < textures.count(); ++i)
         textures[i].second->destroy();
+
+    for(int i = 0; i < depthTextures.count(); ++i)
+        depthTextures[i].second->destroy();
 }
 
-void TextureManager::loadTexture(QString textureName, QString texturePath)
+void TextureManager::loadTexture(QString textureName, QString texturePath, bool depth, QString extension)
 {
     QImage textureImage(texturePath);
-
-    //qDebug() << "Texture path exists:" << QFile(texturePath).exists() << QFileInfo(texturePath).absoluteFilePath();
 
     TexturePtr texture(new Texture(textureImage.mirrored(), texturePath));
 
     QPair<QString, TexturePtr> pair;
 
     foreach(pair, textures)
+    {
+        if(textureName == pair.first && texturePath == pair.second->getPath())
+        {
+            if(depth)
+                loadDepthTexture(textureName, texturePath.replace(QFileInfo(texturePath).baseName(), QFileInfo(texturePath).baseName() + extension));
+
+            //qDebug() << "going destroy texture!";
+            //texture->destroy(); // without memory leak? Is QSharedPointer smart to delete class?
+
+            return;
+        }
+    }
+
+    textures.append(qMakePair<QString, TexturePtr>(textureName, texture));
+
+    if(depth)
+        loadDepthTexture(textureName, texturePath.replace(QFileInfo(texturePath).baseName(), QFileInfo(texturePath).baseName() + extension));
+}
+
+void TextureManager::loadDepthTexture(QString textureName, QString texturePath)
+{
+    QImage textureImage(texturePath);
+
+    TexturePtr texture(new Texture(textureImage.mirrored(), texturePath));
+
+    QPair<QString, TexturePtr> pair;
+
+    foreach(pair, depthTextures)
     {
         if(textureName == pair.first && texturePath == pair.second->getPath())
         {
@@ -67,7 +96,7 @@ void TextureManager::loadTexture(QString textureName, QString texturePath)
         }
     }
 
-    textures.append(qMakePair<QString, TexturePtr>(textureName, texture));
+    depthTextures.append(qMakePair<QString, TexturePtr>(textureName, texture));
 }
 
 bool TextureManager::hasTexture(QString textureName, QString texturePath)
@@ -95,6 +124,19 @@ bool TextureManager::hasTexture(QString textureName, QString texturePath)
 
     return false;
 }*/
+
+bool TextureManager::hasDepthTexture(QString textureName, QString texturePath)
+{
+    QPair<QString, TexturePtr> pair;
+
+    foreach(pair, depthTextures)
+    {
+        if(pair.first == textureName && pair.second->getPath() == texturePath)
+            return true;
+    }
+
+    return false;
+}
 
 const SamplerPtr TextureManager::getSampler() const
 {    
@@ -135,6 +177,48 @@ const TexturePtr TextureManager::getTexture(QString textureName, QString texture
 
     QImage textureImage(1, 1, QImage::Format_RGB32);
     textureImage.setPixel(1, 1, qRgb(0, 0, 0));
+
+    TexturePtr texture(new Texture(textureImage));
+
+    return texture;
+}
+
+const TexturePtr TextureManager::getDepthTexture(QString textureName) const
+{
+    QPair<QString, TexturePtr> pair;
+
+    foreach(pair, depthTextures)
+    {
+        if(pair.first == textureName)
+            return pair.second;
+    }
+
+    qDebug() << QObject::tr("We didn't find depth texture with name") << textureName << QObject::tr("returning white texture!");
+
+    QImage textureImage(1, 1, QImage::Format_RGB32);
+    textureImage.setPixel(1, 1, qRgb(255, 255, 255));
+
+    TexturePtr texture(new Texture(textureImage));
+
+    return texture;
+}
+
+const TexturePtr TextureManager::getDepthTexture(QString textureName, QString texturePath, QString extension) const
+{
+    QPair<QString, TexturePtr> pair;
+
+    texturePath = texturePath.replace(QFileInfo(texturePath).baseName(), QFileInfo(texturePath).baseName() + extension);
+
+    foreach(pair, depthTextures)
+    {
+        if(pair.first == textureName && pair.second->getPath() == texturePath)
+            return pair.second;
+    }
+
+    qDebug() << QObject::tr("We didn't find texture with name") << textureName << QObject::tr("returning white texture!");
+
+    QImage textureImage(1, 1, QImage::Format_RGB32);
+    textureImage.setPixel(1, 1, qRgb(255, 255, 255));
 
     TexturePtr texture(new Texture(textureImage));
 

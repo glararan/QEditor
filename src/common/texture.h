@@ -46,7 +46,10 @@ public:
     void setVertexShade(void* data, QVector2D offset, bool bindTexture = false);
     void setVertexShading(const void* data);
 
+    void setTexture(const void* data, int layer);
+
     const QImage getImage();
+    const QImage getImage(int layer);
 
 private:
     QOpenGLFunctions_4_2_Core* GLfuncs;

@@ -52,7 +52,7 @@ MapTile::MapTile(World* mWorld, const QString& mapFile, int x, int y) // Cache M
     }
 
     /// create map clefts
-    // horizontal
+    /*// horizontal
     for(int x = 0; x < CHUNKS; ++x)
     {
         for(int y = 0; y < CHUNKS - 1; ++y)
@@ -72,7 +72,7 @@ MapTile::MapTile(World* mWorld, const QString& mapFile, int x, int y) // Cache M
 
             qDebug() << QString(QObject::tr("cleft[%1, %2] - vertical")).arg(x).arg(y);
         }
-    }
+    }*/
 
     waterTile = new WaterTile(this);
 }
@@ -117,7 +117,7 @@ MapTile::MapTile(World* mWorld, int x, int y, const QString& mapFile) // File ba
     }
 
     /// create map clefts
-    // horizontal
+    /*// horizontal
     for(int x = 0; x < CHUNKS; ++x)
     {
         for(int y = 0; y < CHUNKS - 1; ++y)
@@ -137,7 +137,7 @@ MapTile::MapTile(World* mWorld, int x, int y, const QString& mapFile) // File ba
 
             qDebug() << QString(QObject::tr("cleft[%1, %2] - vertical")).arg(x).arg(y);
         }
-    }
+    }*/
 
     waterTile = new WaterTile(this, file);
 
@@ -150,7 +150,7 @@ MapTile::~MapTile()
 
     terrainSampler->destroy();
 
-    for(int x = 0; x < CHUNKS; ++x)
+    /*for(int x = 0; x < CHUNKS; ++x)
     {
         for(int y = 0; y < CHUNKS - 1; ++y)
         {
@@ -174,7 +174,7 @@ MapTile::~MapTile()
                 mapCleftVertical[x][y] = NULL;
             }
         }
-    }
+    }*/
 
     for(int x = 0; x < CHUNKS; ++x)
     {
@@ -207,43 +207,43 @@ void MapTile::draw(const float& distance, const QVector3D& camera)
         }
     }
 
-    QOpenGLShaderProgram* shader2 = world->getCleftShader();
-    shader2->bind();
+    /*QOpenGLShaderProgram* shader2 = world->getCleftShader();
+    shader2->bind();*/
 
     // horiz & vertical settings
-    shader2->setUniformValue("textureScaleOption", QVector4D(0, 0, 0, 0));
+    /*shader2->setUniformValue("textureScaleOption", QVector4D(0, 0, 0, 0));
     shader2->setUniformValue("textureScaleFar",    QVector4D(0.4f, 0.4f, 0.4f, 0.4f));
     shader2->setUniformValue("textureScaleNear",   QVector4D(0.4f, 0.4f, 0.4f, 0.4f));
 
     // horizontal settings
     shader2->setUniformValue("horizontalScaleX", CHUNKSIZE);
-    shader2->setUniformValue("horizontalScaleY", 0.01f);
-    shader2->setUniformValue("vertical",         false);
+    shader2->setUniformValue("horizontalScaleY", CHUNKSIZE / CHUNK_WIDTH * 7);//0.01f);
+    shader2->setUniformValue("vertical",         false);*/
 
     // horizontal draw
-    for(int x = 0; x < CHUNKS; ++x)
+    /*for(int x = 0; x < CHUNKS; ++x)
     {
         for(int y = 0; y < CHUNKS - 1; ++y)
         {
             if(mapCleftHorizontal[x][y]->isInVisibleRange(distance, camera))
                 mapCleftHorizontal[x][y]->draw(shader2);
         }
-    }
+    }*/
 
     // vertical settings
-    shader2->setUniformValue("horizontalScaleX", 0.01f);//CHUNKSIZE / CHUNK_WIDTH);
-    shader2->setUniformValue("horizontalScaleY", CHUNKSIZE);
+    /*shader2->setUniformValue("horizontalScaleX", CHUNKSIZE / CHUNK_WIDTH * 10);//0.01f);//CHUNKSIZE / CHUNK_WIDTH);
+    shader2->setUniformValue("horizontalScaleY", CHUNKSIZE);*/
     //shader2->setUniformValue("vertical",         true);
 
     // vertical draw
-    for(int x = 0; x < CHUNKS - 1; ++x)
+    /*for(int x = 0; x < CHUNKS - 1; ++x)
     {
         for(int y = 0; y < CHUNKS; ++y)
         {
             if(mapCleftVertical[x][y]->isInVisibleRange(distance, camera))
                 mapCleftVertical[x][y]->draw(shader2);
         }
-    }
+    }*/
 }
 
 void MapTile::drawObjects(const float& distance, const QVector3D& camera, QMatrix4x4 viewMatrix, QMatrix4x4 projectionMatrix)
@@ -572,14 +572,21 @@ void MapTile::exportHeightmap(QString path, float scale)
                     int red, green, blue;
                     red = green = blue = 0;
 
-                    if(height > 65536.0f)
+                    // rgb export
+                    /*if(height > 65536.0f)
                         height = 65536.0f;
 
                     height *= 256.0f;
 
                     red   = MathHelper::toInt(height) >> 16;
                     green = (MathHelper::toInt(height) >> 8) & 0xff;
-                    blue  = MathHelper::toInt(height) & 0xff;
+                    blue  = MathHelper::toInt(height) & 0xff;*/
+
+                    // grayscale export
+                    if(height > 256.0f)
+                        height = 256.0f;
+
+                    red = green = blue = MathHelper::toInt(height);
 
                     QColor color = QColor(red, green, blue);
 

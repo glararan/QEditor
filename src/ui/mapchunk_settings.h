@@ -43,6 +43,10 @@ private slots:
     void setTextureScaleFar(double scale);
     void setTextureScaleNear(double scale);
 
+    void setAutomaticStartEndEnabled(int state);
+    void setAutomaticStartEndCorrection(double value);
+    void setAutomaticEnd(double value);
+
 public slots:
     void setChunk(MapChunk* mapChunk);
 };

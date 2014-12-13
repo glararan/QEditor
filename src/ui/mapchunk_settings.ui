@@ -61,11 +61,17 @@
     <layout class="QGridLayout" name="gridLayout">
      <item row="0" column="0">
       <widget class="QTabWidget" name="textureScaleTabWidget">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="tabShape">
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="textureScale0">
         <attribute name="title">
@@ -74,6 +80,27 @@
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
           <layout class="QGridLayout" name="gridLayout_ts0">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>Texture scale options:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>Texture scale far:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_6">
+             <property name="text">
+              <string>Texture scale near:</string>
+             </property>
+            </widget>
+           </item>
            <item row="0" column="1">
             <widget class="QComboBox" name="textureScaleOptions0">
              <property name="currentText">
@@ -104,26 +131,18 @@
              </item>
             </widget>
            </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_3">
-             <property name="text">
-              <string>Texture scale options:</string>
+           <item row="3" column="0">
+            <spacer name="verticalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
              </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_5">
-             <property name="text">
-              <string>Texture scale far:</string>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
              </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_6">
-             <property name="text">
-              <string>Texture scale near:</string>
-             </property>
-            </widget>
+            </spacer>
            </item>
           </layout>
          </item>
@@ -136,6 +155,13 @@
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
           <layout class="QGridLayout" name="gridLayout_ts1">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_4">
+             <property name="text">
+              <string>Texture scale options:</string>
+             </property>
+            </widget>
+           </item>
            <item row="0" column="1">
             <widget class="QComboBox" name="textureScaleOptions1">
              <property name="currentText">
@@ -166,13 +192,6 @@
              </item>
             </widget>
            </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_4">
-             <property name="text">
-              <string>Texture scale options:</string>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="0">
             <widget class="QLabel" name="label_7">
              <property name="text">
@@ -187,6 +206,60 @@
              </property>
             </widget>
            </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_15">
+             <property name="text">
+              <string>Automatic texture:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Start height:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QCheckBox" name="automaticTexture1">
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="label_16">
+             <property name="text">
+              <string>End height:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QDoubleSpinBox" name="startHeight1">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="minimum">
+              <double>-32768.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>32768.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QDoubleSpinBox" name="endHeight1">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="minimum">
+              <double>-32768.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>32768.000000000000000</double>
+             </property>
+            </widget>
+           </item>
           </layout>
          </item>
         </layout>
@@ -198,6 +271,13 @@
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <item>
           <layout class="QGridLayout" name="gridLayout_ts2">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_9">
+             <property name="text">
+              <string>Texture scale options:</string>
+             </property>
+            </widget>
+           </item>
            <item row="0" column="1">
             <widget class="QComboBox" name="textureScaleOptions2">
              <property name="currentText">
@@ -228,13 +308,6 @@
              </item>
             </widget>
            </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_9">
-             <property name="text">
-              <string>Texture scale options:</string>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="0">
             <widget class="QLabel" name="label_10">
              <property name="text">
@@ -246,6 +319,60 @@
             <widget class="QLabel" name="label_11">
              <property name="text">
               <string>Texture scale near:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_17">
+             <property name="text">
+              <string>Automatic texture:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="label_18">
+             <property name="text">
+              <string>Start height:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="label_19">
+             <property name="text">
+              <string>End height:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QDoubleSpinBox" name="endHeight2">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="minimum">
+              <double>-32768.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>32768.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QDoubleSpinBox" name="startHeight2">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="minimum">
+              <double>-32768.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>32768.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QCheckBox" name="automaticTexture2">
+             <property name="text">
+              <string/>
              </property>
             </widget>
            </item>
@@ -290,10 +417,10 @@
              </item>
             </widget>
            </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_12">
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_14">
              <property name="text">
-              <string>Texture scale options:</string>
+              <string>Texture scale near:</string>
              </property>
             </widget>
            </item>
@@ -304,10 +431,64 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_14">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_12">
              <property name="text">
-              <string>Texture scale near:</string>
+              <string>Texture scale options:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="label_21">
+             <property name="text">
+              <string>Start height:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_20">
+             <property name="text">
+              <string>Automatic texture:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="label_22">
+             <property name="text">
+              <string>End height:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QDoubleSpinBox" name="startHeight3">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="minimum">
+              <double>-32768.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>32768.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QDoubleSpinBox" name="endHeight3">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="minimum">
+              <double>-32768.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>32768.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QCheckBox" name="automaticTexture3">
+             <property name="text">
+              <string/>
              </property>
             </widget>
            </item>
@@ -353,8 +534,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>227</x>
+     <y>282</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -369,8 +550,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>295</x>
+     <y>288</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>

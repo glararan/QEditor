@@ -43,6 +43,7 @@ MainWindow::MainWindow(QWidget* parent)
 , texturepW(NULL)
 , modelpickerW(NULL)
 , heightmapW(NULL)
+, basicSettingsW(NULL)
 , colorW(NULL)
 , waterW(NULL)
 , cameraW(NULL)
@@ -60,6 +61,7 @@ MainWindow::MainWindow(QWidget* parent)
 , t_terrain_maxHeight(NULL)
 , t_paint_maxAlpha(NULL)
 , t_terrain_maximum_height(NULL)
+, t_terrain_uniform_height(NULL)
 , t_paint_maximum_alpha(NULL)
 , t_modelmode(NULL)
 , t_modelmode_insert(NULL)
@@ -139,6 +141,7 @@ MainWindow::~MainWindow()
     delete waterW;
     delete cameraW;
     delete heightmapW;
+    delete basicSettingsW;
 
     deleteObject(t_outer_radius);
     deleteObject(t_inner_radius);
@@ -167,6 +170,7 @@ MainWindow::~MainWindow()
 
     deleteObject(t_terrain_maxHeight);
     deleteObject(t_terrain_maximum_height);
+    deleteObject(t_terrain_uniform_height);
 
     deleteObject(t_paint_maxAlpha);
     deleteObject(t_paint_maximum_alpha);
@@ -371,6 +375,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
 
     connect(t_terrain_maxHeight,      SIGNAL(stateChanged(int)),    this,    SLOT(setTerrainMaximumHeightState(int)));
     connect(t_terrain_maximum_height, SIGNAL(valueChanged(double)), mapView, SLOT(setTerrainMaximumHeight(double)));
+    connect(t_terrain_uniform_height, SIGNAL(valueChanged(double)), mapView, SLOT(setTerrainUniformHeight(double)));
 
     connect(t_paint_maxAlpha,      SIGNAL(stateChanged(int)),    this,    SLOT(setPaintMaximumAlphaState(int)));
     connect(t_paint_maximum_alpha, SIGNAL(valueChanged(double)), mapView, SLOT(setPaintMaximumAlpha(double)));
@@ -401,6 +406,7 @@ void MainWindow::openWorld(ProjectFileData projectData)
     connect(colorW, SIGNAL(currentColorChanged(QColor)), mapView, SLOT(setVertexShading(QColor)));
 
     connect(cameraW, SIGNAL(showPath(bool)),                             mapView, SLOT(setCameraShowCurve(bool)));
+    connect(cameraW, SIGNAL(repeatPlay(bool)),                           mapView, SLOT(setCameraRepeatPlay(bool)));
     connect(cameraW, SIGNAL(selectedPoint(QVector<QTableWidgetItem*>&)), mapView, SLOT(setCameraCurvePoint(QVector<QTableWidgetItem*>&)));
 }
 
@@ -443,6 +449,12 @@ void MainWindow::createMemoryProject(NewProjectData projectData)
         closeProject();
 
     openWorld(projectFile);
+
+    basicSettingsW = new Basic_Settings(world);
+    basicSettingsW->show();
+
+    connect(basicSettingsW, SIGNAL(openTerrainGeneration()),   this, SLOT(showMapGeneration()));
+    connect(basicSettingsW, SIGNAL(openTerrainImportExport()), this, SLOT(showHeightmap()));
 
     connect(mapView, SIGNAL(initialized()), this, SLOT(loadNewProjectMapTilesIntoMemory()));
 }
@@ -521,7 +533,7 @@ void MainWindow::takeScreenshot()
 
     QRect centralRect = QRect(0, 0, centralWidget()->width(), centralWidget()->height());
 
-    QImage mapViewImage = mapView->grabFrameBuffer();
+    QImage mapViewImage = mapView->grabFramebuffer();
 
     QPainter painter;
     painter.begin(&mainWindowPixmap);
@@ -551,7 +563,7 @@ void MainWindow::takeScreenshotAndUpload()
 
     QRect centralRect = QRect(0, 0, centralWidget()->width(), centralWidget()->height());
 
-    QImage mapViewImage = mapView->grabFrameBuffer();
+    QImage mapViewImage = mapView->grabFramebuffer();
 
     QPainter painter;
     painter.begin(&mainWindowPixmap);
@@ -701,6 +713,8 @@ void MainWindow::setToolBarItem()
         emit setModeEditing(1);
 
         showMode(mode1Actions);
+
+        setTerrain_Mode(t_terrain_mode->currentIndex());
     }
     else if(iName == "action_mapview_m2")
     {
@@ -929,6 +943,7 @@ void MainWindow::initMode()
     t_terrain_mode->setObjectName("t_terrain_mode");
     t_terrain_mode->addItem(tr("Shaping")  , 0);
     t_terrain_mode->addItem(tr("Smoothing"), 1);
+    t_terrain_mode->addItem(tr("Uniform")  , 2);
 
     t_terrain_mode_0.append(qMakePair<QString, QVariant>(tr("Linear")  , 1));
     t_terrain_mode_0.append(qMakePair<QString, QVariant>(tr("Flat")    , 2));
@@ -986,6 +1001,13 @@ void MainWindow::initMode()
     t_terrain_maximum_height->setMaximum(MathHelper::toDouble(std::numeric_limits<float>::max()));
     t_terrain_maximum_height->setObjectName("t_terrain_maximum_height");
     t_terrain_maximum_height->setEnabled(false);
+
+    t_terrain_uniform_height = new QDoubleSpinBox();
+    t_terrain_uniform_height->setDecimals(2);
+    t_terrain_uniform_height->setMinimum(MathHelper::toDouble(std::numeric_limits<float>::min()));
+    t_terrain_uniform_height->setMaximum(MathHelper::toDouble(std::numeric_limits<float>::max()));
+    t_terrain_uniform_height->setObjectName("t_terrain_uniform_height");
+    t_terrain_uniform_height->setVisible(false);
 
     t_paint_maximum_alpha = new QDoubleSpinBox();
     t_paint_maximum_alpha->setDecimals(2);
@@ -1079,6 +1101,7 @@ void MainWindow::initMode()
     addToolbarAction(t_brush_type              , mode1Actions);
     addToolbarAction(t_brush_mode_label        , mode1Actions);
     addToolbarAction(t_brush_mode              , mode1Actions);
+    addToolbarAction(t_terrain_uniform_height  , mode1Actions);
     addToolbarAction(t_outer_radius_label      , mode1Actions);
     addToolbarAction(t_outer_radius            , mode1Actions);
     addToolbarAction(t_outer_radius_value_label, mode1Actions);
@@ -1305,6 +1328,25 @@ void MainWindow::setTerrain_Mode(int index)
 
                 for(int i = 0; i < t_terrain_mode_0.count(); ++i)
                     t_brush_type->addItem(t_terrain_mode_0.at(i).first, t_terrain_mode_0.at(i).second);
+
+                QList<QAction*> actions = ui->toolbar3->actions();
+
+                for(int i = 0; i < actions.count(); ++i)
+                {
+                    if(actions[i]->objectName() == "t_terrain_uniform_height")
+                        actions[i]->setVisible(false);
+
+                    if(actions[i]->objectName() == "t_brush_mode_label"
+                    || actions[i]->objectName() == "t_brush_mode"
+                    || actions[i]->objectName() == "t_brush_type_label"
+                    || actions[i]->objectName() == "t_brush_type"
+                    || actions[i]->objectName() == "t_speed"
+                    || actions[i]->objectName() == "t_speed_label"
+                    || actions[i]->objectName() == "t_speed_value_label"
+                    || actions[i]->objectName() == "t_terrain_maxHeight"
+                    || actions[i]->objectName() == "t_terrain_maximum_height")
+                        actions[i]->setVisible(true);
+                }
             }
             break;
 
@@ -1314,6 +1356,48 @@ void MainWindow::setTerrain_Mode(int index)
 
                 for(int i = 0; i < t_terrain_mode_1.count(); ++i)
                     t_brush_type->addItem(t_terrain_mode_1.at(i).first, t_terrain_mode_1.at(i).second);
+
+                QList<QAction*> actions = ui->toolbar3->actions();
+
+                for(int i = 0; i < actions.count(); ++i)
+                {
+                    if(actions[i]->objectName() == "t_terrain_uniform_height")
+                        actions[i]->setVisible(false);
+
+                    if(actions[i]->objectName() == "t_brush_mode_label"
+                    || actions[i]->objectName() == "t_brush_mode"
+                    || actions[i]->objectName() == "t_brush_type_label"
+                    || actions[i]->objectName() == "t_brush_type"
+                    || actions[i]->objectName() == "t_speed"
+                    || actions[i]->objectName() == "t_speed_label"
+                    || actions[i]->objectName() == "t_speed_value_label"
+                    || actions[i]->objectName() == "t_terrain_maxHeight"
+                    || actions[i]->objectName() == "t_terrain_maximum_height")
+                        actions[i]->setVisible(true);
+                }
+            }
+            break;
+
+        case 2:
+            {
+                QList<QAction*> actions = ui->toolbar3->actions();
+
+                for(int i = 0; i < actions.count(); ++i)
+                {
+                    if(actions[i]->objectName() == "t_terrain_uniform_height")
+                        actions[i]->setVisible(true);
+
+                    if(actions[i]->objectName() == "t_brush_mode_label"
+                    || actions[i]->objectName() == "t_brush_mode"
+                    || actions[i]->objectName() == "t_brush_type_label"
+                    || actions[i]->objectName() == "t_brush_type"
+                    || actions[i]->objectName() == "t_speed"
+                    || actions[i]->objectName() == "t_speed_label"
+                    || actions[i]->objectName() == "t_speed_value_label"
+                    || actions[i]->objectName() == "t_terrain_maxHeight"
+                    || actions[i]->objectName() == "t_terrain_maximum_height")
+                        actions[i]->setVisible(false);
+                }
             }
             break;
     }

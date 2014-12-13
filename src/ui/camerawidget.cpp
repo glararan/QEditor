@@ -34,7 +34,8 @@ CameraWidget::CameraWidget(Camera* cam, QWidget* parent)
 
     connect(ui->tableWidget, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(itemChanged(QTableWidgetItem*)));
 
-    connect(ui->showCurveBox, SIGNAL(stateChanged(int)), this, SLOT(setShowPath(int)));
+    connect(ui->showCurveBox,  SIGNAL(stateChanged(int)), this, SLOT(setShowPath(int)));
+    connect(ui->repeatPlayBox, SIGNAL(stateChanged(int)), this, SLOT(setRepeat(int)));
 
     connect(ui->addButton,    SIGNAL(clicked()), this, SLOT(addPosition()));
     connect(ui->setButton,    SIGNAL(clicked()), this, SLOT(setPosition()));
@@ -93,6 +94,21 @@ void CameraWidget::setShowPath(int state)
 
         case 2:
             emit showPath(true);
+            break;
+    }
+}
+
+void CameraWidget::setRepeat(int state)
+{
+    switch(state)
+    {
+        case 0:
+        default:
+            emit repeatPlay(false);
+            break;
+
+        case 2:
+            emit repeatPlay(true);
             break;
     }
 }
@@ -284,7 +300,7 @@ void CameraWidget::stop()
 
     playing = false;
 
-    camera->stop();
+    camera->stop(true);
 }
 
 void CameraWidget::clear()

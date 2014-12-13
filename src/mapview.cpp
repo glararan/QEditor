@@ -21,12 +21,13 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "ipipeline.h"
 
 #include <QKeyEvent>
+#include <QTabletEvent>
 #include <QOpenGLContext>
 
 MapView::MapView(World* mWorld, QWidget* parent)
-: QGLWidget(parent)
+: QOpenGLWidget(parent)
 , world(mWorld)
-, GLcontext(this->context()->contextHandle())
+, GLcontext(this->context())
 , camera(new Camera(this))
 , pipeline(new IPipeline())
 , m_v()
@@ -52,6 +53,7 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , rightButtonPressed(false)
 , changedMouseMode(false)
 , tabletMode(app().getSetting("tabletMode", false).toBool())
+, tablet(false)
 , mouse_position(QPoint(0, 0))
 , mousePosZ(0)
 , prevMousePosZ(0)
@@ -59,6 +61,7 @@ MapView::MapView(World* mWorld, QWidget* parent)
 , object_move()
 , shaping_speed(1.0f)
 , shaping_brush_type(1)
+, uniform_height(0.0f)
 , texturing_flow(1.0f)
 , vertexShadingColor(QColor(255, 255, 255, 255))
 , shiftDown(false)
@@ -80,8 +83,14 @@ MapView::MapView(World* mWorld, QWidget* parent)
     format.setSamples(4);
     format.setProfile(QSurfaceFormat::CoreProfile);
 
-    GLcontext->setFormat(format);
+    QSurfaceFormat::setDefaultFormat(format);
+
+    /*GLcontext = new QOpenGLContext();
     GLcontext->create();
+    GLcontext->setFormat(format);
+    GLcontext->setShareContext(QOpenGLContext::currentContext());*/
+
+    //QOpenGLContext::currentContext()->setShareContext(GLcontext);
 
     modelMatrix.setToIdentity();
     //pipeline->getModelMatrix().setToIdentity();
@@ -93,6 +102,9 @@ MapView::MapView(World* mWorld, QWidget* parent)
 
     // Assign camera to World
     world->setCamera(camera);
+
+    // tablet initial
+    wacom.pressure = 1.0f;
 
     AddStatusBarMessage("FPS: "             , &fps           , "int");
     AddStatusBarMessage("speed multiplier: ", &speed_mult    , "float");
@@ -109,6 +121,8 @@ MapView::MapView(World* mWorld, QWidget* parent)
 MapView::~MapView()
 {
     delete camera;
+
+    //delete GLcontext;
 }
 
 void MapView::timerEvent(QTimerEvent*)
@@ -118,15 +132,26 @@ void MapView::timerEvent(QTimerEvent*)
     const qreal time = m_Utime.elapsed() / 1000.0f;
 
     update(time);
-    updateGL();
+    //updateGL();
 }
 
 void MapView::initializeGL()
 {
     this->makeCurrent();
 
+    initializeOpenGLFunctions();
+
+    QSurfaceFormat format;
+    format.setDepthBufferSize(24);
+    format.setMajorVersion(4);
+    format.setMinorVersion(3);
+    format.setSamples(4);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+
+    this->context()->setFormat(format);
+
     // Initialize World
-    world->initialize(GLcontext, size());
+    world->initialize(/*GLcontext*/this->context(), size());
 
     // Initialize camera shader
     camera->initialize();
@@ -134,6 +159,8 @@ void MapView::initializeGL()
     // Enable depth testing
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+
+    glDepthFunc(GL_LEQUAL); // just testing new depth func
 
     glClearColor(0.65f, 0.77f, 1.0f, 1.0f);
 
@@ -347,11 +374,11 @@ void MapView::update(float t)
     }
 
     // Change terrain
-    if(leftButtonPressed)
+    if(leftButtonPressed || tablet)
     {
         const QVector3D& position(terrain_pos);
 
-        if((eMMode == ShiftOnly && tabletMode) || shiftDown)
+        if((eMMode == ShiftOnly && tabletMode) || (eMMode == ShiftOnly && tablet) || shiftDown)
         {
             switch(eMode)
             {
@@ -360,11 +387,15 @@ void MapView::update(float t)
                         switch(eTerrain)
                         {
                             case Shaping:
-                                world->changeTerrain(position.x(), position.z(), 7.5f * dt * shaping_speed);
+                                world->changeTerrain(position.x(), position.z(), 7.5f * dt * shaping_speed * wacom.pressure);
                                 break;
 
                             case Smoothing:
-                                world->flattenTerrain(position.x(), position.z(), position.y(), pow(0.2f, dt) * shaping_speed);
+                                world->flattenTerrain(position.x(), position.z(), position.y(), pow(0.2f, dt) * shaping_speed * wacom.pressure);
+                                break;
+
+                            case Uniform:
+                                world->uniformTerrain(position.x(), position.z(), uniform_height);
                                 break;
                         }
                     }
@@ -372,13 +403,13 @@ void MapView::update(float t)
 
                 case Texturing:
                     {
-                        world->paintTerrain(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f));
+                        world->paintTerrain(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f) * wacom.pressure);
                     }
                     break;
 
                 case VertexShading:
                     {
-                        world->paintVertexShading(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f), vertexShadingColor);
+                        world->paintVertexShading(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f) * wacom.pressure, vertexShadingColor);
                     }
                     break;
 
@@ -392,7 +423,7 @@ void MapView::update(float t)
                     break;
             }
         }
-        else if((eMMode == CtrlOnly && tabletMode) || ctrlDown)
+        else if((eMMode == CtrlOnly && tabletMode) || (eMMode == CtrlOnly && tablet) || ctrlDown)
         {
             switch(eMode)
             {
@@ -401,11 +432,15 @@ void MapView::update(float t)
                         switch(eTerrain)
                         {
                             case Shaping:
-                                world->changeTerrain(position.x(), position.z(), -7.5f * dt * shaping_speed);
+                                world->changeTerrain(position.x(), position.z(), -7.5f * dt * shaping_speed * wacom.pressure);
                                 break;
 
                             case Smoothing:
-                                world->blurTerrain(position.x(), position.z(), pow(0.2f, dt) * shaping_speed);
+                                world->blurTerrain(position.x(), position.z(), pow(0.2f, dt) * shaping_speed * wacom.pressure);
+                                break;
+
+                            case Uniform:
+                                world->uniformTerrain(position.x(), position.z(), uniform_height);
                                 break;
                         }
                     }
@@ -413,13 +448,13 @@ void MapView::update(float t)
 
                 case Texturing:
                     {
-                        world->paintTerrain(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f));
+                        world->paintTerrain(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f) * wacom.pressure);
                     }
                     break;
 
                 case VertexShading:
                     {
-                        world->paintVertexShading(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f), vertexShadingColor);
+                        world->paintVertexShading(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f) * wacom.pressure, vertexShadingColor);
                     }
                     break;
             }
@@ -756,9 +791,19 @@ void MapView::setCameraShowCurve(bool show)
     showCameraCurve = show;
 }
 
+void MapView::setCameraRepeatPlay(bool repeat)
+{
+    camera->setPlayRepeat(repeat);
+}
+
 void MapView::setTerrainMaximumHeight(double value)
 {
     world->setTerrainMaximumHeight(MathHelper::toFloat(value));
+}
+
+void MapView::setTerrainUniformHeight(double value)
+{
+    uniform_height = MathHelper::toFloat(value);
 }
 
 void MapView::setPaintMaximumAlpha(double value)
@@ -1058,7 +1103,7 @@ void MapView::keyPressEvent(QKeyEvent* e)
             break;
 
         default:
-            QGLWidget::keyPressEvent(e);
+            QOpenGLWidget::keyPressEvent(e);
     }
 }
 
@@ -1122,7 +1167,7 @@ void MapView::keyReleaseEvent(QKeyEvent* e)
             break;
 
         default:
-            QGLWidget::keyReleaseEvent(e);
+            QOpenGLWidget::keyReleaseEvent(e);
     }
 }
 
@@ -1142,7 +1187,7 @@ void MapView::mousePressEvent(QMouseEvent* e)
 
     mousePos = prevMousePos = e->pos();
 
-    QGLWidget::mousePressEvent(e);
+    QOpenGLWidget::mousePressEvent(e);
 }
 
 void MapView::mouseReleaseEvent(QMouseEvent* e)
@@ -1166,7 +1211,7 @@ void MapView::mouseReleaseEvent(QMouseEvent* e)
             setForwardSpeed(0.0f);
     }
 
-    QGLWidget::mouseReleaseEvent(e);
+    QOpenGLWidget::mouseReleaseEvent(e);
 }
 
 void MapView::mouseMoveEvent(QMouseEvent* e)
@@ -1200,7 +1245,71 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
 
     mouse_position = this->mapFromGlobal(QCursor::pos());
 
-    QGLWidget::mouseMoveEvent(e);
+    QOpenGLWidget::mouseMoveEvent(e);
+}
+
+void MapView::tabletEvent(QTabletEvent* e)
+{
+    if(e->device() != QTabletEvent::Stylus)
+        return;
+
+    if(e->type() == QEvent::TabletPress)
+    {
+        tablet = true;
+
+        wacom.device  = e->device();
+        wacom.pointer = e->pointerType();
+    }
+    else if(e->type() == QEvent::TabletRelease)
+    {
+        tablet = false;
+
+        wacom.pressure = 1.0f;
+    }
+    else if(e->type() == QEvent::TabletMove)
+    {
+        wacom.pressure           = e->pressure();
+        wacom.rotation           = e->rotation();
+        wacom.tangentialPressure = e->tangentialPressure();
+        wacom.x                  = e->x();
+        wacom.y                  = e->y();
+        wacom.xTilt              = e->xTilt();
+        wacom.yTilt              = e->yTilt();
+
+        mousePos  = e->pos();
+        mousePosZ = terrain_pos.z();
+
+        float dx =  0.4f * (mousePos.x() - prevMousePos.x());
+        float dy = -0.4f * (mousePos.y() - prevMousePos.y());
+        float dz =  0.4f * (mousePosZ    - prevMousePosZ);
+
+        if(e->pointerType() == QTabletEvent::Cursor)
+        {
+            if(rightButtonPressed && !shiftDown && !altDown && !ctrlDown && !camera->lock())
+            {
+                pan(dx);
+                tilt(dy);
+            }
+            else if(altDown)
+            {
+                if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+                    updateBrushOuterRadius(dx);
+            }
+            else if(rightButtonPressed && altDown)
+            {
+                if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+                    updateBrushInnerRadius(dx);
+            }
+        }
+
+        prevMousePos  = mousePos;
+        prevMousePosZ = mousePosZ;
+        object_move   = QVector3D(dx / 40.0f, dy / 40.0f, dz / 40.0f);
+
+        mouse_position = this->mapFromGlobal(QCursor::pos());
+    }
+
+    QOpenGLWidget::tabletEvent(e);
 }
 
 void MapView::wheelEvent(QWheelEvent* e)
@@ -1208,7 +1317,7 @@ void MapView::wheelEvent(QWheelEvent* e)
     if(!shiftDown && !altDown && !ctrlDown)
         dynamicZoom.push_back(-(MathHelper::toFloat(e->delta()) / 240));
 
-    QGLWidget::wheelEvent(e);
+    QOpenGLWidget::wheelEvent(e);
 }
 
 void MapView::focusInEvent(QFocusEvent* e)
@@ -1224,7 +1333,7 @@ void MapView::focusInEvent(QFocusEvent* e)
     setSideSpeed(0.0f);
     setVerticalSpeed(0.0f);
 
-    QGLWidget::focusInEvent(e);
+    QOpenGLWidget::focusInEvent(e);
 }
 
 void MapView::focusOutEvent(QFocusEvent* e)
@@ -1240,5 +1349,5 @@ void MapView::focusOutEvent(QFocusEvent* e)
     setSideSpeed(0.0f);
     setVerticalSpeed(0.0f);
 
-    QGLWidget::focusOutEvent(e);
+    QOpenGLWidget::focusOutEvent(e);
 }

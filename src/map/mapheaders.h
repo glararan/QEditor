@@ -35,20 +35,19 @@ static const double CHUNK_DIAMETER = sqrt(pow(CHUNKSIZE, 2) + pow(CHUNKSIZE, 2))
 
 static const float MAP_DRAW_DISTANCE = 1000.0f;
 
-static const int MAP_WIDTH  = 1024; // Tile width, this become out of date
-static const int MAP_HEIGHT = 1024; // Tile height, this become out of date
+static const int TILE_WIDTH  = 1024;
+static const int TILE_HEIGHT = 1024;
 
-static const int TILE_WIDTH  = MAP_WIDTH;
-static const int TILE_HEIGHT = MAP_HEIGHT;
+static const int CHUNK_WIDTH  = TILE_WIDTH / CHUNKS;
+static const int CHUNK_HEIGHT = TILE_HEIGHT / CHUNKS;
 
-static const int CHUNK_WIDTH  = MAP_WIDTH / CHUNKS;
-static const int CHUNK_HEIGHT = MAP_HEIGHT / CHUNKS;
-
-static const int CHUNK_ARRAY_SIZE    = MAP_WIDTH / CHUNKS * MAP_HEIGHT / CHUNKS * sizeof(float);
+static const int CHUNK_ARRAY_SIZE    = TILE_WIDTH / CHUNKS * TILE_HEIGHT / CHUNKS * sizeof(float);
 static const int CHUNK_ARRAY_UC_SIZE = CHUNK_ARRAY_SIZE / sizeof(float); // Unsigned char array size
 
 static const int MAX_TEXTURES = 4;
 static const int ALPHAMAPS    = MAX_TEXTURES - 1;
+
+static const int MAX_TEXTURE_SIZE = 1024;
 
 enum ShaderUnits
 {
@@ -87,6 +86,11 @@ struct MCVT
     qreal textureScaleNear[MAX_TEXTURES];
 
     TextureScaleOption textureScale[MAX_TEXTURES];
+
+    bool automaticTexture[MAX_TEXTURES - 1];
+
+    float automaticTextureStart[MAX_TEXTURES - 1];
+    float automaticTextureEnd[MAX_TEXTURES - 1];
 };
 
 struct MH2O
@@ -140,6 +144,16 @@ struct MapGenerationData
     float erode;
 };
 
+struct BasicSettingsData
+{
+    bool setTerrainHeight;
+    bool setWaterHeight;
+    bool setWaterDraw;
+
+    float terrainHeight;
+    float waterHeight;
+};
+
 struct ProjectFileData
 {
     quint32 version;
@@ -162,7 +176,7 @@ struct ProjectFileData
 
 // Data streams operators
 /// Map header data streams
-inline QDataStream& operator<<(QDataStream& dataStream, const MapHeader& mapHeader)
+inline QDataStream& operator<<(QDataStream& dataStream, const MapHeader& mapHeader) // Save
 {
     dataStream << mapHeader.version;
 
@@ -201,12 +215,20 @@ inline QDataStream& operator<<(QDataStream& dataStream, const MapHeader& mapHead
                        << mapHeader.mcin->entries[i].mcnk->terrainOffset->textureScaleFar[j]
                        << mapHeader.mcin->entries[i].mcnk->terrainOffset->textureScaleNear[j];
         }
+
+        // Automatic texture
+        for(int j = 0; j < MAX_TEXTURES - 1; ++j)
+        {
+            dataStream << mapHeader.mcin->entries[i].mcnk->terrainOffset->automaticTexture[j]
+                       << mapHeader.mcin->entries[i].mcnk->terrainOffset->automaticTextureStart[j]
+                       << mapHeader.mcin->entries[i].mcnk->terrainOffset->automaticTextureEnd[j];
+        }
     }
 
     return dataStream;
 }
 
-inline QDataStream& operator>>(QDataStream& dataStream, MapHeader& mapHeader)
+inline QDataStream& operator>>(QDataStream& dataStream, MapHeader& mapHeader) // Load
 {
     dataStream >> mapHeader.version;
 
@@ -254,6 +276,14 @@ inline QDataStream& operator>>(QDataStream& dataStream, MapHeader& mapHeader)
                        >> mapHeader.mcin->entries[i].mcnk->terrainOffset->textureScaleNear[j];
 
             mapHeader.mcin->entries[i].mcnk->terrainOffset->textureScale[j] = (TextureScaleOption)option;
+        }
+
+        // Automatic texture
+        for(int j = 0; j < MAX_TEXTURES - 1; ++j)
+        {
+            dataStream >> mapHeader.mcin->entries[i].mcnk->terrainOffset->automaticTexture[j]
+                       >> mapHeader.mcin->entries[i].mcnk->terrainOffset->automaticTextureStart[j]
+                       >> mapHeader.mcin->entries[i].mcnk->terrainOffset->automaticTextureEnd[j];
         }
     }
 

@@ -36,6 +36,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "ui/waterwidget.h"
 #include "ui/camerawidget.h"
 #include "ui/heightmapwidget.h"
+#include "ui/basic_settings.h"
 
 #include "world.h"
 #include "mapview.h"
@@ -67,6 +68,7 @@ private:
     TexturePicker*     texturepW;
     ModelPicker*       modelpickerW;
     HeightmapWidget*   heightmapW;
+    Basic_Settings*    basicSettingsW;
 
     void addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area = Qt::RightDockWidgetArea);
 
@@ -96,6 +98,7 @@ private:
     QCheckBox* t_terrain_maxHeight;
 
     QDoubleSpinBox* t_terrain_maximum_height;
+    QDoubleSpinBox* t_terrain_uniform_height;
 
     QLabel* t_terrain_mode_label;
 

@@ -48,6 +48,8 @@ class Camera : public QObject
 
     Q_PROPERTY(bool locked READ lock WRITE setLock)
 
+    Q_PROPERTY(bool repeatPlay READ playRepeat WRITE setPlayRepeat)
+
     Q_PROPERTY(QVector<BezierCurve*> curves WRITE setCurves)
 
     Q_ENUMS(ProjectionType)
@@ -114,12 +116,15 @@ public:
     void setLock(const bool& lock);
     bool lock() const;
 
+    void setPlayRepeat(const bool& repeat);
+    bool playRepeat() const;
+
     void setCurves(const QVector<BezierCurve*>& BCurves);
     void deleteCurves();
 
     void play(const int& secs);
     void playSequence();
-    void stop();
+    void stop(bool override = true);
 
     bool playing() const;
 
