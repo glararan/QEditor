@@ -36,6 +36,12 @@ TextureManager::TextureManager(World* world, float antialiasing)
 
     sampler->setWrapMode(Sampler::DirectionS, GL_REPEAT);
     sampler->setWrapMode(Sampler::DirectionT, GL_REPEAT);
+
+    blackImage = QImage(MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, QImage::Format_RGB888);
+    blackImage.fill(Qt::black);
+
+    whiteImage = QImage(MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, QImage::Format_RGB888);
+    whiteImage.fill(Qt::white);
 }
 
 TextureManager::~TextureManager()
@@ -51,6 +57,9 @@ TextureManager::~TextureManager()
 
 void TextureManager::loadTexture(QString textureName, QString texturePath, bool depth, QString extension)
 {
+    if(!QFile(texturePath).exists())
+        qWarning() << texturePath << QObject::tr("is not exist!");
+
     QImage textureImage(texturePath);
 
     TexturePtr texture(new Texture(textureImage.mirrored(), texturePath));
@@ -79,6 +88,9 @@ void TextureManager::loadTexture(QString textureName, QString texturePath, bool 
 
 void TextureManager::loadDepthTexture(QString textureName, QString texturePath)
 {
+    if(!QFile(texturePath).exists())
+        qWarning() << texturePath << QObject::tr("is not exist!");
+
     QImage textureImage(texturePath);
 
     TexturePtr texture(new Texture(textureImage.mirrored(), texturePath));
@@ -155,10 +167,7 @@ const TexturePtr TextureManager::getTexture(QString textureName) const
 
     qDebug() << QObject::tr("We didn't find texture with name") << textureName << QObject::tr("returning black texture!");
 
-    QImage textureImage(1, 1, QImage::Format_RGB32);
-    textureImage.setPixel(1, 1, qRgb(0, 0, 0));
-
-    TexturePtr texture(new Texture(textureImage));
+    TexturePtr texture(new Texture(blackImage));
 
     return texture;
 }
@@ -175,10 +184,7 @@ const TexturePtr TextureManager::getTexture(QString textureName, QString texture
 
     qDebug() << QObject::tr("We didn't find texture with name") << textureName << QObject::tr("returning black texture!");
 
-    QImage textureImage(1, 1, QImage::Format_RGB32);
-    textureImage.setPixel(1, 1, qRgb(0, 0, 0));
-
-    TexturePtr texture(new Texture(textureImage));
+    TexturePtr texture(new Texture(blackImage));
 
     return texture;
 }
@@ -195,10 +201,7 @@ const TexturePtr TextureManager::getDepthTexture(QString textureName) const
 
     qDebug() << QObject::tr("We didn't find depth texture with name") << textureName << QObject::tr("returning white texture!");
 
-    QImage textureImage(1, 1, QImage::Format_RGB32);
-    textureImage.setPixel(1, 1, qRgb(255, 255, 255));
-
-    TexturePtr texture(new Texture(textureImage));
+    TexturePtr texture(new Texture(whiteImage));
 
     return texture;
 }
@@ -217,10 +220,8 @@ const TexturePtr TextureManager::getDepthTexture(QString textureName, QString te
 
     qDebug() << QObject::tr("We didn't find texture with name") << textureName << QObject::tr("returning white texture!");
 
-    QImage textureImage(1, 1, QImage::Format_RGB32);
-    textureImage.setPixel(1, 1, qRgb(255, 255, 255));
 
-    TexturePtr texture(new Texture(textureImage));
+    TexturePtr texture(new Texture(whiteImage));
 
     return texture;
 }

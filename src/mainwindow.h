@@ -181,8 +181,6 @@ private:
     World*   world;
     MapView* mapView;
 
-    bool** mapCoords;
-
 signals:
     void setSpeedMultiplier(float multiplier);
     void setDisplayMode(int mode);
@@ -238,12 +236,10 @@ private slots:
     void showMapGeneration();
     void showHeightmap();
 
-    void openWorld(ProjectFileData projectData);
+    void openWorld(ProjectFileData projectData, bool** mapCoords = NULL);
     void postInitializeSubWorldWidgets();
 
     void createMemoryProject(NewProjectData projectData);
-
-    void loadNewProjectMapTilesIntoMemory();
 
     void newProject();
     void closeProject();

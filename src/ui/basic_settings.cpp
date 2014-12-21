@@ -68,5 +68,5 @@ void Basic_Settings::accept()
 
 void Basic_Settings::reject()
 {
-
+    close();
 }

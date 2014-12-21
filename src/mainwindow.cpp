@@ -96,7 +96,6 @@ MainWindow::MainWindow(QWidget* parent)
 , t_scale_value_label(NULL)
 , world(NULL)
 , mapView(NULL)
-, mapCoords(NULL)
 {
     ui->setupUi(this);
 
@@ -210,24 +209,16 @@ MainWindow::~MainWindow()
 
     deleteObject(mapView);
 
-    if(mapCoords)
-    {
-        for(int i = 0; i < TILES; ++i)
-            delete[] mapCoords[i];
-
-        delete[] mapCoords;
-    }
-
     qDebug() << tr("MainWindow was destroyed!");
 }
 
-void MainWindow::openWorld(ProjectFileData projectData)
+void MainWindow::openWorld(ProjectFileData projectData, bool** mapCoords)
 {
     // world constructor
     world = new World(projectData);
 
     // map view constructor
-    mapView = new MapView(world, this);
+    mapView = new MapView(world, this, mapCoords);
 
     setCentralWidget(mapView);
 
@@ -425,8 +416,6 @@ void MainWindow::createMemoryProject(NewProjectData projectData)
     projectFile.mapName        = projectData.mapName;
     projectFile.mapsCount      = 0;
 
-    mapCoords = projectData.mapCoords;
-
     for(int x = 0; x < TILES; ++x)
     {
         for(int y = 0; y < TILES; ++y)
@@ -448,22 +437,13 @@ void MainWindow::createMemoryProject(NewProjectData projectData)
     if(world && mapView) // world is already open, close it and create proj.
         closeProject();
 
-    openWorld(projectFile);
+    openWorld(projectFile, projectData.mapCoords);
 
     basicSettingsW = new Basic_Settings(world);
     basicSettingsW->show();
 
     connect(basicSettingsW, SIGNAL(openTerrainGeneration()),   this, SLOT(showMapGeneration()));
     connect(basicSettingsW, SIGNAL(openTerrainImportExport()), this, SLOT(showHeightmap()));
-
-    connect(mapView, SIGNAL(initialized()), this, SLOT(loadNewProjectMapTilesIntoMemory()));
-}
-
-void MainWindow::loadNewProjectMapTilesIntoMemory()
-{
-    world->loadNewProjectMapTilesIntoMemory(mapCoords, mapView->size());
-
-    texturepW->initialize(world->getTextureManager());
 }
 
 void MainWindow::newProject()

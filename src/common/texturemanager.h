@@ -56,6 +56,8 @@ private:
     QVector<QPair<QString, TexturePtr>> textures, depthTextures;
 
     TexturePtr selectedTexture;
+
+    QImage blackImage, whiteImage;
 };
 
 #endif // TEXTUREMANAGER_H

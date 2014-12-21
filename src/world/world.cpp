@@ -22,7 +22,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "texturemanager.h"
 #include "fractalgeneration.h"
 #include "perlingenerator.h"
-#include "stlexport.h"
+#include "stl.h"
 
 // Recent projects
 #include "ui/startup.h"
@@ -96,10 +96,9 @@ void World::deleteMe()
     delete this;
 }
 
-void World::initialize(QOpenGLContext* context, QSize fboSize)
+void World::initialize(QOpenGLContext* context, QSize fboSize, bool** mapCoords)
 {
     GLfuncs = context->versionFunctions<QOpenGLFunctions_4_2_Core>();
-    //GLfuncs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_4_2_Core>();
 
     if(!GLfuncs)
     {
@@ -135,16 +134,30 @@ void World::initialize(QOpenGLContext* context, QSize fboSize)
     modelManager = new IModelManager();
     modelManager->loadModels(projectData.projectRootDir);
 
-    for(int x = 0; x < TILES; ++x)
+    if(!mapCoords)
     {
-        for(int y = 0; y < TILES; ++y)
+        for(int x = 0; x < TILES; ++x)
         {
-            int index = y * TILES + x;
+            for(int y = 0; y < TILES; ++y)
+            {
+                int index = y * TILES + x;
 
-            if(projectData.maps[index].exists == 0)
-                mapTiles[x][y].tile = NULL;
-            else
-                loadTile(x, y);
+                if(projectData.maps[index].exists == 0)
+                    mapTiles[x][y].tile = NULL;
+                else
+                    loadTile(x, y);
+            }
+        }
+    }
+    else
+    {
+        for(int x = 0; x < TILES; ++x)
+        {
+            for(int y = 0; y < TILES; ++y)
+            {
+                if(mapCoords[x][y])
+                    loadTile(x, y, false);
+            }
         }
     }
 
@@ -707,20 +720,6 @@ MapTile* World::loadTile(int x, int y, bool fileExists)
         mapTiles[x][y].tile = new MapTile(this, filename, x, y);
 
     return mapTiles[x][y].tile;
-}
-
-void World::loadNewProjectMapTilesIntoMemory(bool** mapCoords, QSize size)
-{
-    for(int x = 0; x < TILES; ++x)
-    {
-        for(int y = 0; y < TILES; ++y)
-        {
-            if(mapCoords[x][y])
-                loadTile(x, y, false);
-        }
-    }
-
-    createNeighbours();
 }
 
 void World::changeTerrain(float x, float z, float change)
@@ -1653,10 +1652,9 @@ void World::test()
     delete[] mapData;*/
 
     // Generat 3D STL data
-    STLExport* stlExport = new STLExport();
-    stlExport->setMapTile(mapTiles[0][0].tile);
-    stlExport->generateData();
-    stlExport->exportIt("data.txt");
+    STL* stlExport = new STL(mapTiles[0][0].tile, STL::Low);
+    stlExport->createData();
+    stlExport->exportIt("test.stl");
 
     delete stlExport;
 

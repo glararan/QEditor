@@ -24,9 +24,10 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <QTabletEvent>
 #include <QOpenGLContext>
 
-MapView::MapView(World* mWorld, QWidget* parent)
+MapView::MapView(World* mWorld, QWidget* parent, bool** mapCoords)
 : QOpenGLWidget(parent)
 , world(mWorld)
+, worldCoords(mapCoords) // coordinats for cache tiles
 , GLcontext(this->context())
 , camera(new Camera(this))
 , pipeline(new IPipeline())
@@ -115,7 +116,13 @@ MapView::~MapView()
 {
     delete camera;
 
-    //delete GLcontext;
+    if(worldCoords)
+    {
+        for(int i = 0; i < TILES; ++i)
+            delete[] worldCoords[i];
+
+        delete[] worldCoords;
+    }
 }
 
 void MapView::timerEvent(QTimerEvent*)
@@ -125,7 +132,6 @@ void MapView::timerEvent(QTimerEvent*)
     const qreal time = m_Utime.elapsed() / 1000.0f;
 
     update(time);
-    //updateGL();
 }
 
 void MapView::initializeGL()
@@ -144,7 +150,7 @@ void MapView::initializeGL()
     this->context()->setFormat(format);
 
     // Initialize World
-    world->initialize(/*GLcontext*/this->context(), size());
+    world->initialize(this->context(), size(), worldCoords);
 
     // Initialize camera shader
     camera->initialize();

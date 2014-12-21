@@ -73,7 +73,7 @@ SOURCES  += $$PWD/main.cpp \
             $$PWD/map/mapcleft.cpp \
             $$PWD/ui/mapchunk_settings.cpp \
     src/ui/basic_settings.cpp \
-    src/stlexport.cpp
+    $$PWD/stl.cpp
             #$$PWD/3rd-party/libtrix/libtrix.cpp \
             #$$PWD/3rd-party/hmstl/stb_image.cpp \
             #$$PWD/3rd-party/hmstl/heightmap.cpp
@@ -133,7 +133,7 @@ HEADERS  += $$PWD/mainwindow.h \
             $$PWD/map/mapcleft.h \
             $$PWD/ui/mapchunk_settings.h \
     src/ui/basic_settings.h \
-    src/stlexport.h
+    $$PWD/stl.h
             #$$PWD/3rd-party/libtrix/libtrix.h \
             #$$PWD/3rd-party/hmstl/stb_image.h \
             #$$PWD/3rd-party/hmstl/heightmap.h \

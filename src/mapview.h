@@ -36,7 +36,7 @@ class MapView : public QOpenGLWidget, protected QOpenGLFunctions_4_2_Core
     Q_OBJECT
 
 public:
-    MapView(World* mWorld, QWidget* parent = 0);
+    MapView(World* mWorld, QWidget* parent = 0, bool** mapCoords = NULL);
     ~MapView();
 
     // Camera motion control
@@ -134,6 +134,8 @@ private:
     void ClearStatusBarMessage();
 
     World* world;
+
+    bool** worldCoords;
 
     /// Terrain parameters
     float shaping_speed;

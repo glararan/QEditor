@@ -50,9 +50,6 @@
         <file>textures/grass.png</file>
         <file>textures/rock.png</file>
         <file>textures/snowrocks.png</file>
-        <file>textures/sand.png</file>
-        <file>textures/sand_rock.png</file>
-        <file>textures/sand2.png</file>
         <file>textures/ground.png</file>
     </qresource>
     <qresource prefix="/languages">

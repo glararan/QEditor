@@ -112,6 +112,8 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 
     chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, textureArray, world->getTextureManager()->getSampler(), "textures");
 
+    free(texture_data); // dealloc
+
     /// Depth Textures
     depthTextures[0] = world->getTextureManager()->getDepthTexture("groundTexture");
     depthTextures[1] = world->getTextureManager()->getDepthTexture("grassTexture");
@@ -151,6 +153,8 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 
     chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture2, depthTextureArray, world->getTextureManager()->getSampler(), "depthTextures");
 
+    free(depth_data); // dealloc
+
     /// Alphamaps
     for(int i = 0; i < ALPHAMAPS; ++i)
     {
@@ -189,7 +193,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
     {
         textureScaleFar[i]    = app().getSetting("textureScaleFarSlider", 0.4).toFloat();
         textureScaleNear[i]   = app().getSetting("textureScaleNearSlider", 0.4).toFloat();
-        textureScaleOption[i] = (TextureScaleOption)app().getSetting("textureScaleOption").toInt();
+        textureScaleOption[i] = (TextureScaleOption)app().getSetting("textureScaleOption", 0).toInt();
     }
 
     /// Automatic texture
@@ -408,6 +412,8 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
 
     chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, textureArray, world->getTextureManager()->getSampler(), "textures");
 
+    free(texture_data); // dealloc
+
     /// Set Depth Textures
     world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture2);
 
@@ -441,6 +447,8 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
     world->getGLFunctions()->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, MAX_TEXTURES, GL_RGBA, GL_UNSIGNED_BYTE, depth_data);
 
     chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture2, depthTextureArray, world->getTextureManager()->getSampler(), "depthTextures");
+
+    free(depth_data); // dealloc
 
     /// Set Alphamaps
     for(int i = 0; i < ALPHAMAPS; ++i)
@@ -1645,7 +1653,7 @@ float MapChunk::HMapSizeToHoriz(int position)
 
 void MapChunk::moveAlphaMap(int index, bool up)
 {
-    /// TODO: use calloc instead of malloc + memset? also use free? !!! Dont set memory for depth texture! Never...
+    /// TODO: use calloc instead of malloc + memset? !!! Dont set memory for depth texture! Never...
     textureArray->bind();
 
     switch(up)
@@ -1686,6 +1694,8 @@ void MapChunk::moveAlphaMap(int index, bool up)
 
                 world->getGLFunctions()->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, index - 1, MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, 1, GL_RGBA, GL_UNSIGNED_BYTE, texture_data);
 
+                free(texture_data); // dealloc
+
                 // depth
                 unsigned char* depth_data = (unsigned char*)malloc(MAX_TEXTURE_SIZE * MAX_TEXTURE_SIZE * 4);
 
@@ -1708,6 +1718,8 @@ void MapChunk::moveAlphaMap(int index, bool up)
                 depthTextureArray->bind();
 
                 world->getGLFunctions()->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, index - 1, MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, 1, GL_RGBA, GL_UNSIGNED_BYTE, depth_data);
+
+                free(depth_data); // dealloc
             }
             break;
 
@@ -1747,6 +1759,8 @@ void MapChunk::moveAlphaMap(int index, bool up)
 
                 world->getGLFunctions()->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, index + 1, MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, 1, GL_RGBA, GL_UNSIGNED_BYTE, texture_data);
 
+                free(texture_data); // dealloc
+
                 // depth
                 unsigned char* depth_data = (unsigned char*)malloc(MAX_TEXTURE_SIZE * MAX_TEXTURE_SIZE * 4);
 
@@ -1769,6 +1783,8 @@ void MapChunk::moveAlphaMap(int index, bool up)
                 depthTextureArray->bind();
 
                 world->getGLFunctions()->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, index + 1, MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, 1, GL_RGBA, GL_UNSIGNED_BYTE, depth_data);
+
+                free(depth_data); // dealloc
             }
             break;
     }
@@ -1798,6 +1814,8 @@ void MapChunk::moveAlphaMap(int index, bool up)
 
     world->getGLFunctions()->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, index, MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, 1, GL_RGBA, GL_UNSIGNED_BYTE, texture_temp_data);
 
+    free(texture_temp_data); // dealloc
+
     // depth
     unsigned char* depth_temp_data = (unsigned char*)malloc(MAX_TEXTURE_SIZE * MAX_TEXTURE_SIZE * 4);
 
@@ -1820,6 +1838,8 @@ void MapChunk::moveAlphaMap(int index, bool up)
     depthTextureArray->bind();
 
     world->getGLFunctions()->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, index, MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, 1, GL_RGBA, GL_UNSIGNED_BYTE, depth_temp_data);
+
+    free(depth_temp_data); // dealloc
 
     chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, textureArray, world->getTextureManager()->getSampler(), "textures");
 }

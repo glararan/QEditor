@@ -76,14 +76,12 @@ public:
     explicit World(const ProjectFileData& projectFile);
 
     void deleteMe();
-    void initialize(QOpenGLContext* context, QSize fboSize);
+    void initialize(QOpenGLContext* context, QSize fboSize, bool** mapCoords = NULL);
 
     void update(float dt);
     void draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatrix, float triangles, QVector2D mousePosition, bool drawBrush = false, bool drawNewModel = false);
 
     bool hasTile(int pX, int pY) const;
-
-    void loadNewProjectMapTilesIntoMemory(bool** mapCoords, QSize size);
 
     enum eDisplayMode
     {
