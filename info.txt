@@ -48,7 +48,7 @@ MapChunk:
 
 in development, in near future(code is almost ready):
 - water display (wireframe, ..)
-- 3D printer support
+- 3D printer support (need to print test on 3D printer)
 - 3D stereoscopic
 
 discuss features:
@@ -59,7 +59,7 @@ discuss features:
  - posunutí
  - zneviditelneni
  - skopirovani
-- textures (2Dsampler) to textureArray => better performance.. faster, more textures..
+- point light http://www.tomdalling.com/blog/modern-opengl/06-diffuse-point-lighting/
 
 // tipy od lidí
 - generování objektů po určené textuře (first todo better object support)

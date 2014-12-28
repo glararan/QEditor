@@ -3,9 +3,12 @@
 
 #include "mapheaders.h"
 
+#include <QObject>
 #include <QString>
 #include <QVector3D>
 #include <QTextStream>
+#include <QThread>
+#include <QMetaType>
 
 // Cube normals
 #define NORMALS_TOP    QVector3D( 0,  1,  0)
@@ -17,7 +20,10 @@
 
 class MapTile;
 class Face;
+class FaceWorker;
 class Vertex;
+
+typedef QVector<Vertex> VertexArray; // for QObject connection that doesnt work at programming time, so waiting for remaking than hacky pointer to Face
 
 class STL
 {
@@ -43,6 +49,7 @@ public:
 
     void exportIt(QString file, float scale = 1.0);
     void createData();
+    void surfaceSize(float mm, bool scaleHeight = false);
 
     void setMapTile(MapTile* tile);
     void setResolution(Resolution resolution);
@@ -67,18 +74,25 @@ private:
     Face* getFace(Facets facet);
 };
 
-class Face
+class Face : public QObject
 {
+    Q_OBJECT
+
 public:
-    Face(STL::Facets face);
+    Face(STL::Facets face, QObject* parent = NULL);
     ~Face();
 
     void writeToFile(QTextStream* stream, float scale);
 
     void createVertices();
 
+    void optimalize();
+
     void setInputData(QVector<QVector3D>& datas);
     void setResolution(STL::Resolution resolution);
+    void setSurfaceSize(float mm, bool scaleHeight = false); // can be called only once for now
+
+    void handleResults(VertexArray container, int threadID);
 
     const STL::Resolution getResolution() const { return facetResolution; }
     const STL::Facets     getFacet() const      { return facet; }
@@ -90,21 +104,49 @@ private:
 
     STL::Resolution facetResolution;
     STL::Facets facet;
+
+    QMap<int, QVector<Vertex>> threadsVertexs;
+
+    bool readyToWrite;
+};
+
+class FaceWorker : public QThread
+{
+    Q_OBJECT
+
+public:
+    FaceWorker(QVector<Vertex>& container, int threadID, Face* faceParent, QObject* parent = NULL);
+    ~FaceWorker();
+
+private:
+    QVector<Vertex> vertexs;
+
+    int threadNumber;
+
+    Face* face;
+
+    void run() Q_DECL_OVERRIDE;
 };
 
 class Vertex
 {
 public:
     Vertex();
-    Vertex(QVector3D vertex_1, QVector3D vertex_2, QVector3D vertex_3);
+    Vertex(QVector3D vertex_1, QVector3D vertex_2, QVector3D vertex_3, QVector3D vertex_4);
     ~Vertex();
 
     void scale(const float value);
 
+    void setSurfaceSize(float mm, bool scaleHeight = false);
+    void setVertex(const QVector3D& vector, const int& index);
+
     const QVector3D getVertex(const int i) const;
 
+    int columns;
+    int rows;
+
 private:
-    QVector3D vertex1, vertex2, vertex3;
+    QVector3D vertex1, vertex2, vertex3, vertex4;
 };
 
 #endif // STLEXPORT_H

@@ -63,6 +63,8 @@ OTHER_FILES += info.txt \
     resources.rc \
     data/shaders/qeditor_bezier_point.vert \
     data/shaders/qeditor_bezier_point.frag \
+    data/shaders/qeditor_boundingbox.vert \
+    data/shaders/qeditor_boundingbox.frag \
     data/shaders/qeditor_bezier.tcs \
     data/shaders/qeditor_bezier.tes \
     data/shaders/qeditor_cleft.tcs \

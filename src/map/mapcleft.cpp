@@ -289,7 +289,7 @@ void MapCleft::initialize()
     positionData[11] = 133.0f;*/
 
     mesh.createVertexArrayObject();
-    mesh.createBuffer(IMesh::Vertices, positionData.data(), positionData.size() * sizeof(float));
+    mesh.createBuffer(Mesh::Vertices, positionData.data(), positionData.size() * sizeof(float));
     mesh.setNumFaces(size * 4);
     //mesh.setNumFaces(4);
 }
@@ -324,8 +324,8 @@ void MapCleft::draw(QOpenGLShaderProgram* shader)
         // Render the quad as a patch
         {
             mesh.bind();
-            //mesh.createAttributeArray(IMesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 2);
-            mesh.createAttributeArray(IMesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 3);
+            //mesh.createAttributeArray(Mesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 2);
+            mesh.createAttributeArray(Mesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 3);
 
             shader->setPatchVertexCount(4);
 

@@ -61,7 +61,7 @@ private:
     World* world;
 
     /// Water
-    IMesh Mesh;
+    Mesh mesh;
 
     Material* chunkMaterial;
 

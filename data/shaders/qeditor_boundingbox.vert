@@ -13,46 +13,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#ifndef MODELPICKER_H
-#define MODELPICKER_H
+#version 400
 
-#include <QWidget>
+in vec3 position;
 
-#include "model/modelmanager.h"
+uniform mat4 mvp;
 
-#include "ui/tableview.h"
-#include "ui/toolbox.h"
-
-namespace Ui
+void main(void)
 {
-    class ModelPicker;
+    gl_Position = mvp * vec4(position, 1.0);
 }
-
-class ModelPicker : public QWidget
-{
-    Q_OBJECT
-
-public:
-    explicit ModelPicker(QWidget* parent = 0);
-    ~ModelPicker();
-
-    void loadPicker(ModelManager* manager);
-    void clear();
-
-private:
-    Ui::ModelPicker* ui;
-
-    QString currentModelLocation;
-
-    ToolBox* box;
-
-    QVector<TextureWell*> items;
-
-    ModelManager* manager;
-
-private slots:
-    void modelSelected(int, int);
-    void modelviewSelected(int, int);
-};
-
-#endif // MODELPICKER_H

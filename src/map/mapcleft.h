@@ -3,7 +3,7 @@
 
 #include "mapchunk.h"
 #include "maptile.h"
-#include "imesh.h"
+#include "mesh.h"
 
 class MapCleft
 {
@@ -24,7 +24,7 @@ private:
     MapChunk::Border orientation;
 
     // Terrain
-    IMesh mesh;
+    Mesh mesh;
 
     Material* chunkMaterial;
 

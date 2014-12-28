@@ -8,9 +8,7 @@
 #include "texture.h"
 #include "sampler.h"
 #include "material.h"
-
-#include "ipipeline.h"
-#include "imesh.h"
+#include "mesh.h"
 
 class Skybox
 {
@@ -30,7 +28,7 @@ public:
 
     void draw(QOpenGLShaderProgram* shader);
 
-    void loadSide(QOpenGLTexture::CubeMapFace side, QString fileName);
+    void loadSide(QOpenGLTexture::CubeMapFace side, const QString fileName);
 
     Material* getMaterial() { return material; }
 
@@ -44,7 +42,7 @@ private:
 
     Material* material;
 
-    IMesh mesh;
+    Mesh mesh;
 
     void createAttributeArray(QOpenGLShaderProgram* shader);
 };

@@ -29,7 +29,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <QTableWidgetItem>
 
 class Camera;
-class IPipeline;
+class Pipeline;
 
 class MapView : public QOpenGLWidget, protected QOpenGLFunctions_4_2_Core
 {
@@ -71,12 +71,13 @@ public:
 
     enum eEditingMode
     {
-        Default       = 0,
-        Terrain       = 1,
-        Texturing     = 2,
-        VertexShading = 3,
-        Object        = 5,
-        CameraCurves  = 6
+        Default        = 0,
+        Terrain        = 1,
+        Texturing      = 2,
+        VertexShading  = 3,
+        Object         = 5,
+        CameraCurves   = 6,
+        VertexLighting = 7
     };
 
     void setEditingMode(eEditingMode editingMode) { eMode = editingMode; }
@@ -103,7 +104,7 @@ public:
 
     QVector3D getWorldCoordinates(float mouseX, float mouseY);
 
-    IPipeline* getPipeline() const { return pipeline; }
+    Pipeline* getPipeline() const { return pipeline; }
 
 protected:
     void initializeGL();
@@ -181,7 +182,7 @@ private:
 
     // Terrain rendering controls
     QMatrix4x4 modelMatrix;
-    IPipeline* pipeline;
+    Pipeline*  pipeline;
 
     bool stereoscopic;
 

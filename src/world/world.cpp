@@ -17,6 +17,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "maptile.h"
 #include "watertile.h"
+#include "mapobject.h"
 #include "mathhelper.h"
 #include "qeditor.h"
 #include "texturemanager.h"
@@ -39,6 +40,8 @@ World::World(const ProjectFileData& projectFile)
 , highlightChunk(NULL)
 , possibleModel(NULL)
 , modelManager(NULL)
+, selectionManager(NULL)
+, currentSelection(NULL)
 , reflection_fbo(NULL)
 , refraction_fbo(NULL)
 , terrainMaximumHeight(0.0f)
@@ -131,8 +134,12 @@ void World::initialize(QOpenGLContext* context, QSize fboSize, bool** mapCoords)
     textureManager = new TextureManager(this, app().getSetting("antialiasing", 1.0f).toFloat());
 
     // initialize model manager
-    modelManager = new IModelManager();
+    modelManager = new ModelManager(textureManager);
     modelManager->loadModels(projectData.projectRootDir);
+
+    // initialize selection manager
+    selectionManager = new SelectionManager();
+    currentSelection = selectionManager->getSelection(0);
 
     if(!mapCoords)
     {
@@ -184,6 +191,18 @@ void World::initialize(QOpenGLContext* context, QSize fboSize, bool** mapCoords)
 
     if(!modelShader->link())
         qCritical() << QObject::tr("Could not link shader program. Log:") << modelShader->log();
+
+    /// Bounding Box shader
+    boundingBoxShader = new QOpenGLShaderProgram();
+
+    /*if(!boundingBoxShader->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/data/shaders/qeditor_boundingbox.vert"))
+        qCritical() << QObject::tr("Could not compile vertex shader. Log:") << boundingBoxShader->log();
+
+    if(!boundingBoxShader->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/data/shaders/qeditor_boundingbox.frag"))
+        qCritical() << QObject::tr("Could not compile fragment shader. Log:") << boundingBoxShader->log();
+
+    if(!boundingBoxShader->link())
+        qCritical() << QObject::tr("Could not link shader program. Log:") << boundingBoxShader->log();*/
 
     /// Terrain Shader
     terrainShader = new QOpenGLShaderProgram();
@@ -558,18 +577,24 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
 
     if(possibleModel && drawNewModel && modelManager->isModelSelected() && getTileAt(worldCoordinates.x(), worldCoordinates.z()))
     {
-        IPipeline Pipeline(modelMatrix, camera->viewMatrix(), camera->projectionMatrix());
-        Pipeline.translate(worldCoordinates.x(), worldCoordinates.y() + (getObjectBrush()->impend * 10.0f), worldCoordinates.z());
-        Pipeline.scale(getObjectBrush()->scale);
-        Pipeline.rotateX(getObjectBrush()->rotation_x * 360.0f);
-        Pipeline.rotateY(getObjectBrush()->rotation_y * 360.0f);
-        Pipeline.rotateZ(getObjectBrush()->rotation_z * 360.0f);
+        Pipeline pipeline(modelMatrix, camera->viewMatrix(), camera->projectionMatrix());
+        pipeline.translate(worldCoordinates.x(), worldCoordinates.y() + (getObjectBrush()->impend * 10.0f), worldCoordinates.z());
+        pipeline.scale(getObjectBrush()->scale);
+        pipeline.rotateX(getObjectBrush()->rotation_x * 360.0f);
+        pipeline.rotateY(getObjectBrush()->rotation_y * 360.0f);
+        pipeline.rotateZ(getObjectBrush()->rotation_z * 360.0f);
 
         modelShader->bind();
 
-        Pipeline.updateMatrices(modelShader);
+        pipeline.updateMatrices(modelShader);
 
         possibleModel->draw(modelShader);
+    }
+
+    if(currentSelection->getType() == Selection::MapObjectType)
+    {
+        // draw bounding box
+        currentSelection->getData().mapObject->drawBoundingBox(boundingBoxShader);
     }
 
     glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
@@ -866,6 +891,30 @@ void World::paintVertexShading(float x, float z, float flow, QColor& color)
     }
 }
 
+void World::paintVertexLighting(float x, float z, float flow, QColor& lightColor)
+{
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
+                for(int cx = 0; cx < CHUNKS; ++cx)
+                {
+                    for(int cy = 0; cy < CHUNKS; ++cy)
+                    {
+                        if(mapTiles[tx][ty].tile->getChunk(cx, cy)->paintVertexLighting(x, z, flow, lightColor))
+                        {
+                            // push changed chunks
+                            // set changed i, j
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 void World::removeObject(float x, float z)
 {
     for(int tx = 0; tx < TILES; ++tx)
@@ -928,11 +977,11 @@ void World::updateNewModel(bool shiftDown, bool leftButtonPressed)
         {
             delete possibleModel;
 
-            possibleModel = new IModel(modelManager, current_index);
+            possibleModel = new Model(modelManager, current_index);
         }
     }
     else if(current_index >= 0)
-        possibleModel = new IModel(modelManager, current_index);
+        possibleModel = new Model(modelManager, current_index);
 
     if(leftButtonPressed && shiftDown) //insert new model
     {
@@ -940,13 +989,10 @@ void World::updateNewModel(bool shiftDown, bool leftButtonPressed)
 
         if(tile)
         {
-            MapObject* object = new MapObject();
-
-            object->model         = new IModel(modelManager, current_index);
-            object->translate     = worldCoordinates;
-            object->height_offset = getObjectBrush()->impend * 10.0f;
-            object->rotation      = QVector3D(getObjectBrush()->rotation_x, getObjectBrush()->rotation_y, getObjectBrush()->rotation_z);
-            object->scale         = QVector3D(getObjectBrush()->scale, getObjectBrush()->scale, getObjectBrush()->scale);
+            MapObject* object = new MapObject(new Model(modelManager, current_index), getObjectBrush()->impend * 10.0f);
+            object->setTranslate(worldCoordinates);
+            object->setRotation(QVector3D(getObjectBrush()->rotation_x, getObjectBrush()->rotation_y, getObjectBrush()->rotation_z));
+            object->setScale(QVector3D(getObjectBrush()->scale, getObjectBrush()->scale, getObjectBrush()->scale));
 
             tile->insertModel(object);
         }
@@ -1037,6 +1083,21 @@ void World::exportHeightmap(QString path, float scale)
     // todo for each tile, heightmap_x_y.raw
     if(tileLoaded(0, 0))
         mapTiles[0][0].tile->exportHeightmap(path, scale);
+}
+
+void World::exportSTL(QString path, float surface, bool scaleHeight, bool low)
+{
+    // todo for selected tile, heightmap_x_y.stl
+    if(tileLoaded(0, 0))
+    {
+        // Generat 3D STL data
+        STL* stlExport = new STL(mapTiles[0][0].tile, low ? STL::Low : STL::High);
+        stlExport->createData();
+        stlExport->surfaceSize(surface, scaleHeight);
+        stlExport->exportIt(path);
+
+        delete stlExport;
+    }
 }
 
 MapChunk* World::getMapChunkAt(const QVector3D& position) const
@@ -1650,13 +1711,6 @@ void World::test()
     mapTiles[0][0].tile->getChunk(1, 3)->setHeightmap(mapData);
 
     delete[] mapData;*/
-
-    // Generat 3D STL data
-    STL* stlExport = new STL(mapTiles[0][0].tile, STL::Low);
-    stlExport->createData();
-    stlExport->exportIt("test.stl");
-
-    delete stlExport;
 
     /// Fix NaN values in heightmap
     /*MapChunk* chunk = getMapChunkAt(worldCoordinates);

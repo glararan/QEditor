@@ -40,9 +40,11 @@ public:
     const SamplerPtr getSampler() const;
     const TexturePtr getTexture(QString textureName) const;
     const TexturePtr getTexture(QString textureName, QString texturePath) const;
+    const TexturePtr getTexture(const int index) const;
     const TexturePtr getDepthTexture(QString textureName) const;
     const TexturePtr getDepthTexture(QString textureName, QString texturePath, QString extension = QString("_h")) const;
     const TexturePtr getSelectedTexture();
+    const int        getIndex(QString texturePath) const;
 
     const QVector<QPair<QString, TexturePtr>> getTextures() const      { return textures; }
     const QVector<QPair<QString, TexturePtr>> getDepthTextures() const { return depthTextures; }

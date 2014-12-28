@@ -56,7 +56,7 @@ uniform struct MaterialInfo
 uniform sampler2D baseTexture;
 uniform sampler2D layer1Texture;
 uniform sampler2D layer2Texture;
-uniform sampler2D layer3Texture;
+uniform sampler2D layer3Texture; // out of date
 
 uniform sampler2D layer1Alpha;
 uniform sampler2D layer2Alpha;
@@ -68,6 +68,7 @@ uniform sampler2DArray depthTextures;
 uniform sampler2DArray alphamaps;
 
 uniform sampler2D vertexShading;
+uniform sampler2D vertexLighting;
 
 uniform float colorStop1 = 0.0;
 uniform float colorStop2 = 4.0;
@@ -564,6 +565,16 @@ vec4 shadeTexturedAndLit()
 
         //diffuseColor.rgb = mix(diffuseColor.rgb, vertexShadingColor.rgb, vertexShadingColor.a);
     }
+
+    // vertex lighting
+    vec3 surfaceToLight = vec3(position.x, position.y + 10.0f, position.z) - position.xyz;
+
+    float brightness = clamp(dot(normal, surfaceToLight) / length(surfaceToLight) * length(normal), 0.0f, 1.0f) * 2.0;
+
+    vec4 vertexLightingColor = texture(vertexLighting, texCoords);
+    vertexLightingColor.rgb  = vertexLightingColor.rgb * 2.0 - 1.0;
+
+    diffuseColor += vec4(brightness * (vertexLightingColor.rgb * vertexLightingColor.a) * diffuseColor.rgb, diffuseColor.a);
 
     // non overlay effect
     //diffuseColor = mix(diffuseColor, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);

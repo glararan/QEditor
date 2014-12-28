@@ -13,47 +13,49 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#ifndef IMODEL_H
-#define IMODEL_H
+#ifndef MODEL_H
+#define MODEL_H
 
-#include "itexturemanager.h"
-#include "imodelmanager.h"
-#include "imodelinterface.h"
-#include "ianimation.h"
-#include "ipipeline.h"
-#include "ilight.h"
+#include "texturemanager.h"
+#include "modelmanager.h"
+#include "modelinterface.h"
+#include "animation.h"
+#include "pipeline.h"
+#include "light.h"
 
-class QOpenGLFunctions_3_1;
+class QOpenGLFunctions_4_2_Core;
 
-class IModel
+class Model
 {
 public:
-    IModel(IModelManager* modelManager, int index);
-    ~IModel();
+    Model(ModelManager* modelManager, const int index);
+    ~Model();
 
     void draw(QOpenGLShaderProgram* shader);
 
     void enableAnimations();
     void disableAnimations();
 
-    bool isAnimationEnabled();
+    const bool isAnimationEnabled() const { return animations_enabled; }
 
-    IModelInterface* getModelInterface();
-    IAnimationState* getAnimationState();
+    ModelInterface* getModelInterface() const { return model_interface; }
+    AnimationState* getAnimationState() const { return animation_state; }
+
+    const QVector3D& getCenter() const;
 
 private:
-    QOpenGLFunctions_3_1* m_funcs;
-    QOpenGLShaderProgram* lastShader;
+    QOpenGLFunctions_4_2_Core* GLfuncs;
+    QOpenGLShaderProgram*      lastShader;
 
-    ITextureManager* texture_manager;
-    IModelInterface* model_interface;
-    IAnimationState* animation_state;
+    TextureManager* texture_manager;
+    ModelInterface* model_interface;
+    AnimationState* animation_state;
 
-    ILight Light;
+    Light light;
 
     bool animations_enabled;
 
     void createAttributeArray(QOpenGLShaderProgram* shader);
 };
 
-#endif // IMODEL_H
+#endif // MODEL_H

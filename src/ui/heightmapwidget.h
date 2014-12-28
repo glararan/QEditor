@@ -22,15 +22,18 @@ private:
 private slots:
     void showImportBrowser();
     void showExportBrowser();
+    void showSTLExportBrowser();
 
     void doImport();
     void doExport();
+    void doSTLExport();
 
     void setScale(double scale);
 
 signals:
     void importing(QString path, float scale);
     void exporting(QString path, float scale);
+    void stlExporting(QString path, float surface, bool scaleHeight, bool low);
 
     void setScale(float scale);
 };

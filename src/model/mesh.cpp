@@ -13,14 +13,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#include "imesh.h"
+#include "mesh.h"
 
-IMesh::IMesh()
+Mesh::Mesh()
 {
     buffers[6] = QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
 }
 
-IMesh::~IMesh()
+Mesh::~Mesh()
 {
     vao.destroy();
 
@@ -28,18 +28,13 @@ IMesh::~IMesh()
         buffers[i].destroy();
 }
 
-void IMesh::createVertexArrayObject()
+void Mesh::createVertexArrayObject()
 {
     vao.create();
     vao.bind();
 }
 
-QOpenGLBuffer* IMesh::getBuffer(IMesh::BufferName name)
-{
-    return &buffers[name];
-}
-
-void IMesh::createBuffer(BufferName name, void* data, int count)
+void Mesh::createBuffer(const BufferName name, void* data, const int count)
 {
     QOpenGLBuffer* buffer = getBuffer(name);
     buffer->create();
@@ -49,7 +44,7 @@ void IMesh::createBuffer(BufferName name, void* data, int count)
     buffer->release();
 }
 
-void IMesh::createAttributeArray(BufferName name, QOpenGLShaderProgram* shader, const char* location, GLenum type, int offset, int tupleSize)
+void Mesh::createAttributeArray(const BufferName name, QOpenGLShaderProgram* shader, const char* location, const GLenum type, const int offset, const int tupleSize)
 {
     QOpenGLBuffer* buffer = getBuffer(name);
     buffer->bind();
@@ -58,33 +53,28 @@ void IMesh::createAttributeArray(BufferName name, QOpenGLShaderProgram* shader, 
     shader->setAttributeBuffer(location, type, offset, tupleSize);
 }
 
-QOpenGLVertexArrayObject* IMesh::getVertexArrayObject()
-{
-    return &vao;
-}
-
-void IMesh::bind()
+void Mesh::bind()
 {
     if(!getVertexArrayObject()->isCreated())
         createVertexArrayObject();
 
     getVertexArrayObject()->bind();
 
-    if(!getBuffer(IMesh::Index)->isCreated())
-        getBuffer(IMesh::Index)->create();
+    if(!getBuffer(Mesh::Index)->isCreated())
+        getBuffer(Mesh::Index)->create();
 
-    getBuffer(IMesh::Index)->bind();
+    getBuffer(Mesh::Index)->bind();
 }
 
-IMeshes::IMeshes()
+Meshes::Meshes()
 {
 }
 
-IMeshes::~IMeshes()
+Meshes::~Meshes()
 {
     for(int i = 0; i < meshes.size(); ++i)
     {
-        IMesh* m = meshes.at(i);
+        Mesh* m = meshes.at(i);
 
         delete m;
 
@@ -92,33 +82,23 @@ IMeshes::~IMeshes()
     }
 }
 
-void IMeshes::add(IMesh* mesh)
+void Meshes::add(Mesh* mesh)
 {
     meshes.push_back(mesh);
 }
 
-IMesh* IMeshes::at(int index)
-{
-    return meshes.at(index);
-}
-
-int IMeshes::size()
-{
-    return meshes.size();
-}
-
-void IMeshes::createAttributeArray(QOpenGLShaderProgram* shader)
+void Meshes::createAttributeArray(QOpenGLShaderProgram* shader)
 {
     for(int i = 0; i < meshes.size(); ++i)
     {
-        IMesh* mesh = meshes.at(i);
+        Mesh* mesh = meshes.at(i);
 
         mesh->getVertexArrayObject()->bind();
-        mesh->createAttributeArray(IMesh::Vertices,  shader, "qt_Vertex",   GL_FLOAT, 0, 3);
-        mesh->createAttributeArray(IMesh::Normals,   shader, "qt_Normal",   GL_FLOAT, 0, 3);
-        mesh->createAttributeArray(IMesh::TexCoords, shader, "qt_TexCoord", GL_FLOAT, 0, 2);
-        mesh->createAttributeArray(IMesh::Tangent,   shader, "qt_Tangent",  GL_FLOAT, 0, 3);
-        mesh->createAttributeArray(IMesh::Bones,     shader, "qt_BoneIDs",  GL_FLOAT, 0, 4);
-        mesh->createAttributeArray(IMesh::Weight,    shader, "qt_Weights",  GL_FLOAT, 0, 4);
+        mesh->createAttributeArray(Mesh::Vertices,  shader, "qt_Vertex",   GL_FLOAT, 0, 3);
+        mesh->createAttributeArray(Mesh::Normals,   shader, "qt_Normal",   GL_FLOAT, 0, 3);
+        mesh->createAttributeArray(Mesh::TexCoords, shader, "qt_TexCoord", GL_FLOAT, 0, 2);
+        mesh->createAttributeArray(Mesh::Tangent,   shader, "qt_Tangent",  GL_FLOAT, 0, 3);
+        mesh->createAttributeArray(Mesh::Bones,     shader, "qt_BoneIDs",  GL_FLOAT, 0, 4);
+        mesh->createAttributeArray(Mesh::Weight,    shader, "qt_Weights",  GL_FLOAT, 0, 4);
     }
 }

@@ -19,9 +19,7 @@ INCLUDEPATH += src/common \
                src/map/generation \
                src/model \
                src/world \
-               src/3rd-party/imageshackAPI \
-               src/3rd-party/hmstl \
-               src/3rd-party/libtrix
+               src/3rd-party/imageshackAPI
 
 SOURCES  += $$PWD/main.cpp \
             $$PWD/mainwindow.cpp \
@@ -49,15 +47,6 @@ SOURCES  += $$PWD/main.cpp \
             $$PWD/helper/mathhelper.cpp \
             $$PWD/map/watertile.cpp \
             $$PWD/map/waterchunk.cpp \
-            $$PWD/model/ianimation.cpp \
-            $$PWD/model/ibone.cpp \
-            $$PWD/model/ilight.cpp \
-            $$PWD/model/imesh.cpp \
-            $$PWD/model/imodel.cpp \
-            $$PWD/model/imodelinterface.cpp \
-            $$PWD/model/imodelmanager.cpp \
-            $$PWD/model/ipipeline.cpp \
-            $$PWD/model/itexturemanager.cpp \
             $$PWD/ui/modelpicker.cpp \
             $$PWD/ui/toolbox.cpp \
             $$PWD/ui/waterwidget.cpp \
@@ -72,12 +61,19 @@ SOURCES  += $$PWD/main.cpp \
             $$PWD/ui/heightmapwidget.cpp \
             $$PWD/map/mapcleft.cpp \
             $$PWD/ui/mapchunk_settings.cpp \
-    src/ui/basic_settings.cpp \
-    $$PWD/stl.cpp
-            #$$PWD/3rd-party/libtrix/libtrix.cpp \
-            #$$PWD/3rd-party/hmstl/stb_image.cpp \
-            #$$PWD/3rd-party/hmstl/heightmap.cpp
-            #$$PWD/3rd-party/hmstl/htmstl.cpp
+            $$PWD/ui/basic_settings.cpp \
+            $$PWD/stl.cpp \
+    $$PWD/model/animation.cpp \
+    $$PWD/model/bone.cpp \
+    $$PWD/model/light.cpp \
+    $$PWD/model/mesh.cpp \
+    $$PWD/model/model.cpp \
+    $$PWD/model/modelinterface.cpp \
+    $$PWD/model/modelmanager.cpp \
+    $$PWD/model/pipeline.cpp \
+    $$PWD/selection.cpp \
+    $$PWD/boundingbox.cpp \
+    $$PWD/map/mapobject.cpp
 
 HEADERS  += $$PWD/mainwindow.h \
             $$PWD/ui/teleportwidget.h \
@@ -108,15 +104,6 @@ HEADERS  += $$PWD/mainwindow.h \
             $$PWD/map/watertile.h \
             $$PWD/map/waterchunk.h \
             $$PWD/ui/waterwidget.h \
-            $$PWD/model/ianimation.h \
-            $$PWD/model/ibone.h \
-            $$PWD/model/ilight.h \
-            $$PWD/model/imesh.h \
-            $$PWD/model/imodel.h \
-            $$PWD/model/imodelinterface.h \
-            $$PWD/model/imodelmanager.h \
-            $$PWD/model/ipipeline.h \
-            $$PWD/model/itexturemanager.h \
             $$PWD/ui/modelpicker.h \
             $$PWD/ui/toolbox.h \
             $$PWD/ui/waterwidget.h \
@@ -132,12 +119,19 @@ HEADERS  += $$PWD/mainwindow.h \
             $$PWD/ui/heightmapwidget.h \
             $$PWD/map/mapcleft.h \
             $$PWD/ui/mapchunk_settings.h \
-    src/ui/basic_settings.h \
-    $$PWD/stl.h
-            #$$PWD/3rd-party/libtrix/libtrix.h \
-            #$$PWD/3rd-party/hmstl/stb_image.h \
-            #$$PWD/3rd-party/hmstl/heightmap.h \
-            #$$PWD/3rd-party/hmstl/htmstl.h
+            $$PWD/ui/basic_settings.h \
+            $$PWD/stl.h \
+    $$PWD/model/animation.h \
+    $$PWD/model/bone.h \
+    $$PWD/model/light.h \
+    $$PWD/model/mesh.h \
+    $$PWD/model/model.h \
+    $$PWD/model/modelinterface.h \
+    $$PWD/model/modelmanager.h \
+    $$PWD/model/pipeline.h \
+    $$PWD/selection.h \
+    $$PWD/boundingbox.h \
+    $$PWD/map/mapobject.h
 
 FORMS    += $$PWD/mainwindow.ui \
             $$PWD/ui/teleportwidget.ui \
@@ -152,4 +146,4 @@ FORMS    += $$PWD/mainwindow.ui \
             $$PWD/ui/mapgeneration.ui \
             $$PWD/ui/heightmapwidget.ui \
             $$PWD/ui/mapchunk_settings.ui \
-    src/ui/basic_settings.ui
+            $$PWD/ui/basic_settings.ui

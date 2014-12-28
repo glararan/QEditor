@@ -13,46 +13,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#ifndef MODELPICKER_H
-#define MODELPICKER_H
+#ifndef LIGHT_H
+#define LIGHT_H
 
-#include <QWidget>
+#include <QtCore>
+#include <QtWidgets>
 
-#include "model/modelmanager.h"
-
-#include "ui/tableview.h"
-#include "ui/toolbox.h"
-
-namespace Ui
+struct Light
 {
-    class ModelPicker;
-}
+    Light(const QVector3D position = QVector3D(0.0f, 0.0f, 0.0f), const QVector3D ambient = QVector3D(0.3f, 0.3f, 0.3f), const QVector3D diffuse = QVector3D(0.6f, 0.6f, 0.6f), const QVector3D specular = QVector3D(1.0f, 1.0f, 1.0f));
 
-class ModelPicker : public QWidget
-{
-    Q_OBJECT
-
-public:
-    explicit ModelPicker(QWidget* parent = 0);
-    ~ModelPicker();
-
-    void loadPicker(ModelManager* manager);
-    void clear();
-
-private:
-    Ui::ModelPicker* ui;
-
-    QString currentModelLocation;
-
-    ToolBox* box;
-
-    QVector<TextureWell*> items;
-
-    ModelManager* manager;
-
-private slots:
-    void modelSelected(int, int);
-    void modelviewSelected(int, int);
+    QVector3D position;
+    QVector3D ambient;
+    QVector3D diffuse;
+    QVector3D specular;
 };
 
-#endif // MODELPICKER_H
+#endif // LIGHT_H

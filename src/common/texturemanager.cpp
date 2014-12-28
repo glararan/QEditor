@@ -189,6 +189,14 @@ const TexturePtr TextureManager::getTexture(QString textureName, QString texture
     return texture;
 }
 
+const TexturePtr TextureManager::getTexture(const int index) const
+{
+    if(index >= textures.size())
+        qWarning() << QObject::tr("Index is out of texture list size!");
+
+    return textures.at(index).second;
+}
+
 const TexturePtr TextureManager::getDepthTexture(QString textureName) const
 {
     QPair<QString, TexturePtr> pair;
@@ -239,6 +247,21 @@ const TexturePtr TextureManager::getSelectedTexture()
     }
 
     return selectedTexture;
+}
+
+const int TextureManager::getIndex(QString texturePath) const
+{
+    QPair<QString, TexturePtr> pair;
+
+    for(int i = 0; i < textures.size(); ++i)
+    {
+        pair = textures[i];
+
+        if(pair.second->getPath() == texturePath)
+            return i;
+    }
+
+    return -1;
 }
 
 void TextureManager::setAntialiasing(World* world, const float antialiasing)

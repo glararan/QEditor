@@ -19,36 +19,15 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "mapchunk.h"
 #include "world.h"
 #include "mapheaders.h"
-#include "model/imodelmanager.h"
-#include "model/imodel.h"
+#include "model/modelmanager.h"
+#include "model/model.h"
 
 #include <QOpenGLFramebufferObjectFormat>
 #include <QOpenGLFramebufferObject>
 
 class WaterTile;
 class MapCleft;
-
-struct MapObject
-{
-    MapObject()
-    {
-        model         = 0;
-        height_offset = 0.0f;
-    }
-
-    ~MapObject()
-    {
-        delete model;
-    }
-
-    IModel* model;
-
-    float height_offset;
-
-    QVector3D translate;
-    QVector3D rotation;
-    QVector3D scale;
-};
+class MapObject;
 
 class MapTile
 {

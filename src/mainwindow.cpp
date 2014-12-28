@@ -317,11 +317,12 @@ void MainWindow::openWorld(ProjectFileData projectData, bool** mapCoords)
     connect(settingsW, SIGNAL(setTextureScaleNear(float)),         mapView, SLOT(setTextureScaleNear(float)));
     connect(settingsW, SIGNAL(setTabletMode(bool)),                mapView, SLOT(setTabletMode(bool)));
 
-    connect(heightmapW, SIGNAL(accepted()),                this, SLOT(heightmapWidgetAccepted()));
-    connect(heightmapW, SIGNAL(rejected()),                this, SLOT(heightmapWidgetRejected()));
-    connect(heightmapW, SIGNAL(setScale(float)),           this, SLOT(setHeightmapScale(float)));
-    connect(heightmapW, SIGNAL(importing(QString, float)), this, SLOT(importingHeightmap(QString, float)));
-    connect(heightmapW, SIGNAL(exporting(QString, float)), this, SLOT(exportingHeightmap(QString, float)));
+    connect(heightmapW, SIGNAL(accepted()),                               this, SLOT(heightmapWidgetAccepted()));
+    connect(heightmapW, SIGNAL(rejected()),                               this, SLOT(heightmapWidgetRejected()));
+    connect(heightmapW, SIGNAL(setScale(float)),                          this, SLOT(setHeightmapScale(float)));
+    connect(heightmapW, SIGNAL(importing(QString, float)),                this, SLOT(importingHeightmap(QString, float)));
+    connect(heightmapW, SIGNAL(exporting(QString, float)),                this, SLOT(exportingHeightmap(QString, float)));
+    connect(heightmapW, SIGNAL(stlExporting(QString, float, bool, bool)), this, SLOT(exportingSTL(QString, float, bool, bool)));
 
     // tools - test, stereoscopic
     connect(ui->action_3D_Stereoscopic, SIGNAL(triggered(bool)), mapView, SLOT(set3DStreoscopic(bool)));
@@ -344,6 +345,7 @@ void MainWindow::openWorld(ProjectFileData projectData, bool** mapCoords)
     connect(ui->action_mapview_m4, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
     connect(ui->action_mapview_m5, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
     connect(ui->action_mapview_m6, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
+    connect(ui->action_mapview_m7, SIGNAL(triggered()), this, SLOT(setToolBarItem()));
 
     connect(this, SIGNAL(setModeEditing(int)), mapView, SLOT(setModeEditing(int)));
 
@@ -476,6 +478,7 @@ void MainWindow::closeProject()
     mode4Actions.clear();
     mode5Actions.clear();
     mode6Actions.clear();
+    mode7Actions.clear();
 
     // clear toolbar
     ui->toolbar3->clear();
@@ -733,6 +736,14 @@ void MainWindow::setToolBarItem()
         showMode(mode6Actions);
 
         addDockWindow(tr("Camera"), cameraW);
+    }
+    else if(iName == "action_mapview_m7")
+    {
+        emit setModeEditing(7);
+
+        showMode(mode7Actions);
+
+        addDockWindow(tr("Vertex Lighting"), colorW);
     }
 }
 
@@ -1110,7 +1121,7 @@ void MainWindow::initMode()
     addToolbarAction(t_paint_maxAlpha          , mode2Actions);
     addToolbarAction(t_paint_maximum_alpha     , mode2Actions);
 
-    // mode3
+    /// mode3
     addToolbarAction(t_brush_label             , mode3Actions);
     addToolbarAction(t_brush_circle            , mode3Actions);
     addToolbarAction(t_brush_square            , mode3Actions);
@@ -1126,7 +1137,7 @@ void MainWindow::initMode()
     addToolbarAction(t_paint_maxAlpha          , mode3Actions);
     addToolbarAction(t_paint_maximum_alpha     , mode3Actions);
 
-    // mode5
+    /// mode5
     addToolbarAction(t_model_mode_label        , mode5Actions);
     addToolbarAction(t_modelmode_insert        , mode5Actions);
     addToolbarAction(t_modelmode_delete        , mode5Actions);
@@ -1147,8 +1158,23 @@ void MainWindow::initMode()
     addToolbarAction(t_scale                   , mode5Actions);
     addToolbarAction(t_scale_value_label       , mode5Actions);
 
-    // mode6
+    /// mode6
 
+    /// mode7
+    addToolbarAction(t_brush_label             , mode7Actions);
+    addToolbarAction(t_brush_circle            , mode7Actions);
+    addToolbarAction(t_brush_square            , mode7Actions);
+    addToolbarAction(t_outer_radius_label      , mode7Actions);
+    addToolbarAction(t_outer_radius            , mode7Actions);
+    addToolbarAction(t_outer_radius_value_label, mode7Actions);
+    addToolbarAction(t_inner_radius_label      , mode7Actions);
+    addToolbarAction(t_inner_radius            , mode7Actions);
+    addToolbarAction(t_inner_radius_value_label, mode7Actions);
+    addToolbarAction(t_flow_label              , mode7Actions);
+    addToolbarAction(t_flow                    , mode7Actions);
+    addToolbarAction(t_flow_value_label        , mode7Actions);
+    addToolbarAction(t_paint_maxAlpha          , mode7Actions);
+    addToolbarAction(t_paint_maximum_alpha     , mode7Actions);
 
     hideToolbarActions();
 }
@@ -1448,6 +1474,11 @@ void MainWindow::importingHeightmap(QString path, float scale)
 void MainWindow::exportingHeightmap(QString path, float scale)
 {
     world->exportHeightmap(path, scale);
+}
+
+void MainWindow::exportingSTL(QString path, float surface, bool scaleHeight, bool low)
+{
+    world->exportSTL(path, surface, scaleHeight, low);
 }
 
 void MainWindow::setHeightmapScale(float scale)

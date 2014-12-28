@@ -13,14 +13,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#ifndef IMESH_H
-#define IMESH_H
+#ifndef MESH_H
+#define MESH_H
 
 #include <QtWidgets>
 
 #include <assimp/scene.h>
 
-#include "itexturemanager.h"
+#include "texturemanager.h"
 
 struct MeshMaterial
 {
@@ -55,7 +55,7 @@ struct MeshTextures
     int heightTextureIndex;
 };
 
-class IMesh
+class Mesh
 {
 public:
     enum BufferName
@@ -69,23 +69,23 @@ public:
         Index      = 6
     };
 
-    IMesh();
-    ~IMesh();
+    Mesh();
+    ~Mesh();
 
     void bind();
 
     void createVertexArrayObject();
-    void createBuffer(BufferName name, void* data, int count);
-    void createAttributeArray(BufferName name, QOpenGLShaderProgram* shader, const char* location, GLenum type, int offset, int tupleSize);
+    void createBuffer(const BufferName name, void* data, const int count);
+    void createAttributeArray(const BufferName name, QOpenGLShaderProgram* shader, const char* location, const GLenum type, const int offset, const int tupleSize);
 
     MeshMaterial* getMeshMaterial() { return &meshMaterial; }
     MeshTextures* getMeshTextures() { return &meshTextures; }
 
-    int getNumFaces()              { return numFaces; }
-    void setNumFaces(int numFaces) { this->numFaces = numFaces; }
+    const int getNumFaces() const         { return numFaces; }
+    void setNumFaces(const int _numFaces) { numFaces = _numFaces; }
 
-    QOpenGLBuffer*            getBuffer(BufferName name);
-    QOpenGLVertexArrayObject* getVertexArrayObject();
+    QOpenGLBuffer*            getBuffer(const BufferName name) { return &buffers[name]; }
+    QOpenGLVertexArrayObject* getVertexArrayObject()           { return &vao; }
 
 private:
     int numFaces;
@@ -97,22 +97,22 @@ private:
     QOpenGLVertexArrayObject vao;
 };
 
-class IMeshes
+class Meshes
 {
 public:
-    IMeshes();
-    ~IMeshes();
+    Meshes();
+    ~Meshes();
 
-    void add(IMesh* mesh);
+    void add(Mesh* mesh);
 
-    IMesh* at(int index);
+    Mesh* at(const int index) const { return meshes.at(index); }
 
-    int size();
+    const int size() const { return meshes.size(); }
 
     void createAttributeArray(QOpenGLShaderProgram* shader);
 
 private:
-    QList<IMesh*> meshes;
+    QList<Mesh*> meshes;
 };
 
-#endif // IMESH_H
+#endif // MESH_H

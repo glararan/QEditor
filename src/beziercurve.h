@@ -17,7 +17,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #define BEZIERCURVE_H
 
 #include "mathhelper.h"
-#include "imesh.h"
+#include "mesh.h"
 
 #include <QVector3D>
 #include <QVector2D>
@@ -45,8 +45,7 @@ public:
     QVector3D upVector[4];
 
 private:
-    IMesh mesh;
-    IMesh mesh2;
+    Mesh mesh, mesh2;
 
     int usedPoints;
 };

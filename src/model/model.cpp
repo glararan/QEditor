@@ -13,44 +13,44 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#include "imodel.h"
+#include "model.h"
 
-#include <QOpenGLFunctions_3_1>
+#include <QOpenGLFunctions_4_2_Core>
 
-IModel::IModel(IModelManager* modelManager, int index)
+Model::Model(ModelManager* modelManager, const int index)
 : lastShader(0)
 , animation_state(0)
 , animations_enabled(true)
 , texture_manager(modelManager->getTextureManager())
 , model_interface(modelManager->getModel(index)->modelInterface)
 {
-    m_funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_3_1>();
+    GLfuncs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_4_2_Core>();
 
-    if(!m_funcs)
+    if(!GLfuncs)
     {
         qWarning() << "Requires multi-texturing support";
         exit(-1);
     }
 
-    m_funcs->initializeOpenGLFunctions();
+    GLfuncs->initializeOpenGLFunctions();
 
     if(model_interface->hasAnimations())
-        animation_state = new IAnimationState(model_interface->getAnimations());
+        animation_state = new AnimationState(model_interface->getAnimations());
 }
 
-IModel::~IModel()
+Model::~Model()
 {
     delete animation_state;
 }
 
-void IModel::draw(QOpenGLShaderProgram* shader)
+void Model::draw(QOpenGLShaderProgram* shader)
 {
     createAttributeArray(shader);
 
-    shader->setUniformValue("qt_lPosition",   Light.position);
-    shader->setUniformValue("qt_lAmbient",    Light.ambient);
-    shader->setUniformValue("qt_lDiffuse",    Light.diffuse);
-    shader->setUniformValue("qt_lSpecular",   Light.specular);
+    shader->setUniformValue("qt_lPosition",   light.position);
+    shader->setUniformValue("qt_lAmbient",    light.ambient);
+    shader->setUniformValue("qt_lDiffuse",    light.diffuse);
+    shader->setUniformValue("qt_lSpecular",   light.specular);
     shader->setUniformValue("diffuseTexture", 0);
 
     if(model_interface->hasAnimations() && animations_enabled)
@@ -61,11 +61,11 @@ void IModel::draw(QOpenGLShaderProgram* shader)
     else
         shader->setUniformValue("animationEnabled", false);
 
-    IMeshes* meshes = model_interface->getMeshes();
+    Meshes* meshes = model_interface->getMeshes();
 
     for(int i = 0; i < meshes->size(); ++i)
     {
-        IMesh* mesh = meshes->at(i);
+        Mesh* mesh = meshes->at(i);
 
         shader->setUniformValue("qt_mAmbient",  mesh->getMeshMaterial()->mAmbient);
         shader->setUniformValue("qt_mDiffuse",  mesh->getMeshMaterial()->mDiffuse);
@@ -73,11 +73,11 @@ void IModel::draw(QOpenGLShaderProgram* shader)
         shader->setUniformValue("qt_Shininess", mesh->getMeshMaterial()->shininess);
         shader->setUniformValue("qt_Opacity",   mesh->getMeshMaterial()->opacity);
 
-        shader->setUniformValue("hasDiffuse",mesh->getMeshTextures()->hasDiffuseTexture);
+        shader->setUniformValue("hasDiffuse", mesh->getMeshTextures()->hasDiffuseTexture);
 
         if(mesh->getMeshTextures()->hasDiffuseTexture)
         {
-            m_funcs->glActiveTexture(GL_TEXTURE0);
+            GLfuncs->glActiveTexture(GL_TEXTURE0);
 
             texture_manager->getTexture(mesh->getMeshTextures()->diffuseTextureIndex)->bind();
             texture_manager->getSampler()->bind(0);
@@ -98,32 +98,27 @@ void IModel::draw(QOpenGLShaderProgram* shader)
     }
 }
 
-bool IModel::isAnimationEnabled()
-{
-    return animations_enabled;
-}
-
-void IModel::enableAnimations()
+void Model::enableAnimations()
 {
     animations_enabled = true;
 }
 
-void IModel::disableAnimations()
+void Model::disableAnimations()
 {
     animations_enabled = false;
 }
 
-IModelInterface* IModel::getModelInterface()
+const QVector3D& Model::getCenter() const
 {
-    return model_interface;
+    QVector3D center;
+
+    return center;
+
+    //for(int i = 0; i < model_interface->getMeshes()[0].size(); ++i)
+        //center += model_interface->getMeshes()[0].at(i)->
 }
 
-IAnimationState* IModel::getAnimationState()
-{
-    return animation_state;
-}
-
-void IModel::createAttributeArray(QOpenGLShaderProgram* shader)
+void Model::createAttributeArray(QOpenGLShaderProgram* shader)
 {
     if(lastShader == shader)
         return;

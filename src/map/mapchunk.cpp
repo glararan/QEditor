@@ -34,6 +34,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 , depthTextureArray(new Texture(QOpenGLTexture::Target2DArray))
 , alphaArray(new Texture(QOpenGLTexture::Target2DArray))
 , vertexShadingMap(NULL)
+, vertexLightingMap(NULL)
 , displaySubroutines(world->DisplayModeCount)
 , highlight(false)
 , selected(false)
@@ -188,6 +189,19 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 
     chunkMaterial->setTextureUnitConfiguration(ShaderUnits::VertexShading, vertexShadingMap, terrainSampler, "vertexShading");
 
+    /// Vertex Lighting
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::VertexLighting);
+
+    vertexLightingData = new unsigned char[CHUNK_ARRAY_SIZE];
+
+    memset(vertexLightingData, 0, CHUNK_ARRAY_SIZE);
+
+    vertexLightingMap = TexturePtr(new Texture(QOpenGLTexture::Target2D));
+    vertexLightingMap->setSize(TILE_WIDTH / CHUNKS, TILE_HEIGHT / CHUNKS);
+    vertexLightingMap->setVertexShading(vertexLightingData);
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::VertexLighting, vertexLightingMap, terrainSampler, "vertexLighting");
+
     /// Texture scale
     for(int i = 0; i < MAX_TEXTURES; ++i)
     {
@@ -228,6 +242,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
 , depthTextureArray(new Texture(QOpenGLTexture::Target2DArray))
 , alphaArray(new Texture(QOpenGLTexture::Target2DArray))
 , vertexShadingMap(NULL)
+, vertexLightingMap(NULL)
 , displaySubroutines(world->DisplayModeCount)
 , highlight(false)
 , selected(false)
@@ -259,14 +274,14 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
         {
             QString texturePath = tile->getHeader().mcin->entries[chunkIndex()].mcnk->terrainOffset->textures[i];
 
-            /*if(i == 0)
+            if(i == 0)
                 texturePath = "textures/KLS_GRASS04_1024.png";
             else if(i == 1)
                 texturePath = "textures/6ng_grass03_1024.png";
             else if(i == 2)
                 texturePath = "textures/KLS_Rock05_1024.png";
             else
-                texturePath = "textures/V4W_CLIFF01_1024.png";*/
+                texturePath = "textures/V4W_CLIFF01_1024.png";
 
             if(texturePath == QString())
             {
@@ -291,6 +306,19 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
 
         /// Load Vertex Shading
         vertexShadingData = tile->getHeader().mcin->entries[chunkIndex()].mcnk->terrainOffset->vertexShading;
+
+        /// Vertex Lighting
+        world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::VertexLighting);
+
+        vertexLightingData = new unsigned char[CHUNK_ARRAY_SIZE];
+
+        memset(vertexLightingData, 127, CHUNK_ARRAY_SIZE);
+
+        vertexLightingMap = TexturePtr(new Texture(QOpenGLTexture::Target2D));
+        vertexLightingMap->setSize(TILE_WIDTH / CHUNKS, TILE_HEIGHT / CHUNKS);
+        vertexLightingMap->setVertexShading(vertexLightingData);
+
+        chunkMaterial->setTextureUnitConfiguration(ShaderUnits::VertexLighting, vertexLightingMap, terrainSampler, "vertexLighting");
 
         /// Load Texture scale
         for(int i = 0; i < MAX_TEXTURES; ++i)
@@ -543,9 +571,9 @@ void MapChunk::initialize()
         }
     }
 
-    Mesh.createVertexArrayObject();
-    Mesh.createBuffer(IMesh::Vertices, positionData.data(), positionData.size() * sizeof(float));
-    Mesh.setNumFaces(patchCount);
+    mesh.createVertexArrayObject();
+    mesh.createBuffer(Mesh::Vertices, positionData.data(), positionData.size() * sizeof(float));
+    mesh.setNumFaces(patchCount);
 }
 
 void MapChunk::test()
@@ -634,12 +662,12 @@ void MapChunk::draw(QOpenGLShaderProgram* shader)
     {
         // Render the quad as a patch
         {
-            Mesh.bind();
-            Mesh.createAttributeArray(IMesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 2);
+            mesh.bind();
+            mesh.createAttributeArray(Mesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 2);
 
             shader->setPatchVertexCount(1);
 
-            world->getGLFunctions()->glDrawArrays(GL_PATCHES, 0, Mesh.getNumFaces());
+            world->getGLFunctions()->glDrawArrays(GL_PATCHES, 0, mesh.getNumFaces());
         }
     }
 }
@@ -1560,6 +1588,110 @@ bool MapChunk::paintVertexShading(float x, float z, float flow, QColor& color)
         }
 
         chunkMaterial->setTextureUnitConfiguration(ShaderUnits::VertexShading, vertexShadingMap, terrainSampler, "vertexShading");
+    }
+
+    return changed;
+}
+
+bool MapChunk::paintVertexLighting(float x, float z, float flow, QColor& lightColor)
+{
+    bool changed = false;
+
+    const Brush* brush = world->getBrush();
+
+    float xdiff = baseX - x + CHUNKSIZE / 2;
+    float ydiff = baseY - z + CHUNKSIZE / 2;
+
+    float dist = sqrt(pow(xdiff, 2) + pow(ydiff, 2));
+
+    if(dist > (brush->OuterRadius() + CHUNK_DIAMETER))
+        return changed;
+
+    QList<QPair<QVector<unsigned char>, QVector2D>> changing;
+
+    int minX = horizToHMapSize(x - brush->OuterRadius());
+    int maxX = horizToHMapSize(x + brush->OuterRadius());
+
+    int minY = horizToHMapSize(z - brush->OuterRadius());
+    int maxY = horizToHMapSize(z + brush->OuterRadius());
+
+    for(int _x = minX; _x < maxX; ++_x)
+    {
+        for(int _y = minY; _y < maxY; ++_y) // _y mean z!
+        {
+            switch(brush->Shape())
+            {
+                case Brush::Circle:
+                default:
+                    {
+                        xdiff = HMapSizeToHoriz(_x) - x;
+                        ydiff = HMapSizeToHoriz(_y) - z;
+
+                        dist = sqrt(pow(xdiff, 2) + pow(ydiff, 2));
+
+                        if(dist < brush->OuterRadius())
+                        {
+                            int X = _x % TILE_WIDTH;
+                            int Y = _y % TILE_HEIGHT;
+
+                            X -= chunkX * (TILE_WIDTH / CHUNKS);
+                            Y -= chunkY * (TILE_HEIGHT / CHUNKS);
+
+                            int index = (Y * (TILE_WIDTH / CHUNKS)) + X;
+
+                            if(index < 0 || index >= CHUNK_ARRAY_SIZE || X < 0 || Y < 0 || X >= (TILE_WIDTH / CHUNKS) || Y >= (TILE_HEIGHT / CHUNKS))
+                                continue;
+
+                            index *= sizeof(float);
+
+                            float lossyMultiplier = brush->calcLossyMultiplier(dist);
+
+                            switch(brush->BrushTypes().vertexShading)
+                            {
+                                case Brush::TexturingType::Solid:
+                                default:
+                                    {
+                                        vertexLightingData[index]     = ToUChar(qMax(qMin(MathHelper::closerTo(vertexLightingData[index],     lightColor.redF(),   ((255.0f - vertexLightingData[index])     * flow * 3) * lossyMultiplier), 255.0f), 0.0f));
+                                        vertexLightingData[index + 1] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexLightingData[index + 1], lightColor.greenF(), ((255.0f - vertexLightingData[index + 1]) * flow * 3) * lossyMultiplier), 255.0f), 0.0f));
+                                        vertexLightingData[index + 2] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexLightingData[index + 2], lightColor.blueF(),  ((255.0f - vertexLightingData[index + 2]) * flow * 3) * lossyMultiplier), 255.0f), 0.0f));
+
+                                        if(!world->getPaintMaximumState() || (world->getPaintMaximumState() && ToFloat(vertexLightingData[index + 3]) < world->getPaintMaximumAlpha() * 255.0f))
+                                            vertexLightingData[index + 3] = ToUChar(qMax(qMin(MathHelper::closerTo(vertexLightingData[index + 3], lightColor.alphaF(), ((255.0f - vertexLightingData[index + 3]) * flow * 3) * lossyMultiplier), 255.0f), 0.0f));
+
+                                        QVector<unsigned char> dataContainer;
+                                        dataContainer.append(vertexLightingData[index]);     // R
+                                        dataContainer.append(vertexLightingData[index + 1]); // G
+                                        dataContainer.append(vertexLightingData[index + 2]); // B
+                                        dataContainer.append(vertexLightingData[index + 3]); // A
+
+                                        changing.append(qMakePair<QVector<unsigned char>, QVector2D>(dataContainer, QVector2D(X, Y)));
+                                    }
+                                    break;
+                            }
+
+                            changed = true;
+                        }
+                    }
+                    break;
+            }
+        }
+    }
+
+    if(changed)
+    {
+        vertexLightingMap->bind();
+
+        for(int i = 0; i < changing.count(); ++i)
+        {
+            unsigned char data[4];
+
+            for(int j = 0; j < 4; ++j)
+                data[j] = changing.value(i).first.at(j);
+
+            vertexLightingMap->setVertexShade(data, changing.value(i).second);
+        }
+
+        chunkMaterial->setTextureUnitConfiguration(ShaderUnits::VertexLighting, vertexLightingMap, terrainSampler, "vertexLighting");
     }
 
     return changed;

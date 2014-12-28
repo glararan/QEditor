@@ -17,6 +17,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "watertile.h"
 #include "mapcleft.h"
+#include "mapobject.h"
 #include "perlingenerator.h"
 #include "qeditor.h"
 
@@ -258,21 +259,21 @@ void MapTile::drawObjects(const float& distance, const QVector3D& camera, QMatri
     {
         MapObject* mapObject = objects.at(i);
 
-        QVector3D translate = mapObject->translate;
-        QVector3D rotation  = mapObject->rotation;
-        QVector3D scale     = mapObject->scale;
+        QVector3D translate = mapObject->getTranslate();
+        QVector3D rotation  = mapObject->getRotation();
+        QVector3D scale     = mapObject->getScale();
 
-        IPipeline Pipeline(QMatrix4x4(),viewMatrix, projectionMatrix);
-        Pipeline.translate(translate.x(), translate.y() + mapObject->height_offset, translate.z());
-        Pipeline.scale(scale.x(),scale.y(), scale.z());
-        Pipeline.rotateX(rotation.x() * 360.0f);
-        Pipeline.rotateY(rotation.y() * 360.0f);
-        Pipeline.rotateZ(rotation.z() * 360.0f);
+        Pipeline pipeline(QMatrix4x4(), viewMatrix, projectionMatrix);
+        pipeline.translate(translate.x(), translate.y() + mapObject->getHeightOffset(), translate.z());
+        pipeline.scale(scale.x(), scale.y(), scale.z());
+        pipeline.rotateX(rotation.x() * 360.0f);
+        pipeline.rotateY(rotation.y() * 360.0f);
+        pipeline.rotateZ(rotation.z() * 360.0f);
 
-        if(mapObject->model)
+        if(mapObject->getModel())
         {
-            Pipeline.updateMatrices(shader);
-            mapObject->model->draw(shader);
+            pipeline.updateMatrices(shader);
+            mapObject->getModel()->draw(shader);
         }
     }
 }
@@ -679,8 +680,8 @@ void MapTile::deleteModel(float x, float z)
 
         float radius = 5.0f;
 
-        if(object->translate.x() - radius < x && object->translate.x() + radius > x
-        && object->translate.z() - radius < z && object->translate.z() + radius > z)
+        if(object->getTranslate().x() - radius < x && object->getTranslate().x() + radius > x
+        && object->getTranslate().z() - radius < z && object->getTranslate().z() + radius > z)
         {
             delete object;
 
@@ -697,9 +698,10 @@ void MapTile::updateModelHeight()
     {
         MapObject* mapObject = objects.at(i);
 
-        QVector3D position = mapObject->translate;
+        QVector3D position = mapObject->getTranslate();
+        position.setY(getHeight(position.x(), position.z()));
 
-        mapObject->translate.setY(getHeight(position.x(), position.z()));
+        mapObject->setTranslate(position);
     }
 }
 

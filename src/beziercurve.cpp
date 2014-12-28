@@ -74,18 +74,18 @@ void BezierCurve::init()
     }
 
     mesh.createVertexArrayObject();
-    mesh.createBuffer(IMesh::Vertices, positionData.data(), positionData.size() * sizeof(float));
+    mesh.createBuffer(Mesh::Vertices, positionData.data(), positionData.size() * sizeof(float));
     mesh.setNumFaces(usedPoints);
 
     mesh2.createVertexArrayObject();
-    mesh2.createBuffer(IMesh::Vertices, positionData2.data(), positionData2.size() * sizeof(float));
+    mesh2.createBuffer(Mesh::Vertices, positionData2.data(), positionData2.size() * sizeof(float));
     mesh2.setNumFaces(12);
 }
 
 void BezierCurve::drawControlPoints(QOpenGLShaderProgram* shader)
 {
     mesh.bind();
-    mesh.createAttributeArray(IMesh::Vertices, shader, "position", GL_FLOAT, 0, 3);
+    mesh.createAttributeArray(Mesh::Vertices, shader, "position", GL_FLOAT, 0, 3);
 
     glPointSize(15.0f);
     glDrawArrays(GL_POINTS, 0, mesh.getNumFaces()); // draw 4 points
@@ -94,7 +94,7 @@ void BezierCurve::drawControlPoints(QOpenGLShaderProgram* shader)
 void BezierCurve::drawCurve(QOpenGLShaderProgram* shader)
 {
     mesh2.bind();
-    mesh2.createAttributeArray(IMesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 3);
+    mesh2.createAttributeArray(Mesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 3);
 
     shader->setPatchVertexCount(4);
 

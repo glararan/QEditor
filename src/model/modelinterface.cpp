@@ -13,14 +13,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#include "imodelinterface.h"
+#include "modelinterface.h"
 
-IModelInterface::IModelInterface(ITextureManager *textureManager, QString filename)
+ModelInterface::ModelInterface(TextureManager* manager, const QString filename)
 : has_animations(false)
-, Meshes(0)
-, Animations(0)
-, Bones(0)
-, TextureManager(textureManager)
+, meshes(0)
+, animations(0)
+, bones(0)
+, textureManager(manager)
 {
     if(filename.contains("/"))
     {
@@ -47,68 +47,38 @@ IModelInterface::IModelInterface(ITextureManager *textureManager, QString filena
     if(scene->HasAnimations())
     {
         has_animations = true;
-        Bones          = loadBones(scene);
+        bones          = loadBones(scene);
 
         buildSkeleton(scene->mRootNode, NULL);
 
-        Animations = new IAnimations();
-        Animations->setBones(Bones);
+        animations = new Animations();
+        animations->setBones(bones);
 
         for(uint i = 0; i < scene->mNumAnimations; ++i)
-            Animations->add(loadAnimation(scene->mAnimations[i], i));
+            animations->add(loadAnimation(scene->mAnimations[i], i));
     }
 
-    Meshes = new IMeshes();
+    meshes = new Meshes();
 
     for(uint i = 0; i < scene->mNumMeshes; ++i)
-        Meshes->add(loadMesh(scene->mMeshes[i],scene->mMaterials[scene->mMeshes[i]->mMaterialIndex], i));
+        meshes->add(loadMesh(scene->mMeshes[i],scene->mMaterials[scene->mMeshes[i]->mMaterialIndex], i));
 }
 
-IModelInterface::~IModelInterface()
+ModelInterface::~ModelInterface()
 {
-    if(Animations)
-        delete Animations;
+    if(animations)
+        delete animations;
 
-    if(Bones)
-        delete Bones;
+    if(bones)
+        delete bones;
 
-    if(Meshes)
-        delete Meshes;
+    if(meshes)
+        delete meshes;
 }
 
-bool IModelInterface::hasAnimations()
+Bones* ModelInterface::loadBones(const aiScene* scene)
 {
-    return has_animations;
-}
-
-IMeshes* IModelInterface::getMeshes()
-{
-    return Meshes;
-}
-
-IBones* IModelInterface::getBones()
-{
-    return Bones;
-}
-
-IAnimations* IModelInterface::getAnimations()
-{
-    return Animations;
-}
-
-QString IModelInterface::getFilePath()
-{
-    return filePath;
-}
-
-QString IModelInterface::getFileName()
-{
-    return fileName;
-}
-
-IBones* IModelInterface::loadBones(const aiScene* scene)
-{
-    IBones* bones = new IBones();
+    Bones* bones = new Bones();
 
     for(uint mesh_index = 0; mesh_index < scene->mNumMeshes; ++mesh_index)
     {
@@ -131,15 +101,15 @@ IBones* IModelInterface::loadBones(const aiScene* scene)
     return bones;
 }
 
-IAnimation* IModelInterface::loadAnimation(const aiAnimation* ai_animation, int index)
+Animation* ModelInterface::loadAnimation(const aiAnimation* ai_animation, const int index)
 {
     QString animation_name(ai_animation->mName.data);
 
     double duration = ai_animation->mDuration;
     //qDebug() << "Animation: " + animation_name + " duration " + QString::number(duration);
 
-    IAnimation* animation = new IAnimation(animation_name, duration, index);
-    animation->setBoneCount(Bones->getBoneNames().size());
+    Animation* animation = new Animation(animation_name, duration, index);
+    animation->setBoneCount(bones->getBoneNames().size());
 
     for(uint bone_index = 0; bone_index < ai_animation->mNumChannels; ++bone_index)
     {
@@ -147,10 +117,10 @@ IAnimation* IModelInterface::loadAnimation(const aiAnimation* ai_animation, int 
 
         QString bone_name(channel->mNodeName.data);
 
-        if(!Bones->hasBone(bone_name))
+        if(!bones->hasBone(bone_name))
             continue;
 
-        int bone_id = Bones->getBone(bone_name)->getId();
+        int bone_id = bones->getBone(bone_name)->getId();
 
         animation->registerBone(bone_id);
 
@@ -179,11 +149,11 @@ IAnimation* IModelInterface::loadAnimation(const aiAnimation* ai_animation, int 
     return animation;
 }
 
-IMesh* IModelInterface::loadMesh(aiMesh* ai_mesh, aiMaterial* ai_material, int index)
+Mesh* ModelInterface::loadMesh(aiMesh* ai_mesh, aiMaterial* ai_material, const int index)
 {
     Q_UNUSED(index)
 
-    IMesh* mesh = new IMesh();
+    Mesh* mesh = new Mesh();
 
     QVector3D* vertices  = new QVector3D[ai_mesh->mNumVertices];
     QVector3D* normals   = new QVector3D[ai_mesh->mNumVertices];
@@ -194,7 +164,7 @@ IMesh* IModelInterface::loadMesh(aiMesh* ai_mesh, aiMaterial* ai_material, int i
 
     QVector<uint> indices;
 
-    if(ai_mesh->HasBones() && Bones)
+    if(ai_mesh->HasBones() && bones)
     {
         for(uint i = 0; i < ai_mesh->mNumBones; ++i)
         {
@@ -206,7 +176,7 @@ IMesh* IModelInterface::loadMesh(aiMesh* ai_mesh, aiMaterial* ai_material, int i
                 int vertexId      = w.mVertexId;
                 float weightValue = w.mWeight;
 
-                int boneID = Bones->getBone(boneName)->getId();
+                int boneID = bones->getBone(boneName)->getId();
 
                 addWeightData(&boneIDs[vertexId], &weight[vertexId], boneID, weightValue);
             }
@@ -240,13 +210,13 @@ IMesh* IModelInterface::loadMesh(aiMesh* ai_mesh, aiMaterial* ai_material, int i
     loadMaterial(ai_material, mesh);
 
     mesh->createVertexArrayObject();
-    mesh->createBuffer(IMesh::Vertices,  vertices, sizeof(QVector3D)  * ai_mesh->mNumVertices);
-    mesh->createBuffer(IMesh::Normals,   normals, sizeof(QVector3D)   * ai_mesh->mNumVertices);
-    mesh->createBuffer(IMesh::TexCoords, texCoords, sizeof(QVector2D) * ai_mesh->mNumVertices);
-    mesh->createBuffer(IMesh::Tangent,   tangent, sizeof(QVector3D)   * ai_mesh->mNumVertices);
-    mesh->createBuffer(IMesh::Bones,     boneIDs, sizeof(QVector4D)   * ai_mesh->mNumVertices);
-    mesh->createBuffer(IMesh::Weight,    weight, sizeof(QVector4D)    * ai_mesh->mNumVertices);
-    mesh->createBuffer(IMesh::Index,     indices.data(), sizeof(int)  * indices.size());
+    mesh->createBuffer(Mesh::Vertices,  vertices, sizeof(QVector3D)  * ai_mesh->mNumVertices);
+    mesh->createBuffer(Mesh::Normals,   normals, sizeof(QVector3D)   * ai_mesh->mNumVertices);
+    mesh->createBuffer(Mesh::TexCoords, texCoords, sizeof(QVector2D) * ai_mesh->mNumVertices);
+    mesh->createBuffer(Mesh::Tangent,   tangent, sizeof(QVector3D)   * ai_mesh->mNumVertices);
+    mesh->createBuffer(Mesh::Bones,     boneIDs, sizeof(QVector4D)   * ai_mesh->mNumVertices);
+    mesh->createBuffer(Mesh::Weight,    weight, sizeof(QVector4D)    * ai_mesh->mNumVertices);
+    mesh->createBuffer(Mesh::Index,     indices.data(), sizeof(int)  * indices.size());
     mesh->setNumFaces(indices.size());
 
     delete[] vertices;
@@ -259,7 +229,7 @@ IMesh* IModelInterface::loadMesh(aiMesh* ai_mesh, aiMaterial* ai_material, int i
     return mesh;
 }
 
-void IModelInterface::loadMaterial(aiMaterial* ai_material, IMesh* meshTarget)
+void ModelInterface::loadMaterial(aiMaterial* ai_material, Mesh* meshTarget)
 {
     aiColor3D color(0.f, 0.f, 0.f);
 
@@ -283,20 +253,20 @@ void IModelInterface::loadMaterial(aiMaterial* ai_material, IMesh* meshTarget)
 
     QString textureFolder = fileName.left(fileName.indexOf(".")) + "/";
 
-    loadTextures(ai_material, aiTextureType_DIFFUSE,  meshTarget->getMeshTextures()->diffuseTextureIndex,  meshTarget->getMeshTextures()->hasDiffuseTexture,  filePath + textureFolder,TextureManager);
-    loadTextures(ai_material, aiTextureType_SPECULAR, meshTarget->getMeshTextures()->specularTextureIndex, meshTarget->getMeshTextures()->hasSpecularTexture, filePath + textureFolder,TextureManager);
-    loadTextures(ai_material, aiTextureType_NORMALS,  meshTarget->getMeshTextures()->normalsTextureIndex,  meshTarget->getMeshTextures()->hasNormalsTexture,  filePath + textureFolder,TextureManager);
-    loadTextures(ai_material, aiTextureType_HEIGHT,   meshTarget->getMeshTextures()->heightTextureIndex,   meshTarget->getMeshTextures()->hasHeightTexture,   filePath + textureFolder,TextureManager);
+    loadTextures(ai_material, aiTextureType_DIFFUSE,  meshTarget->getMeshTextures()->diffuseTextureIndex,  meshTarget->getMeshTextures()->hasDiffuseTexture,  filePath + textureFolder, textureManager);
+    loadTextures(ai_material, aiTextureType_SPECULAR, meshTarget->getMeshTextures()->specularTextureIndex, meshTarget->getMeshTextures()->hasSpecularTexture, filePath + textureFolder, textureManager);
+    loadTextures(ai_material, aiTextureType_NORMALS,  meshTarget->getMeshTextures()->normalsTextureIndex,  meshTarget->getMeshTextures()->hasNormalsTexture,  filePath + textureFolder, textureManager);
+    loadTextures(ai_material, aiTextureType_HEIGHT,   meshTarget->getMeshTextures()->heightTextureIndex,   meshTarget->getMeshTextures()->hasHeightTexture,   filePath + textureFolder, textureManager);
 }
 
-void IModelInterface::buildSkeleton(aiNode* current, IBone* parent)
+void ModelInterface::buildSkeleton(aiNode* current, Bone* parent)
 {
-    IBone* bone;
+    Bone* bone;
 
-    if(!Bones->hasBone(QString(current->mName.data)))
-        bone = Bones->createEmptyBone(QString(current->mName.data));
+    if(!bones->hasBone(QString(current->mName.data)))
+        bone = bones->createEmptyBone(QString(current->mName.data));
     else
-        bone = Bones->getBone(QString(current->mName.data));
+        bone = bones->getBone(QString(current->mName.data));
 
     bone->setNodeTransformation(getMatrix(&current->mTransformation));
 
@@ -307,41 +277,48 @@ void IModelInterface::buildSkeleton(aiNode* current, IBone* parent)
         buildSkeleton(current->mChildren[child_index], bone);
 }
 
-void IModelInterface::loadTextures(aiMaterial* ai_material, aiTextureType type, int &index, bool& succes, QString filePath, ITextureManager* textureManager)
+void ModelInterface::loadTextures(aiMaterial* ai_material, aiTextureType type, int &index, bool& succes, QString filePath, TextureManager* manager)
 {
     aiString str;
 
     if(ai_material->GetTextureCount(type) > 0)
     {
-        ai_material->GetTexture(type,0, &str);
+        ai_material->GetTexture(type, 0, &str);
 
-        QString textureFilename = filePath + QString(str.C_Str());
+        QString textureFilename = QString(str.C_Str());
+        QString textureFilepath = filePath;
+        QString textureFile     = textureFilepath + textureFilename;
 
         textureFilename = textureFilename.replace(".tga", ".png"); //doesnt support tga formats, so try find png
+        textureFile     = textureFile.replace(".tga", ".png");
 
-        if(textureManager->hasTexture(textureFilename))
+        QString textureName = QFileInfo(textureFilepath).baseName() + "ModelTexture";
+
+        if(manager->hasTexture(textureName, textureFile))
         {
-            index  = textureManager->getIndex(textureFilename);
+            index  = manager->getIndex(textureFile);
             succes = true;
         }
         else
         {
-            if(textureManager->loadTexture(textureFilename))
+            manager->loadTexture(textureName, textureFile);
+
+            if(manager->hasTexture(textureName, textureFile))
             {
-                index  = textureManager->getIndex(textureFilename);
+                index  = manager->getIndex(textureFile);
                 succes = true;
             }
             else
             {
                 succes = false;
 
-                qDebug() << "error load: " + textureFilename;
+                qDebug() << "error load: " + textureFile;
             }
         }
     }
 }
 
-void IModelInterface::addWeightData(QVector4D* boneIdTarget, QVector4D* weightTarget, float id, float w)
+void ModelInterface::addWeightData(QVector4D* boneIdTarget, QVector4D* weightTarget, float id, float w)
 {
     if(weightTarget->x() == 0.0)
     {
@@ -376,7 +353,7 @@ void IModelInterface::addWeightData(QVector4D* boneIdTarget, QVector4D* weightTa
     }
 }
 
-QMatrix4x4 IModelInterface::getMatrix(const aiMatrix4x4* m)
+QMatrix4x4 ModelInterface::getMatrix(const aiMatrix4x4* m)
 {
     QMatrix4x4 nodeMatrix;
 

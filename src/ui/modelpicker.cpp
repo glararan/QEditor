@@ -35,7 +35,7 @@ ModelPicker::~ModelPicker()
     delete ui;
 }
 
-void ModelPicker::loadPicker(IModelManager* manager)
+void ModelPicker::loadPicker(ModelManager* manager)
 {
     this->manager = manager;
 
@@ -53,7 +53,7 @@ void ModelPicker::loadPicker(IModelManager* manager)
 
         for(int j = 0; j < names.size(); ++j)
         {
-            IModelData* model = manager->getModel(manager->getIndex(names.at(j)));
+            ModelData* model = manager->getModel(manager->getIndex(names.at(j)));
 
             well->insertItem(model->image, names.at(j));
         }

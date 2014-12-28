@@ -147,9 +147,9 @@ void WaterChunk::initialize()
         }
     }
 
-    Mesh.createVertexArrayObject();
-    Mesh.createBuffer(IMesh::Vertices, positionData.data(), positionData.size() * sizeof(float));
-    Mesh.setNumFaces(patchCount);
+    mesh.createVertexArrayObject();
+    mesh.createBuffer(Mesh::Vertices, positionData.data(), positionData.size() * sizeof(float));
+    mesh.setNumFaces(patchCount);
 }
 
 void WaterChunk::draw(QOpenGLShaderProgram* shader, GLuint reflectionTexture, GLuint depthTexture)
@@ -173,12 +173,12 @@ void WaterChunk::draw(QOpenGLShaderProgram* shader, GLuint reflectionTexture, GL
 
         // Render the quad as a patch
         {
-            Mesh.bind();
-            Mesh.createAttributeArray(IMesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 2);
+            mesh.bind();
+            mesh.createAttributeArray(Mesh::Vertices, shader, "vertexPosition", GL_FLOAT, 0, 2);
 
             shader->setPatchVertexCount(1);
 
-            world->getGLFunctions()->glDrawArrays(GL_PATCHES, 0, Mesh.getNumFaces());
+            world->getGLFunctions()->glDrawArrays(GL_PATCHES, 0, mesh.getNumFaces());
         }
     }
 }

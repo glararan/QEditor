@@ -27,13 +27,15 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "texturemanager.h"
 #include "framebuffer.h"
 #include "skybox.h"
+#include "selection.h"
 
-#include "model/imodelmanager.h"
-#include "model/imodel.h"
-#include "model/ipipeline.h"
+#include "model/modelmanager.h"
+#include "model/model.h"
+#include "model/pipeline.h"
 
 class MapTile;
 class MapChunk;
+class MapObject;
 class MapView;
 class WaterChunk;
 class TextureManager;
@@ -67,8 +69,6 @@ private:
 
     friend class World;
 };
-
-struct MapObject;
 
 class World
 {
@@ -114,6 +114,7 @@ public:
 
     void paintTerrain(float x, float z, float flow);
     void paintVertexShading(float x, float z, float flow, QColor& color);
+    void paintVertexLighting(float x, float z, float flow, QColor& lightColor);
 
     void removeObject(float x, float z);
 
@@ -130,21 +131,25 @@ public:
 
     void importHeightmap(QString path, float scale);
     void exportHeightmap(QString path, float scale);
+    void exportSTL(QString path, float surface, bool scaleHeight, bool low);
 
     void save();
 
-    QOpenGLFunctions_4_2_Core* getGLFunctions()    { return GLfuncs; }
-    Brush*                     getBrush()          { return brush; }
-    Camera*                    getCamera()         { return camera; }
-    ObjectBrush*               getObjectBrush()    { return objectBrush; }
-    Skybox*                    getSkybox()         { return skybox; }
-    TextureManager*            getTextureManager() { return textureManager; }
-    IModelManager*             getModelManager()   { return modelManager; }
-    QOpenGLShaderProgram*      getModelShader()    { return modelShader; }
-    QOpenGLShaderProgram*      getTerrainShader()  { return terrainShader; }
-    QOpenGLShaderProgram*      getCleftShader()    { return cleftShader; }
-    QOpenGLShaderProgram*      getWaterShader()    { return waterShader; }
-    QOpenGLShaderProgram*      getSkyboxShader()   { return skyboxShader; }
+    QOpenGLFunctions_4_2_Core* getGLFunctions()       { return GLfuncs; }
+    Brush*                     getBrush()             { return brush; }
+    Camera*                    getCamera()            { return camera; }
+    ObjectBrush*               getObjectBrush()       { return objectBrush; }
+    Skybox*                    getSkybox()            { return skybox; }
+    TextureManager*            getTextureManager()    { return textureManager; }
+    ModelManager*              getModelManager()      { return modelManager; }
+    SelectionManager*          getSelectionManager()  { return selectionManager; }
+    Selection*                 getCurrentSelection()  { return currentSelection; }
+    QOpenGLShaderProgram*      getModelShader()       { return modelShader; }
+    QOpenGLShaderProgram*      getTerrainShader()     { return terrainShader; }
+    QOpenGLShaderProgram*      getCleftShader()       { return cleftShader; }
+    QOpenGLShaderProgram*      getWaterShader()       { return waterShader; }
+    QOpenGLShaderProgram*      getSkyboxShader()      { return skyboxShader; }
+    QOpenGLShaderProgram*      getBoundingBoxShader() { return boundingBoxShader; }
 
     const ProjectFileData getProjectData() const          { return projectData; }
     const int             getAlphamapSize() const         { return alphaMapSize; }
@@ -183,13 +188,15 @@ private:
 
     float time;
 
-    Camera*         camera;
-    Brush*          brush;
-    ObjectBrush*    objectBrush;
-    Skybox*         skybox;
-    TextureManager* textureManager;
-    IModelManager*  modelManager;
-    MapChunk*       highlightChunk;
+    Camera*           camera;
+    Brush*            brush;
+    ObjectBrush*      objectBrush;
+    Skybox*           skybox;
+    TextureManager*   textureManager;
+    ModelManager*     modelManager;
+    MapChunk*         highlightChunk;
+    SelectionManager* selectionManager;
+    Selection*        currentSelection;
 
     QOpenGLFramebufferObject* fbo;
     QOpenGLFramebufferObject* reflection_fbo;
@@ -207,7 +214,7 @@ private:
 
     MapTiles mapTiles[TILES][TILES];
 
-    IModel* possibleModel;
+    Model* possibleModel;
 
     float terrainMaximumHeight;
     bool  terrainMaximumState;
@@ -232,6 +239,7 @@ private:
     QOpenGLShaderProgram* cleftShader;
     QOpenGLShaderProgram* waterShader;
     QOpenGLShaderProgram* skyboxShader;
+    QOpenGLShaderProgram* boundingBoxShader;
 
     ProjectFileData projectData;
 

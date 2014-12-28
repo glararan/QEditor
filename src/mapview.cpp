@@ -18,7 +18,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "mathhelper.h"
 #include "qeditor.h"
 
-#include "ipipeline.h"
+#include "pipeline.h"
 
 #include <QKeyEvent>
 #include <QTabletEvent>
@@ -30,7 +30,7 @@ MapView::MapView(World* mWorld, QWidget* parent, bool** mapCoords)
 , worldCoords(mapCoords) // coordinats for cache tiles
 , GLcontext(this->context())
 , camera(new Camera(this))
-, pipeline(new IPipeline())
+, pipeline(new Pipeline())
 , m_v()
 , viewCenterFixed(false)
 , showCameraCurve(false)
@@ -420,6 +420,12 @@ void MapView::update(float t)
                             setCameraCurvePointPosition(cameraCurvePoint, object_move);
                     }
                     break;
+
+                case VertexLighting:
+                    {
+                        world->paintVertexLighting(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f) * wacom.pressure, vertexShadingColor);
+                    }
+                    break;
             }
         }
         else if((eMMode == CtrlOnly && tabletMode) || (eMMode == CtrlOnly && tablet) || ctrlDown)
@@ -454,6 +460,12 @@ void MapView::update(float t)
                 case VertexShading:
                     {
                         world->paintVertexShading(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f) * wacom.pressure, vertexShadingColor);
+                    }
+                    break;
+
+                case VertexLighting:
+                    {
+                        world->paintVertexLighting(position.x(), position.z(), qMin(texturing_flow * dt, 1.0f) * wacom.pressure, vertexShadingColor);
                     }
                     break;
             }
@@ -541,7 +553,7 @@ void MapView::paintGL()
         if(showCameraCurve)
             camera->drawCurve(modelMatrix);
 
-        if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+        if(eMode == Terrain || eMode == Texturing || eMode == VertexShading || eMode == VertexLighting)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
         else if(eMode == Object && eModel == Insertion)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
@@ -559,7 +571,7 @@ void MapView::paintGL()
         if(showCameraCurve)
             camera->drawCurve(modelMatrix);
 
-        if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+        if(eMode == Terrain || eMode == Texturing || eMode == VertexShading || eMode == VertexLighting)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
         else if(eMode == Object && eModel == Insertion)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
@@ -575,7 +587,7 @@ void MapView::paintGL()
         if(showCameraCurve)
             camera->drawCurve(modelMatrix);
 
-        if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+        if(eMode == Terrain || eMode == Texturing || eMode == VertexShading || eMode == VertexLighting)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), true);
         else if(eMode == Object && eModel == Insertion)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
@@ -675,6 +687,7 @@ void MapView::setModeEditing(int option)
         case VertexShading:
         case Object:
         case CameraCurves:
+        case VertexLighting:
             eMode = (eEditingMode)option;
             break;
 
@@ -1229,12 +1242,12 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
     }
     else if(leftButtonPressed && altDown)
     {
-        if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+        if(eMode == Terrain || eMode == Texturing || eMode == VertexShading || eMode == VertexLighting)
             updateBrushOuterRadius(dx);
     }
     else if(rightButtonPressed && altDown)
     {
-        if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+        if(eMode == Terrain || eMode == Texturing || eMode == VertexShading || eMode == VertexLighting)
             updateBrushInnerRadius(dx);
     }
 
@@ -1291,12 +1304,12 @@ void MapView::tabletEvent(QTabletEvent* e)
             }
             else if(altDown)
             {
-                if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+                if(eMode == Terrain || eMode == Texturing || eMode == VertexShading || eMode == VertexLighting)
                     updateBrushOuterRadius(dx);
             }
             else if(rightButtonPressed && altDown)
             {
-                if(eMode == Terrain || eMode == Texturing || eMode == VertexShading)
+                if(eMode == Terrain || eMode == Texturing || eMode == VertexShading || eMode == VertexLighting)
                     updateBrushInnerRadius(dx);
             }
         }

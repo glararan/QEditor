@@ -13,35 +13,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#include "ianimation.h"
+#include "animation.h"
 
-IAnimation::IAnimation(QString animation_name, float animation_duration, int animation_id)
+Animation::Animation(const QString animation_name, const float animation_duration, const int animation_id)
 {
     name     = animation_name;
     duration = animation_duration;
     id       = animation_id;
 }
 
-IAnimation::~IAnimation()
+Animation::~Animation()
 {
 }
 
-int IAnimation::getId()
-{
-    return id;
-}
-
-float IAnimation::getDuration()
-{
-    return duration;
-}
-
-QString IAnimation::getName()
-{
-    return name;
-}
-
-QVector<QMatrix4x4> IAnimation::getTransforms(float time_stamp, QMap<int, QPair<float, int>>* position_state, QMap<int, QPair<float, int>>* scaling_state, QMap<int, QPair<float, int>>* rotation_state)
+const QVector<QMatrix4x4> Animation::getTransforms(const float time_stamp, QMap<int, QPair<float, int>>* position_state, QMap<int, QPair<float, int>>* scaling_state, QMap<int, QPair<float, int>>* rotation_state) const
 {
     QVector<QMatrix4x4> out;
 
@@ -138,70 +123,40 @@ QVector<QMatrix4x4> IAnimation::getTransforms(float time_stamp, QMap<int, QPair<
     return out;
 }
 
-int IAnimation::getBoneCount()
-{
-    return bone_count;
-}
-
-void IAnimation::setBoneCount(int count)
-{
-    bone_count = count;
-}
-
-void IAnimation::addBonePosition(int bone_id, float time, QVector3D position)
+void Animation::addBonePosition(const int bone_id, const float time, const QVector3D position)
 {
     positions[bone_id].push_back(QPair<float, QVector3D>(time, position));
 }
 
-void IAnimation::addBoneScaling(int bone_id, float time, QVector3D scaling)
+void Animation::addBoneScaling(const int bone_id, const float time, const QVector3D scaling)
 {
     scalings[bone_id].push_back(QPair<float, QVector3D>(time, scaling));
 }
 
-void IAnimation::addBoneRotation(int bone_id, float time, QQuaternion rotation)
+void Animation::addBoneRotation(const int bone_id, const float time, const QQuaternion rotation)
 {
     rotations[bone_id].push_back(QPair<float, QQuaternion>(time, rotation));
 }
 
-QMap<int, QVector<QPair<float, QVector3D>>>* IAnimation::getPositions()
-{
-    return &positions;
-}
-
-QMap<int, QVector<QPair<float, QVector3D>>>* IAnimation::getScalings()
-{
-    return &scalings;
-}
-
-QMap<int, QVector<QPair<float, QQuaternion>>>* IAnimation::getRotations()
-{
-    return &rotations;
-}
-
-void IAnimation::registerBone(int boneId)
+void Animation::registerBone(const int boneId)
 {
     boneRegister.push_back(boneId);
 }
 
-bool IAnimation::isRegistered(int boneId)
-{
-    return boneRegister.contains(boneId);
-}
-
 /// Animations
-IAnimations::IAnimations()
+Animations::Animations()
 {
 }
 
-IAnimations::~IAnimations()
+Animations::~Animations()
 {
-    QMap<QString, IAnimation*> animations;
+    QMap<QString, Animation*> animations;
 
-    QList<IAnimation*> values = animations.values();
+    QList<Animation*> values = animations.values();
 
     for(int i = 0; i < values.size(); ++i)
     {
-        IAnimation* animation = values.at(i);
+        Animation* animation = values.at(i);
 
         delete animation;
 
@@ -209,31 +164,16 @@ IAnimations::~IAnimations()
     }
 }
 
-void IAnimations::add(IAnimation* _animation)
+void Animations::add(Animation* _animation)
 {
     animations[_animation->getId()] = _animation;
 }
 
-IAnimation* IAnimations::get(int id)
-{
-    return animations[id];
-}
-
-void IAnimations::setBones(IBones* Bones)
-{
-    this->Bones = Bones;
-}
-
-IBones* IAnimations::getBones()
-{
-    return Bones;
-}
-
-QVector<QString> IAnimations::getAnimationNames()
+const QVector<QString> Animations::getAnimationNames() const
 {
     QVector<QString> names;
 
-    QList<IAnimation*> stack = animations.values();
+    QList<Animation*> stack = animations.values();
 
     for(int i = 0; i < stack.size(); ++i)
         names.push_back(stack.at(i)->getName());
@@ -241,18 +181,13 @@ QVector<QString> IAnimations::getAnimationNames()
     return names;
 }
 
-QVector<int> IAnimations::getAnimationsIds()
+const QVector<int> Animations::getAnimationsIds() const
 {
     return animations.keys().toVector();
 }
 
-int IAnimations::getAnimationCount()
-{
-    return animations.size();
-}
-
 /// AnimationState
-IAnimationState::IAnimationState(IAnimations* anims)
+AnimationState::AnimationState(Animations* anims)
 {
     current_animation = 0;
     animations        = anims;
@@ -270,34 +205,13 @@ IAnimationState::IAnimationState(IAnimations* anims)
     update(0.0f);
 }
 
-IAnimationState::~IAnimationState()
+AnimationState::~AnimationState()
 {
 }
 
-void IAnimationState::setAnimation(int id, float animationTime)
+void AnimationState::update(const float frame_time)
 {
-    current_animation = id;
-    animation_time    = animationTime;
-}
-
-int IAnimationState::getAnimation()
-{
-    return current_animation;
-}
-
-float IAnimationState::getAnimationTime()
-{
-    return animation_time;
-}
-
-IAnimations* IAnimationState::getAnimations()
-{
-    return animations;
-}
-
-void IAnimationState::update(float frame_time)
-{
-    IAnimation* animation = animations->get(current_animation);
+    Animation* animation = animations->get(current_animation);
 
     float animation_duration = animation->getDuration();
 
@@ -310,7 +224,7 @@ void IAnimationState::update(float frame_time)
 
     for(int i = 0; i < unmultiplied_transforms.size(); ++i)
     {
-        IBone* b = animations->getBones()->getBone(i);
+        Bone* b = animations->getBones()->getBone(i);
 
         QMatrix4x4 offset = b->getOffset();
         QMatrix4x4 result = QMatrix4x4();
@@ -329,7 +243,13 @@ void IAnimationState::update(float frame_time)
     }
 }
 
-QVector<QMatrix4x4> IAnimationState::getTransforms()
+void AnimationState::setAnimation(const int id, const float animationTime)
+{
+    current_animation = id;
+    animation_time    = animationTime;
+}
+
+const QVector<QMatrix4x4> AnimationState::getTransforms() const
 {
     QVector<QMatrix4x4> out;
 

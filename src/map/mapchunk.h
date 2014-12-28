@@ -29,7 +29,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "material.h"
 #include "world.h"
-#include "imesh.h"
+#include "mesh.h"
 
 class MapChunk
 {
@@ -48,8 +48,9 @@ public:
     bool blurTerrain(float x   , float z, float change);
     bool uniformTerrain(float x, float z, float height);
 
-    bool paintTerrain(float x      , float z, float flow, TexturePtr texture);
-    bool paintVertexShading(float x, float z, float flow, QColor& color);
+    bool paintTerrain(float x       , float z, float flow, TexturePtr texture);
+    bool paintVertexShading(float x , float z, float flow, QColor& color);
+    bool paintVertexLighting(float x, float z, float flow, QColor& lightColor);
 
     void updateNeighboursHeightmapData();
 
@@ -126,7 +127,7 @@ private:
     World* world;
 
     /// Terrain
-    IMesh Mesh;
+    Mesh mesh;
 
     Material* chunkMaterial;
 
@@ -146,9 +147,11 @@ private:
     TexturePtr alphaArray;
 
     TexturePtr vertexShadingMap;
+    TexturePtr vertexLightingMap;
 
     unsigned char* alphaMapsData[ALPHAMAPS];
     unsigned char* vertexShadingData;
+    unsigned char* vertexLightingData;
 
     float textureScaleNear[MAX_TEXTURES];
     float textureScaleFar[MAX_TEXTURES];

@@ -160,6 +160,8 @@ private:
     // Editing mode = 6
     CameraWidget* cameraW;
 
+    // Editing mode = 7
+
     //
     QList<QString> mode0Actions;
     QList<QString> mode1Actions;
@@ -168,6 +170,7 @@ private:
     QList<QString> mode4Actions;
     QList<QString> mode5Actions;
     QList<QString> mode6Actions;
+    QList<QString> mode7Actions;
 
     void initMode();
     void showMode(QList<QString>& parentList);
@@ -221,6 +224,7 @@ private slots:
 
     void importingHeightmap(QString path, float scale);
     void exportingHeightmap(QString path, float scale);
+    void exportingSTL(QString path, float surface, bool scaleHeight, bool low);
 
     void setHeightmapScale(float scale);
 

@@ -13,10 +13,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#include "ipipeline.h"
+#include "pipeline.h"
 #include "mathhelper.h"
 
-IPipeline::IPipeline()
+Pipeline::Pipeline()
 {
     modelMatrix.push_back(QMatrix4x4());
     viewMatrix.push_back(QMatrix4x4());
@@ -36,7 +36,7 @@ IPipeline::IPipeline()
                             0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-IPipeline::IPipeline(QMatrix4x4 model, QMatrix4x4 view, QMatrix4x4 projection)
+Pipeline::Pipeline(const QMatrix4x4 model, const QMatrix4x4 view, const QMatrix4x4 projection)
 {
     modelMatrix.push_back(model);
     viewMatrix.push_back(view);
@@ -50,7 +50,7 @@ IPipeline::IPipeline(QMatrix4x4 model, QMatrix4x4 view, QMatrix4x4 projection)
     currentMatrix             = 0;
 }
 
-void IPipeline::loadIdentity()
+void Pipeline::loadIdentity()
 {
     if(currentMatrix == MODEL_MATRIX || currentMatrix == VIEW_MATRIX)
     {
@@ -63,13 +63,13 @@ void IPipeline::loadIdentity()
     matricesReady=false;
 }
 
-void IPipeline::matrixMode(int m)
+void Pipeline::matrixMode(const int m)
 {
     if(m == MODEL_MATRIX || m == VIEW_MATRIX || m == PROJECTION_MATRIX)
         currentMatrix=m;
 }
 
-void IPipeline::translate(float x, float y, float z)
+void Pipeline::translate(const float x, const float y, const float z)
 {
     if(currentMatrix == MODEL_MATRIX)
         modelMatrix[modelMatrix.size() - 1].translate(x, y, z);
@@ -80,7 +80,7 @@ void IPipeline::translate(float x, float y, float z)
     matricesReady = false;
 }
 
-void IPipeline::scale(float x, float y, float z)
+void Pipeline::scale(const float x, const float y, const float z)
 {
     if(currentMatrix == MODEL_MATRIX)
         modelMatrix[modelMatrix.size() - 1].scale(x, y, z);
@@ -90,7 +90,7 @@ void IPipeline::scale(float x, float y, float z)
     matricesReady = false;
 }
 
-void IPipeline::scale(float v)
+void Pipeline::scale(const float v)
 {
     if(currentMatrix == MODEL_MATRIX)
         modelMatrix[modelMatrix.size() - 1].scale(v, v, v);
@@ -100,7 +100,7 @@ void IPipeline::scale(float v)
     matricesReady = false;
 }
 
-void IPipeline::rotateX(float angle)
+void Pipeline::rotateX(const float angle)
 {
     if(currentMatrix == MODEL_MATRIX)
         modelMatrix[modelMatrix.size() - 1].rotate(angle, 1.0f, 0.0f, 0.0f);
@@ -110,7 +110,7 @@ void IPipeline::rotateX(float angle)
     matricesReady = false;
 }
 
-void IPipeline::rotateY(float angle)
+void Pipeline::rotateY(const float angle)
 {
     if(currentMatrix == MODEL_MATRIX)
         modelMatrix[modelMatrix.size() - 1].rotate(angle, 0.0f, 1.0f, 0.0f);
@@ -120,7 +120,7 @@ void IPipeline::rotateY(float angle)
     matricesReady = false;
 }
 
-void IPipeline::rotateZ(float angle)
+void Pipeline::rotateZ(const float angle)
 {
     if(currentMatrix == MODEL_MATRIX)
         modelMatrix[modelMatrix.size() - 1].rotate(angle, 0.0f, 0.0f, 1.0f);
@@ -130,7 +130,7 @@ void IPipeline::rotateZ(float angle)
     matricesReady = false;
 }
 
-void IPipeline::rotate(float angle, float x, float y, float z)
+void Pipeline::rotate(const float angle, const float x, const float y, const float z)
 {
     if(currentMatrix == MODEL_MATRIX)
         modelMatrix[modelMatrix.size() - 1].rotate(angle, x, y, z);
@@ -140,7 +140,7 @@ void IPipeline::rotate(float angle, float x, float y, float z)
     matricesReady = false;
 }
 
-void IPipeline::lookAt(const QVector3D& eye, const QVector3D& center, const QVector3D& up)
+void Pipeline::lookAt(const QVector3D& eye, const QVector3D& center, const QVector3D& up)
 {
     viewMatrix[viewMatrix.size() - 1].lookAt(eye, center, up);
 
@@ -150,7 +150,7 @@ void IPipeline::lookAt(const QVector3D& eye, const QVector3D& center, const QVec
     lightMatrix = viewMatrix[viewMatrix.size() - 1] * lightModelMatrix;
 }
 
-void IPipeline::lookAt(QVector3D& position, QVector3D& direction)
+void Pipeline::lookAt(const QVector3D& position, QVector3D& direction)
 {
     float angleUD = direction.x();
 
@@ -180,21 +180,21 @@ void IPipeline::lookAt(QVector3D& position, QVector3D& direction)
     skyboxMatrix[skyboxMatrix.size() - 1].rotate(direction.y(), 0.0f, 1.0f, 0.0f);
 }
 
-void IPipeline::ortho(float left, float right, float bottom, float top, float nearPlane, float farPlane)
+void Pipeline::ortho(const float left, const float right, const float bottom, const float top, const float nearPlane, const float farPlane)
 {
     projectionMatrix[projectionMatrix.size() - 1].ortho(left, right, bottom, top, nearPlane, farPlane);
 
     matricesReady = false;
 }
 
-void IPipeline::perspective(float angle, float aRatio, float nearPlane, float farPlane)
+void Pipeline::perspective(const float angle, const float aRatio, const float nearPlane, const float farPlane)
 {
     projectionMatrix[projectionMatrix.size() - 1].perspective(angle, aRatio, nearPlane, farPlane);
 
     matricesReady = false;
 }
 
-void IPipeline::resize(int width, int height)
+void Pipeline::resize(const int width, const int height)
 {
     viewportSize = QVector2D(float(width), float(height));
 
@@ -208,7 +208,7 @@ void IPipeline::resize(int width, int height)
     viewportMatrix.setColumn(3, QVector4D(w2, h2, 0.0f, 1.0f));
 }
 
-void IPipeline::setLight(QVector3D& position, QVector3D& direction)
+void Pipeline::setLight(const QVector3D& position, QVector3D& direction)
 {
     lightPosition = position;
 
@@ -221,22 +221,7 @@ void IPipeline::setLight(QVector3D& position, QVector3D& direction)
     lightModelMatrix.translate(position.x(), position.y(), position.z());
 }
 
-bool IPipeline::isShadowEnabled()
-{
-    return false;
-}
-
-QMatrix4x4 IPipeline::getModelMatrix()
-{
-    return modelMatrix[modelMatrix.size() - 1];
-}
-
-QMatrix4x4 IPipeline::getViewMatrix()
-{
-    return viewMatrix[viewMatrix.size() - 1];
-}
-
-QMatrix4x4 IPipeline::getModelViewMatrix()
+const QMatrix4x4 Pipeline::getModelViewMatrix() const
 {
     if(!matricesReady)
         return viewMatrix[viewMatrix.size() - 1] * modelMatrix[modelMatrix.size() - 1];
@@ -244,12 +229,7 @@ QMatrix4x4 IPipeline::getModelViewMatrix()
         return modelViewMatrix;
 }
 
-QMatrix4x4 IPipeline::getProjectionMatrix()
-{
-    return projectionMatrix[projectionMatrix.size() - 1];
-}
-
-QMatrix4x4 IPipeline::getModelViewProjectionMatrix()
+const QMatrix4x4 Pipeline::getModelViewProjectionMatrix() const
 {
     if(!matricesReady)
         return viewMatrix[viewMatrix.size() - 1] * modelMatrix[modelMatrix.size() - 1] * projectionMatrix[projectionMatrix.size() - 1];
@@ -257,17 +237,7 @@ QMatrix4x4 IPipeline::getModelViewProjectionMatrix()
         return modelViewProjectionMatrix;
 }
 
-QMatrix4x4 IPipeline::getViewPortMatrix()
-{
-    return viewportMatrix;
-}
-
-QVector2D IPipeline::getViewportSize()
-{
-    return viewportSize;
-}
-
-void IPipeline::pushMatrix()
+void Pipeline::pushMatrix()
 {
     QMatrix4x4 matrix;
 
@@ -291,7 +261,7 @@ void IPipeline::pushMatrix()
     }
 }
 
-void IPipeline::popMatrix()
+void Pipeline::popMatrix()
 {
     if(currentMatrix == MODEL_MATRIX)
     {
@@ -310,7 +280,7 @@ void IPipeline::popMatrix()
     }
 }
 
-void IPipeline::updateMatrices(QOpenGLShaderProgram* shader)
+void Pipeline::updateMatrices(QOpenGLShaderProgram* shader)
 {
     if(!matricesReady)
     {

@@ -13,20 +13,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#ifndef ILIGHT_H
-#define ILIGHT_H
+#include "light.h"
 
-#include <QtCore>
-#include <QtWidgets>
-
-struct ILight
+Light::Light(const QVector3D position, const QVector3D ambient, const QVector3D diffuse, const QVector3D specular)
 {
-    ILight(QVector3D position = QVector3D(0.0f, 0.0f, 0.0f), QVector3D ambient = QVector3D(0.3f, 0.3f, 0.3f), QVector3D diffuse = QVector3D(0.6f, 0.6f, 0.6f), QVector3D specular = QVector3D(1.0f, 1.0f, 1.0f));
-
-    QVector3D position;
-    QVector3D ambient;
-    QVector3D diffuse;
-    QVector3D specular;
-};
-
-#endif // ILIGHT_H
+    Light::position = position;
+    Light::ambient  = ambient;
+    Light::diffuse  = diffuse;
+    Light::specular = specular;
+}

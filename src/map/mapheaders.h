@@ -53,15 +53,19 @@ enum ShaderUnits
 {
     Heightmap     = 0,
     Texture1      = 1,
-    Texture2      = 2,
+    /*Texture2      = 2,
     Texture3      = 3,
     Texture4      = 4,
     Alphamap1     = 5,
-    //Alphamap1     = 4,
-    //Texture4      = 5,
     Alphamap2     = 6,
     Alphamap3     = 7,
-    VertexShading = 8
+    VertexShading = 8, gonna out of date?*/
+    Texture2       = 2,
+    Alphamap1      = 3,
+    Alphamap2      = 4,
+    Alphamap3      = 5,
+    VertexShading  = 6,
+    VertexLighting = 7
 };
 
 /// Structures

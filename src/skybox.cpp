@@ -64,7 +64,7 @@ Skybox::Skybox(QOpenGLFunctions_4_2_Core* funcs)
     };
 
     mesh.createVertexArrayObject();
-    mesh.createBuffer(IMesh::Vertices, &data, sizeof(data));
+    mesh.createBuffer(Mesh::Vertices, &data, sizeof(data));
     mesh.setNumFaces(36);
 }
 
@@ -87,7 +87,7 @@ void Skybox::draw(QOpenGLShaderProgram* shader)
     GLfuncs->glDrawArrays(GL_TRIANGLES, 0, mesh.getNumFaces());
 }
 
-void Skybox::loadSide(QOpenGLTexture::CubeMapFace side, QString fileName)
+void Skybox::loadSide(QOpenGLTexture::CubeMapFace side, const QString fileName)
 {
     texture->bind();
 
@@ -102,7 +102,7 @@ void Skybox::createAttributeArray(QOpenGLShaderProgram* shader)
         return;
 
     mesh.getVertexArrayObject()->bind();
-    mesh.createAttributeArray(IMesh::Vertices, shader, "qt_Vertex", GL_FLOAT, 0, 3);
+    mesh.createAttributeArray(Mesh::Vertices, shader, "qt_Vertex", GL_FLOAT, 0, 3);
 
     shaderProgram = shader;
 }

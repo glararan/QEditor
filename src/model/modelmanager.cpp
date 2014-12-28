@@ -13,34 +13,32 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#include "imodelmanager.h"
+#include "modelmanager.h"
 
-IModelManager::IModelManager()
+ModelManager::ModelManager(TextureManager* manager)
+: textureManager(manager)
+, current(-1)
 {
-    textureManager = new ITextureManager();
-    current        = -1;
 }
 
-IModelManager::~IModelManager()
+ModelManager::~ModelManager()
 {
-    QList<IModelData*> models = data.values();
+    QList<ModelData*> models = data.values();
 
     for(int i = 0; i < models.size(); ++i)
         delete models.at(i);
-
-    delete textureManager;
 }
 
-bool IModelManager::loadModel(QString category, QString file)
+bool ModelManager::loadModel(const QString category, const QString file)
 {
     if(data.keys().contains(file))
         return false;
 
-    IModelInterface *model = 0;
+    ModelInterface* model = 0;
 
     try
     {
-        model = new IModelInterface(textureManager, file);
+        model = new ModelInterface(textureManager, file);
     }
     catch(...)
     {
@@ -49,7 +47,7 @@ bool IModelManager::loadModel(QString category, QString file)
         return false;
     }
 
-    data.insert(file,new IModelData(category, QImage("://object_icon"), model));
+    data.insert(file, new ModelData(category, QImage("://object_icon"), model));
 
     if(!categories.contains(category))
         categories.push_back(category);
@@ -57,7 +55,7 @@ bool IModelManager::loadModel(QString category, QString file)
     return true;
 }
 
-void IModelManager::loadModels(QString modelsDirectory)
+void ModelManager::loadModels(const QString modelsDirectory)
 {
     QDir dirModels(modelsDirectory + "/models");
 
@@ -81,22 +79,12 @@ void IModelManager::loadModels(QString modelsDirectory)
 
             QString filePath = dirModels.path() + "/" + category + "/" + file;
 
-            loadModel(category,filePath);
+            loadModel(category, filePath);
         }
     }
 }
 
-QVector<QString> IModelManager::getCategories()
-{
-    return categories;
-}
-
-QVector<QString> IModelManager::getNames()
-{
-    return data.keys().toVector();
-}
-
-QVector<QString> IModelManager::getNames(QString category)
+const QVector<QString> ModelManager::getNames(const QString category) const
 {
     QVector<QString> names;
 
@@ -109,7 +97,7 @@ QVector<QString> IModelManager::getNames(QString category)
     return names;
 }
 
-int IModelManager::getIndex(QString modelPath)
+const int ModelManager::getIndex(const QString modelPath) const
 {
     for(int i = 0; i < data.keys().size(); ++i)
     {
@@ -118,14 +106,4 @@ int IModelManager::getIndex(QString modelPath)
     }
 
     return -1;
-}
-
-IModelData* IModelManager::getModel(int index)
-{
-    return data.values().at(index);
-}
-
-ITextureManager* IModelManager::getTextureManager()
-{
-    return textureManager;
 }
