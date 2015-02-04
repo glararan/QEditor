@@ -51,24 +51,40 @@ void main()
 
     if(hasDiffuse)
     {
-        myAmbient = texture2D(diffuseTexture, In.texcoord).xyz;
-        myDiffuse = myAmbient;
+        myAmbient *= texture2D(diffuseTexture, In.texcoord).xyz;
+        myDiffuse  = myAmbient;
+
+        if(texture2D(diffuseTexture, In.texcoord).a < 0.1f)
+            discard;
     }
 
-    vec3 ambient    = myAmbient * qt_lAmbient;
+    vec3 diffuse = (dot(In.normal, normalize(qt_lPosition - In.position)) * myDiffuse + qt_mAmbient) * qt_lDiffuse;
+
+    vec3 specular = vec3(0, 0, 0);
+
+    vec3 eyeDir  = normalize(-In.position);
+    vec3 r       = normalize(reflect(-normalize(qt_lPosition - In.position), In.normal));
+
+    specular = qt_lSpecular * pow(max(dot(r, eyeDir), 0.0), qt_Shininess);
+
+    vec3 ambient;
+
+    /*vec3 ambient    = myAmbient * qt_lAmbient;
     vec3 surf2light = normalize(qt_lPosition - In.position);
     vec3 norm       = normalize(In.normal);
 
-    float dcont = max(0.0,dot(norm, surf2light));
+    float dcont = max(0.0, dot(norm, surf2light));
 
-    vec3 diffuse    = dcont*(myDiffuse * qt_lDiffuse);
+    vec3 diffuse    = dcont * (myDiffuse * qt_lDiffuse);
     vec3 surf2view  = normalize(-In.position);
     vec3 reflection = reflect(-surf2light, norm);
 
     float scont = pow(max(0.0, dot(surf2view, reflection)), qt_Shininess);
 
-    vec3 specular = scont * qt_lSpecular * qt_mSpecular;
+    vec3 specular = scont * qt_lSpecular * qt_mSpecular;*/
 
-    fragColor = vec4(ambient + diffuse + specular, qt_Opacity);
+    //vec4(ambientAndDiff, 1.0) * diffuseColor + vec4(spec, 1.0);
+    //fragColor = vec4(diffuse + specular, qt_Opacity);
+    fragColor = vec4(texture2D(diffuseTexture, In.texcoord).rgb, 1.0f);
     //gl_FragColor=vec4(ambient+diffuse+specular,qt_Opacity);
 }

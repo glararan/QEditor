@@ -23,6 +23,10 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <QTime>
 
 #include <limits.h>
+#include <random>
+#include <functional>
+
+using namespace std;
 
 MathHelper::MathHelper()
 {
@@ -94,6 +98,11 @@ const float MathHelper::toFloat(const long value)
 }
 
 const float MathHelper::toFloat(const unsigned int value)
+{
+    return static_cast<float>(value);
+}
+
+const float MathHelper::toFloat(const unsigned char value)
 {
     return static_cast<float>(value);
 }
@@ -208,15 +217,26 @@ const int MathHelper::round(const int number, const int multiple)
 const int MathHelper::random(const int minimum, int maximum, const bool withMaximum)
 {
     if(!withMaximum)
-        maximum--;
+        --maximum;
 
-    return qrand() % ((maximum + 1) - minimum) + minimum;
+    // random is limited to 32767
+    /*int rand = qrand();
+
+    setTimeSeed();
+
+    return (rand * (RAND_MAX + 1) + qrand()) % ((maximum + 1) - minimum) + minimum;*/
+    mt19937::result_type seed((uint)QTime::currentTime().msec());
+
+    auto random = std::bind(uniform_int_distribution<int>(minimum, maximum), mt19937(seed));
+
+    return random();
+    //return qrand() % ((maximum + 1) - minimum) + minimum;
 }
 
 const unsigned int MathHelper::randomUint(const unsigned int minimum, unsigned int maximum, const bool withMaximum)
 {
     if(!withMaximum)
-        maximum--;
+        --maximum;
 
     return qrand() % ((maximum + 1) - minimum) + minimum;
 }
@@ -231,6 +251,13 @@ const double MathHelper::randomDouble(const double minimum, double maximum)
 const double MathHelper::randomDouble()
 {
     return randomDouble(0.0, 1.0);
+}
+
+const float MathHelper::randomFloat(const float minimum, float maximum)
+{
+    float f = toFloat(qrand()) / RAND_MAX;
+
+    return minimum + f * (maximum - minimum);
 }
 
 const float MathHelper::clamp(float value, float min, float max)
@@ -294,6 +321,11 @@ void MathHelper::addKineticEnergy(float& step, float dt, float weight)
 const bool MathHelper::isNaN(const float value)
 {
     return value != value;
+}
+
+const bool MathHelper::isInRadius(const float centerX, const float centerY, const float x, const float y, const float radius)
+{
+    return sqrt(pow(centerX - x, 2) + pow(centerY - y, 2)) <= radius ? true : false;
 }
 
 void MathHelper::setTimeSeed()

@@ -16,6 +16,8 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "mapview.h"
 #include "camera.h"
 #include "mathhelper.h"
+#include "mapobject.h"
+#include "mapchunk.h"
 #include "qeditor.h"
 
 #include "pipeline.h"
@@ -24,7 +26,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <QTabletEvent>
 #include <QOpenGLContext>
 
-MapView::MapView(World* mWorld, QWidget* parent, bool** mapCoords)
+MapView::MapView(World* mWorld, UndoRedoManager* undoManager, QWidget* parent, bool** mapCoords)
 : QOpenGLWidget(parent)
 , world(mWorld)
 , worldCoords(mapCoords) // coordinats for cache tiles
@@ -50,12 +52,23 @@ MapView::MapView(World* mWorld, QWidget* parent, bool** mapCoords)
 , time(0.0f)
 , m_metersToUnits(4 * MathHelper::PI() / speed) // 500 units == 10 km => 0.05 units/m
 , fps(0)
+, frames(0)
 , leftButtonPressed(false)
 , rightButtonPressed(false)
+, wheelButtonPressed(false)
+, wasLeftButtonPressed(false)
+, wasLeftButtonReleased(false)
+, wasWheelButtonPressed(false)
+, wasWheelButtonReleased(false)
 , changedMouseMode(false)
 , tabletMode(app().getSetting("tabletMode", false).toBool())
 , tablet(false)
 , mouse_position(QPoint(0, 0))
+, prevMousePos(QPoint(0, 0))
+, mousePos(QPoint(0, 0))
+, mousePosStart(QPoint(0, 0))
+, mousePosEnd(QPoint(0, 0))
+, mouseVector(QVector2D())
 , mousePosZ(0)
 , prevMousePosZ(0)
 , terrain_pos()
@@ -65,10 +78,16 @@ MapView::MapView(World* mWorld, QWidget* parent, bool** mapCoords)
 , uniform_height(0.0f)
 , texturing_flow(1.0f)
 , vertexShadingColor(QColor(255, 255, 255, 255))
+, spawn_on_click(false)
+, drawModel(false)
 , shiftDown(false)
 , ctrlDown(false)
 , altDown(false)
 , escapeDown(false)
+, deleteDown(false)
+, undoRedoManager(undoManager)
+, mapObjectStart(QVector3D())
+, mapObjectScale(false)
 , eMMode(Nothing)
 , eMode(Default)
 , eTerrain(Shaping)
@@ -164,6 +183,7 @@ void MapView::initializeGL()
     glClearColor(0.65f, 0.77f, 1.0f, 1.0f);
 
     m_Utime.start();
+    fpsTimer.start();
 
     emit initialized();
 }
@@ -178,7 +198,16 @@ void MapView::update(float t)
     time           = t;
 
     // FPS
-    fps = 1000.0f / (dt * 1000.0f);
+    ++frames;
+
+    if(fpsTimer.elapsed() >= 1000)
+    {
+        fps = frames;
+
+        frames = 0;
+
+        fpsTimer.restart();
+    }
 
     // Update the camera position and orientation
     Camera::CameraTranslationOption option = viewCenterFixed ? Camera::DontTranslateViewCenter : Camera::TranslateViewCenter;
@@ -332,16 +361,143 @@ void MapView::update(float t)
         changedMouseMode = false;
 
     // highlight and select chunk
-    if(eMode == Default && altDown)
+    if(eMode == Default)
     {
         const QVector3D& position(terrain_pos);
 
-        world->highlightMapChunkAt(position);
-
-        if(leftButtonPressed)
+        if(altDown && world->getCurrentSelection()->getType() == Selection::None)
         {
-            emit selectedMapChunk(world->getMapChunkAt(position));
-            emit selectedWaterChunk(world->getWaterChunkAt(position));
+            world->highlightMapChunkAt(position);
+
+            if(leftButtonPressed)
+            {
+                emit selectedMapTile(world->getTileAt(position.x(), position.z()));
+                emit selectedMapChunk(world->getMapChunkAt(position));
+                emit selectedWaterChunk(world->getWaterChunkAt(position));
+            }
+        }
+        else if(wasLeftButtonPressed && !spawn_on_click)
+        {
+            if(world->trySelectMapObject(position))
+            {
+                if(!ctrlDown && !altDown)
+                {
+                    mapObjectStart = world->getCurrentSelection()->getData().mapObject->getRotation();
+
+                    mapObjectScale = false;
+                }
+                else if(ctrlDown && altDown)
+                {
+                    mapObjectStart = world->getCurrentSelection()->getData().mapObject->getScale();
+
+                    mapObjectScale = true;
+                }
+            }
+        }
+        else if(wasLeftButtonPressed && spawn_on_click)
+        {
+            spawn_on_click = drawModel = false;
+
+            world->spawnMapObjectFromFavouriteList(terrain_pos);
+        }
+        else if(!wasLeftButtonPressed && (spawn_on_click || drawModel) && escapeDown)
+        {
+            world->getModelManager()->setCurrentModel(-1);
+
+            escapeDown = spawn_on_click = drawModel = false;
+        }
+        else if(deleteDown && world->getCurrentSelection()->getType() == Selection::MapObjectType)
+        {
+            undoRedoManager->push(new DeleteMapObjectCommand(world->getCurrentSelection()->getData().mapObject, world));
+
+            //world->removeObject(world->getCurrentSelection()->getData().mapObject);
+
+            deleteDown = false;
+        }
+        else if(wheelButtonPressed && world->getCurrentSelection()->getType() == Selection::MapObjectType && object_move != QVector3D())
+        {
+            QVector3D directionUp(1.0f, 0.0f, 0.0f);
+            QVector3D directionRight(0.0f, 0.0f, 1.0f);
+
+            if(wasWheelButtonPressed)
+                mapObjectStart = world->getCurrentSelection()->getData().mapObject->getTranslate();
+
+            if(!shiftDown && !altDown && !ctrlDown) // xyz move
+            {
+                directionUp    = Rotate(0.0f, 0.0f, directionUp,    panAngle * MathHelper::toFloat(MathHelper::PI()) / 180.0f);
+                directionRight = Rotate(0.0f, 0.0f, directionRight, panAngle * MathHelper::toFloat(MathHelper::PI()) / 180.0f);
+
+                QVector3D translation = world->getCurrentSelection()->getData().mapObject->getTranslate();
+
+                translation += mouseVector.x() * directionUp    * -80.0f;
+                translation -= mouseVector.y() * directionRight * 80.0f;
+
+                world->getCurrentSelection()->getData().mapObject->setTranslate(translation, true);
+            }
+            else if(shiftDown) // x
+            {
+                QVector3D translation = world->getCurrentSelection()->getData().mapObject->getTranslate() + QVector3D(object_move.x(), 0.0f, 0.0f);
+
+                world->getCurrentSelection()->getData().mapObject->setTranslate(translation, true);
+            }
+            else if(ctrlDown) // y
+            {
+                QVector3D translation = world->getCurrentSelection()->getData().mapObject->getTranslate() + QVector3D(0.0f, object_move.y(), 0.0f);
+
+                world->getCurrentSelection()->getData().mapObject->setTranslate(translation, true);
+            }
+            else if(altDown) // z
+            {
+                QVector3D translation = world->getCurrentSelection()->getData().mapObject->getTranslate() + QVector3D(0.0f, 0.0f, object_move.x());
+
+                world->getCurrentSelection()->getData().mapObject->setTranslate(translation, true);
+            }
+        }
+        else if(wasWheelButtonReleased && world->getCurrentSelection()->getType() == Selection::MapObjectType && mapObjectStart != world->getCurrentSelection()->getData().mapObject->getTranslate() && mapObjectStart != QVector3D())
+        {
+            undoRedoManager->push(new MoveMapObjectCommand(world->getCurrentSelection()->getData().mapObject, mapObjectStart));
+
+            mapObjectStart = QVector3D();
+        }
+        else if(leftButtonPressed && world->getCurrentSelection()->getType() == Selection::MapObjectType)
+        {
+            // rotation and scale is based on mouseX move
+            if(shiftDown) // rotateY
+            {
+                QVector3D rotation = world->getCurrentSelection()->getData().mapObject->getRotation() + QVector3D(0.0f, object_move.x(), 0.0f);
+
+                world->getCurrentSelection()->getData().mapObject->setRotation(rotation, true);
+            }
+            else if(ctrlDown && !altDown) // rotateX
+            {
+                QVector3D rotation = world->getCurrentSelection()->getData().mapObject->getRotation() + QVector3D(object_move.x(), 0.0f, 0.0f);
+
+                world->getCurrentSelection()->getData().mapObject->setRotation(rotation, true);
+            }
+            else if(altDown && !ctrlDown) // rotateZ
+            {
+                QVector3D rotation = world->getCurrentSelection()->getData().mapObject->getRotation() + QVector3D(0.0f, 0.0f, object_move.x());
+
+                world->getCurrentSelection()->getData().mapObject->setRotation(rotation, true);
+            }
+            else if(ctrlDown && altDown) // scale
+            {
+                QVector3D scale = world->getCurrentSelection()->getData().mapObject->getScale() + QVector3D(object_move.x(), object_move.x(), object_move.x());
+
+                world->getCurrentSelection()->getData().mapObject->setScale(scale, true);
+            }
+        }
+        else if(wasLeftButtonReleased && world->getCurrentSelection()->getType() == Selection::MapObjectType && mapObjectStart != world->getCurrentSelection()->getData().mapObject->getRotation() && !mapObjectScale)
+        {
+            undoRedoManager->push(new RotateMapObjectCommand(world->getCurrentSelection()->getData().mapObject, mapObjectStart));
+
+            mapObjectStart = QVector3D();
+        }
+        else if(wasLeftButtonReleased && world->getCurrentSelection()->getType() == Selection::MapObjectType && mapObjectStart != world->getCurrentSelection()->getData().mapObject->getScale() && mapObjectScale)
+        {
+            undoRedoManager->push(new ScaleMapObjectCommand(world->getCurrentSelection()->getData().mapObject, mapObjectStart));
+
+            mapObjectStart = QVector3D();
         }
     }
 
@@ -355,7 +511,11 @@ void MapView::update(float t)
                     world->updateNewModel(shiftDown, wasLeftButtonPressed);
 
                     if(escapeDown)
+                    {
                         world->getModelManager()->setCurrentModel(-1);
+
+                        escapeDown = false;
+                    }
                 }
                 break;
 
@@ -472,10 +632,39 @@ void MapView::update(float t)
         }
     }
 
+    if(wasLeftButtonReleased)
+    {
+        switch(eMode)
+        {
+            case Terrain:
+                {
+                    if(world->getModifiedTerrain().count() > 0)
+                    {
+                        QVector<QPair<QVector2D, float>> modifiedTerrain = world->getModifiedTerrain();
+                        QVector<QPair<QVector2D, float>> modifiedTerrain2;
+
+                        for(int i = 0; i < modifiedTerrain.count(); ++i)
+                        {
+                            QPair<QVector2D, float> pair = modifiedTerrain.at(i);
+
+                            float value = world->getMapChunkAt(QVector3D(pair.first.x(), 0.0f, pair.first.y()))->getHeightFromWorld(pair.first.x(), pair.first.y());
+
+                            modifiedTerrain2.append(QPair<QVector2D, float>(pair.first, value));
+                        }
+
+                        undoRedoManager->push(new ModifyTerrainCommand(modifiedTerrain, modifiedTerrain2, world));
+
+                        world->getModifiedTerrain().clear();
+                    }
+                }
+                break;
+        }
+    }
+
     if(object_move != QVector3D())
         object_move = QVector3D();
 
-    wasLeftButtonPressed = false;
+    wasLeftButtonPressed = wasLeftButtonReleased = wasWheelButtonPressed = wasWheelButtonReleased = false;
 
     world->update(t);
 
@@ -558,7 +747,7 @@ void MapView::paintGL()
         else if(eMode == Object && eModel == Insertion)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
         else
-            world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
+            world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, drawModel);
     }
     else
     {
@@ -576,7 +765,7 @@ void MapView::paintGL()
         else if(eMode == Object && eModel == Insertion)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
         else
-            world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
+            world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, drawModel);
 
         glDrawBuffer(GL_BACK_RIGHT);
 
@@ -592,7 +781,7 @@ void MapView::paintGL()
         else if(eMode == Object && eModel == Insertion)
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, true);
         else
-            world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()));
+            world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, drawModel);
     }
 }
 
@@ -612,9 +801,6 @@ void MapView::resizeGL(int w, int h)
 
     // Update World FBO
     world->setFboSize(QSize(w, h));
-
-    // Update pipeline
-    //pipeline->resize(w, h);
 
     // Update the viewport matrix
     float w2 = w / 2.0f;
@@ -677,6 +863,17 @@ void MapView::ClearStatusBarMessage()
     sbDataList.clear();
 }
 
+QVector3D MapView::Rotate(float x, float y, QVector3D& direction, float angle)
+{
+    float xa = direction.x() - x;
+    float ya = direction.z() - y;
+
+    direction.setX(xa * cosf(angle) - ya * sinf(angle) + x);
+    direction.setZ(xa * sinf(angle) + ya * cosf(angle) + y);
+
+    return direction;
+}
+
 void MapView::setModeEditing(int option)
 {
     switch(option)
@@ -695,6 +892,8 @@ void MapView::setModeEditing(int option)
             eMode = Default;
             break;
     }
+
+    drawModel = false;
 }
 
 void MapView::setDisplayMode(int mode)
@@ -1002,10 +1201,14 @@ void MapView::save()
 
 void MapView::keyPressEvent(QKeyEvent* e)
 {
-    switch (e->key())
+    switch(e->key())
     {
         case Qt::Key_Escape:
             escapeDown = true;
+            break;
+
+        case Qt::Key_Delete:
+            deleteDown = true;
             break;
 
         case Qt::Key_W:
@@ -1117,6 +1320,30 @@ void MapView::keyPressEvent(QKeyEvent* e)
         default:
             QOpenGLWidget::keyPressEvent(e);
     }
+
+    switch(e->nativeVirtualKey()) // Czech keyboard
+    {
+        case Qt::Key_2: // 1 is binded for speed :/
+            {
+                if(eMode == Default)
+                    emit setPreviousModel();
+            }
+            break;
+
+        case Qt::Key_3:
+            {
+                if(eMode == Default)
+                    emit setNextModel();
+            }
+            break;
+
+        case Qt::Key_4:
+            {
+                if(eMode == Default) // wait for click then spawn model, and select it
+                    spawn_on_click = true;
+            }
+            break;
+    }
 }
 
 void MapView::keyReleaseEvent(QKeyEvent* e)
@@ -1186,18 +1413,18 @@ void MapView::keyReleaseEvent(QKeyEvent* e)
 void MapView::mousePressEvent(QMouseEvent* e)
 {
     if(e->button() == Qt::LeftButton)
-    {
-        leftButtonPressed = true;
-        wasLeftButtonPressed = true;
-    }
+        leftButtonPressed = wasLeftButtonPressed = true;
 
     if(e->button() == Qt::RightButton)
         rightButtonPressed = true;
 
+    if(e->button() == Qt::MidButton)
+        wheelButtonPressed = wasWheelButtonPressed = true;
+
     if(leftButtonPressed && rightButtonPressed && !camera->lock())
         setForwardSpeed(speed * speed_mult);
 
-    mousePos = prevMousePos = e->pos();
+    mousePos = prevMousePos = mousePosStart = e->pos();
 
     QOpenGLWidget::mousePressEvent(e);
 }
@@ -1206,7 +1433,8 @@ void MapView::mouseReleaseEvent(QMouseEvent* e)
 {
     if(e->button() == Qt::LeftButton)
     {
-        leftButtonPressed = false;
+        leftButtonPressed     = false;
+        wasLeftButtonReleased = true;
 
         if(m_v.z() > 0.0f)
             setForwardSpeed(0.0f);
@@ -1223,6 +1451,14 @@ void MapView::mouseReleaseEvent(QMouseEvent* e)
             setForwardSpeed(0.0f);
     }
 
+    if(e->button() == Qt::MidButton)
+    {
+        wheelButtonPressed     = false;
+        wasWheelButtonReleased = true;
+    }
+
+    mousePosEnd = e->pos();
+
     QOpenGLWidget::mouseReleaseEvent(e);
 }
 
@@ -1234,6 +1470,9 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
     float dx =  0.4f * (mousePos.x() - prevMousePos.x());
     float dy = -0.4f * (mousePos.y() - prevMousePos.y());
     float dz =  0.4f * (mousePosZ    - prevMousePosZ);
+
+    mouseVector.setX(-camera->aspectRatio() * MathHelper::toFloat(mousePos.x() - prevMousePos.x()) / MathHelper::toFloat(width()));
+    mouseVector.setY(-MathHelper::toFloat(mousePos.y() - prevMousePos.y()) / MathHelper::toFloat(height()));
 
     if((leftButtonPressed || rightButtonPressed) && !shiftDown && !altDown && !ctrlDown && !camera->lock())
     {
@@ -1338,8 +1577,13 @@ void MapView::focusInEvent(QFocusEvent* e)
     ctrlDown  = false;
     shiftDown = false;
 
-    leftButtonPressed  = false;
-    rightButtonPressed = false;
+    leftButtonPressed      = false;
+    rightButtonPressed     = false;
+    wasLeftButtonPressed   = false;
+    wasLeftButtonReleased  = false;
+    wheelButtonPressed     = false;
+    wasWheelButtonPressed  = false;
+    wasWheelButtonReleased = false;
 
     setForwardSpeed(0.0f);
     setSideSpeed(0.0f);
@@ -1354,8 +1598,13 @@ void MapView::focusOutEvent(QFocusEvent* e)
     ctrlDown  = false;
     shiftDown = false;
 
-    leftButtonPressed  = false;
-    rightButtonPressed = false;
+    leftButtonPressed      = false;
+    rightButtonPressed     = false;
+    wasLeftButtonPressed   = false;
+    wasLeftButtonReleased  = false;
+    wheelButtonPressed     = false;
+    wasWheelButtonPressed  = false;
+    wasWheelButtonReleased = false;
 
     setForwardSpeed(0.0f);
     setSideSpeed(0.0f);

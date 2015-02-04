@@ -17,9 +17,10 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 in vec3 position;
 
-uniform mat4 mvp;
+uniform mat4 modelViewProjectionMatrix;
 
 void main(void)
 {
-    gl_Position = mvp * vec4(position, 1.0);
+    gl_Position  = modelViewProjectionMatrix * vec4(position, 1.0);
+    gl_PointSize = 1.0f;
 }

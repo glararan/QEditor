@@ -221,6 +221,20 @@ void Pipeline::setLight(const QVector3D& position, QVector3D& direction)
     lightModelMatrix.translate(position.x(), position.y(), position.z());
 }
 
+void Pipeline::setCamera(const QMatrix4x4& model, const QMatrix4x4& view, const QMatrix4x4& proj)
+{
+    modelMatrix.push_back(model);
+    viewMatrix.push_back(view);
+    projectionMatrix.push_back(proj);
+
+    modelViewMatrix           = QMatrix4x4();
+    modelViewProjectionMatrix = QMatrix4x4();
+    normalMatrix              = QMatrix3x3();
+    worldNormalMatrix         = QMatrix3x3();
+    matricesReady             = true;
+    currentMatrix             = 0;
+}
+
 const QMatrix4x4 Pipeline::getModelViewMatrix() const
 {
     if(!matricesReady)

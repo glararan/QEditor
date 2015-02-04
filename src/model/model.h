@@ -28,7 +28,7 @@ class QOpenGLFunctions_4_2_Core;
 class Model
 {
 public:
-    Model(ModelManager* modelManager, const int index);
+    Model(ModelManager* modelManager, ModelInterface* modelInterface);
     ~Model();
 
     void draw(QOpenGLShaderProgram* shader);
@@ -40,8 +40,6 @@ public:
 
     ModelInterface* getModelInterface() const { return model_interface; }
     AnimationState* getAnimationState() const { return animation_state; }
-
-    const QVector3D& getCenter() const;
 
 private:
     QOpenGLFunctions_4_2_Core* GLfuncs;

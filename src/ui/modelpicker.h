@@ -17,6 +17,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #define MODELPICKER_H
 
 #include <QWidget>
+#include <QListWidget>
 
 #include "model/modelmanager.h"
 
@@ -27,6 +28,18 @@ namespace Ui
 {
     class ModelPicker;
 }
+
+class FavouriteList : public QListWidget
+{
+public:
+    explicit FavouriteList(QWidget* parent);
+    ~FavouriteList();
+
+protected:
+    void dragEnterEvent(QDragEnterEvent* event);
+    void dragMoveEvent(QDragMoveEvent* event);
+    void dropEvent(QDropEvent* event);
+};
 
 class ModelPicker : public QWidget
 {
@@ -48,11 +61,24 @@ private:
 
     QVector<TextureWell*> items;
 
+    FavouriteList* favouriteList;
+
     ModelManager* manager;
 
 private slots:
-    void modelSelected(int, int);
+    void modelSelected(int row, int column);
+    void modelSelected(int row);
     void modelviewSelected(int, int);
+
+    void deleteModel();
+    void clearModels();
+
+public slots:
+    void setPreviousModel();
+    void setNextModel();
+
+signals:
+    void modelIsSelected();
 };
 
 #endif // MODELPICKER_H

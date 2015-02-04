@@ -33,14 +33,14 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
     chunkMaterial = new Material();
 
     /// Set Water texture
-    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture1);
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Textures);
 
     if(!world->getTextureManager()->hasTexture("waterTexture", "textures/water.png"))
         world->getTextureManager()->loadTexture("waterTexture", "textures/water.png");
 
     waterTexture = world->getTextureManager()->getTexture("waterTexture");
 
-    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, waterTexture, world->getTextureManager()->getSampler(), QByteArrayLiteral("baseTexture"));
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Textures, waterTexture, world->getTextureManager()->getSampler(), QByteArrayLiteral("baseTexture"));
 
     /// Water
     waterData = new float[CHUNK_ARRAY_UC_SIZE]; // chunk_array_size
@@ -78,14 +78,14 @@ WaterChunk::WaterChunk(World* mWorld, int x, int y, Sampler* sampler, int tileX,
 {
     chunkMaterial = new Material();
     /// Set Water texture
-    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture1);
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Textures);
 
     if(!world->getTextureManager()->hasTexture("waterTexture", "textures/water.png"))
         world->getTextureManager()->loadTexture("waterTexture", "textures/water.png");
 
     waterTexture = world->getTextureManager()->getTexture("waterTexture");
 
-    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, waterTexture, world->getTextureManager()->getSampler(), QByteArrayLiteral("baseTexture"));
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Textures, waterTexture, world->getTextureManager()->getSampler(), QByteArrayLiteral("baseTexture"));
 
     /// Water - todo file load
     waterData = new float[CHUNK_ARRAY_UC_SIZE]; // chunk_array_size
@@ -300,7 +300,7 @@ void WaterChunk::setReflectionTexture(GLuint reflectionTexture, GLuint depthText
 {
     world->getGLFunctions()->glBindTexture(GL_TEXTURE_2D, reflectionTexture);
 
-    chunkMaterial->setFramebufferUnitConfiguration(ShaderUnits::Texture2, reflectionTexture, QByteArrayLiteral("reflectionTexture"));
+    chunkMaterial->setFramebufferUnitConfiguration(ShaderUnits::DepthTextures, reflectionTexture, QByteArrayLiteral("reflectionTexture"));
 
     /*world->getGLFunctions()->glBindTexture(GL_TEXTURE_2D, depthTexture);
 

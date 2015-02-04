@@ -61,9 +61,6 @@ discuss features:
  - skopirovani
 - point light http://www.tomdalling.com/blog/modern-opengl/06-diffuse-point-lighting/
 
-// tipy od lidí
-- generování objektů po určené textuře (first todo better object support)
-
 Tessellation shader resources
 http://codeflow.org/entries/2010/nov/07/opengl-4-tessellation/
 https://github.com/tijutv/GPU-Terrain-Generation

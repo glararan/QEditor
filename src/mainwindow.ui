@@ -151,6 +151,7 @@
     <addaction name="separator"/>
     <addaction name="action_Texture_Picker"/>
     <addaction name="action_Chunk_settings"/>
+    <addaction name="action_Detail_Doodads"/>
     <addaction name="action_Settings"/>
     <addaction name="action_Teleport"/>
     <addaction name="action_Map_Generator"/>
@@ -466,10 +467,16 @@
    <property name="text">
     <string>&amp;Undo</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
+   </property>
   </action>
   <action name="action_Redo">
    <property name="text">
     <string>&amp;Redo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Alt+Z</string>
    </property>
   </action>
   <action name="action_Settings">
@@ -685,6 +692,11 @@
    </property>
    <property name="toolTip">
     <string>Vertex Lighting tool</string>
+   </property>
+  </action>
+  <action name="action_Detail_Doodads">
+   <property name="text">
+    <string>D&amp;etail Doodads</string>
    </property>
   </action>
  </widget>

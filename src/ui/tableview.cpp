@@ -24,6 +24,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <QMimeData>
 #include <QApplication>
 #include <QToolTip>
+#include <QDrag>
 
 TexturesArray::TexturesArray(int rows, int cols, QWidget* parent)
 : QWidget(parent)
@@ -33,6 +34,7 @@ TexturesArray::TexturesArray(int rows, int cols, QWidget* parent)
     d = 0;
 
     setFocusPolicy(Qt::StrongFocus);
+    setAcceptDrops(true);
 
     cellw     = textureSize.width();
     cellh     = textureSize.height();
@@ -181,12 +183,34 @@ void TexturesArray::mousePressEvent(QMouseEvent* e)
     pos.setY(pos.y() - floor(MathHelper::toDouble(pos.y()) / MathHelper::toDouble(textureSize.height())) * textureMargin.height());
 
     setCurrent(rowAt(pos.y()), columnAt(pos.x()));
+
+    if(getToolTip(curRow, curCol) != QString())
+    {
+        QMimeData* mimeData = new QMimeData();
+        mimeData->setText(getToolTip(curRow, curCol));
+
+        QDrag* drag = new QDrag(this);
+        drag->setMimeData(mimeData);
+        drag->setHotSpot(e->pos());
+        drag->exec(Qt::CopyAction);
+    }
 }
 
 void TexturesArray::mouseReleaseEvent(QMouseEvent* /* event */)
 {
     // The current cell marker is set to the cell the mouse is clicked in
     setSelected(curRow, curCol);
+}
+
+void TexturesArray::dragEnterEvent(QDragEnterEvent* event)
+{
+    if(event->source() == this)
+    {
+        // The current cell marker is set to the cell the mouse is clicked in
+        setSelected(curRow, curCol);
+
+        event->ignore();
+    }
 }
 
 bool TexturesArray::event(QEvent* e)
@@ -335,6 +359,9 @@ void TexturesArray::updateToolTip(int row, int column, QString toolTip)
 
 QString TexturesArray::getToolTip(int row, int column)
 {
+    if(toolTipArray.count() <= ncols * row + column)
+        return QString();
+
     return toolTipArray[ncols * row + column];
 }
 
@@ -506,6 +533,8 @@ void TextureWell::mousePressEvent(QMouseEvent* e)
     mousePressed = true;
 
     pressPos = e->pos();
+
+
 }
 
 void TextureWell::mouseReleaseEvent(QMouseEvent* e)
@@ -521,7 +550,7 @@ void TextureWell::mouseReleaseEvent(QMouseEvent* e)
 void TextureWell::itemSelected(int row, int col)
 {
     if(!values[(row * numCols()) + col].second.isFree)
-        emit selected(row,col);
+        emit selected(row, col);
 }
 
 int TextureWell::firstFreeIndex()

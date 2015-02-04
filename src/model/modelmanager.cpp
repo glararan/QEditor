@@ -15,6 +15,8 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "modelmanager.h"
 
+#include "model.h"
+
 ModelManager::ModelManager(TextureManager* manager)
 : textureManager(manager)
 , current(-1)
@@ -23,10 +25,15 @@ ModelManager::ModelManager(TextureManager* manager)
 
 ModelManager::~ModelManager()
 {
-    QList<ModelData*> models = data.values();
+    QList<ModelData*> modelsData = data.values();
+
+    for(int i = 0; i < modelsData.size(); ++i)
+        delete modelsData.at(i);
+
+    QList<Model*> modelsList = models.values();
 
     for(int i = 0; i < models.size(); ++i)
-        delete models.at(i);
+        delete modelsList.at(i);
 }
 
 bool ModelManager::loadModel(const QString category, const QString file)
@@ -48,6 +55,7 @@ bool ModelManager::loadModel(const QString category, const QString file)
     }
 
     data.insert(file, new ModelData(category, QImage("://object_icon"), model));
+    models.insert(file, new Model(this, model));
 
     if(!categories.contains(category))
         categories.push_back(category);

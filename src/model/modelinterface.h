@@ -27,6 +27,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "animation.h"
 #include "mesh.h"
 #include "texturemanager.h"
+#include "modelheader.h"
 
 class ModelInterface
 {
@@ -43,6 +44,8 @@ public:
     const QString getFilePath() const { return filePath; }
     const QString getFileName() const { return fileName; }
 
+    const ModelHeader& getHeader() const { return header; }
+
 private:
     Bones*     loadBones(const aiScene* scene);
     Animation* loadAnimation(const aiAnimation* ai_animation, const int index);
@@ -50,6 +53,8 @@ private:
 
     void loadMaterial(aiMaterial* ai_material, Mesh* meshTarget);
     void buildSkeleton(aiNode* current, Bone* parent);
+
+    void initialize(const aiScene* scene);
 
     static void addWeightData(QVector4D* boneIdTarget, QVector4D* weightTarget, float id, float w);
     static void loadTextures(aiMaterial* ai_material, aiTextureType type, int& index, bool& succes, QString filePath, TextureManager* manager);
@@ -64,6 +69,8 @@ private:
 
     QString filePath;
     QString fileName;
+
+    ModelHeader header;
 
     bool has_animations;
 };

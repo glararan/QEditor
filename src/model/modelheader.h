@@ -13,14 +13,22 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#version 400
+#ifndef MODELHEADER_H
+#define MODELHEADER_H
 
-uniform samplerCube cubeMap;
+#include <QVector3D>
 
-in vec3 vertexVector;
-out vec4 fragColor;
-
-void main()
+struct ModelHeader
 {
-    fragColor = texture(cubeMap, vertexVector);
-}
+    QVector3D vertexBoxMin, vertexBoxMax;
+    QVector3D boundingBoxMin, boundingBoxMax;
+
+    QVector3D center;
+
+    const QVector3D& getVertexBoxRadius() const   { (vertexBoxMax + vertexBoxMin) / 2; }
+    const QVector3D& getBoundingBoxRadius() const { (boundingBoxMin + boundingBoxMax) / 2; }
+
+    const QVector3D& getCenter() const { return center; }
+};
+
+#endif // MODELHEADER_H

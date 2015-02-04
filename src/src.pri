@@ -73,7 +73,9 @@ SOURCES  += $$PWD/main.cpp \
     $$PWD/model/pipeline.cpp \
     $$PWD/selection.cpp \
     $$PWD/boundingbox.cpp \
-    $$PWD/map/mapobject.cpp
+    $$PWD/map/mapobject.cpp \
+    $$PWD/ui/detaildoodadswidget.cpp \
+    $$PWD/undoredomanager.cpp
 
 HEADERS  += $$PWD/mainwindow.h \
             $$PWD/ui/teleportwidget.h \
@@ -131,7 +133,10 @@ HEADERS  += $$PWD/mainwindow.h \
     $$PWD/model/pipeline.h \
     $$PWD/selection.h \
     $$PWD/boundingbox.h \
-    $$PWD/map/mapobject.h
+    $$PWD/map/mapobject.h \
+    $$PWD/model/modelheader.h \
+    $$PWD/ui/detaildoodadswidget.h \
+    $$PWD/undoredomanager.h
 
 FORMS    += $$PWD/mainwindow.ui \
             $$PWD/ui/teleportwidget.ui \
@@ -146,4 +151,5 @@ FORMS    += $$PWD/mainwindow.ui \
             $$PWD/ui/mapgeneration.ui \
             $$PWD/ui/heightmapwidget.ui \
             $$PWD/ui/mapchunk_settings.ui \
-            $$PWD/ui/basic_settings.ui
+            $$PWD/ui/basic_settings.ui \
+    $$PWD/ui/detaildoodadswidget.ui

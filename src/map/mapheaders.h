@@ -49,18 +49,13 @@ static const int ALPHAMAPS    = MAX_TEXTURES - 1;
 
 static const int MAX_TEXTURE_SIZE = 1024;
 
+static const int MAX_OBJECTS = 256;
+
 enum ShaderUnits
 {
-    Heightmap     = 0,
-    Texture1      = 1,
-    /*Texture2      = 2,
-    Texture3      = 3,
-    Texture4      = 4,
-    Alphamap1     = 5,
-    Alphamap2     = 6,
-    Alphamap3     = 7,
-    VertexShading = 8, gonna out of date?*/
-    Texture2       = 2,
+    Heightmap      = 0,
+    Textures       = 1,
+    DepthTextures  = 2,
     Alphamap1      = 3,
     Alphamap2      = 4,
     Alphamap3      = 5,
@@ -127,12 +122,35 @@ struct MCIN
     } entries[CHUNKS * CHUNKS];
 };
 
+// List of filenames for obj files
+struct MOBJ
+{
+    QString fileNames[MAX_OBJECTS];
+};
+
+struct MDDF
+{
+    struct MDDFentry
+    {
+        quint32 mobjEntry;
+        quint32 uniqueID;
+
+        qreal position[3];
+        qreal rotation[3];
+        qreal scale[3];
+
+        // maybe some flags in future
+    } entries[MAX_OBJECTS * 4];
+};
+
 // Contains offsets relative to MapHeader data in the file for specific chunks
 struct MapHeader
 {
     quint32 version;
 
     MCIN* mcin;
+    MOBJ* mobj;
+    MDDF* mddf;
 };
 
 struct MapGenerationData
@@ -184,6 +202,7 @@ inline QDataStream& operator<<(QDataStream& dataStream, const MapHeader& mapHead
 {
     dataStream << mapHeader.version;
 
+    /// Chunks data
     for(int i = 0; i < CHUNKS * CHUNKS; ++i)
     {
         dataStream << mapHeader.mcin->entries[i].size
@@ -229,6 +248,27 @@ inline QDataStream& operator<<(QDataStream& dataStream, const MapHeader& mapHead
         }
     }
 
+    /// Tile data
+    /// MOBJ
+    for(int i = 0; i < MAX_OBJECTS; ++i)
+        dataStream << mapHeader.mobj->fileNames[i];
+
+    /// MDDF
+    for(int i = 0; i < MAX_OBJECTS * 4; ++i)
+    {
+        dataStream << mapHeader.mddf->entries[i].mobjEntry
+                   << mapHeader.mddf->entries[i].uniqueID
+                   << mapHeader.mddf->entries[i].position[0]
+                   << mapHeader.mddf->entries[i].position[1]
+                   << mapHeader.mddf->entries[i].position[2]
+                   << mapHeader.mddf->entries[i].rotation[0]
+                   << mapHeader.mddf->entries[i].rotation[1]
+                   << mapHeader.mddf->entries[i].rotation[2]
+                   << mapHeader.mddf->entries[i].scale[0]
+                   << mapHeader.mddf->entries[i].scale[1]
+                   << mapHeader.mddf->entries[i].scale[2];
+    }
+
     return dataStream;
 }
 
@@ -237,7 +277,10 @@ inline QDataStream& operator>>(QDataStream& dataStream, MapHeader& mapHeader) //
     dataStream >> mapHeader.version;
 
     mapHeader.mcin = new MCIN;
+    mapHeader.mobj = new MOBJ;
+    mapHeader.mddf = new MDDF;
 
+    /// Chunks data
     for(int i = 0; i < CHUNKS * CHUNKS; ++i)
     {
         mapHeader.mcin->entries[i].mcnk = new MCNK;
@@ -290,6 +333,27 @@ inline QDataStream& operator>>(QDataStream& dataStream, MapHeader& mapHeader) //
                        >> mapHeader.mcin->entries[i].mcnk->terrainOffset->automaticTextureEnd[j];
         }
     }
+
+    /// Tile data
+    /// MOBJ
+    /*for(int i = 0; i < MAX_OBJECTS; ++i)
+        dataStream >> mapHeader.mobj->fileNames[i];
+
+    /// MDDF
+    for(int i = 0; i < MAX_OBJECTS * 4; ++i)
+    {
+        dataStream >> mapHeader.mddf->entries[i].mobjEntry
+                   >> mapHeader.mddf->entries[i].uniqueID
+                   >> mapHeader.mddf->entries[i].position[0]
+                   >> mapHeader.mddf->entries[i].position[1]
+                   >> mapHeader.mddf->entries[i].position[2]
+                   >> mapHeader.mddf->entries[i].rotation[0]
+                   >> mapHeader.mddf->entries[i].rotation[1]
+                   >> mapHeader.mddf->entries[i].rotation[2]
+                   >> mapHeader.mddf->entries[i].scale[0]
+                   >> mapHeader.mddf->entries[i].scale[1]
+                   >> mapHeader.mddf->entries[i].scale[2];
+    }*/
 
     return dataStream;
 }

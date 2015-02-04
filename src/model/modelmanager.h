@@ -21,6 +21,8 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "modelinterface.h"
 #include "texturemanager.h"
 
+class Model;
+
 struct ModelData
 {
     ModelData(const QString Category, const QImage Image, ModelInterface* ModelInterface)
@@ -59,14 +61,16 @@ public:
     const int getIndex(const QString modelPath) const;
     const int getCurrentModel() const { return current; }
 
-    ModelData*      getModel(const int index) const { return data.values().at(index); }
-    TextureManager* getTextureManager() const       { return textureManager; }
+    Model*          getModel(const int index) const     { return models.values().at(index); }
+    ModelData*      getModelData(const int index) const { return data.values().at(index); }
+    TextureManager* getTextureManager() const           { return textureManager; }
 
     void setCurrentModel(const int index) { current = index; }
 
 private:
     TextureManager* textureManager;
 
+    QMap<QString, Model*>     models;
     QMap<QString, ModelData*> data;
     QVector<QString>          categories;
 

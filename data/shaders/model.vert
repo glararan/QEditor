@@ -67,9 +67,10 @@ void main()
         animationMatrix += boneMatrix[int(qt_BoneIDs[3])] * qt_Weights[3];
     }
 
-    gl_Position = modelViewProjectionMatrix * animationMatrix * vec4(qt_Vertex, 1.0);
+    gl_Position = modelViewProjectionMatrix /* animationMatrix*/ * vec4(qt_Vertex, 1.0);
 
-    Out.position = (modelViewMatrix * animationMatrix * vec4(qt_Vertex,1.0)).xyz;
-    Out.normal   = (modelViewMatrix * animationMatrix * vec4(qt_Normal, 0.0)).xyz;
+    Out.position = (modelViewMatrix /* animationMatrix*/ * vec4(qt_Vertex, 1.0)).xyz;
+    //Out.normal   = (modelViewMatrix * animationMatrix * vec4(qt_Normal, 0.0)).xyz;
+    Out.normal   = normalize((modelViewMatrix * vec4(qt_Normal, 1.0f)).xyz);
     Out.texcoord = qt_TexCoord;
 }

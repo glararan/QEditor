@@ -17,18 +17,19 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include <QOpenGLFunctions_4_2_Core>
 
-Model::Model(ModelManager* modelManager, const int index)
+Model::Model(ModelManager* modelManager, ModelInterface* modelInterface)
 : lastShader(0)
 , animation_state(0)
 , animations_enabled(true)
 , texture_manager(modelManager->getTextureManager())
-, model_interface(modelManager->getModel(index)->modelInterface)
+, model_interface(modelInterface)
 {
     GLfuncs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_4_2_Core>();
 
     if(!GLfuncs)
     {
         qWarning() << "Requires multi-texturing support";
+
         exit(-1);
     }
 
@@ -106,16 +107,6 @@ void Model::enableAnimations()
 void Model::disableAnimations()
 {
     animations_enabled = false;
-}
-
-const QVector3D& Model::getCenter() const
-{
-    QVector3D center;
-
-    return center;
-
-    //for(int i = 0; i < model_interface->getMeshes()[0].size(); ++i)
-        //center += model_interface->getMeshes()[0].at(i)->
 }
 
 void Model::createAttributeArray(QOpenGLShaderProgram* shader)

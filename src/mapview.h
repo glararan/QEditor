@@ -30,13 +30,14 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 class Camera;
 class Pipeline;
+class UndoRedoManager;
 
 class MapView : public QOpenGLWidget, protected QOpenGLFunctions_4_2_Core
 {
     Q_OBJECT
 
 public:
-    MapView(World* mWorld, QWidget* parent = 0, bool** mapCoords = NULL);
+    MapView(World* mWorld, UndoRedoManager* undoManager, QWidget* parent = 0, bool** mapCoords = NULL);
     ~MapView();
 
     // Camera motion control
@@ -102,6 +103,8 @@ public:
     void setModelMode(eModelMode modelMode) { eModel = modelMode; }
     eModelMode modelMode() const            { return eModel; }
 
+    void setDrawModel(bool enable) { drawModel = enable; }
+
     QVector3D getWorldCoordinates(float mouseX, float mouseY);
 
     Pipeline* getPipeline() const { return pipeline; }
@@ -134,6 +137,8 @@ private:
     void AddStatusBarMessage(const QString message, const void* data, const QString data_type);
     void ClearStatusBarMessage();
 
+    QVector3D Rotate(float x, float y, QVector3D& direction, float angle);
+
     World* world;
 
     bool** worldCoords;
@@ -149,6 +154,9 @@ private:
 
     // Vertex shading parameters
     QColor vertexShadingColor;
+
+    /// Objects paramaters
+    bool spawn_on_click, drawModel;
 
     /// Global parameters
     QOpenGLContext* GLcontext;
@@ -191,18 +199,21 @@ private:
 
     const float m_metersToUnits;
 
-    QTime m_Utime;
+    QTime m_Utime, fpsTimer;
 
-    int fps;
+    int fps, frames;
 
     // mouse
-    bool leftButtonPressed, rightButtonPressed, wasLeftButtonPressed;
+    bool leftButtonPressed, rightButtonPressed, wheelButtonPressed, wasLeftButtonPressed, wasLeftButtonReleased, wasWheelButtonPressed, wasWheelButtonReleased;
     bool changedMouseMode, tabletMode, tablet;
 
     QPoint mouse_position;
 
     QPoint prevMousePos;
     QPoint mousePos;
+    QPoint mousePosStart, mousePosEnd;
+
+    QVector2D mouseVector;
 
     int mousePosZ, prevMousePosZ;
 
@@ -225,7 +236,14 @@ private:
     } wacom;
 
     // keyboard
-    bool shiftDown, ctrlDown, altDown, escapeDown;
+    bool shiftDown, ctrlDown, altDown, escapeDown, deleteDown;
+
+    // undo redo manager
+    UndoRedoManager* undoRedoManager;
+
+    QVector3D mapObjectStart;
+
+    bool mapObjectScale;
 
     // status bar
     QVector<QString>     sbMessageList;
@@ -288,12 +306,16 @@ signals:
     void updateBrushInnerRadius(double radius);
     void updateBrush(int brush);
 
+    void selectedMapTile(MapTile* tile);
     void selectedMapChunk(MapChunk* chunk);
     void selectedWaterChunk(WaterChunk* chunk);
 
     void eMModeChanged(MapView::eMouseMode& mouseMode, MapView::eEditingMode& editingMode);
 
     void getCameraCurvePoint(const QVector3D& position);
+
+    void setPreviousModel();
+    void setNextModel();
 
     void initialized();
 };

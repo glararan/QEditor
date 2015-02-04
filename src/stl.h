@@ -1,3 +1,18 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #ifndef STLEXPORT_H
 #define STLEXPORT_H
 
@@ -19,6 +34,7 @@
 #define NORMALS_SOUTH  QVector3D( 0,  0, -1)
 
 class MapTile;
+class MapChunk;
 class Face;
 class FaceWorker;
 class Vertex;
@@ -45,6 +61,7 @@ public:
     };
 
     STL(MapTile* tile = NULL, Resolution resolution = Low);
+    STL(MapChunk* chunk, Resolution resolution = Low);
     ~STL();
 
     void exportIt(QString file, float scale = 1.0);
@@ -57,8 +74,13 @@ public:
     const MapTile*   getMapTile() const    { return mapTile; }
     const Resolution getResolution() const { return stlResolution; }
 
+    static float baseHeight;
+
 private:
-    MapTile* mapTile;
+    MapTile*  mapTile;
+    MapChunk* mapChunk;
+
+    bool type;
 
     Resolution stlResolution;
 
@@ -79,7 +101,7 @@ class Face : public QObject
     Q_OBJECT
 
 public:
-    Face(STL::Facets face, QObject* parent = NULL);
+    Face(STL::Facets face, bool tile = true, QObject* parent = NULL);
     ~Face();
 
     void writeToFile(QTextStream* stream, float scale);
@@ -107,7 +129,7 @@ private:
 
     QMap<int, QVector<Vertex>> threadsVertexs;
 
-    bool readyToWrite;
+    bool readyToWrite, type;
 };
 
 class FaceWorker : public QThread
@@ -115,13 +137,15 @@ class FaceWorker : public QThread
     Q_OBJECT
 
 public:
-    FaceWorker(QVector<Vertex>& container, int threadID, Face* faceParent, QObject* parent = NULL);
+    FaceWorker(QVector<Vertex>& container, int threadID, bool tile, Face* faceParent, QObject* parent = NULL);
     ~FaceWorker();
 
 private:
     QVector<Vertex> vertexs;
 
     int threadNumber;
+
+    bool type;
 
     Face* face;
 
@@ -137,7 +161,7 @@ public:
 
     void scale(const float value);
 
-    void setSurfaceSize(float mm, bool scaleHeight = false);
+    void setSurfaceSize(float mm, float mapSize = TILESIZE, bool scaleHeight = false);
     void setVertex(const QVector3D& vector, const int& index);
 
     const QVector3D getVertex(const int i) const;

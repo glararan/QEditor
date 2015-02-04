@@ -36,6 +36,7 @@ public:
     bool hasTexture(QString textureName, QString texturePath);
     //bool hasTexture(QString texturePath);
     bool hasDepthTexture(QString textureName, QString texturePath);
+    bool hasDepthTexture(TexturePtr texture);
 
     const SamplerPtr getSampler() const;
     const TexturePtr getTexture(QString textureName) const;

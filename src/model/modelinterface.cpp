@@ -61,7 +61,10 @@ ModelInterface::ModelInterface(TextureManager* manager, const QString filename)
     meshes = new Meshes();
 
     for(uint i = 0; i < scene->mNumMeshes; ++i)
-        meshes->add(loadMesh(scene->mMeshes[i],scene->mMaterials[scene->mMeshes[i]->mMaterialIndex], i));
+        meshes->add(loadMesh(scene->mMeshes[i], scene->mMaterials[scene->mMeshes[i]->mMaterialIndex], i));
+
+    initialize(scene);
+    // try delete scene probably crash
 }
 
 ModelInterface::~ModelInterface()
@@ -74,6 +77,48 @@ ModelInterface::~ModelInterface()
 
     if(meshes)
         delete meshes;
+}
+
+void ModelInterface::initialize(const aiScene* scene)
+{
+    QVector<QVector3D> vertices;
+    QVector<QVector3D> _bones;
+
+    /// Vertices
+    for(int i = 0; i < scene->mNumMeshes; ++i)
+    {
+        for(int j = 0; j < scene->mMeshes[i]->mNumVertices; ++j)
+            vertices.append(QVector3D(scene->mMeshes[i]->mVertices[j].x, scene->mMeshes[i]->mVertices[j].y, scene->mMeshes[i]->mVertices[j].z));
+    }
+
+    // find min and max
+    QVector3D minVertex;
+    QVector3D maxVertex;
+
+    for(int i = 0; i < vertices.count(); ++i)
+    {
+        if(vertices[i].x() < minVertex.x()) // min X
+            minVertex.setX(vertices[i].x());
+
+        if(vertices[i].y() < minVertex.y()) // min Y
+            minVertex.setY(vertices[i].y());
+
+        if(vertices[i].z() < minVertex.z()) // min Z
+            minVertex.setZ(vertices[i].z());
+
+        if(vertices[i].x() > maxVertex.x()) // max X
+            maxVertex.setX(vertices[i].x());
+
+        if(vertices[i].y() > maxVertex.y()) // max Y
+            maxVertex.setY(vertices[i].y());
+
+        if(vertices[i].z() > maxVertex.z()) // max Z
+            maxVertex.setZ(vertices[i].z());
+    }
+
+    header.boundingBoxMin = minVertex;
+    header.boundingBoxMax = maxVertex;
+    header.center         = (maxVertex + minVertex) / 2;
 }
 
 Bones* ModelInterface::loadBones(const aiScene* scene)

@@ -43,6 +43,8 @@ public:
     const MapHeader& getHeader() const { return tileHeader; }
     WaterTile* getWater() const        { return waterTile; }
 
+    const QVector<MapObject*> getMapObjects() const { return objects; }
+
     void draw(const float& distance, const QVector3D& camera);
     void drawObjects(const float& distance, const QVector3D& camera, QMatrix4x4 viewMatrix, QMatrix4x4 projectionMatrix);
     void drawWater(const float& distance, const QVector3D& camera, QOpenGLFramebufferObject* refraction);
@@ -50,8 +52,11 @@ public:
     void update(qreal time);
 
     void insertModel(MapObject* object);
+    bool deleteObject(MapObject* object);
     void deleteModel(float x, float z);
     void updateModelHeight();
+
+    void spawnDetailDoodads(QVector<QString>& textures, QMap<int, QVector<QPair<QString, float>>>& data);
 
     void generateMap(MapGenerationData& data);
 

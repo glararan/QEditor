@@ -43,7 +43,7 @@ QSize ToolBox::sizeHint() const
 {
     ensurePolished();
 
-    return QSize(314,0).boundedTo(QSize(640, 480));
+    return QSize(314, 0).boundedTo(QSize(640, 480));
 }
 
 ToolItem::ToolItem(const QString& t, QWidget* item) : item(item)
@@ -52,7 +52,8 @@ ToolItem::ToolItem(const QString& t, QWidget* item) : item(item)
     layout->setContentsMargins(0, 0, 0, 0);
 
     QString titleString = t;
-    titleString.replace(0,1,titleString.at(0).toUpper());
+    titleString.replace(0, 1, titleString.at(0).toUpper());
+
     title = new QLabel(titleString);
     title->setStyleSheet("QLabel { padding-left: 7px; border-radius: 4px;  border: 1px solid #AAA; background: #E3E3E3; }");
     title->setMargin(3);

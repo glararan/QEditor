@@ -58,6 +58,7 @@ public:
     void resize(const int width, const int height);
 
     void setLight(const QVector3D& position, QVector3D& direction);
+    void setCamera(const QMatrix4x4& model, const QMatrix4x4& view, const QMatrix4x4& proj);
 
     const float getHeight() const { return viewportSize.y(); }
     const float getWidth() const  { return viewportSize.x(); }

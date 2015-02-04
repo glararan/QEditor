@@ -18,6 +18,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include <QWidget>
 #include <QFrame>
+#include <QDragLeaveEvent>
 
 struct TexturesData
 {
@@ -119,6 +120,7 @@ protected:
 
     void mousePressEvent(QMouseEvent*);
     void mouseReleaseEvent(QMouseEvent*);
+    void dragEnterEvent(QDragEnterEvent*);
     void keyPressEvent(QKeyEvent*);
     void focusInEvent(QFocusEvent*);
     void focusOutEvent(QFocusEvent*);

@@ -39,6 +39,7 @@ class MapObject;
 class MapView;
 class WaterChunk;
 class TextureManager;
+class UndoRedoManager;
 
 struct ObjectBrush
 {
@@ -73,7 +74,7 @@ private:
 class World
 {
 public:
-    explicit World(const ProjectFileData& projectFile);
+    World(const ProjectFileData& projectFile, UndoRedoManager* undoManager);
 
     void deleteMe();
     void initialize(QOpenGLContext* context, QSize fboSize, bool** mapCoords = NULL);
@@ -116,7 +117,11 @@ public:
     void paintVertexShading(float x, float z, float flow, QColor& color);
     void paintVertexLighting(float x, float z, float flow, QColor& lightColor);
 
+    bool trySelectMapObject(const QVector3D& position);
+    void spawnMapObjectFromFavouriteList(const QVector3D& position);
+    void addObject(MapObject* object, bool selected = false);
     void removeObject(float x, float z);
+    void removeObject(MapObject* object);
 
     void highlightMapChunkAt(const QVector3D& position);
     void unHighlight();
@@ -131,7 +136,7 @@ public:
 
     void importHeightmap(QString path, float scale);
     void exportHeightmap(QString path, float scale);
-    void exportSTL(QString path, float surface, bool scaleHeight, bool low);
+    void exportSTL(QString path, float surface, bool scaleHeight, bool low, bool tile);
 
     void save();
 
@@ -144,6 +149,7 @@ public:
     ModelManager*              getModelManager()      { return modelManager; }
     SelectionManager*          getSelectionManager()  { return selectionManager; }
     Selection*                 getCurrentSelection()  { return currentSelection; }
+    UndoRedoManager*           getUndoRedoManager()   { return undoRedoManager; }
     QOpenGLShaderProgram*      getModelShader()       { return modelShader; }
     QOpenGLShaderProgram*      getTerrainShader()     { return terrainShader; }
     QOpenGLShaderProgram*      getCleftShader()       { return cleftShader; }
@@ -157,6 +163,9 @@ public:
     const bool            getTerrainMaximumState() const  { return terrainMaximumState; }
     const float           getPaintMaximumAlpha() const    { return paintMaximumAlpha; }
     const bool            getPaintMaximumState() const    { return paintMaximumState; }
+
+    void addModifiedTerrain(QPair<QVector2D, float> pair) { modifiedTerrain.append(pair); }
+    QVector<QPair<QVector2D, float>> getModifiedTerrain() { return modifiedTerrain; }
 
     MapTile*    getTileAt(float x, float z) const;
     MapChunk*   getMapChunkAt(const QVector3D& position) const;
@@ -197,6 +206,7 @@ private:
     MapChunk*         highlightChunk;
     SelectionManager* selectionManager;
     Selection*        currentSelection;
+    UndoRedoManager*  undoRedoManager;
 
     QOpenGLFramebufferObject* fbo;
     QOpenGLFramebufferObject* reflection_fbo;
@@ -218,6 +228,8 @@ private:
 
     float terrainMaximumHeight;
     bool  terrainMaximumState;
+
+    QVector<QPair<QVector2D, float>> modifiedTerrain;
 
     float paintMaximumAlpha;
     bool  paintMaximumState;

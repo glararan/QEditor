@@ -52,6 +52,8 @@ public:
     bool paintVertexShading(float x , float z, float flow, QColor& color);
     bool paintVertexLighting(float x, float z, float flow, QColor& lightColor);
 
+    QVector<QPair<QString, QVector3D>> spawnDetailDoodads(QVector<QString>& texturesList, QMap<int, QVector<QPair<QString, float>>>& data);
+
     void updateNeighboursHeightmapData();
 
     void generation(bool accepted);
@@ -63,6 +65,8 @@ public:
 
     const float getHeightFromWorld(float x, float z);
     const float getMapData(const int& index) const;
+
+    const float getAlphaFromWorld(float x, float z, int layer);
 
     const int chunkIndex() const;
 
@@ -104,6 +108,8 @@ public:
 
     void setHighlight(bool on);
     void setSelected(bool on);
+
+    void setHeightFromWorld(QVector2D position, float height);
 
     void setHeightmap(float* data);
     void setGeneratedHeightmap(float* tileData);
@@ -188,6 +194,14 @@ private:
 
     friend class MapTile;
     friend class MapCleft;
+};
+
+struct DetailDoodadsDataContainer
+{
+    QString objectPath;
+    QString texturePath;
+
+    float radius;
 };
 
 #endif // MAPCHUNK_H

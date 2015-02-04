@@ -53,11 +53,6 @@ uniform struct MaterialInfo
     float shininess; // Specular shininess exponent
 } material;
 
-uniform sampler2D baseTexture;
-uniform sampler2D layer1Texture;
-uniform sampler2D layer2Texture;
-uniform sampler2D layer3Texture; // out of date
-
 uniform sampler2D layer1Alpha;
 uniform sampler2D layer2Alpha;
 uniform sampler2D layer3Alpha;
@@ -389,16 +384,24 @@ vec4 shaderBaseLayer()
 {
     vec2 uvNear, uvFar;
 
-    nearAndFarTexCoords(uvNear, uvFar);
+    nearAndFarTexCoords(uvNear, uvFar, 0);
 
     float textureDistanceFactor = textureDistanceBlendFactor();
 
     // Get base texture color
-    vec4 baseNear  = texture(baseTexture, uvNear);
-    vec4 baseFar   = texture(baseTexture, texCoords);
+    vec4 baseNear  = texture2DArray(textures, vec3(uvNear, 0));
+    vec4 baseFar   = texture2DArray(textures, vec3(texCoords, 0));
     vec4 baseColor = mix(baseNear, baseFar, textureDistanceFactor);
 
-    return mix(baseColor, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
+    // Get base texture depth
+    vec4 baseDNear  = texture2DArray(depthTextures, vec3(uvNear, 0));
+    vec4 baseDFar   = texture2DArray(depthTextures, vec3(texCoords, 0));
+    vec4 baseDColor = mix(baseDNear, baseDFar, textureDistanceFactor);
+
+    vec4 diffuseColor = blendAll(baseColor, vec4(0, 0, 0, 0), vec4(0, 0, 0, 0), vec4(0, 0, 0, 0), 0, 0, 0,
+                                 baseDColor, vec4(0, 0, 0, 0), vec4(0, 0, 0, 0), vec4(0, 0, 0, 0));
+
+    return mix(diffuseColor, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
 }
 
 subroutine(ShaderModelType)
@@ -406,24 +409,37 @@ vec4 shadeBaseAndLayer1()
 {
     vec2 uvNear, uvFar;
 
-    nearAndFarTexCoords(uvNear, uvFar);
+    nearAndFarTexCoords(uvNear, uvFar, 0);
 
     float textureDistanceFactor = textureDistanceBlendFactor();
 
     // Get base texture color
-    vec4 baseNear  = texture(baseTexture, uvNear);
-    vec4 baseFar   = texture(baseTexture, texCoords);
+    vec4 baseNear  = texture2DArray(textures, vec3(uvNear, 0));
+    vec4 baseFar   = texture2DArray(textures, vec3(texCoords, 0));
     vec4 baseColor = mix(baseNear, baseFar, textureDistanceFactor);
 
-    // Get layer 1 texture color
-    vec4 layer1Near  = texture(layer1Texture, uvNear);
-    vec4 layer1Far   = texture(layer1Texture, uvFar);
+    // Get base texture depth
+    vec4 baseDNear  = texture2DArray(depthTextures, vec3(uvNear, 0));
+    vec4 baseDFar   = texture2DArray(depthTextures, vec3(texCoords, 0));
+    vec4 baseDColor = mix(baseDNear, baseDFar, textureDistanceFactor);
+
+    nearAndFarTexCoords(uvNear, uvFar, 1);
+
+    /// Get layer 1 texture color
+    vec4 layer1Near  = texture2DArray(textures, vec3(uvNear, 1));
+    vec4 layer1Far   = texture2DArray(textures, vec3(uvFar, 1));
     vec4 layer1Color = mix(layer1Near, layer1Far, textureDistanceFactor);
 
-    // Blend layer 1 and base texture based upon alphamap
-    vec4 baseLayer1Color = mix(baseColor, layer1Color, texture(layer1Alpha, texCoords).r);
+    /// Get layer 1 texture depth
+    vec4 layer1DNear  = texture2DArray(depthTextures, vec3(uvNear, 1));
+    vec4 layer1DFar   = texture2DArray(depthTextures, vec3(uvFar, 1));
+    vec4 layer1DColor = mix(layer1DNear, layer1DFar, textureDistanceFactor);
 
-    return mix(baseLayer1Color, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
+    // Blend layer 1 and base texture based upon alphamap
+    vec4 diffuseColor = blendAll(baseColor, layer1Color, vec4(0, 0, 0, 0), vec4(0, 0, 0, 0), texture(layer1Alpha, texCoords).r, 0, 0,
+                                 baseDColor, layer1DColor, vec4(0, 0, 0, 0), vec4(0, 0, 0, 0));
+
+    return mix(diffuseColor, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
 }
 
 subroutine(ShaderModelType)
@@ -431,31 +447,49 @@ vec4 shadeBaseLayer1AndLayer2()
 {
     vec2 uvNear, uvFar;
 
-    nearAndFarTexCoords(uvNear, uvFar);
+    nearAndFarTexCoords(uvNear, uvFar, 0);
 
     float textureDistanceFactor = textureDistanceBlendFactor();
 
     // Get base texture color
-    vec4 baseNear  = texture(baseTexture, uvNear);
-    vec4 baseFar   = texture(baseTexture, texCoords);
+    vec4 baseNear  = texture2DArray(textures, vec3(uvNear, 0));
+    vec4 baseFar   = texture2DArray(textures, vec3(texCoords, 0));
     vec4 baseColor = mix(baseNear, baseFar, textureDistanceFactor);
 
+    // Get base texture depth
+    vec4 baseDNear  = texture2DArray(depthTextures, vec3(uvNear, 0));
+    vec4 baseDFar   = texture2DArray(depthTextures, vec3(texCoords, 0));
+    vec4 baseDColor = mix(baseDNear, baseDFar, textureDistanceFactor);
+
+    nearAndFarTexCoords(uvNear, uvFar, 1);
+
     // Get layer 1 texture color
-    vec4 layer1Near  = texture(layer1Texture, uvNear);
-    vec4 layer1Far   = texture(layer1Texture, uvFar);
+    vec4 layer1Near  = texture2DArray(textures, vec3(uvNear, 1));
+    vec4 layer1Far   = texture2DArray(textures, vec3(uvFar, 1));
     vec4 layer1Color = mix(layer1Near, layer1Far, textureDistanceFactor);
 
-    // Blend layer 1 and base texture based upon alphamap
-    vec4 baseAndLayer1Color = mix(baseColor, layer1Color, texture(layer1Alpha, texCoords).r);
+    /// Get layer 1 texture depth
+    vec4 layer1DNear  = texture2DArray(depthTextures, vec3(uvNear, 1));
+    vec4 layer1DFar   = texture2DArray(depthTextures, vec3(uvFar, 1));
+    vec4 layer1DColor = mix(layer1DNear, layer1DFar, textureDistanceFactor);
 
-    // Now blend with layer 2 based upon alphamap
-    vec4 layer2Near  = texture(layer2Texture, uvNear);
-    vec4 layer2Far   = texture(layer2Texture, 5.0 * uvFar);
+    nearAndFarTexCoords(uvNear, uvFar, 2);
+
+    // Get layer 2 texture color
+    vec4 layer2Near  = texture2DArray(textures, vec3(uvNear, 2));
+    vec4 layer2Far   = texture2DArray(textures, vec3(uvFar, 2));
     vec4 layer2Color = mix(layer2Near, layer2Far, textureDistanceFactor);
 
-    vec4 diffuseColor = mix(baseAndLayer1Color, layer2Color, texture(layer2Alpha, texCoords).r);
+    /// Get layer 2 texture depth
+    vec4 layer2DNear  = texture2DArray(depthTextures, vec3(uvNear, 2));
+    vec4 layer2DFar   = texture2DArray(depthTextures, vec3(uvFar, 2));
+    vec4 layer2DColor = mix(layer2DNear, layer2DFar, textureDistanceFactor);
 
-    return mix(diffuseColor, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);;
+    // Blend everything
+    vec4 diffuseColor = blendAll(baseColor, layer1Color, layer2Color, vec4(0, 0, 0, 0), texture(layer1Alpha, texCoords).r, texture(layer2Alpha, texCoords).r, 0,
+                                 baseDColor, layer1DColor, layer2DColor, vec4(0, 0, 0, 0));
+
+    return mix(diffuseColor, texture(vertexShading, texCoords), texture(vertexShading, texCoords).a);
 }
 
 subroutine(ShaderModelType)
@@ -526,32 +560,35 @@ vec4 shadeTexturedAndLit()
     vec4 layer3DColor = mix(layer3DNear, layer3DFar, textureDistanceFactor);
 
     /// Blend layer 1 and base texture based upon alphamap
-    vec4 baseAndLayer1Color = vec4(0, 0, 0, 0);
-
-    if(automaticTexture.x == 0)
-        baseAndLayer1Color = mix(baseColor, layer1Color, texture(layer1Alpha, texCoords).r);
-    else
-        baseAndLayer1Color = mix(baseColor, layer1Color, smoothstep(automaticTextureStart.x, automaticTextureEnd.x, worldPosition.y));
-
-    /// Blend baseAndLayer1Color and layer 1 based upon alphamap
-    vec4 layer1AndLayer2Color = vec4(0, 0, 0, 0);
-
-    if(automaticTexture.y == 0)
-        layer1AndLayer2Color = mix(baseAndLayer1Color, layer2Color, texture(layer2Alpha, texCoords).r);
-    else
-        layer1AndLayer2Color = mix(baseAndLayer1Color, layer2Color, smoothstep(automaticTextureStart.y, automaticTextureEnd.y, worldPosition.y));
-
-    /// Now blend with layer 3 based upon alphamap
     vec4 diffuseColor = vec4(0, 0, 0, 0);
-
-    if(automaticTexture.z == 0)
-        diffuseColor = mix(layer1AndLayer2Color, layer3Color, texture(layer3Alpha, texCoords).r);
-    else
-        diffuseColor = mix(layer1AndLayer2Color, layer3Color, smoothstep(automaticTextureStart.z, automaticTextureEnd.z, worldPosition.y));
 
     if(automaticTexture == vec3(0, 0, 0))
         diffuseColor = blendAll(baseColor, layer1Color, layer2Color, layer3Color, texture(layer1Alpha, texCoords).r, texture(layer2Alpha, texCoords).r, texture(layer3Alpha, texCoords).r,
                                 baseDColor, layer1DColor, layer2DColor, layer3DColor);
+    else
+    {
+        vec4 baseAndLayer1Color = vec4(0, 0, 0, 0);
+
+        if(automaticTexture.x == 0)
+            baseAndLayer1Color = mix(baseColor, layer1Color, texture(layer1Alpha, texCoords).r);
+        else
+            baseAndLayer1Color = mix(baseColor, layer1Color, smoothstep(automaticTextureStart.x, automaticTextureEnd.x, worldPosition.y));
+
+        /// Blend baseAndLayer1Color and layer 1 based upon alphamap
+        vec4 layer1AndLayer2Color = vec4(0, 0, 0, 0);
+
+        if(automaticTexture.y == 0)
+            layer1AndLayer2Color = mix(baseAndLayer1Color, layer2Color, texture(layer2Alpha, texCoords).r);
+        else
+            layer1AndLayer2Color = mix(baseAndLayer1Color, layer2Color, smoothstep(automaticTextureStart.y, automaticTextureEnd.y, worldPosition.y));
+
+        /// Now blend with layer 3 based upon alphamap
+
+        if(automaticTexture.z == 0)
+            diffuseColor = mix(layer1AndLayer2Color, layer3Color, texture(layer3Alpha, texCoords).r);
+        else
+            diffuseColor = mix(layer1AndLayer2Color, layer3Color, smoothstep(automaticTextureStart.z, automaticTextureEnd.z, worldPosition.y));
+    }
 
     // overlay effect
     if(!shadingOff)

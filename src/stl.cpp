@@ -1,12 +1,32 @@
+/*This file is part of QEditor.
+
+QEditor is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QEditor is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
+
 #include "stl.h"
 
 #include "maptile.h"
+#include "mapchunk.h"
 
 #include <QFile>
 
+float STL::baseHeight = 5.0f;
+
 STL::STL(MapTile* tile, Resolution resolution)
 : mapTile(tile)
+, mapChunk(NULL)
 , stlResolution(resolution)
+, type(true)
 {
     faces.append(new Face(South));
     faces.append(new Face(Left));
@@ -14,6 +34,23 @@ STL::STL(MapTile* tile, Resolution resolution)
     faces.append(new Face(Right));
     faces.append(new Face(Bottom));
     faces.append(new Face(North));
+
+    for(int i = 0; i < faces.count(); ++i)
+        faces[i]->setResolution(stlResolution);
+}
+
+STL::STL(MapChunk* chunk, Resolution resolution)
+: mapTile(NULL)
+, mapChunk(chunk)
+, stlResolution(resolution)
+, type(false)
+{
+    faces.append(new Face(South,  false));
+    faces.append(new Face(Left,   false));
+    faces.append(new Face(Top,    false));
+    faces.append(new Face(Right,  false));
+    faces.append(new Face(Bottom, false));
+    faces.append(new Face(North,  false));
 
     for(int i = 0; i < faces.count(); ++i)
         faces[i]->setResolution(stlResolution);
@@ -27,7 +64,7 @@ STL::~STL()
 
 void STL::exportIt(QString file, float scale)
 {
-    if(mapTile)
+    if(mapTile || mapChunk)
     {
         QFile f(file);
 
@@ -68,69 +105,162 @@ void STL::exportIt(QString file, float scale)
 
 void STL::createData()
 {
-    if(mapTile)
+    if(mapTile || mapChunk)
     {
         /// Resolution settings
-        const int STLwidth  = stlResolution == High ? TILE_WIDTH  : TILE_WIDTH  / 4;
-        const int STLheight = stlResolution == High ? TILE_HEIGHT : TILE_HEIGHT / 4;
+        const int STLwidth  = stlResolution == High ? type == true ? TILE_WIDTH  : TILE_WIDTH  / CHUNKS : type == true ? TILE_WIDTH  / 4 : TILE_WIDTH  / CHUNKS / 4;
+        const int STLheight = stlResolution == High ? type == true ? TILE_HEIGHT : TILE_HEIGHT / CHUNKS : type == true ? TILE_HEIGHT / 4 : TILE_HEIGHT / CHUNKS / 4;
 
         QVector<QVector3D> datas;
 
         /// Top
-        // generate 2d heightmap array
-        for(int chunkX = 0; chunkX < CHUNKS; ++chunkX)
+        // find lowest height and fix it!
+        float lowest = 0.0f;
+
+        if(type)
         {
-            for(int chunkY = 0; chunkY < CHUNKS; ++chunkY)
+            for(int chunkX = 0; chunkX < CHUNKS; ++chunkX)
             {
-                for(int x = 0; x < CHUNK_WIDTH; ++x)
+                for(int chunkY = 0; chunkY < CHUNKS; ++chunkY)
                 {
-                    for(int y = 0; y < CHUNK_HEIGHT; ++y)
+                    for(int x = 0; x < CHUNK_WIDTH; ++x)
                     {
-                        int xIndex = chunkX * CHUNK_WIDTH + x;
-                        int yIndex = chunkY * CHUNK_HEIGHT + y;
+                        for(int y = 0; y < CHUNK_HEIGHT; ++y)
+                        {
+                            float heightVal = mapTile->getChunk(chunkX, chunkY)->getHeight(x, y);
 
-                        float xPos = MathHelper::toFloat(xIndex) / MathHelper::toFloat(TILE_WIDTH - 1)  * TILESIZE;
-                        float zPos = MathHelper::toFloat(yIndex) / MathHelper::toFloat(TILE_HEIGHT - 1) * TILESIZE;
-
-                        QVector3D vertex(xPos, mapTile->getChunk(chunkX, chunkY)->getHeight(x, y), zPos);
-
-                        height[xIndex][yIndex] = vertex;
+                            if(lowest > heightVal)
+                                lowest = heightVal;
+                        }
                     }
+                }
+            }
+        }
+        else
+        {
+            for(int x = 0; x < CHUNK_WIDTH; ++x)
+            {
+                for(int y = 0; y < CHUNK_HEIGHT; ++y)
+                {
+                    float heightVal = mapChunk->getHeight(x, y);
+
+                    if(lowest > heightVal)
+                        lowest = heightVal;
+                }
+            }
+        }
+
+        float heightDiff = fabs(STL::baseHeight - fabs(lowest));
+
+        // generate 2d heightmap array
+        if(type)
+        {
+            for(int chunkX = 0; chunkX < CHUNKS; ++chunkX)
+            {
+                for(int chunkY = 0; chunkY < CHUNKS; ++chunkY)
+                {
+                    for(int x = 0; x < CHUNK_WIDTH; ++x)
+                    {
+                        for(int y = 0; y < CHUNK_HEIGHT; ++y)
+                        {
+                            int xIndex = chunkX * CHUNK_WIDTH + x;
+                            int yIndex = chunkY * CHUNK_HEIGHT + y;
+
+                            float xPos = MathHelper::toFloat(xIndex) / MathHelper::toFloat(TILE_WIDTH  - 1) * TILESIZE;
+                            float zPos = MathHelper::toFloat(yIndex) / MathHelper::toFloat(TILE_HEIGHT - 1) * TILESIZE;
+
+                            QVector3D vertex(xPos, mapTile->getChunk(chunkX, chunkY)->getHeight(x, y) + heightDiff, zPos);
+
+                            height[xIndex][yIndex] = vertex;
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            for(int x = 0; x < CHUNK_WIDTH; ++x)
+            {
+                for(int y = 0; y < CHUNK_HEIGHT; ++y)
+                {
+                    float xPos = MathHelper::toFloat(x) / MathHelper::toFloat(TILE_WIDTH / CHUNKS  - 1) * CHUNKSIZE;
+                    float zPos = MathHelper::toFloat(y) / MathHelper::toFloat(TILE_HEIGHT / CHUNKS - 1) * CHUNKSIZE;
+
+                    QVector3D vertex(xPos, mapChunk->getHeight(x, y) + heightDiff, zPos);
+
+                    height[x][y] = vertex;
                 }
             }
         }
 
         if(stlResolution == Low) // we need to divide array
         {
-            for(int y = 0; y < TILE_HEIGHT; y += 4)
+            if(type)
             {
-                for(int x = 0; x < TILE_WIDTH; x += 4)
+                for(int y = 0; y < TILE_HEIGHT; y += 4)
                 {
-                    float _height = height[x + 0][y + 0].y() + height[x + 1][y + 0].y() + height[x + 2][y + 0].y() + height[x + 3][y + 0].y()
-                                  + height[x + 0][y + 1].y() + height[x + 1][y + 1].y() + height[x + 2][y + 1].y() + height[x + 3][y + 1].y()
-                                  + height[x + 0][y + 2].y() + height[x + 1][y + 2].y() + height[x + 2][y + 2].y() + height[x + 3][y + 2].y()
-                                  + height[x + 0][y + 3].y() + height[x + 1][y + 3].y() + height[x + 2][y + 3].y() + height[x + 3][y + 3].y();
-                    _height      /= 16.0f;
+                    for(int x = 0; x < TILE_WIDTH; x += 4)
+                    {
+                        float _height = height[x + 0][y + 0].y() + height[x + 1][y + 0].y() + height[x + 2][y + 0].y() + height[x + 3][y + 0].y()
+                                      + height[x + 0][y + 1].y() + height[x + 1][y + 1].y() + height[x + 2][y + 1].y() + height[x + 3][y + 1].y()
+                                      + height[x + 0][y + 2].y() + height[x + 1][y + 2].y() + height[x + 2][y + 2].y() + height[x + 3][y + 2].y()
+                                      + height[x + 0][y + 3].y() + height[x + 1][y + 3].y() + height[x + 2][y + 3].y() + height[x + 3][y + 3].y();
+                        _height      /= 16.0f;
 
-                    QVector3D vector = height[x / 4][y / 4];
-                    vector.setY(_height);
+                        QVector3D vector = height[x / 4][y / 4];
+                        vector.setY(_height);
 
-                    height[x / 4][y / 4] = vector;
+                        height[x / 4][y / 4] = vector;
+                    }
+                }
+
+                for(int y = 0; y < STLheight; ++y)
+                {
+                    for(int x = 0; x < STLwidth; ++x)
+                    {
+                        float xPos = MathHelper::toFloat(x) / MathHelper::toFloat(STLwidth - 1)  * TILESIZE;
+                        float zPos = MathHelper::toFloat(y) / MathHelper::toFloat(STLheight - 1) * TILESIZE;
+
+                        QVector3D vector = height[x][y];
+                        vector.setX(xPos);
+                        vector.setZ(zPos);
+
+                        height[x][y] = vector;
+                    }
                 }
             }
-
-            for(int y = 0; y < STLheight; ++y)
+            else
             {
-                for(int x = 0; x < STLwidth; ++x)
+                for(int y = 0; y < TILE_HEIGHT / CHUNKS; y += 4)
                 {
-                    float xPos = MathHelper::toFloat(x) / MathHelper::toFloat(STLwidth - 1)  * TILESIZE;
-                    float zPos = MathHelper::toFloat(y) / MathHelper::toFloat(STLheight - 1) * TILESIZE;
+                    for(int x = 0; x < TILE_WIDTH / CHUNKS; x += 4)
+                    {
+                        float _height = height[x + 0][y + 0].y() + height[x + 1][y + 0].y() + height[x + 2][y + 0].y() + height[x + 3][y + 0].y()
+                                      + height[x + 0][y + 1].y() + height[x + 1][y + 1].y() + height[x + 2][y + 1].y() + height[x + 3][y + 1].y()
+                                      + height[x + 0][y + 2].y() + height[x + 1][y + 2].y() + height[x + 2][y + 2].y() + height[x + 3][y + 2].y()
+                                      + height[x + 0][y + 3].y() + height[x + 1][y + 3].y() + height[x + 2][y + 3].y() + height[x + 3][y + 3].y();
+                        _height      /= 16.0f;
 
-                    QVector3D vector = height[x][y];
-                    vector.setX(xPos);
-                    vector.setZ(zPos);
+                        QVector3D vector = height[x / 4][y / 4];
+                        vector.setY(_height);
 
-                    height[x][y] = vector;
+                        height[x / 4][y / 4] = vector;
+                    }
+                }
+
+                for(int y = 0; y < STLheight; ++y)
+                {
+                    for(int x = 0; x < STLwidth; ++x)
+                    {
+                        float xPos = MathHelper::toFloat(x) / MathHelper::toFloat(STLwidth  - 1) * CHUNKSIZE;
+                        float zPos = MathHelper::toFloat(y) / MathHelper::toFloat(STLheight - 1) * CHUNKSIZE;
+
+                        QVector3D vector = height[x][y];
+                        vector.setX(xPos);
+                        vector.setZ(zPos);
+
+                        height[x][y] = vector;
+                    }
                 }
             }
         }
@@ -213,10 +343,12 @@ void STL::createData()
         datas.clear();
 
         // maybe switch X's, now just for proper display in sketchup
-        dataBottom[0][0] = QVector3D(TILESIZE,     0.0f, 0.0f);
+        float size = type == true ? TILESIZE : CHUNKSIZE;
+
+        dataBottom[0][0] = QVector3D(size, 0.0f, 0.0f);
         dataBottom[1][0] = QVector3D(0.0f, 0.0f, 0.0f);
-        dataBottom[0][1] = QVector3D(TILESIZE,     0.0f, TILESIZE);
-        dataBottom[1][1] = QVector3D(0.0f, 0.0f, TILESIZE);
+        dataBottom[0][1] = QVector3D(size, 0.0f, size);
+        dataBottom[1][1] = QVector3D(0.0f, 0.0f, size);
 
         for(int y = 0; y < 2; ++y)
         {
@@ -278,10 +410,11 @@ Face* STL::getFace(Facets facet)
     }
 }
 
-Face::Face(STL::Facets face, QObject* parent)
+Face::Face(STL::Facets face, bool tile, QObject* parent)
 : QObject(parent)
 , facet(face)
 , readyToWrite(true)
+, type(tile)
 {
 }
 
@@ -380,8 +513,8 @@ void Face::writeToFile(QTextStream* stream, float scale)
 void Face::createVertices()
 {
     /// Resolution settings
-    const int STLwidth  = facetResolution == STL::High ? TILE_WIDTH  : TILE_WIDTH  / 4;
-    const int STLheight = facetResolution == STL::High ? TILE_HEIGHT : TILE_HEIGHT / 4;
+    const int STLwidth  = facetResolution == STL::High ? type == true ? TILE_WIDTH  : TILE_WIDTH  / CHUNKS : type == true ? TILE_WIDTH  / 4 : TILE_WIDTH  / CHUNKS / 4;
+    const int STLheight = facetResolution == STL::High ? type == true ? TILE_HEIGHT : TILE_HEIGHT / CHUNKS : type == true ? TILE_HEIGHT / 4 : TILE_HEIGHT / CHUNKS / 4;
 
     switch(facet)
     {
@@ -407,6 +540,8 @@ void Face::createVertices()
         case STL::Right:
         case STL::North:
             {
+                float size = type == true ? TILESIZE : CHUNKSIZE;
+
                 for(int y = 0; y < 2 - 1; ++y)
                 {
                     for(int x = 0; x < STLwidth - 1; ++x)
@@ -424,37 +559,37 @@ void Face::createVertices()
                 {
                     case STL::North: // maybe switch X's, now just for proper display in sketchup
                         {
-                            data[0][0] = QVector3D(TILESIZE, 1.0f, 0.0f);
-                            data[1][0] = QVector3D(0.0f,     1.0f, 0.0f);
-                            data[0][1] = QVector3D(TILESIZE, 0.0f, 0.0f);
-                            data[1][1] = QVector3D(0.0f,     0.0f, 0.0f);
+                            data[0][0] = QVector3D(size, STL::baseHeight, 0.0f);
+                            data[1][0] = QVector3D(0.0f, STL::baseHeight, 0.0f);
+                            data[0][1] = QVector3D(size, 0.0f, 0.0f);
+                            data[1][1] = QVector3D(0.0f, 0.0f, 0.0f);
                         }
                         break;
 
                     case STL::South:
                         {
-                            data[0][0] = QVector3D(0.0f,     1.0f, TILESIZE);
-                            data[1][0] = QVector3D(TILESIZE, 1.0f, TILESIZE);
-                            data[0][1] = QVector3D(0.0f,     0.0f, TILESIZE);
-                            data[1][1] = QVector3D(TILESIZE, 0.0f, TILESIZE);
+                            data[0][0] = QVector3D(0.0f, STL::baseHeight, size);
+                            data[1][0] = QVector3D(size, STL::baseHeight, size);
+                            data[0][1] = QVector3D(0.0f, 0.0f,            size);
+                            data[1][1] = QVector3D(size, 0.0f,            size);
                         }
                         break;
 
                     case STL::Left:
                         {
-                            data[0][0] = QVector3D(0.0f, 1.0f, 0.0f);
-                            data[1][0] = QVector3D(0.0f, 1.0f, TILESIZE);
-                            data[0][1] = QVector3D(0.0f, 0.0f, 0.0f);
-                            data[1][1] = QVector3D(0.0f, 0.0f, TILESIZE);
+                            data[0][0] = QVector3D(0.0f, STL::baseHeight, 0.0f);
+                            data[1][0] = QVector3D(0.0f, STL::baseHeight, size);
+                            data[0][1] = QVector3D(0.0f, 0.0f,            0.0f);
+                            data[1][1] = QVector3D(0.0f, 0.0f,            size);
                         }
                         break;
 
                     case STL::Right:
                         {
-                            data[0][0] = QVector3D(TILESIZE, 1.0f, TILESIZE);
-                            data[1][0] = QVector3D(TILESIZE, 1.0f, 0.0f);
-                            data[0][1] = QVector3D(TILESIZE, 0.0f, TILESIZE);
-                            data[1][1] = QVector3D(TILESIZE, 0.0f, 0.0f);
+                            data[0][0] = QVector3D(size, STL::baseHeight, size);
+                            data[1][0] = QVector3D(size, STL::baseHeight, 0.0f);
+                            data[0][1] = QVector3D(size, 0.0f,            size);
+                            data[1][1] = QVector3D(size, 0.0f,            0.0f);
                         }
                         break;
                 }
@@ -507,7 +642,7 @@ void Face::optimalize()
 
                             for(int i = 0; i < 16; ++i)
                             {
-                                FaceWorker* worker = new FaceWorker(vertexs, i, this, this);
+                                FaceWorker* worker = new FaceWorker(vertexs, i, type, this, this);
 
                                 connect(worker, &QThread::finished, worker, &QObject::deleteLater);
 
@@ -625,8 +760,8 @@ void Face::optimalize()
 void Face::setInputData(QVector<QVector3D>& datas)
 {
     /// Resolution settings
-    const int STLwidth  = facetResolution == STL::High ? TILE_WIDTH  : TILE_WIDTH  / 4;
-    const int STLheight = facetResolution == STL::High ? TILE_HEIGHT : TILE_HEIGHT / 4;
+    const int STLwidth  = facetResolution == STL::High ? type == true ? TILE_WIDTH  : TILE_WIDTH  / CHUNKS : type == true ? TILE_WIDTH  / 4 : TILE_WIDTH  / CHUNKS / 4;
+    const int STLheight = facetResolution == STL::High ? type == true ? TILE_HEIGHT : TILE_HEIGHT / CHUNKS : type == true ? TILE_HEIGHT / 4 : TILE_HEIGHT / CHUNKS / 4;
 
     switch(facet)
     {
@@ -677,6 +812,8 @@ void Face::setInputData(QVector<QVector3D>& datas)
             break;
     }
 
+    float size = type == true ? TILESIZE : CHUNKSIZE;
+
     switch(facet)
     {
         case STL::South:
@@ -685,11 +822,11 @@ void Face::setInputData(QVector<QVector3D>& datas)
                 {
                     for(int x = 0; x < STLwidth; ++x)
                     {
-                        float xPos = MathHelper::toFloat(x) / MathHelper::toFloat(STLwidth - 1) * TILESIZE;
-                        float zPos = 1.0f * TILESIZE;
+                        float xPos = MathHelper::toFloat(x) / MathHelper::toFloat(STLwidth - 1) * size;
+                        float zPos = 1.0f * size;
 
                         if(y != 0)
-                            data[x][y] = QVector3D(xPos, 1.0f, zPos);
+                            data[x][y] = QVector3D(xPos, STL::baseHeight, zPos);
                         else
                             data[x][y] = QVector3D(xPos, data[x][y].y(), zPos);
                     }
@@ -704,10 +841,10 @@ void Face::setInputData(QVector<QVector3D>& datas)
                     for(int x = 0; x < STLwidth; ++x)
                     {
                         float xPos = 0.0f;
-                        float zPos = MathHelper::toFloat(x) / MathHelper::toFloat(STLheight - 1) * TILESIZE;
+                        float zPos = MathHelper::toFloat(x) / MathHelper::toFloat(STLheight - 1) * size;
 
                         if(y != 0)
-                            data[x][y] = QVector3D(xPos, 1.0f, zPos);
+                            data[x][y] = QVector3D(xPos, STL::baseHeight, zPos);
                         else
                             data[x][y] = QVector3D(xPos, data[x][y].y(), zPos);
                     }
@@ -721,11 +858,11 @@ void Face::setInputData(QVector<QVector3D>& datas)
                 {
                     for(int x = 0; x < STLwidth; ++x)
                     {
-                        float xPos = 1.0f * TILESIZE;
-                        float zPos = MathHelper::toFloat(STLheight - (x + 1)) / MathHelper::toFloat(STLheight - 1) * TILESIZE;
+                        float xPos = 1.0f * size;
+                        float zPos = MathHelper::toFloat(STLheight - (x + 1)) / MathHelper::toFloat(STLheight - 1) * size;
 
                         if(y != 0)
-                            data[x][y] = QVector3D(xPos, 1.0f, zPos);
+                            data[x][y] = QVector3D(xPos, STL::baseHeight, zPos);
                         else
                             data[x][y] = QVector3D(xPos, data[x][y].y(), zPos);
                     }
@@ -739,11 +876,11 @@ void Face::setInputData(QVector<QVector3D>& datas)
                 {
                     for(int x = 0; x < STLwidth; ++x)
                     {
-                        float xPos = MathHelper::toFloat(STLwidth - (x + 1)) / MathHelper::toFloat(STLwidth - 1) * TILESIZE;
+                        float xPos = MathHelper::toFloat(STLwidth - (x + 1)) / MathHelper::toFloat(STLwidth - 1) * size;
                         float zPos = 0.0f;
 
                         if(y != 0)
-                            data[x][y] = QVector3D(xPos, 1.0f, zPos);
+                            data[x][y] = QVector3D(xPos, STL::baseHeight, zPos);
                         else
                             data[x][y] = QVector3D(xPos, data[x][y].y(), zPos);
                     }
@@ -764,7 +901,7 @@ void Face::setSurfaceSize(float mm, bool scaleHeight)
         QThread::sleep(1);
 
     for(int i = 0; i < vertexs.count(); ++i)
-        vertexs[i].setSurfaceSize(mm, scaleHeight);
+        vertexs[i].setSurfaceSize(mm, type == true ? TILESIZE : CHUNKSIZE, scaleHeight);
 }
 
 void Face::handleResults(VertexArray container, int threadID)
@@ -845,9 +982,10 @@ void Face::handleResults(VertexArray container, int threadID)
     }
 }
 
-FaceWorker::FaceWorker(QVector<Vertex> &container, int threadID, Face* faceParent, QObject* parent)
+FaceWorker::FaceWorker(QVector<Vertex> &container, int threadID, bool tile, Face* faceParent, QObject* parent)
 : QThread(parent)
 , face(faceParent)
+, type(tile)
 , vertexs(container)
 , threadNumber(threadID)
 {
@@ -861,7 +999,7 @@ FaceWorker::~FaceWorker()
 void FaceWorker::run()
 {
     // remove another thread vertexs
-    int vertexsTotal = 256 * 256;
+    int vertexsTotal = type == true ? TILE_WIDTH / CHUNKS * TILE_HEIGHT / CHUNKS : CHUNK_WIDTH / CHUNKS * CHUNK_HEIGHT / CHUNKS;
     int startOffset  = vertexsTotal * threadNumber;
     int endOffset    = startOffset + vertexsTotal;
 
@@ -957,26 +1095,26 @@ void Vertex::scale(const float value)
     vertex4 *= value;
 }
 
-void Vertex::setSurfaceSize(float mm, bool scaleHeight)
+void Vertex::setSurfaceSize(float mm, float mapSize, bool scaleHeight)
 {
-    vertex1.setX(vertex1.x() / TILESIZE * mm);
-    vertex1.setZ(vertex1.z() / TILESIZE * mm);
+    vertex1.setX(vertex1.x() / mapSize * mm);
+    vertex1.setZ(vertex1.z() / mapSize * mm);
 
-    vertex2.setX(vertex2.x() / TILESIZE * mm);
-    vertex2.setZ(vertex2.z() / TILESIZE * mm);
+    vertex2.setX(vertex2.x() / mapSize * mm);
+    vertex2.setZ(vertex2.z() / mapSize * mm);
 
-    vertex3.setX(vertex3.x() / TILESIZE * mm);
-    vertex3.setZ(vertex3.z() / TILESIZE * mm);
+    vertex3.setX(vertex3.x() / mapSize * mm);
+    vertex3.setZ(vertex3.z() / mapSize * mm);
 
-    vertex4.setX(vertex4.x() / TILESIZE * mm);
-    vertex4.setZ(vertex4.z() / TILESIZE * mm);
+    vertex4.setX(vertex4.x() / mapSize * mm);
+    vertex4.setZ(vertex4.z() / mapSize * mm);
 
     if(scaleHeight)
     {
-        vertex1.setY(vertex1.y() / TILESIZE * mm);
-        vertex2.setY(vertex2.y() / TILESIZE * mm);
-        vertex3.setY(vertex3.y() / TILESIZE * mm);
-        vertex4.setY(vertex4.y() / TILESIZE * mm);
+        vertex1.setY(vertex1.y() / mapSize * mm);
+        vertex2.setY(vertex2.y() / mapSize * mm);
+        vertex3.setY(vertex3.y() / mapSize * mm);
+        vertex4.setY(vertex4.y() / mapSize * mm);
     }
 }
 

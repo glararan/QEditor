@@ -637,6 +637,8 @@ void MapTile::saveTile()
     MapHeader mapHeader;
     mapHeader.version = MAP_HEADER_VERSION;
     mapHeader.mcin    = new MCIN;
+    mapHeader.mobj    = new MOBJ;
+    mapHeader.mddf    = new MDDF;
 
     for(int x = 0; x < CHUNKS; ++x)
     {
@@ -648,6 +650,75 @@ void MapTile::saveTile()
 
             mapChunks[x][y]->save(mapHeader.mcin->entries[index].mcnk);
         }
+    }
+
+    int empty = 0;
+
+    for(int i = 0; i < objects.size(); ++i)
+    {
+        QString filePath = objects.at(i)->getModel()->getModelInterface()->getFilePath();
+
+        if(empty >= MAX_OBJECTS)
+            continue;
+
+        bool already = false;
+
+        // check for list if there is
+        for(int j = 0; j < MAX_OBJECTS; ++j)
+        {
+            if(mapHeader.mobj->fileNames[j] == filePath)
+            {
+                already = true;
+
+                break;
+            }
+        }
+
+        if(!already) // not on list, there is still place to add
+            mapHeader.mobj->fileNames[empty++] = filePath;
+    }
+
+    empty = 0;
+
+    for(int i = 0; i < objects.size(); ++i)
+    {
+        if(empty >= MAX_OBJECTS * 4) // sorry we are full
+            break;
+
+        // lets add entries
+        QString filePath = objects.at(i)->getModel()->getModelInterface()->getFilePath();
+
+        int id = -1;
+
+        for(int j = 0; j < MAX_OBJECTS; ++j)
+        {
+            if(mapHeader.mobj->fileNames[j] == filePath)
+            {
+                id = j;
+
+                break;
+            }
+        }
+
+        if(id == -1) // this model is not on list, sorry, todo some output
+            break;
+
+        // add
+        MapObject* object = objects.at(i);
+
+        mapHeader.mddf->entries[empty].mobjEntry   = id;
+        mapHeader.mddf->entries[empty].uniqueID    = 0; // not used
+        mapHeader.mddf->entries[empty].position[0] = object->getTranslate().x();
+        mapHeader.mddf->entries[empty].position[1] = object->getTranslate().y();
+        mapHeader.mddf->entries[empty].position[2] = object->getTranslate().z();
+        mapHeader.mddf->entries[empty].rotation[0] = object->getRotation().x();
+        mapHeader.mddf->entries[empty].rotation[1] = object->getRotation().y();
+        mapHeader.mddf->entries[empty].rotation[2] = object->getRotation().z();
+        mapHeader.mddf->entries[empty].scale[0]    = object->getScale().x();
+        mapHeader.mddf->entries[empty].scale[1]    = object->getScale().y();
+        mapHeader.mddf->entries[empty].scale[2]    = object->getScale().z();
+
+        ++empty;
     }
 
     QDataStream data(&file);
@@ -670,6 +741,25 @@ void MapTile::test()
 void MapTile::insertModel(MapObject *object)
 {
     objects.push_back(object);
+}
+
+bool MapTile::deleteObject(MapObject* object)
+{
+    for(int i = 0; i < objects.count(); ++i)
+    {
+        if(objects[i] == object)
+        {
+            objects.removeAt(i);
+
+            delete object;
+
+            object = NULL;
+
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void MapTile::deleteModel(float x, float z)
@@ -703,6 +793,19 @@ void MapTile::updateModelHeight()
 
         mapObject->setTranslate(position);
     }
+}
+
+void MapTile::spawnDetailDoodads(QVector<QString>& textures, QMap<int, QVector<QPair<QString, float>>>& data)
+{
+    QVector<QVector<QPair<QString, QVector3D>>> resultSpawnData;
+
+    for(int y = 0; y < CHUNKS; ++y)
+    {
+        for(int x = 0; x < CHUNKS; ++x)
+            resultSpawnData.append(mapChunks[x][y]->spawnDetailDoodads(textures, data));
+    }
+
+    world->getUndoRedoManager()->push(new SpawnDetailDoodadsCommand(resultSpawnData, world));
 }
 
 MapChunk* MapTile::getChunkAt(float x, float z)

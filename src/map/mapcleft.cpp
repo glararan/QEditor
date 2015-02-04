@@ -12,17 +12,9 @@ MapCleft::MapCleft(World* mWorld, MapTile* tile, MapChunk::Border orient, MapChu
     chunkMaterial = new Material();
 
     ///////////
-    for(int i = 0; i < MAX_TEXTURES; ++i)
-    {
-        world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture1 + ToGLuint(i));
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Textures);
 
-        QString uniformName = QString("layer%1Texture").arg(i);
-
-        if(i == 0)
-            uniformName = "baseTexture";
-
-        chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1 + i, previous->textures[i], world->getTextureManager()->getSampler(), uniformName.toLatin1());
-    }
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Textures, previous->textureArray, world->getTextureManager()->getSampler(), "textures");
 
     for(int i = 0; i < ALPHAMAPS; ++i)
     {

@@ -31,7 +31,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <QMessageBox>
 #include <QDir>
 
-World::World(const ProjectFileData& projectFile)
+World::World(const ProjectFileData& projectFile, UndoRedoManager* undoManager)
 : camera(0)
 , projectData(projectFile)
 , brush(new Brush(Brush::Types(), 3.0f, 10.0f, app().getSetting("outerBrushColor", QColor(0, 255, 0)).value<QColor>(), app().getSetting("innerBrushColor", QColor(0, 255, 0)).value<QColor>(), 5.3f))
@@ -42,6 +42,7 @@ World::World(const ProjectFileData& projectFile)
 , modelManager(NULL)
 , selectionManager(NULL)
 , currentSelection(NULL)
+, undoRedoManager(undoManager)
 , reflection_fbo(NULL)
 , refraction_fbo(NULL)
 , terrainMaximumHeight(0.0f)
@@ -86,7 +87,6 @@ World::~World()
     delete modelManager;
     delete objectBrush;
     delete skybox;
-    delete possibleModel;
     delete modelShader;
     delete terrainShader;
     delete cleftShader;
@@ -195,14 +195,14 @@ void World::initialize(QOpenGLContext* context, QSize fboSize, bool** mapCoords)
     /// Bounding Box shader
     boundingBoxShader = new QOpenGLShaderProgram();
 
-    /*if(!boundingBoxShader->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/data/shaders/qeditor_boundingbox.vert"))
+    if(!boundingBoxShader->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/data/shaders/qeditor_boundingbox.vert"))
         qCritical() << QObject::tr("Could not compile vertex shader. Log:") << boundingBoxShader->log();
 
     if(!boundingBoxShader->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/data/shaders/qeditor_boundingbox.frag"))
         qCritical() << QObject::tr("Could not compile fragment shader. Log:") << boundingBoxShader->log();
 
     if(!boundingBoxShader->link())
-        qCritical() << QObject::tr("Could not link shader program. Log:") << boundingBoxShader->log();*/
+        qCritical() << QObject::tr("Could not link shader program. Log:") << boundingBoxShader->log();
 
     /// Terrain Shader
     terrainShader = new QOpenGLShaderProgram();
@@ -594,7 +594,7 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
     if(currentSelection->getType() == Selection::MapObjectType)
     {
         // draw bounding box
-        currentSelection->getData().mapObject->drawBoundingBox(boundingBoxShader);
+        currentSelection->getData().mapObject->drawBoundingBox(boundingBoxShader, camera->viewMatrix(), camera->projectionMatrix());
     }
 
     glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
@@ -915,6 +915,96 @@ void World::paintVertexLighting(float x, float z, float flow, QColor& lightColor
     }
 }
 
+bool World::trySelectMapObject(const QVector3D& position)
+{
+    MapTile* tile = getTileAt(position.x(), position.z());
+
+    if(tile)
+    {
+        bool found = false;
+
+        for(int i = 0; i < tile->getMapObjects().count(); ++i)
+        {
+            QVector3D boundingBoxMin = tile->getMapObjects().at(i)->getBoundingBoxMin();
+            QVector3D boundingBoxMax = tile->getMapObjects().at(i)->getBoundingBoxMax();
+
+            if(position.x() >= boundingBoxMin.x() && position.x() <= boundingBoxMax.x()
+            && position.y() >= boundingBoxMin.y() && position.y() <= boundingBoxMax.y()
+            && position.z() >= boundingBoxMin.z() && position.z() <= boundingBoxMax.z())
+            {
+                // find selection or create
+                /*for(int i = 0; i < )
+
+                if() // find
+                {
+
+                }
+                else*/ // create
+                    currentSelection = selectionManager->getSelection(selectionManager->add(tile->getMapObjects().at(i)));
+
+                found = true;
+
+                return true;
+            }
+        }
+
+        if(!found)
+            currentSelection = selectionManager->getSelection(0);
+    }
+
+    return false;
+}
+
+void World::spawnMapObjectFromFavouriteList(const QVector3D& position)
+{
+    Q_UNUSED(position);
+
+    int current_index = modelManager->getCurrentModel();
+
+    if(current_index < 0)
+        return;
+
+    undoRedoManager->push(new AddMapObjectCommand(worldCoordinates, QVector3D(getObjectBrush()->rotation_x, getObjectBrush()->rotation_y, getObjectBrush()->rotation_z), QVector3D(getObjectBrush()->scale, getObjectBrush()->scale, getObjectBrush()->scale), current_index, this));
+
+    /*MapTile* tile = getTileAt(position.x(), position.z());
+
+    if(tile)
+    {
+        int current_index = modelManager->getCurrentModel();
+
+        if(current_index < 0)
+            return;*/
+
+        //urManager->push(new AddMapObjectCommand());
+        //undoRedoManager->push(new AddMapObjectCommand(worldCoordinates, QVector3D(getObjectBrush()->rotation_x, getObjectBrush()->rotation_y, getObjectBrush()->rotation_z), QVector3D(getObjectBrush()->scale, getObjectBrush()->scale, getObjectBrush()->scale), current_index, this));
+
+        /*MapObject* object = new MapObject(modelManager->getModel(current_index), getObjectBrush()->impend * 10.0f);
+        object->setTranslate(worldCoordinates, false);
+        object->setRotation(QVector3D(getObjectBrush()->rotation_x, getObjectBrush()->rotation_y, getObjectBrush()->rotation_z), false);
+        object->setScale(QVector3D(getObjectBrush()->scale, getObjectBrush()->scale, getObjectBrush()->scale), false);
+        object->updateBoundingBox();
+
+        tile->insertModel(object);
+
+        currentSelection = selectionManager->getSelection(selectionManager->add(object));*/
+    //}
+}
+
+void World::addObject(MapObject* object, bool selected)
+{
+    QVector3D position = object->getTranslate();
+
+    MapTile* tile = getTileAt(position.x(), position.z());
+
+    if(tile)
+    {
+        tile->insertModel(object);
+
+        if(selected)
+            currentSelection = selectionManager->getSelection(selectionManager->add(object));
+    }
+}
+
 void World::removeObject(float x, float z)
 {
     for(int tx = 0; tx < TILES; ++tx)
@@ -923,6 +1013,24 @@ void World::removeObject(float x, float z)
         {
             if(tileLoaded(tx, ty))
                 mapTiles[tx][ty].tile->deleteModel(x, z);
+        }
+    }
+}
+
+void World::removeObject(MapObject* object)
+{
+    if(currentSelection->getType() == Selection::MapObjectType && currentSelection->getData().mapObject == object)
+        currentSelection = selectionManager->getSelection(0);
+
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
+                if(mapTiles[tx][ty].tile->deleteObject(object))
+                    return; // break both cycles faster :)
+            }
         }
     }
 }
@@ -974,28 +1082,27 @@ void World::updateNewModel(bool shiftDown, bool leftButtonPressed)
         QString path = possibleModel->getModelInterface()->getFilePath() + possibleModel->getModelInterface()->getFileName();
 
         if(modelManager->getIndex(path) != current_index)
-        {
-            delete possibleModel;
-
-            possibleModel = new Model(modelManager, current_index);
-        }
+            possibleModel = modelManager->getModel(current_index);
     }
     else if(current_index >= 0)
-        possibleModel = new Model(modelManager, current_index);
+        possibleModel = modelManager->getModel(current_index);
 
     if(leftButtonPressed && shiftDown) //insert new model
     {
-        MapTile* tile = getTileAt(worldCoordinates.x(), worldCoordinates.z());
+        undoRedoManager->push(new AddMapObjectCommand(worldCoordinates, QVector3D(getObjectBrush()->rotation_x, getObjectBrush()->rotation_y, getObjectBrush()->rotation_z), QVector3D(getObjectBrush()->scale, getObjectBrush()->scale, getObjectBrush()->scale), current_index, this, false));
+
+        /*MapTile* tile = getTileAt(worldCoordinates.x(), worldCoordinates.z());
 
         if(tile)
         {
-            MapObject* object = new MapObject(new Model(modelManager, current_index), getObjectBrush()->impend * 10.0f);
-            object->setTranslate(worldCoordinates);
-            object->setRotation(QVector3D(getObjectBrush()->rotation_x, getObjectBrush()->rotation_y, getObjectBrush()->rotation_z));
-            object->setScale(QVector3D(getObjectBrush()->scale, getObjectBrush()->scale, getObjectBrush()->scale));
+            MapObject* object = new MapObject(modelManager->getModel(current_index), getObjectBrush()->impend * 10.0f);
+            object->setTranslate(worldCoordinates, false);
+            object->setRotation(QVector3D(getObjectBrush()->rotation_x, getObjectBrush()->rotation_y, getObjectBrush()->rotation_z), false);
+            object->setScale(QVector3D(getObjectBrush()->scale, getObjectBrush()->scale, getObjectBrush()->scale), false);
+            object->updateBoundingBox();
 
             tile->insertModel(object);
-        }
+        }*/
     }
 }
 
@@ -1085,13 +1192,24 @@ void World::exportHeightmap(QString path, float scale)
         mapTiles[0][0].tile->exportHeightmap(path, scale);
 }
 
-void World::exportSTL(QString path, float surface, bool scaleHeight, bool low)
+void World::exportSTL(QString path, float surface, bool scaleHeight, bool low, bool tile)
 {
     // todo for selected tile, heightmap_x_y.stl
     if(tileLoaded(0, 0))
     {
-        // Generat 3D STL data
-        STL* stlExport = new STL(mapTiles[0][0].tile, low ? STL::Low : STL::High);
+        STL* stlExport;
+
+        if(tile)
+            stlExport = new STL(mapTiles[0][0].tile, low ? STL::Low : STL::High);
+        else
+        {
+            //if(!currentSelection->getData().mapChunk)
+                //return;
+
+            stlExport = new STL(mapTiles[0][0].tile->getChunk(0, 3), low ? STL::Low : STL::High);
+        }
+
+        // Generate 3D STL data
         stlExport->createData();
         stlExport->surfaceSize(surface, scaleHeight);
         stlExport->exportIt(path);
@@ -1570,6 +1688,21 @@ void World::updateNeighboursHeightmapData()
 
 void World::test()
 {
+    for(int x = 0; x < TILES; ++x)
+    {
+            for(int y = 0; y < TILES; ++y)
+            {
+                if(tileLoaded(x, y))
+                {
+                    for(int wx = 0; wx < CHUNKS; ++wx)
+                    {
+                        for(int wy = 0; wy < CHUNKS; ++wy)
+                            mapTiles[x][y].tile->getChunk(wx, wy)->test();
+                    }
+                }
+            }
+    }
+
     /// Enable water on each tile and chunk
     /*for(int x = 0; x < TILES; ++x)
     {

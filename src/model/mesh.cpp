@@ -30,14 +30,19 @@ Mesh::~Mesh()
 
 void Mesh::createVertexArrayObject()
 {
-    vao.create();
+    if(!vao.isCreated())
+        vao.create();
+
     vao.bind();
 }
 
 void Mesh::createBuffer(const BufferName name, void* data, const int count)
 {
     QOpenGLBuffer* buffer = getBuffer(name);
-    buffer->create();
+
+    if(!buffer->isCreated())
+        buffer->create();
+
     buffer->setUsagePattern(QOpenGLBuffer::StaticDraw);
     buffer->bind();
     buffer->allocate(data, count);

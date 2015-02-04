@@ -44,6 +44,7 @@ MainWindow::MainWindow(QWidget* parent)
 , modelpickerW(NULL)
 , heightmapW(NULL)
 , basicSettingsW(NULL)
+, detailDoodadsW(NULL)
 , colorW(NULL)
 , waterW(NULL)
 , cameraW(NULL)
@@ -94,6 +95,7 @@ MainWindow::MainWindow(QWidget* parent)
 , t_impend_value_label(NULL)
 , t_scale_label(NULL)
 , t_scale_value_label(NULL)
+, undoRedoManager(new UndoRedoManager(this))
 , world(NULL)
 , mapView(NULL)
 {
@@ -141,6 +143,7 @@ MainWindow::~MainWindow()
     delete cameraW;
     delete heightmapW;
     delete basicSettingsW;
+    delete detailDoodadsW;
 
     deleteObject(t_outer_radius);
     deleteObject(t_inner_radius);
@@ -202,6 +205,8 @@ MainWindow::~MainWindow()
 
     qDebug() << tr("UI in MainWindow was destroyed!");
 
+    delete undoRedoManager;
+
     deleteObject(startUp);
 
     if(world)
@@ -215,10 +220,10 @@ MainWindow::~MainWindow()
 void MainWindow::openWorld(ProjectFileData projectData, bool** mapCoords)
 {
     // world constructor
-    world = new World(projectData);
+    world = new World(projectData, undoRedoManager);
 
     // map view constructor
-    mapView = new MapView(world, this, mapCoords);
+    mapView = new MapView(world, undoRedoManager, this, mapCoords);
 
     setCentralWidget(mapView);
 
@@ -240,6 +245,7 @@ void MainWindow::openWorld(ProjectFileData projectData, bool** mapCoords)
     waterW         = new WaterWidget();
     cameraW        = new CameraWidget(world->getCamera());
     heightmapW     = new HeightmapWidget();
+    detailDoodadsW = new DetailDoodadsWidget();
 
     // post initialize world sub widgets
     connect(mapView, SIGNAL(initialized()), this, SLOT(postInitializeSubWorldWidgets()));
@@ -253,8 +259,11 @@ void MainWindow::openWorld(ProjectFileData projectData, bool** mapCoords)
     connect(mapView, SIGNAL(updateBrushInnerRadius(double)),  this,           SLOT(setBrushInnerRadius(double)));
     connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)),     texturepW,      SLOT(setChunk(MapChunk*)));
     connect(mapView, SIGNAL(selectedMapChunk(MapChunk*)),     chunkSettingsW, SLOT(setChunk(MapChunk*)));
+    connect(mapView, SIGNAL(selectedMapTile(MapTile*)),       detailDoodadsW, SLOT(setTile(MapTile*)));
     connect(mapView, SIGNAL(selectedWaterChunk(WaterChunk*)), waterW,         SLOT(setChunk(WaterChunk*)));
     connect(mapView, SIGNAL(getCameraCurvePoint(QVector3D)),  cameraW,        SLOT(selectPoint(QVector3D)));
+    connect(mapView, SIGNAL(setPreviousModel()),              modelpickerW,   SLOT(setPreviousModel()));
+    connect(mapView, SIGNAL(setNextModel()),                  modelpickerW,   SLOT(setNextModel()));
 
     connect(mapView, SIGNAL(eMModeChanged(MapView::eMouseMode&, MapView::eEditingMode&)),
             this,    SLOT(setBrushMode(MapView::eMouseMode&, MapView::eEditingMode&)));
@@ -297,13 +306,14 @@ void MainWindow::openWorld(ProjectFileData projectData, bool** mapCoords)
     // tools - show chunk lines
     connect(ui->action_Show_Chunk_lines, SIGNAL(toggled(bool)), mapView, SLOT(setTurnChunkLines(bool)));
 
-    // tools - texture picker, settings, teleport, map generator, heightmap, reset camera, lock camera
+    // tools - texture picker, settings, teleport, map generator, heightmap, reset camera, lock camera, detail doodads
     connect(ui->action_Texture_Picker, SIGNAL(triggered()),     this,    SLOT(showTexturePicker()));
     connect(ui->action_Chunk_settings, SIGNAL(triggered()),     this,    SLOT(showChunkSettings()));
     connect(ui->action_Settings,       SIGNAL(triggered()),     this,    SLOT(showSettings()));
     connect(ui->action_Teleport,       SIGNAL(triggered()),     this,    SLOT(showTeleport()));
     connect(ui->action_Map_Generator,  SIGNAL(triggered()),     this,    SLOT(showMapGeneration()));
     connect(ui->action_Heightmap,      SIGNAL(triggered()),     this,    SLOT(showHeightmap()));
+    connect(ui->action_Detail_Doodads, SIGNAL(triggered()),     this,    SLOT(showDetailDoodads()));
     connect(ui->action_Reset_camera,   SIGNAL(triggered()),     mapView, SLOT(resetCamera()));
     connect(ui->action_Lock_camera,    SIGNAL(triggered(bool)), mapView, SLOT(lockCamera(bool)));
 
@@ -317,20 +327,27 @@ void MainWindow::openWorld(ProjectFileData projectData, bool** mapCoords)
     connect(settingsW, SIGNAL(setTextureScaleNear(float)),         mapView, SLOT(setTextureScaleNear(float)));
     connect(settingsW, SIGNAL(setTabletMode(bool)),                mapView, SLOT(setTabletMode(bool)));
 
-    connect(heightmapW, SIGNAL(accepted()),                               this, SLOT(heightmapWidgetAccepted()));
-    connect(heightmapW, SIGNAL(rejected()),                               this, SLOT(heightmapWidgetRejected()));
-    connect(heightmapW, SIGNAL(setScale(float)),                          this, SLOT(setHeightmapScale(float)));
-    connect(heightmapW, SIGNAL(importing(QString, float)),                this, SLOT(importingHeightmap(QString, float)));
-    connect(heightmapW, SIGNAL(exporting(QString, float)),                this, SLOT(exportingHeightmap(QString, float)));
-    connect(heightmapW, SIGNAL(stlExporting(QString, float, bool, bool)), this, SLOT(exportingSTL(QString, float, bool, bool)));
+    connect(heightmapW, SIGNAL(accepted()),                                     this, SLOT(heightmapWidgetAccepted()));
+    connect(heightmapW, SIGNAL(rejected()),                                     this, SLOT(heightmapWidgetRejected()));
+    connect(heightmapW, SIGNAL(setScale(float)),                                this, SLOT(setHeightmapScale(float)));
+    connect(heightmapW, SIGNAL(importing(QString, float)),                      this, SLOT(importingHeightmap(QString, float)));
+    connect(heightmapW, SIGNAL(exporting(QString, float)),                      this, SLOT(exportingHeightmap(QString, float)));
+    connect(heightmapW, SIGNAL(stlExporting(QString, float, bool, bool, bool)), this, SLOT(exportingSTL(QString, float, bool, bool, bool)));
 
     // tools - test, stereoscopic
     connect(ui->action_3D_Stereoscopic, SIGNAL(triggered(bool)), mapView, SLOT(set3DStreoscopic(bool)));
     connect(ui->action_Test, SIGNAL(triggered()), mapView, SLOT(doTest()));
 
+    // tools - undo redo
+    connect(ui->action_Undo, SIGNAL(triggered()), undoRedoManager, SLOT(undo()));
+    connect(ui->action_Redo, SIGNAL(triggered()), undoRedoManager, SLOT(redo()));
+
+    connect(ui->action_Undo, SIGNAL(triggered()), this, SLOT(undoredo()));
+    connect(ui->action_Redo, SIGNAL(triggered()), this, SLOT(undoredo()));
+
     // tools - development
-    connect(ui->action_Undo,          SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
-    connect(ui->action_Redo,          SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
+    //connect(ui->action_Undo,          SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
+    //connect(ui->action_Redo,          SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
     //connect(ui->action_New,           SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
     connect(ui->action_Load,          SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
     //connect(ui->action_Close_Project, SIGNAL(triggered()), this, SLOT(actionIsInDevelopment()));
@@ -398,6 +415,8 @@ void MainWindow::openWorld(ProjectFileData projectData, bool** mapCoords)
 
     connect(colorW, SIGNAL(currentColorChanged(QColor)), mapView, SLOT(setVertexShading(QColor)));
 
+    connect(modelpickerW, SIGNAL(modelIsSelected()), this, SLOT(modelIsSelected()));
+
     connect(cameraW, SIGNAL(showPath(bool)),                             mapView, SLOT(setCameraShowCurve(bool)));
     connect(cameraW, SIGNAL(repeatPlay(bool)),                           mapView, SLOT(setCameraRepeatPlay(bool)));
     connect(cameraW, SIGNAL(selectedPoint(QVector<QTableWidgetItem*>&)), mapView, SLOT(setCameraCurvePoint(QVector<QTableWidgetItem*>&)));
@@ -407,6 +426,7 @@ void MainWindow::postInitializeSubWorldWidgets()
 {
     texturepW->initialize(world->getTextureManager());
     modelpickerW->loadPicker(world->getModelManager());
+    detailDoodadsW->initialize(world->getTextureManager());
 }
 
 void MainWindow::createMemoryProject(NewProjectData projectData)
@@ -588,6 +608,23 @@ void MainWindow::screenshotUploadError(const QString& error)
 
     if(QObject::sender())
         qobject_cast<FileUpload*>(QObject::sender())->deleteLater();
+}
+
+void MainWindow::undoredo()
+{
+    if(undoRedoManager->count() < 1)
+    {
+        ui->action_Undo->setEnabled(false);
+        ui->action_Redo->setEnabled(false);
+    }
+    else
+    {
+        if(!ui->action_Undo->isEnabled())
+            ui->action_Undo->setEnabled(true);
+
+        if(!ui->action_Redo->isEnabled())
+            ui->action_Redo->setEnabled(false);
+    }
 }
 
 QString MainWindow::getActionName(QObject* object) const
@@ -816,6 +853,11 @@ void MainWindow::showMapGeneration()
 void MainWindow::showHeightmap()
 {
     addDockWindow(tr("Heightmap settings"), heightmapW);
+}
+
+void MainWindow::showDetailDoodads()
+{
+    addDockWindow(tr("Detail Doodads"), detailDoodadsW);
 }
 
 void MainWindow::addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area)
@@ -1422,6 +1464,13 @@ void MainWindow::setModel_Mode(int unknown, bool unknown2)
         mapView->setModelMode(MapView::Removal);
 }
 
+void MainWindow::modelIsSelected()
+{
+    mapView->setDrawModel(true);
+
+    world->updateNewModel(false, false);
+}
+
 void MainWindow::actionIsInDevelopment()
 {
     QMessageBox msg;
@@ -1476,9 +1525,9 @@ void MainWindow::exportingHeightmap(QString path, float scale)
     world->exportHeightmap(path, scale);
 }
 
-void MainWindow::exportingSTL(QString path, float surface, bool scaleHeight, bool low)
+void MainWindow::exportingSTL(QString path, float surface, bool scaleHeight, bool low, bool tile)
 {
-    world->exportSTL(path, surface, scaleHeight, low);
+    world->exportSTL(path, surface, scaleHeight, low, tile);
 }
 
 void MainWindow::setHeightmapScale(float scale)

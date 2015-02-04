@@ -19,6 +19,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "qeditor.h"
 #include "mathhelper.h"
 #include "brush.h"
+#include "mapobject.h"
 
 #include <QImage>
 #include <QOpenGLPixelTransferOptions>
@@ -80,7 +81,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
     /*QOpenGLPixelTransferOptions uploadOptions;
     uploadOptions.setAlignment(1);*/
 
-    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture1);
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Textures);
 
     textureArray->bind();
 
@@ -111,7 +112,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 
     world->getGLFunctions()->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, MAX_TEXTURES, GL_RGBA, GL_UNSIGNED_BYTE, texture_data);//textureArray->setData(0, i, QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, textures[i]->getImage().bits(), &uploadOptions);
 
-    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, textureArray, world->getTextureManager()->getSampler(), "textures");
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Textures, textureArray, world->getTextureManager()->getSampler(), "textures");
 
     free(texture_data); // dealloc
 
@@ -121,7 +122,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
     depthTextures[2] = world->getTextureManager()->getDepthTexture("rockTexture");
     depthTextures[3] = world->getTextureManager()->getDepthTexture("snowTexture");
 
-    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture2);
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::DepthTextures);
 
     depthTextureArray->bind();
 
@@ -152,7 +153,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
 
     world->getGLFunctions()->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, MAX_TEXTURES, GL_RGBA, GL_UNSIGNED_BYTE, depth_data);
 
-    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture2, depthTextureArray, world->getTextureManager()->getSampler(), "depthTextures");
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::DepthTextures, depthTextureArray, world->getTextureManager()->getSampler(), "depthTextures");
 
     free(depth_data); // dealloc
 
@@ -407,7 +408,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
     /*QOpenGLPixelTransferOptions uploadOptions;
     uploadOptions.setAlignment(1);*/
 
-    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture1);
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Textures);
 
     textureArray->bind();
 
@@ -438,12 +439,12 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
 
     world->getGLFunctions()->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, MAX_TEXTURES, GL_RGBA, GL_UNSIGNED_BYTE, texture_data);//textureArray->setData(0, i, QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, textures[i]->getImage().bits(), &uploadOptions);
 
-    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, textureArray, world->getTextureManager()->getSampler(), "textures");
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Textures, textureArray, world->getTextureManager()->getSampler(), "textures");
 
     free(texture_data); // dealloc
 
     /// Set Depth Textures
-    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::Texture2);
+    world->getGLFunctions()->glActiveTexture(GL_TEXTURE0 + ShaderUnits::DepthTextures);
 
     depthTextureArray->bind();
 
@@ -474,7 +475,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
 
     world->getGLFunctions()->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, MAX_TEXTURES, GL_RGBA, GL_UNSIGNED_BYTE, depth_data);
 
-    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture2, depthTextureArray, world->getTextureManager()->getSampler(), "depthTextures");
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::DepthTextures, depthTextureArray, world->getTextureManager()->getSampler(), "depthTextures");
 
     free(depth_data); // dealloc
 
@@ -607,7 +608,7 @@ void MapChunk::test()
     chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));*/
 
     /// Fix height
-    terrainData->bind();
+    /*terrainData->bind();
 
     for(int x = 0; x < TILE_WIDTH / CHUNKS; ++x)
     {
@@ -622,6 +623,20 @@ void MapChunk::test()
 
                 terrainData->setHeight(x, QVector2D(QPoint(x, y)));
             }
+        }
+    }
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));*/
+
+    terrainData->bind();
+
+    for(int x = 0; x < TILE_WIDTH / CHUNKS; ++x)
+    {
+        for(int y = 0; y < TILE_HEIGHT / CHUNKS; ++y)
+        {
+            mapData[(TILE_WIDTH / CHUNKS) * y + x] += 2.0f;
+
+            terrainData->setHeight(mapData[(TILE_WIDTH / CHUNKS) * y + x], QVector2D(QPoint(x, y)));
         }
     }
 
@@ -715,6 +730,29 @@ const float MapChunk::getHeightFromWorld(float x, float z)
 const float MapChunk::getMapData(const int& index) const
 {
     return mapData[index];
+}
+
+const float MapChunk::getAlphaFromWorld(float x, float z, int layer)
+{
+    int X = horizToHMapSize(x) % TILE_WIDTH;
+    int Y = horizToHMapSize(z) % TILE_HEIGHT;
+
+    X -= chunkX * (TILE_WIDTH / CHUNKS);
+    Y -= chunkY * (TILE_HEIGHT / CHUNKS);
+
+    int index = (Y * TILE_WIDTH / CHUNKS) + X;
+
+    if(layer == 0)
+    {
+        float alpha = 0.0f;
+
+        for(int i = 0; i < MAX_TEXTURES - 1; ++i)
+            alpha += MathHelper::toFloat(alphaMapsData[i][index]) / 255.0f;
+
+        return 1.0f - alpha;
+    }
+    else // layer - 1 cause we already started at 1 but index starts at 0
+        return MathHelper::toFloat(alphaMapsData[layer - 1][index]) / 255.0f;;
 }
 
 const int MapChunk::chunkIndex() const
@@ -931,6 +969,25 @@ bool MapChunk::changeTerrain(float x, float z, float change)
 
             if(changing.value(i).second.x() == 0)
                 verticalData.append(QPair<int, float>(changing.value(i).second.y(), changing.value(i).first));
+
+            QVector2D position = QVector2D(chunkBaseX + changing.value(i).second.x() / MathHelper::toFloat(CHUNK_WIDTH) * CHUNKSIZE, chunkBaseY + changing.value(i).second.y() / MathHelper::toFloat(CHUNK_HEIGHT) * CHUNKSIZE);
+
+            bool avail = true;
+
+            for(int j = 0; j < world->getModifiedTerrain().count(); ++j)
+            {
+                QPair<QVector2D, float> pair = world->getModifiedTerrain().at(j);
+
+                if(pair.first == position)
+                {
+                    avail = false;
+
+                    break;
+                }
+            }
+
+            if(avail)
+                world->addModifiedTerrain(QPair<QVector2D, float>(position, changing.value(i).first));
 
             terrainData->setHeight(changing.value(i).first, changing.value(i).second);
         }
@@ -1356,9 +1413,66 @@ bool MapChunk::paintTerrain(float x, float z, float flow, TexturePtr texture)
 
                 textures[i] = texture;
 
-                QString uniformName = QString("layer%1Texture").arg(i);
+                /// Set texture
+                unsigned char* texture_data = (unsigned char*)malloc(MAX_TEXTURE_SIZE * MAX_TEXTURE_SIZE * 4);
 
-                chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1 + i, textures[i], world->getTextureManager()->getSampler(), uniformName.toLatin1());
+                memset(texture_data, 0, MAX_TEXTURE_SIZE * MAX_TEXTURE_SIZE * 4);
+
+                if(!textures[i]->isNull())
+                {
+                    QImage _texture = textures[i]->getImage();
+
+                    if(_texture.width() > MAX_TEXTURE_SIZE || _texture.height() > MAX_TEXTURE_SIZE)
+                        qCritical() << QObject::tr("Texture is larger than") << MAX_TEXTURE_SIZE << "px";
+
+                    if(_texture.width() != 0 && _texture.height() != 0)
+                    {
+                        for(int i = 0; i < MAX_TEXTURE_SIZE / _texture.width() * MAX_TEXTURE_SIZE / _texture.height(); ++i)
+                            memcpy(&texture_data[_texture.width() * _texture.height() * 4 * i], &_texture.bits()[0], _texture.width() * _texture.height() * 4);
+                    }
+                    else
+                        qWarning() << QObject::tr("Texture is empty!");
+                }
+
+                textureArray->bind();
+
+                world->getGLFunctions()->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, 1, GL_RGBA, GL_UNSIGNED_BYTE, texture_data);
+
+                free(texture_data); // dealloc
+
+                chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Textures, textureArray, world->getTextureManager()->getSampler(), "textures");
+
+                /// Depth texture
+                TexturePtr depthTexture = TexturePtr(new Texture());
+
+                unsigned char* depth_data = (unsigned char*)malloc(MAX_TEXTURE_SIZE * MAX_TEXTURE_SIZE * 4);
+
+                if(world->getTextureManager()->hasDepthTexture(texture))
+                    depthTexture = world->getTextureManager()->getDepthTexture(QFileInfo(texture->getPath()).baseName() + "Texture");
+
+                if(!depthTexture->isNull())
+                {
+                    QImage _depthTexture = depthTexture->getImage();
+
+                    if(_depthTexture.width() > MAX_TEXTURE_SIZE || _depthTexture.height() > MAX_TEXTURE_SIZE)
+                        qCritical() << QObject::tr("Depth Texture is larger than") << MAX_TEXTURE_SIZE << "px";
+
+                    if(_depthTexture.width() != 0 && _depthTexture.height() != 0)
+                    {
+                        for(int i = 0; i < MAX_TEXTURE_SIZE / _depthTexture.width() * MAX_TEXTURE_SIZE / _depthTexture.height(); ++i)
+                            memcpy(&depth_data[_depthTexture.width() * _depthTexture.height() * 4 * i], &_depthTexture.bits()[0], _depthTexture.width() * _depthTexture.height() * 4);
+                    }
+                    else
+                        qWarning() << QObject::tr("Depth Texture is empty!");
+                }
+
+                depthTextureArray->bind();
+
+                world->getGLFunctions()->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, 1, GL_RGBA, GL_UNSIGNED_BYTE, depth_data);
+
+                free(depth_data); // dealloc
+
+                chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Textures, textureArray, world->getTextureManager()->getSampler(), "depthTextures");
 
                 break;
             }
@@ -1697,6 +1811,196 @@ bool MapChunk::paintVertexLighting(float x, float z, float flow, QColor& lightCo
     return changed;
 }
 
+QVector<QPair<QString, QVector3D>> MapChunk::spawnDetailDoodads(QVector<QString>& texturesList, QMap<int, QVector<QPair<QString, float>>>& data)
+{
+    // remove stuff which is not for this chunk
+    QVector<QString> texturesList2;
+    QVector<int>     texturesListAlphaIndex;
+    QVector<QVector<QPair<float, float>>> texturesListAlpha;
+
+    QVector<QVector<QPair<QString, float>>> data2;
+    QVector<DetailDoodadsDataContainer> data3;
+
+    for(int i = 0; i < texturesList.count(); ++i)
+    {
+        bool exists = false;
+
+        int layer = -1;
+
+        for(int j = 0; j < MAX_TEXTURES; ++j)
+        {
+            if(texturesList[i] == textures[j]->getPath())
+            {
+                exists = true;
+                layer  = j;
+
+                break;
+            }
+        }
+
+        if(exists)
+        {
+            texturesList2.append(texturesList.at(i));
+            texturesListAlphaIndex.append(layer);
+            data2.append(data[i]);
+        }
+
+        if(texturesList2.count() >= MAX_TEXTURES)
+            break;
+    }
+
+    texturesListAlpha.resize(texturesList2.count());
+
+    for(int i = 0; i < texturesList2.count(); ++i)
+    {
+        for(int j = 0; j < data2[i].count(); ++j)
+        {
+            DetailDoodadsDataContainer container;
+            container.objectPath  = data2[i][j].first;
+            container.texturePath = texturesList2[i];
+            container.radius      = data2[i][j].second;
+
+            data3.append(container);
+        }
+    }
+
+    // alphamaps available points
+    int counter = 0;
+
+    for(int i = 0; i < texturesList2.count(); ++i)
+    {
+        int layer = texturesListAlphaIndex[i];
+
+        for(int y = 0; y < CHUNK_HEIGHT; ++y)
+        {
+            for(int x = 0; x < CHUNK_WIDTH; ++x)
+            {
+                float _x = chunkBaseX + CHUNKSIZE / MathHelper::toFloat(CHUNK_WIDTH) * x;
+                float _z = chunkBaseY + CHUNKSIZE / MathHelper::toFloat(CHUNK_HEIGHT) * y;
+
+                if(getAlphaFromWorld(_x, _z, layer) >= 0.5f)
+                {
+                    texturesListAlpha[i].append(QPair<float, float>(_x, _z));
+
+                    ++counter;
+                }
+
+                if(counter >= CHUNK_WIDTH * CHUNK_HEIGHT)
+                    break;
+            }
+
+            if(counter >= CHUNK_WIDTH * CHUNK_HEIGHT)
+                break;
+        }
+
+        if(counter >= CHUNK_WIDTH * CHUNK_HEIGHT)
+            break;
+    }
+
+    // spawn vector
+    int objectsPerChunk = MAX_OBJECTS * 4 / (CHUNKS * CHUNKS);
+    int objectIndex     = 0;
+
+    QVector<QPair<QString, QVector3D>> resultData;
+
+    MapTile* tile = world->getTileAt(chunkBaseX, chunkBaseY);
+
+    for(int i = 0; i < objectsPerChunk; ++i)
+    {
+        if(objectIndex >= data3.count())
+            objectIndex = 0;
+
+        // get correct texture
+        bool can = false;
+
+        int layer = -1;
+
+        for(int j = 0; j < MAX_TEXTURES; ++j)
+        {
+            if(data3[objectIndex].texturePath == textures[j]->getPath())
+            {
+                can   = true;
+                layer = j;
+
+                break;
+            }
+        }
+
+        if(!can)
+        {
+            --i;
+
+            continue;
+        }
+
+        if(texturesListAlpha[layer].count() < 1) // just go on and count objectPerChunk
+        {
+            ++objectIndex;
+
+            continue;
+        }
+
+        int index = MathHelper::random(0, texturesListAlpha[layer].count());
+
+        QPair<float, float> value = texturesListAlpha[layer][index];
+
+        float x = value.first;
+        float y = value.second;
+
+        for(int j = 0; j < resultData.count(); ++j)
+        {
+            QVector3D resultDataVector = resultData[j].second;
+
+            if(MathHelper::isInRadius(x, y, resultDataVector.x(), resultDataVector.z(), data3[objectIndex].radius))
+            {
+                can = false;
+
+                break;
+            }
+        }
+
+        if(!can)
+        {
+            texturesListAlpha[layer].removeAt(index);
+
+            --i;
+
+            continue;
+        }
+
+        for(int j = 0; j < tile->getMapObjects().count(); ++j)
+        {
+            QVector3D mapObjectData = tile->getMapObjects().at(j)->getTranslate();
+
+            if(MathHelper::isInRadius(x, y, mapObjectData.x(), mapObjectData.z(), data3[objectIndex].radius))
+            {
+                can = false;
+
+                break;
+            }
+        }
+
+        if(!can)
+        {
+            texturesListAlpha[layer].removeAt(index);
+
+            --i;
+
+            continue;
+        }
+
+        texturesListAlpha[layer].removeAt(index);
+
+        float z = getHeightFromWorld(x, y);
+
+        resultData.append(QPair<QString, QVector3D>(data3[objectIndex].objectPath, QVector3D(x, z, y)));
+
+        ++objectIndex;
+    }
+
+    return resultData; // => spawn
+}
+
 void MapChunk::updateNeighboursHeightmapData()
 {
     if(leftNeighbour)
@@ -1973,22 +2277,31 @@ void MapChunk::moveAlphaMap(int index, bool up)
 
     free(depth_temp_data); // dealloc
 
-    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1, textureArray, world->getTextureManager()->getSampler(), "textures");
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Textures, textureArray, world->getTextureManager()->getSampler(), "textures");
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Textures, textureArray, world->getTextureManager()->getSampler(), "depthTextures");
 }
 
 void MapChunk::deleteAlphaMap(int index)
 {
     textures[index] = TexturePtr(new Texture());
 
-    QString uniformName = QString("layer%1Texture").arg(index);
+    unsigned char* texture_data = (unsigned char*)malloc(MAX_TEXTURE_SIZE * MAX_TEXTURE_SIZE * 4);
 
-    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Texture1 + index, textures[index], world->getTextureManager()->getSampler(), uniformName.toLatin1());
+    memset(texture_data, 0, MAX_TEXTURE_SIZE * MAX_TEXTURE_SIZE * 4);
+
+    textureArray->bind();
+
+    world->getGLFunctions()->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, index + 1, MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, 1, GL_RGBA, GL_UNSIGNED_BYTE, texture_data);
+
+    free(texture_data); // dealloc
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Textures, textureArray, world->getTextureManager()->getSampler(), "textures");
 
     memset(alphaMapsData[index], 0, TILE_WIDTH / CHUNKS * TILE_HEIGHT / CHUNKS); // clear alpha map
 
     alphaMaps[index]->setAlphamap(alphaMapsData[index]);
 
-    uniformName = QString("layer%1Alpha").arg(index);
+    QString uniformName = QString("layer%1Alpha").arg(index);
 
     chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Alphamap1 + index, alphaMaps[index], terrainSampler, uniformName.toLatin1());
 }
@@ -2053,6 +2366,24 @@ void MapChunk::setSelected(bool on)
         return;
 
     selected = on;
+}
+
+void MapChunk::setHeightFromWorld(QVector2D position, float height)
+{
+    int X = horizToHMapSize(position.x()) % TILE_WIDTH;
+    int Y = horizToHMapSize(position.y()) % TILE_HEIGHT;
+
+    X -= chunkX * (TILE_WIDTH / CHUNKS);
+    Y -= chunkY * (TILE_HEIGHT / CHUNKS);
+
+    int index = (Y * TILE_WIDTH / CHUNKS) + X;
+
+    mapData[index] = height;
+
+    terrainData->bind();
+    terrainData->setHeight(height, position);
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
 }
 
 void MapChunk::setHeightmap(float* data)

@@ -7,19 +7,19 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>485</height>
+    <height>530</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>400</width>
-    <height>485</height>
+    <height>530</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>400</width>
-    <height>485</height>
+    <height>530</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -28,18 +28,48 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="label">
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="styleSheet">
+        <string notr="true">margin-left:25px;</string>
+       </property>
+       <property name="text">
+        <string>File:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QLineEdit" name="exportFileBox"/>
+     </item>
+     <item row="19" column="0">
+      <widget class="QLabel" name="label_3">
        <property name="styleSheet">
         <string notr="true">font: 75 9pt &quot;MS Shell Dlg 2&quot;;
 font-weight:bold;</string>
        </property>
        <property name="text">
-        <string>Import:</string>
+        <string>Settings:</string>
        </property>
       </widget>
      </item>
-     <item row="18" column="0">
+     <item row="20" column="0">
+      <widget class="QLabel" name="label_6">
+       <property name="styleSheet">
+        <string notr="true">margin-left:25px;</string>
+       </property>
+       <property name="text">
+        <string>Scale:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="2">
+      <widget class="QPushButton" name="importButton">
+       <property name="text">
+        <string>Import</string>
+       </property>
+      </widget>
+     </item>
+     <item row="21" column="0">
       <spacer name="verticalSpacer">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
@@ -63,49 +93,16 @@ font-weight:bold;</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="2">
-      <widget class="QPushButton" name="importButton">
-       <property name="text">
-        <string>Import</string>
-       </property>
-      </widget>
-     </item>
-     <item row="16" column="0">
-      <widget class="QLabel" name="label_3">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
        <property name="styleSheet">
         <string notr="true">font: 75 9pt &quot;MS Shell Dlg 2&quot;;
 font-weight:bold;</string>
        </property>
        <property name="text">
-        <string>Settings:</string>
+        <string>Import:</string>
        </property>
       </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label_4">
-       <property name="styleSheet">
-        <string notr="true">margin-left:25px;</string>
-       </property>
-       <property name="text">
-        <string>File:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="17" column="0">
-      <widget class="QLabel" name="label_6">
-       <property name="styleSheet">
-        <string notr="true">margin-left:25px;</string>
-       </property>
-       <property name="text">
-        <string>Scale:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="1">
-      <widget class="QLineEdit" name="exportFileBox"/>
-     </item>
-     <item row="1" column="1">
-      <widget class="QLineEdit" name="importFileBox"/>
      </item>
      <item row="2" column="1">
       <widget class="QDoubleSpinBox" name="importScaleBox">
@@ -127,7 +124,10 @@ font-weight:bold;</string>
        </property>
       </widget>
      </item>
-     <item row="17" column="1">
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="importFileBox"/>
+     </item>
+     <item row="20" column="1">
       <widget class="QDoubleSpinBox" name="heightmapScale">
        <property name="buttonSymbols">
         <enum>QAbstractSpinBox::UpDownArrows</enum>
@@ -147,6 +147,20 @@ font-weight:bold;</string>
        </property>
        <property name="text">
         <string>File:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="2">
+      <widget class="QPushButton" name="exportBrowseButton">
+       <property name="text">
+        <string>Browse</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="2">
+      <widget class="QPushButton" name="exportButton">
+       <property name="text">
+        <string>Export</string>
        </property>
       </widget>
      </item>
@@ -176,20 +190,6 @@ font-weight:bold;</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="2">
-      <widget class="QPushButton" name="exportButton">
-       <property name="text">
-        <string>Export</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="2">
-      <widget class="QPushButton" name="exportBrowseButton">
-       <property name="text">
-        <string>Browse</string>
-       </property>
-      </widget>
-     </item>
      <item row="2" column="0">
       <widget class="QLabel" name="label_7">
        <property name="styleSheet">
@@ -197,16 +197,6 @@ font-weight:bold;</string>
        </property>
        <property name="text">
         <string>Scale:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="13" column="0">
-      <widget class="QLabel" name="label_13">
-       <property name="styleSheet">
-        <string notr="true">margin-left:25px;</string>
-       </property>
-       <property name="text">
-        <string>Resolution:</string>
        </property>
       </widget>
      </item>
@@ -223,6 +213,16 @@ font-weight:bold;</string>
        </attribute>
       </widget>
      </item>
+     <item row="13" column="0">
+      <widget class="QLabel" name="label_13">
+       <property name="styleSheet">
+        <string notr="true">margin-left:25px;</string>
+       </property>
+       <property name="text">
+        <string>Resolution:</string>
+       </property>
+      </widget>
+     </item>
      <item row="12" column="1">
       <widget class="QCheckBox" name="stlExportScaleHeightBox">
        <property name="text">
@@ -230,13 +230,43 @@ font-weight:bold;</string>
        </property>
       </widget>
      </item>
-     <item row="12" column="0">
-      <widget class="QLabel" name="label_12">
+     <item row="11" column="1">
+      <widget class="QDoubleSpinBox" name="stlExportSurfaceBox"/>
+     </item>
+     <item row="10" column="1">
+      <widget class="QLineEdit" name="stlExportFileBox"/>
+     </item>
+     <item row="10" column="2">
+      <widget class="QPushButton" name="stlExportBrowseButton">
+       <property name="text">
+        <string>Browse</string>
+       </property>
+      </widget>
+     </item>
+     <item row="15" column="1">
+      <widget class="QRadioButton" name="stlExportHighResolutionBox">
+       <property name="text">
+        <string>High</string>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">radioResolutionGroup</string>
+       </attribute>
+      </widget>
+     </item>
+     <item row="18" column="2">
+      <widget class="QPushButton" name="stlExportButton">
+       <property name="text">
+        <string>Export</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="0">
+      <widget class="QLabel" name="label_10">
        <property name="styleSheet">
         <string notr="true">margin-left:25px;</string>
        </property>
        <property name="text">
-        <string>Scale height:</string>
+        <string>File:</string>
        </property>
       </widget>
      </item>
@@ -251,23 +281,6 @@ font-weight:bold;</string>
        </property>
       </widget>
      </item>
-     <item row="10" column="0">
-      <widget class="QLabel" name="label_10">
-       <property name="styleSheet">
-        <string notr="true">margin-left:25px;</string>
-       </property>
-       <property name="text">
-        <string>File:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="15" column="2">
-      <widget class="QPushButton" name="stlExportButton">
-       <property name="text">
-        <string>Export</string>
-       </property>
-      </widget>
-     </item>
      <item row="11" column="0">
       <widget class="QLabel" name="label_11">
        <property name="styleSheet">
@@ -278,27 +291,47 @@ font-weight:bold;</string>
        </property>
       </widget>
      </item>
-     <item row="14" column="1">
-      <widget class="QRadioButton" name="stlExportHighResolutionBox">
+     <item row="12" column="0">
+      <widget class="QLabel" name="label_12">
+       <property name="styleSheet">
+        <string notr="true">margin-left:25px;</string>
+       </property>
        <property name="text">
-        <string>High</string>
+        <string>Scale height:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="16" column="1">
+      <widget class="QRadioButton" name="stlExportMapTileBox">
+       <property name="text">
+        <string>Map Tile</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
-        <string notr="true">radioResolutionGroup</string>
+        <string notr="true">radioAreaGroup</string>
        </attribute>
       </widget>
      </item>
-     <item row="11" column="1">
-      <widget class="QDoubleSpinBox" name="stlExportSurfaceBox"/>
-     </item>
-     <item row="10" column="1">
-      <widget class="QLineEdit" name="stlExportFileBox"/>
-     </item>
-     <item row="10" column="2">
-      <widget class="QPushButton" name="stlExportBrowseButton">
-       <property name="text">
-        <string>Browse</string>
+     <item row="16" column="0">
+      <widget class="QLabel" name="label_14">
+       <property name="styleSheet">
+        <string notr="true">margin-left:25px;</string>
        </property>
+       <property name="text">
+        <string>Area:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="17" column="1">
+      <widget class="QRadioButton" name="stlExportMapChunkBox">
+       <property name="text">
+        <string>Map Chunk</string>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">radioAreaGroup</string>
+       </attribute>
       </widget>
      </item>
     </layout>
@@ -352,5 +385,6 @@ font-weight:bold;</string>
  </connections>
  <buttongroups>
   <buttongroup name="radioResolutionGroup"/>
+  <buttongroup name="radioAreaGroup"/>
  </buttongroups>
 </ui>

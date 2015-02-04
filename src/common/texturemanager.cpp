@@ -150,6 +150,19 @@ bool TextureManager::hasDepthTexture(QString textureName, QString texturePath)
     return false;
 }
 
+bool TextureManager::hasDepthTexture(TexturePtr texture)
+{
+    QPair<QString, TexturePtr> pair;
+
+    foreach(pair, depthTextures)
+    {
+        if(pair.first == QFileInfo(texture->getPath()).baseName() + "Texture")
+            return true;
+    }
+
+    return false;
+}
+
 const SamplerPtr TextureManager::getSampler() const
 {    
     return sampler;

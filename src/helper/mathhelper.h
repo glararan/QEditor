@@ -49,6 +49,7 @@ public:
     static const float toFloat(const double value);
     static const float toFloat(const long value);
     static const float toFloat(const unsigned int value);
+    static const float toFloat(const unsigned char value);
 
     static const unsigned char toUChar(const int value);
     static const unsigned char toUChar(const double value);
@@ -73,6 +74,7 @@ public:
     static const unsigned int randomUint(const unsigned int minimum, unsigned int maximum, const bool withMaximum = false);
     static const double       randomDouble(const double minimum, double maximum);
     static const double       randomDouble(); // returns between 0.0 and 1.0
+    static const float        randomFloat(const float minimum, float maximum);
 
     static const float clamp(float value, float min, float max);
 
@@ -86,6 +88,7 @@ public:
     static void addKineticEnergy(float& step, float dt, float weight = 50.0f); // 50.0f == 50kg
 
     static const bool isNaN(const float value);
+    static const bool isInRadius(const float centerX, const float centerY, const float x, const float y, const float radius);
 
     static void setTimeSeed();
     static void setRandomSeed(int seed);

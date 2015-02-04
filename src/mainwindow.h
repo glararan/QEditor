@@ -37,9 +37,11 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "ui/camerawidget.h"
 #include "ui/heightmapwidget.h"
 #include "ui/basic_settings.h"
+#include "ui/detaildoodadswidget.h"
 
 #include "world.h"
 #include "mapview.h"
+#include "undoredomanager.h"
 
 namespace Ui
 {
@@ -62,13 +64,14 @@ private:
     QString DisplayMode;
     QString ToolBarItem;
 
-    TeleportWidget*    teleportW;
-    MapChunk_Settings* chunkSettingsW;
-    MapView_Settings*  settingsW;
-    TexturePicker*     texturepW;
-    ModelPicker*       modelpickerW;
-    HeightmapWidget*   heightmapW;
-    Basic_Settings*    basicSettingsW;
+    TeleportWidget*      teleportW;
+    MapChunk_Settings*   chunkSettingsW;
+    MapView_Settings*    settingsW;
+    TexturePicker*       texturepW;
+    ModelPicker*         modelpickerW;
+    HeightmapWidget*     heightmapW;
+    Basic_Settings*      basicSettingsW;
+    DetailDoodadsWidget* detailDoodadsW;
 
     void addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area = Qt::RightDockWidgetArea);
 
@@ -178,6 +181,9 @@ private:
     void addToolbarAction(QWidget* widget, QList<QString>& parentList);
     void hideToolbarActions();
 
+    // Undo Redo
+    UndoRedoManager* undoRedoManager;
+
     //
     StartUp* startUp;
 
@@ -213,6 +219,8 @@ private slots:
     void setTerrain_Mode(int index);
     void setModel_Mode(int unknown, bool unknown2);
 
+    void modelIsSelected();
+
     void mapGenerationDataAccepted();
     void mapGenerationDataRejected();
 
@@ -224,7 +232,7 @@ private slots:
 
     void importingHeightmap(QString path, float scale);
     void exportingHeightmap(QString path, float scale);
-    void exportingSTL(QString path, float surface, bool scaleHeight, bool low);
+    void exportingSTL(QString path, float surface, bool scaleHeight, bool low, bool tile);
 
     void setHeightmapScale(float scale);
 
@@ -239,6 +247,7 @@ private slots:
     void showProjectSettings();
     void showMapGeneration();
     void showHeightmap();
+    void showDetailDoodads();
 
     void openWorld(ProjectFileData projectData, bool** mapCoords = NULL);
     void postInitializeSubWorldWidgets();
@@ -253,6 +262,8 @@ private slots:
 
     void screenshotUploadDone(const QString& link);
     void screenshotUploadError(const QString& error);
+
+    void undoredo();
 
     void actionIsInDevelopment();
 };
