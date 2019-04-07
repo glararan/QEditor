@@ -353,7 +353,7 @@ void Camera::play(const int& secs)
 {
     Q_D(Camera);
 
-    d->play_ticks = MathHelper::toInt(floor(MathHelper::toFloat(secs) * 1000.0f / 16.0f));
+    d->play_ticks = MathHelper::toInt(floor(MathHelper::toFloat(secs) * 1000.0f / 16.6f));
     d->play_tick  = 0;
     d->play       = true;
     d->locked     = true;
@@ -368,7 +368,11 @@ void Camera::playSequence()
     int playTick   = d->play_tick - (playTicks * curveIndex);
 
     if(curveIndex >= d->curves.count())
+    {
         stop();
+
+        return;
+    }
 
     BezierCurve* curve = d->curves.at(curveIndex);
 

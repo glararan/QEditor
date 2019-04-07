@@ -40,6 +40,17 @@ QEditor::QEditor(int& argc, char** argv)
 
     qsrand((uint)QTime::currentTime().msec());
 
+    /// CAUSING DISABLING 3D picking
+    /*QSurfaceFormat format;
+    format.setDepthBufferSize(24);
+    format.setMajorVersion(4);
+    format.setMinorVersion(3);
+    format.setSamples(4);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setOption(QSurfaceFormat::DebugContext);
+
+    QSurfaceFormat::setDefaultFormat(format);*/
+
     qDebug() << "Compiler C++ version:" << __cplusplus;
 
 #if (defined(ENVIRONMENT64))

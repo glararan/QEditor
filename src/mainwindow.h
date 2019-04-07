@@ -41,6 +41,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "world.h"
 #include "mapview.h"
+#include "mapexplorer.h"
 #include "undoredomanager.h"
 
 namespace Ui
@@ -187,8 +188,9 @@ private:
     //
     StartUp* startUp;
 
-    World*   world;
-    MapView* mapView;
+    World*       world;
+    MapView*     mapView;
+    MapExplorer* mapExplorer;
 
 signals:
     void setSpeedMultiplier(float multiplier);
@@ -248,6 +250,7 @@ private slots:
     void showMapGeneration();
     void showHeightmap();
     void showDetailDoodads();
+    void showMapExplorer();
 
     void openWorld(ProjectFileData projectData, bool** mapCoords = NULL);
     void postInitializeSubWorldWidgets();

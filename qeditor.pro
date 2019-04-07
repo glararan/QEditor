@@ -28,11 +28,11 @@ CONFIG += c++11 network
 CONFIG(debug, debug|release)   { DEFINES += DEBUG_MODE }
 CONFIG(release, debug|release) { DEFINES += RELEASE_MODE }
 
-install_it.path = $$OUT_PWD
-install_it.files += $$PWD/textures/grass.png
-install_it.files += $$PWD/textures/rock.png
-install_it.files += $$PWD/textures/snowrocks.png
-install_it.files += $$PWD/textures/water.png
+#install_it.path = $$OUT_PWD
+#install_it.files += $$PWD/textures/grass.png
+#install_it.files += $$PWD/textures/rock.png
+#install_it.files += $$PWD/textures/snowrocks.png
+#install_it.files += $$PWD/textures/water.png
 
 INSTALLS += install_it
 
@@ -76,7 +76,7 @@ OTHER_FILES += info.txt \
     data/shaders/qeditor_cleft2.frag
 
 #unix|
-win32: LIBS += -L$$PWD/ -lquazip
+#win32: LIBS += -L$$PWD/ -lquazip
 
 win32:INCLUDEPATH += $$PWD/dep\include
 win32:LIBS        += $$PWD/dep\lib\assimp_release-dll_x64\assimp.lib
@@ -91,18 +91,18 @@ unix:LIBS += "/home/debian/Stažené/assimp/lib/libz.a"      # change !!!
 INCLUDEPATH += $$PWD/
 DEPENDPATH += $$PWD/
 
-win32: PRE_TARGETDEPS += $$PWD/quazip.lib
+#win32: PRE_TARGETDEPS += $$PWD/quazip.lib
 # else:unix: PRE_TARGETDEPS += $$PWD/libquazip.a
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/ -lQt5PlatformSupport
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/ -lQt5PlatformSupportd
-else:unix: LIBS += -L$$PWD/ -lQt5PlatformSupport
+#win32:CONFIG(release, debug|release): LIBS += -L$$PWD/ -lQt5PlatformSupport
+#else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/ -lQt5PlatformSupportd
+#else:unix: LIBS += -L$$PWD/ -lQt5PlatformSupport
 
 INCLUDEPATH += $$PWD/
 DEPENDPATH += $$PWD/
 
-win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/libQt5PlatformSupport.a
-else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/libQt5PlatformSupportd.a
-else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/Qt5PlatformSupport.lib
-else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/Qt5PlatformSupportd.lib
-#else:unix: PRE_TARGETDEPS += $$PWD/libQt5PlatformSupport.a
+#win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/libQt5PlatformSupport.a
+#else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/libQt5PlatformSupportd.a
+#else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/Qt5PlatformSupport.lib
+#else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/Qt5PlatformSupportd.lib
+##else:unix: PRE_TARGETDEPS += $$PWD/libQt5PlatformSupport.a

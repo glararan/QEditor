@@ -600,6 +600,132 @@ void World::draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatri
     glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
 }
 
+void World::drawExplorerView(Camera* cam, QMatrix4x4 modelMatrix, float triangles)
+{
+    /*glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+
+    QMatrix4x4 viewMatrix        = cam->viewMatrix();
+    QMatrix4x4 modelViewMatrix   = viewMatrix * modelMatrix;
+    QMatrix3x3 worldNormalMatrix = modelMatrix.normalMatrix();
+    QMatrix3x3 normalMatrix      = modelViewMatrix.normalMatrix();
+    QMatrix4x4 mvp               = cam->projectionMatrix() * modelViewMatrix;
+
+    // Set the lighting parameters
+    QVector4D worldLightDirection(sinf(sunTheta * MathHelper::degreesToRadians(1.0f)), cosf(sunTheta * MathHelper::degreesToRadians(1.0f)), 0.0f, 0.0f);
+    QMatrix4x4 worldToEyeNormal(normalMatrix);
+
+    QVector4D lightDirection = worldToEyeNormal * worldLightDirection;
+
+    /// draw Environment
+    GLfuncs->glBlendFunc(GL_ONE, GL_ZERO);
+
+    // set shader settings + little draws
+    for(int i = 0; i < 3; ++i)
+    {
+        QOpenGLShaderProgram* shader;
+
+        switch(i)
+        {
+            default:
+            case 0:
+                shader = getTerrainShader();
+                break;
+
+            case 1:
+                shader = getWaterShader();
+                break;
+
+            case 2:
+                shader = getCleftShader();
+                break;
+        }
+
+        shader->bind();
+
+        // Set the horizontal and vertical scales applied in the tess eval shader
+        shader->setUniformValue("pixelsPerTriangleEdge", triangles);
+
+        // Pass in the usual transformation matrices
+        shader->setUniformValue("modelMatrix"      , modelMatrix);
+        shader->setUniformValue("modelViewMatrix"  , modelViewMatrix);
+        shader->setUniformValue("worldNormalMatrix", worldNormalMatrix);
+        shader->setUniformValue("normalMatrix"     , normalMatrix);
+        shader->setUniformValue("mvp"              , mvp);
+
+        // Set the lighting parameters
+        shader->setUniformValue("light.position", lightDirection);
+
+        if(i == 0) // terrain
+        {
+            shader->setUniformValue("shadingOff", shadingOff);
+
+            // draw reflection, refraction
+#ifdef Q_OS_WIN32
+            // Seems problematic currently for Linux, Qt 5.4 seems prblematic for Win
+            //drawReflection();
+            //drawRefraction();
+#endif
+
+            // draw Skybox
+            if(!skyboxOff)
+                drawSkybox(modelMatrix);
+        }
+        else if(i == 1) // water
+        {
+            shader->setUniformValue("cameraPosition", cam->position());
+
+            /// calc skybox matrix
+            QVector2D direction = MathHelper::getDirections(cam->viewMatrix());
+
+            QMatrix4x4 skyboxMatrix = QMatrix4x4();
+            skyboxMatrix.setToIdentity();
+            skyboxMatrix.translate(camera->position());
+            skyboxMatrix.rotate(direction.x(), 1.0f, 0.0f, 0.0f);
+            skyboxMatrix.rotate(direction.y(), 0.0f, 1.0f, 0.0f);
+
+            // set skybox, reflection and projection matrix
+            shader->setUniformValue("skyboxMatrix",     skyboxMatrix);
+            shader->setUniformValue("reflectionMatrix", reflectionView);
+            shader->setUniformValue("projMatrix",       cam->projectionMatrix());
+
+            // set alfa distance
+            shader->setUniformValue("fog.minAlphaDistance", 32.0f +  cam->position().y() / 2); // height coordinate
+            shader->setUniformValue("fog.maxAlphaDistance", 128.0f + cam->position().y() * 2); // height coordinate
+        }
+    }
+
+    // draw terrain
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+            {
+                mapTiles[tx][ty].tile->draw(MAP_DRAW_DISTANCE, cam->position());
+                mapTiles[tx][ty].tile->drawObjects(MAP_DRAW_DISTANCE, cam->position(), cam->viewMatrix(), cam->projectionMatrix());
+            }
+        }
+    }
+
+    // draw water
+    GLfuncs->glEnable(GL_BLEND);
+    GLfuncs->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    for(int tx = 0; tx < TILES; ++tx)
+    {
+        for(int ty = 0; ty < TILES; ++ty)
+        {
+            if(tileLoaded(tx, ty))
+                mapTiles[tx][ty].tile->drawWater(MAP_DRAW_DISTANCE, cam->position(), reflection_fbo);
+        }
+    }
+
+    GLfuncs->glDisable(GL_BLEND);
+    GLfuncs->glBlendFunc(GL_ONE, GL_ZERO); // reset blend func
+
+    glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);*/
+}
+
 void World::drawSkybox(QMatrix4x4& modelMatrix)
 {
     // keep camera in vars
@@ -921,7 +1047,7 @@ bool World::trySelectMapObject(const QVector3D& position)
 
     if(tile)
     {
-        bool found = false;
+        QVector<MapObject*> objects;
 
         for(int i = 0; i < tile->getMapObjects().count(); ++i)
         {
@@ -931,25 +1057,33 @@ bool World::trySelectMapObject(const QVector3D& position)
             if(position.x() >= boundingBoxMin.x() && position.x() <= boundingBoxMax.x()
             && position.y() >= boundingBoxMin.y() && position.y() <= boundingBoxMax.y()
             && position.z() >= boundingBoxMin.z() && position.z() <= boundingBoxMax.z())
-            {
-                // find selection or create
-                /*for(int i = 0; i < )
-
-                if() // find
-                {
-
-                }
-                else*/ // create
-                    currentSelection = selectionManager->getSelection(selectionManager->add(tile->getMapObjects().at(i)));
-
-                found = true;
-
-                return true;
-            }
+                objects.append(tile->getMapObjects().at(i));
         }
 
-        if(!found)
+        if(objects.count() < 1)
             currentSelection = selectionManager->getSelection(0);
+        else
+        {
+            MapObject* closest = objects.at(0);
+
+            for(int i = 1; i < objects.count(); ++i)
+            {
+                if(closest->getCenter().distanceToLine(position, QVector3D()) > objects.at(i)->getCenter().distanceToLine(position, QVector3D()))
+                    closest = objects.at(i);
+            }
+
+            // find selection or create
+            /*for(int i = 0; i < )
+
+            if() // find
+            {
+
+            }
+            else*/ // create
+                currentSelection = selectionManager->getSelection(selectionManager->add(closest));
+
+            return true;
+        }
     }
 
     return false;
@@ -1203,10 +1337,10 @@ void World::exportSTL(QString path, float surface, bool scaleHeight, bool low, b
             stlExport = new STL(mapTiles[0][0].tile, low ? STL::Low : STL::High);
         else
         {
-            //if(!currentSelection->getData().mapChunk)
-                //return;
+            /*if(!currentSelection->getData().mapChunk)
+                return;*/
 
-            stlExport = new STL(mapTiles[0][0].tile->getChunk(0, 3), low ? STL::Low : STL::High);
+            stlExport = new STL(mapTiles[0][0].tile->getChunk(2, 1), low ? STL::Low : STL::High);
         }
 
         // Generate 3D STL data
@@ -1857,22 +1991,28 @@ void World::test()
         {
             if(tileLoaded(tx, ty))
             {
-                fbo->bind();
+                qDebug() << fbo->bind();
 
                 GLfuncs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
                 GLfuncs->glViewport(0, 0, fbo->width(), fbo->height());
 
                 mapTiles[tx][ty].tile->draw(MAP_DRAW_DISTANCE, camera->position());
+                mapTiles[tx][ty].tile->drawObjects(MAP_DRAW_DISTANCE, camera->position(), camera->viewMatrix(), camera->projectionMatrix());
 
-                fbo->release();
+                qDebug() << fbo->release();
 
                 GLfuncs->glViewport(0, 0, viewportSize.width(), viewportSize.height());
             }
         }
     }
 
-    int width, height;
+    QImage img = fbo->toImage();
+
+    qDebug() << img.width() << img.height();
+
+    img.save("test2.png");*/
+
+    /*int width, height;
 
     GLfuncs->glBindTexture(GL_TEXTURE_2D, fbo->texture());
 

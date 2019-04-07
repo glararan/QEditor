@@ -163,7 +163,7 @@ void TexturesArray::paintCell(QPainter* p, int row, int col, const QRect& rect)
  */
 void TexturesArray::paintCellContents(QPainter* p, int row, int col, const QRect &r)
 {
-    if (d)
+    if(d)
         p->fillRect(r, d->brush[row * numCols() + col]);
     else
     {
@@ -172,6 +172,8 @@ void TexturesArray::paintCellContents(QPainter* p, int row, int col, const QRect
         p->drawLine(r.topLeft(), r.bottomRight());
         p->drawLine(r.topRight(), r.bottomLeft());
     }
+
+    //p->drawText();
 }
 
 void TexturesArray::mousePressEvent(QMouseEvent* e)
@@ -308,11 +310,11 @@ void TexturesArray::focusInEvent(QFocusEvent*)
 
 void TexturesArray::setCellBrush(int row, int col, const QBrush &b)
 {
-    if (!d)
+    if(!d)
     {
         d = new TexturesData;
 
-        int i = numRows()*numCols();
+        int i = numRows() * numCols();
 
         d->brush = new QBrush[i];
     }
@@ -367,7 +369,7 @@ QString TexturesArray::getToolTip(int row, int column)
 
 void TexturesArray::itemSelected(int row, int col)
 {
-    emit selected(row,col);
+    emit selected(row, col);
 }
 
 /*!\reimp
@@ -498,18 +500,24 @@ QImage TextureWell::getImage(int row, int column)
 
 void TextureWell::setRows(const int count)
 {
-    values.resize(numCols() * count);
+    if(values.count() < numCols() * count)
+    {
+        values.resize(numCols() * count);
 
-    setDefaultImages();
+        setDefaultImages();
+    }
 
     TexturesArray::setRows(count);
 }
 
 void TextureWell::setCols(const int count)
 {
-    values.resize(numRows() * count);
+    if(values.count() < numCols() * count)
+    {
+        values.resize(numRows() * count);
 
-    setDefaultImages();
+        setDefaultImages();
+    }
 
     TexturesArray::setCols(count);
 }
@@ -533,8 +541,6 @@ void TextureWell::mousePressEvent(QMouseEvent* e)
     mousePressed = true;
 
     pressPos = e->pos();
-
-
 }
 
 void TextureWell::mouseReleaseEvent(QMouseEvent* e)

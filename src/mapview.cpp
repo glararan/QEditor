@@ -96,15 +96,6 @@ MapView::MapView(World* mWorld, UndoRedoManager* undoManager, QWidget* parent, b
     setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
 
-    QSurfaceFormat format;
-    format.setDepthBufferSize(24);
-    format.setMajorVersion(4);
-    format.setMinorVersion(3);
-    format.setSamples(4);
-    format.setProfile(QSurfaceFormat::CoreProfile);
-
-    QSurfaceFormat::setDefaultFormat(format);
-
     modelMatrix.setToIdentity();
     //pipeline->getModelMatrix().setToIdentity();
 
@@ -127,6 +118,8 @@ MapView::MapView(World* mWorld, UndoRedoManager* undoManager, QWidget* parent, b
     AddStatusBarMessage("tilt: "            , &tiltAngle     , "float");
     AddStatusBarMessage("mouse: "           , &mouse_position, "QPoint");
     AddStatusBarMessage("terrain coords: "  , &terrain_pos   , "QVector3D_xzy");
+
+    //setUpdateBehavior(QOpenGLWidget::PartialUpdate);
 
     startTimer(16);
 }
@@ -151,6 +144,7 @@ void MapView::timerEvent(QTimerEvent*)
     const qreal time = m_Utime.elapsed() / 1000.0f;
 
     update(time);
+    paintGL();
 }
 
 void MapView::initializeGL()
@@ -165,6 +159,7 @@ void MapView::initializeGL()
     format.setMinorVersion(3);
     format.setSamples(4);
     format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setOption(QSurfaceFormat::DebugContext);
 
     this->context()->setFormat(format);
 
@@ -376,10 +371,10 @@ void MapView::update(float t)
                 emit selectedWaterChunk(world->getWaterChunkAt(position));
             }
         }
-        else if(wasLeftButtonPressed && !spawn_on_click)
+        else if(wasLeftButtonPressed && !spawn_on_click && world->getCurrentSelection()->getType() == Selection::MapObjectType && world->getCurrentSelection()->getData().mapObject)
         {
-            if(world->trySelectMapObject(position))
-            {
+            //if(world->trySelectMapObject(position))
+            //{
                 if(!ctrlDown && !altDown)
                 {
                     mapObjectStart = world->getCurrentSelection()->getData().mapObject->getRotation();
@@ -392,7 +387,7 @@ void MapView::update(float t)
 
                     mapObjectScale = true;
                 }
-            }
+            //}
         }
         else if(wasLeftButtonPressed && spawn_on_click)
         {
@@ -636,26 +631,161 @@ void MapView::update(float t)
     {
         switch(eMode)
         {
+            case Default:
+                {
+                    if(!spawn_on_click && mousePosStart == mousePosEnd)
+                    {
+                        if(world->trySelectMapObject(terrain_pos))
+                        {
+                            if(!ctrlDown && !altDown)
+                            {
+                                mapObjectStart = world->getCurrentSelection()->getData().mapObject->getRotation();
+
+                                mapObjectScale = false;
+                            }
+                            else if(ctrlDown && altDown)
+                            {
+                                mapObjectStart = world->getCurrentSelection()->getData().mapObject->getScale();
+
+                                mapObjectScale = true;
+                            }
+                        }
+                    }
+                }
+                break;
+
             case Terrain:
                 {
                     if(world->getModifiedTerrain().count() > 0)
                     {
-                        QVector<QPair<QVector2D, float>> modifiedTerrain = world->getModifiedTerrain();
-                        QVector<QPair<QVector2D, float>> modifiedTerrain2;
+                        QHash<QVector2D, TerrainUndoData> modTerrain = world->getModifiedTerrain();
 
-                        for(int i = 0; i < modifiedTerrain.count(); ++i)
+                        QVector<QPair<QVector2D, TerrainUndoData>> modifiedTerrain, modifiedTerrain2;
+
+                        QPair<QVector2D, TerrainUndoData> pair, pair2;
+
+                        QVector<QVector2D> keys         = modTerrain.keys().toVector();
+                        QVector<TerrainUndoData> values = modTerrain.values().toVector();
+
+                        int kCount = keys.count();
+
+                        TerrainUndoData value;
+
+                        for(int i = 0; i < kCount; ++i) // lost 99% of time on world->....
                         {
-                            QPair<QVector2D, float> pair = modifiedTerrain.at(i);
+                            pair.first  = keys.at(i);
+                            pair.second = values.at(i);
 
-                            float value = world->getMapChunkAt(QVector3D(pair.first.x(), 0.0f, pair.first.y()))->getHeightFromWorld(pair.first.x(), pair.first.y());
+                            modifiedTerrain.append(pair);
 
-                            modifiedTerrain2.append(QPair<QVector2D, float>(pair.first, value));
+                            value.index    = pair.second.index;
+                            value.value    = world->getMapChunkAt(QVector3D(pair.first.x(), 0.0f, pair.first.y()))->getMapData(value.index);
+                            value.position = pair.second.position;
+
+                            pair2.first  = pair.first;
+                            pair2.second = value;
+
+                            modifiedTerrain2.append(pair2);
                         }
 
-                        undoRedoManager->push(new ModifyTerrainCommand(modifiedTerrain, modifiedTerrain2, world));
+                        undoRedoManager->push(new ModifyTerrainCommand(modifiedTerrain, modifiedTerrain2, world)); // 800ms
 
-                        world->getModifiedTerrain().clear();
+                        world->clearModifiedTerrain();
                     }
+                }
+                break;
+
+            case Texturing:
+                {
+                    QHash<QVector2D, TextureUndoData> modTextures = world->getModifiedTextures();
+
+                    QVector<QPair<QVector2D, TextureUndoData>> modifiedTextures, modifiedTextures2;
+
+                    QPair<QVector2D, TextureUndoData> pair, pair2;
+
+                    QVector<QVector2D> keys         = modTextures.keys().toVector();
+                    QVector<TextureUndoData> values = modTextures.values().toVector();
+
+                    int kCount = keys.count();
+
+                    QVector<float> value;
+
+                    TextureUndoData val;
+
+                    for(int i = 0; i < kCount; ++i) // lost 99% of time on world->....
+                    {
+                        pair.first  = keys.at(i);
+                        pair.second = values.at(i);
+
+                        modifiedTextures.append(pair);
+
+                        for(int j = 1; j < MAX_TEXTURES; ++j) // base texture dont own alpha layer, so we start at j = 1
+                            value.append(world->getMapChunkAt(QVector3D(pair.first.x(), 0.0f, pair.first.y()))->getAlphaMapsData(pair.second.index, j));
+
+                        val.index    = pair.second.index;
+                        val.position = pair.second.position;
+                        val.values   = value;
+
+                        pair2.first  = pair.first;
+                        pair2.second = val;
+
+                        modifiedTextures2.append(pair2);
+
+                        value.clear();
+                    }
+
+                    undoRedoManager->push(new ModifyTexturesCommand(modifiedTextures, modifiedTextures2, world)); // 800ms
+
+                    world->clearModifiedTextures();
+                }
+                break;
+
+            case VertexShading:
+            case VertexLighting:
+                {
+                    QHash<QVector2D, VertexUndoData> modVertexs = world->getModifiedVertexs();
+
+                    QVector<QPair<QVector2D, VertexUndoData>> modifiedVertexs, modifiedVertexs2;
+
+                    QPair<QVector2D, VertexUndoData> pair, pair2;
+
+                    QVector<QVector2D> keys        = modVertexs.keys().toVector();
+                    QVector<VertexUndoData> values = modVertexs.values().toVector();
+
+                    int kCount = keys.count();
+
+                    QColor value;
+
+                    VertexUndoData val;
+
+                    for(int i = 0; i < kCount; ++i) // lost 99% of time on world->....
+                    {
+                        pair.first  = keys.at(i);
+                        pair.second = values.at(i);
+
+                        modifiedVertexs.append(pair);
+
+                        if(eMode == VertexShading)
+                            value = world->getMapChunkAt(QVector3D(pair.first.x(), 0.0f, pair.first.y()))->getVertexShadingData(pair.second.index);
+                        else if(eMode == VertexLighting)
+                            value = world->getMapChunkAt(QVector3D(pair.first.x(), 0.0f, pair.first.y()))->getVertexLightingData(pair.second.index);
+
+                        val.index    = pair.second.index;
+                        val.position = pair.second.position;
+                        val.r        = MathHelper::toUChar(value.red());
+                        val.g        = MathHelper::toUChar(value.green());
+                        val.b        = MathHelper::toUChar(value.blue());
+                        val.a        = MathHelper::toUChar(value.alpha());
+
+                        pair2.first  = pair.first;
+                        pair2.second = val;
+
+                        modifiedVertexs2.append(pair2);
+                    }
+
+                    undoRedoManager->push(new ModifyVertexsCommand(modifiedVertexs, modifiedVertexs2, world, eMode == VertexShading ? true : false)); // 800ms
+
+                    world->clearModifiedTextures();
                 }
                 break;
         }
@@ -736,7 +866,6 @@ void MapView::paintGL()
     if(!stereoscopic)
     {
         glDrawBuffer(GL_FRONT);
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if(showCameraCurve)
@@ -752,9 +881,7 @@ void MapView::paintGL()
     else
     {
         glDrawBuffer(GL_BACK_LEFT);
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         glFrustum(0.0 - 1.0, width() - 1.0, -0.75, 0.75, 0.65, 4.0);
 
         if(showCameraCurve)
@@ -768,9 +895,7 @@ void MapView::paintGL()
             world->draw(this, terrain_pos, modelMatrix, screenSpaceErrorLevel, QVector2D(mouse_position.x(), mouse_position.y()), false, drawModel);
 
         glDrawBuffer(GL_BACK_RIGHT);
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         glFrustum(0.0 + 1.0, width() + 1.0, -0.75, 0.75, 0.65, 4.0);
 
         if(showCameraCurve)
@@ -1353,6 +1478,7 @@ void MapView::keyReleaseEvent(QKeyEvent* e)
         case Qt::Key_Escape:
             escapeDown = false;
             break;
+
         case Qt::Key_W:
         case Qt::Key_S:
             {
@@ -1492,7 +1618,7 @@ void MapView::mouseMoveEvent(QMouseEvent* e)
 
     prevMousePos  = mousePos;
     prevMousePosZ = mousePosZ;
-    object_move   = QVector3D(dx / 40.0f, dy / 40.0f, dz / 40.0f);
+    object_move   = QVector3D(dx / 80.0f, dy / 80.0f, dz / 80.0f);
 
     mouse_position = this->mapFromGlobal(QCursor::pos());
 

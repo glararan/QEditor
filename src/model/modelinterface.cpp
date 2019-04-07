@@ -37,7 +37,7 @@ ModelInterface::ModelInterface(TextureManager* manager, const QString filename)
 
     const aiScene* scene = importer.ReadFile(filename.toStdString(), aiProcess_GenSmoothNormals | aiProcess_Triangulate | aiProcess_CalcTangentSpace/* | aiProcess_FlipUVs*/);
 
-    if(scene == 0 || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+    if(!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
         throw QString("The file wasn't successfuly opened");
 
@@ -296,7 +296,7 @@ void ModelInterface::loadMaterial(aiMaterial* ai_material, Mesh* meshTarget)
     ai_material->Get(AI_MATKEY_OPACITY, opacity);
     meshTarget->getMeshMaterial()->opacity = opacity;
 
-    QString textureFolder = fileName.left(fileName.indexOf(".")) + "/";
+    QString textureFolder = ""; //fileName.left(fileName.indexOf(".")) + "/"; // - Why the hell we are using same
 
     loadTextures(ai_material, aiTextureType_DIFFUSE,  meshTarget->getMeshTextures()->diffuseTextureIndex,  meshTarget->getMeshTextures()->hasDiffuseTexture,  filePath + textureFolder, textureManager);
     loadTextures(ai_material, aiTextureType_SPECULAR, meshTarget->getMeshTextures()->specularTextureIndex, meshTarget->getMeshTextures()->hasSpecularTexture, filePath + textureFolder, textureManager);

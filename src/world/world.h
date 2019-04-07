@@ -19,6 +19,8 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <QObject>
 #include <QOpenGLFunctions_4_2_Core>
 #include <QStringList>
+#include <QHash>
+#include <QVector2D>
 
 #include "mapheaders.h"
 #include "globalheader.h"
@@ -28,6 +30,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "framebuffer.h"
 #include "skybox.h"
 #include "selection.h"
+#include "undoredomanager.h"
 
 #include "model/modelmanager.h"
 #include "model/model.h"
@@ -39,7 +42,6 @@ class MapObject;
 class MapView;
 class WaterChunk;
 class TextureManager;
-class UndoRedoManager;
 
 struct ObjectBrush
 {
@@ -81,6 +83,7 @@ public:
 
     void update(float dt);
     void draw(MapView* mapView, QVector3D& terrain_pos, QMatrix4x4 modelMatrix, float triangles, QVector2D mousePosition, bool drawBrush = false, bool drawNewModel = false);
+    void drawExplorerView(Camera* cam, QMatrix4x4 modelMatrix, float triangles);
 
     bool hasTile(int pX, int pY) const;
 
@@ -164,8 +167,17 @@ public:
     const float           getPaintMaximumAlpha() const    { return paintMaximumAlpha; }
     const bool            getPaintMaximumState() const    { return paintMaximumState; }
 
-    void addModifiedTerrain(QPair<QVector2D, float> pair) { modifiedTerrain.append(pair); }
-    QVector<QPair<QVector2D, float>> getModifiedTerrain() { return modifiedTerrain; }
+    void addModifiedTerrain(QPair<QVector2D, TerrainUndoData> pair) { if(!modifiedTerrain.contains(pair.first)) modifiedTerrain.insert(pair.first, pair.second); }
+    void clearModifiedTerrain()                                     { modifiedTerrain.clear(); }
+    QHash<QVector2D, TerrainUndoData> getModifiedTerrain()          { return modifiedTerrain; }
+
+    void addModifiedTextures(QPair<QVector2D, TextureUndoData> pair) { if(!modifiedTextures.contains(pair.first)) modifiedTextures.insert(pair.first, pair.second); }
+    void clearModifiedTextures()                                     { modifiedTextures.clear(); }
+    QHash<QVector2D, TextureUndoData> getModifiedTextures()          { return modifiedTextures; }
+
+    void addModifiedVertex(QPair<QVector2D, VertexUndoData> pair) { if(!modifiedVertex.contains(pair.first)) modifiedVertex.insert(pair.first, pair.second); }
+    void clearModifiedVertex()                                    { modifiedVertex.clear(); }
+    QHash<QVector2D, VertexUndoData> getModifiedVertexs()         { return modifiedVertex; }
 
     MapTile*    getTileAt(float x, float z) const;
     MapChunk*   getMapChunkAt(const QVector3D& position) const;
@@ -229,7 +241,9 @@ private:
     float terrainMaximumHeight;
     bool  terrainMaximumState;
 
-    QVector<QPair<QVector2D, float>> modifiedTerrain;
+    QHash<QVector2D, TerrainUndoData> modifiedTerrain;
+    QHash<QVector2D, TextureUndoData> modifiedTextures;
+    QHash<QVector2D, VertexUndoData>  modifiedVertex;
 
     float paintMaximumAlpha;
     bool  paintMaximumState;

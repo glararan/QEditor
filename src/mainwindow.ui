@@ -156,6 +156,7 @@
     <addaction name="action_Teleport"/>
     <addaction name="action_Map_Generator"/>
     <addaction name="action_Heightmap"/>
+    <addaction name="action_Map_Explorer"/>
     <addaction name="separator"/>
     <addaction name="action_Screenshot"/>
     <addaction name="action_Screenshot_upload"/>
@@ -697,6 +698,11 @@
   <action name="action_Detail_Doodads">
    <property name="text">
     <string>D&amp;etail Doodads</string>
+   </property>
+  </action>
+  <action name="action_Map_Explorer">
+   <property name="text">
+    <string>Map Explorer</string>
    </property>
   </action>
  </widget>

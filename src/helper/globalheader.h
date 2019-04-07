@@ -17,6 +17,7 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #define GLOBALHEADER_H
 
 #include <QtGlobal>
+#include <QVector2D>
 
 #include "mathhelper.h"
 
@@ -32,5 +33,10 @@ struct NewProjectData
 
     bool** mapCoords;
 };
+
+inline uint qHash(const QVector2D& key)
+{
+    return qHash(key.length());
+}
 
 #endif // GLOBALHEADER_H

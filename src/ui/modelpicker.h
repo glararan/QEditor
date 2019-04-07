@@ -22,7 +22,9 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "model/modelmanager.h"
 
 #include "ui/tableview.h"
-#include "ui/toolbox.h"
+//#include "ui/toolbox.h"
+
+class QScrollArea;
 
 namespace Ui
 {
@@ -41,6 +43,24 @@ protected:
     void dropEvent(QDropEvent* event);
 };
 
+class ModelList : public QTreeWidget
+{
+public:
+    explicit ModelList(QWidget* parent);
+    ~ModelList();
+
+    void setModelManager(ModelManager* modelManager) { manager = modelManager; }
+
+protected:
+    void mousePressEvent(QMouseEvent* event);
+    void mouseReleaseEvent(QMouseEvent* event);
+
+    void dragEnterEvent(QDragEnterEvent* event);
+
+private:
+    ModelManager* manager;
+};
+
 class ModelPicker : public QWidget
 {
     Q_OBJECT
@@ -49,26 +69,43 @@ public:
     explicit ModelPicker(QWidget* parent = 0);
     ~ModelPicker();
 
-    void loadPicker(ModelManager* manager);
+    void loadPicker(ModelManager* modelManager);
     void clear();
+
+protected:
+    void resizeEvent(QResizeEvent* event);
 
 private:
     Ui::ModelPicker* ui;
 
     QString currentModelLocation;
 
-    ToolBox* box;
+    /*ToolBox* box;
 
     QVector<TextureWell*> items;
+    QVector<QScrollArea*> scrolls;*/
 
     FavouriteList* favouriteList;
+    ModelList*     modelList;
 
     ModelManager* manager;
 
+    /*QSize modelIconSize;
+    QSize modelIconMargin;
+
+    int columns;*/
+
+    void showHideChildrens(QTreeWidgetItem* item, bool show = true);
+    void showSpecificChildrens(QTreeWidgetItem* item, QString filter);
+    void showSpecificParents(QTreeWidgetItem* item);
+
 private slots:
-    void modelSelected(int row, int column);
+    void modelSelected(QTreeWidgetItem* current, QTreeWidgetItem* prev);
+    //void modelSelected(int row, int column);
     void modelSelected(int row);
-    void modelviewSelected(int, int);
+    //void modelviewSelected(int, int);
+
+    void search(QString filter);
 
     void deleteModel();
     void clearModels();

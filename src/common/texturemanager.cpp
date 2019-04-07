@@ -300,3 +300,16 @@ void TextureManager::setSelectedTexture(int index)
 
     selectedTexture = textures.at(index).second;
 }
+
+void TextureManager::setSelectedTexture(QString path)
+{
+    for(int i = 0; i < textures.count(); ++i)
+    {
+        if(textures.at(i).second->getPath() == path)
+        {
+            selectedTexture = textures.at(i).second;
+
+            break;
+        }
+    }
+}

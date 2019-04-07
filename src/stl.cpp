@@ -327,7 +327,7 @@ void STL::createData()
                 if(y != 0)
                     dataRight[x][y] = QVector3D();
                 else
-                    dataRight[x][0] = height[STLwidth - 1][x];
+                    dataRight[x][0] = height[STLwidth - 1][STLwidth - 1 - x];
             }
         }
 

@@ -76,15 +76,15 @@ public:
     inline int numCols() const  { return ncols; }
     inline int numItems() const { return itemCount; }
 
-    void setRows(const int count) { nrows = count; toolTipArray.resize(nrows * ncols); }
-    void setCols(const int count) { ncols = count; toolTipArray.resize(nrows * ncols); }
+    void setRows(const int count) { nrows = count; if(toolTipArray.count() < nrows * ncols) toolTipArray.resize(nrows * ncols); }
+    void setCols(const int count) { ncols = count; if(toolTipArray.count() < nrows * ncols) toolTipArray.resize(nrows * ncols); }
 
     void setItemCount(const int count) { itemCount = count; }
 
     void clear()
     {
         toolTipArray.clear();
-        toolTipArray.resize(nrows*ncols);
+        toolTipArray.resize(nrows * ncols);
     }
 
     void insertToolTip(int index, QString toolTip)

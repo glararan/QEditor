@@ -55,6 +55,8 @@ private:
     QOpenGLFunctions_4_2_Core* GLfuncs;
 
     QString filePath;
+
+    QImage texture;
 };
 
 typedef QSharedPointer<Texture> TexturePtr;

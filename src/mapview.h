@@ -48,7 +48,7 @@ public:
     void setViewCenterFixed(bool b) { viewCenterFixed = b; }
 
     // Camera orientation control
-    void pan(float angle)  { m_panAngle = angle; }
+    void pan(float angle)  { m_panAngle  = angle; }
     void tilt(float angle) { m_tiltAngle = angle; }
 
     // Screen space error - tessellation control

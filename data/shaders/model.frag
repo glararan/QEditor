@@ -1,3 +1,5 @@
+#version 400
+
 /*This file is part of QEditor.
 
 QEditor is free software: you can redistribute it and/or modify
@@ -13,9 +15,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#version 400
+
 
 layout (location = 0) out vec4 fragColor;
+
+/*subroutine vec4 ShaderModelType();
+subroutine uniform ShaderModelType shaderModel;
+
+uniform struct LineInfo
+{
+    float width;
+
+    vec4 color;
+    vec4 color2;
+} line;*/
 
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 modelViewMatrix;

@@ -39,6 +39,7 @@ public:
     static const int toInt(const double value);
     static const int toInt(const long value);
     static const int toInt(const unsigned int value);
+    static const int toInt(const unsigned char value);
 
     static const double toDouble(const int value);
     static const double toDouble(const float value);

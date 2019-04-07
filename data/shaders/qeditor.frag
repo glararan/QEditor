@@ -1,3 +1,5 @@
+#version 400
+
 /*This file is part of QEditor.
 
 QEditor is free software: you can redistribute it and/or modify
@@ -13,7 +15,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#version 400
+
 
 #extension GL_EXT_texture_array : enable
 
@@ -390,12 +392,12 @@ vec4 shaderBaseLayer()
 
     // Get base texture color
     vec4 baseNear  = texture2DArray(textures, vec3(uvNear, 0));
-    vec4 baseFar   = texture2DArray(textures, vec3(texCoords, 0));
+    vec4 baseFar   = texture2DArray(textures, vec3(uvFar, 0));
     vec4 baseColor = mix(baseNear, baseFar, textureDistanceFactor);
 
     // Get base texture depth
     vec4 baseDNear  = texture2DArray(depthTextures, vec3(uvNear, 0));
-    vec4 baseDFar   = texture2DArray(depthTextures, vec3(texCoords, 0));
+    vec4 baseDFar   = texture2DArray(depthTextures, vec3(uvFar, 0));
     vec4 baseDColor = mix(baseDNear, baseDFar, textureDistanceFactor);
 
     vec4 diffuseColor = blendAll(baseColor, vec4(0, 0, 0, 0), vec4(0, 0, 0, 0), vec4(0, 0, 0, 0), 0, 0, 0,
@@ -415,12 +417,12 @@ vec4 shadeBaseAndLayer1()
 
     // Get base texture color
     vec4 baseNear  = texture2DArray(textures, vec3(uvNear, 0));
-    vec4 baseFar   = texture2DArray(textures, vec3(texCoords, 0));
+    vec4 baseFar   = texture2DArray(textures, vec3(uvFar, 0));
     vec4 baseColor = mix(baseNear, baseFar, textureDistanceFactor);
 
     // Get base texture depth
     vec4 baseDNear  = texture2DArray(depthTextures, vec3(uvNear, 0));
-    vec4 baseDFar   = texture2DArray(depthTextures, vec3(texCoords, 0));
+    vec4 baseDFar   = texture2DArray(depthTextures, vec3(uvFar, 0));
     vec4 baseDColor = mix(baseDNear, baseDFar, textureDistanceFactor);
 
     nearAndFarTexCoords(uvNear, uvFar, 1);
@@ -453,12 +455,12 @@ vec4 shadeBaseLayer1AndLayer2()
 
     // Get base texture color
     vec4 baseNear  = texture2DArray(textures, vec3(uvNear, 0));
-    vec4 baseFar   = texture2DArray(textures, vec3(texCoords, 0));
+    vec4 baseFar   = texture2DArray(textures, vec3(uvFar, 0));
     vec4 baseColor = mix(baseNear, baseFar, textureDistanceFactor);
 
     // Get base texture depth
     vec4 baseDNear  = texture2DArray(depthTextures, vec3(uvNear, 0));
-    vec4 baseDFar   = texture2DArray(depthTextures, vec3(texCoords, 0));
+    vec4 baseDFar   = texture2DArray(depthTextures, vec3(uvFar, 0));
     vec4 baseDColor = mix(baseDNear, baseDFar, textureDistanceFactor);
 
     nearAndFarTexCoords(uvNear, uvFar, 1);
@@ -515,12 +517,12 @@ vec4 shadeTexturedAndLit()
 
     /// Get base texture color
     vec4 baseNear  = texture2DArray(textures, vec3(uvNear, 0));
-    vec4 baseFar   = texture2DArray(textures, vec3(texCoords, 0));
+    vec4 baseFar   = texture2DArray(textures, vec3(uvFar, 0));
     vec4 baseColor = mix(baseNear, baseFar, textureDistanceFactor);
 
     // Get base texture depth
     vec4 baseDNear  = texture2DArray(depthTextures, vec3(uvNear, 0));
-    vec4 baseDFar   = texture2DArray(depthTextures, vec3(texCoords, 0));
+    vec4 baseDFar   = texture2DArray(depthTextures, vec3(uvFar, 0));
     vec4 baseDColor = mix(baseDNear, baseDFar, textureDistanceFactor);
 
     nearAndFarTexCoords(uvNear, uvFar, 1);

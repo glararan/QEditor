@@ -226,7 +226,7 @@ void SpawnDetailDoodadsCommand::redo()
     }
 }
 
-ModifyTerrainCommand::ModifyTerrainCommand(QVector<QPair<QVector2D, float>> dataBefore, QVector<QPair<QVector2D, float>> dataAfter, World* mWorld, QUndoCommand* parent)
+ModifyTerrainCommand::ModifyTerrainCommand(QVector<QPair<QVector2D, TerrainUndoData>> dataBefore, QVector<QPair<QVector2D, TerrainUndoData>> dataAfter, World* mWorld, QUndoCommand* parent)
 : QUndoCommand(parent)
 , dataBeforeList(dataBefore)
 , dataAfterList(dataAfter)
@@ -238,12 +238,12 @@ void ModifyTerrainCommand::undo()
 {
     for(int i = 0; i < dataBeforeList.count(); ++i)
     {
-        QPair<QVector2D, float> pair = dataBeforeList.at(i);
+        QPair<QVector2D, TerrainUndoData> pair = dataBeforeList.at(i);
 
         MapChunk* chunk = world->getMapChunkAt(QVector3D(pair.first.x(), 0.0f, pair.first.y()));
 
         if(chunk)
-            chunk->setHeightFromWorld(pair.first, pair.second);
+            chunk->setHeight(pair.second.index, pair.second.value, pair.second.position);
     }
 }
 
@@ -251,11 +251,84 @@ void ModifyTerrainCommand::redo()
 {
     for(int i = 0; i < dataAfterList.count(); ++i)
     {
-        QPair<QVector2D, float> pair = dataAfterList.at(i);
+        QPair<QVector2D, TerrainUndoData> pair = dataAfterList.at(i);
 
         MapChunk* chunk = world->getMapChunkAt(QVector3D(pair.first.x(), 0.0f, pair.first.y()));
 
         if(chunk)
-            chunk->setHeightFromWorld(pair.first, pair.second);
+            chunk->setHeight(pair.second.index, pair.second.value, pair.second.position);
+    }
+}
+
+ModifyTexturesCommand::ModifyTexturesCommand(QVector<QPair<QVector2D, TextureUndoData>> dataBefore, QVector<QPair<QVector2D, TextureUndoData>> dataAfter, World* mWorld, QUndoCommand* parent)
+: QUndoCommand(parent)
+, dataBeforeList(dataBefore)
+, dataAfterList(dataAfter)
+, world(mWorld)
+{
+}
+
+void ModifyTexturesCommand::undo()
+{
+    for(int i = 0; i < dataBeforeList.count(); ++i)
+    {
+        QPair<QVector2D, TextureUndoData> pair = dataBeforeList.at(i);
+
+        MapChunk* chunk = world->getMapChunkAt(QVector3D(pair.first.x(), 0.0f, pair.first.y()));
+
+        if(chunk)
+            chunk->setAlphas(pair.second.index, pair.second.values, pair.second.position);
+    }
+}
+
+void ModifyTexturesCommand::redo()
+{
+    for(int i = 0; i < dataAfterList.count(); ++i)
+    {
+        QPair<QVector2D, TextureUndoData> pair = dataAfterList.at(i);
+
+        MapChunk* chunk = world->getMapChunkAt(QVector3D(pair.first.x(), 0.0f, pair.first.y()));
+
+        if(chunk)
+            chunk->setAlphas(pair.second.index, pair.second.values, pair.second.position);
+    }
+}
+
+ModifyVertexsCommand::ModifyVertexsCommand(QVector<QPair<QVector2D, VertexUndoData>> dataBefore, QVector<QPair<QVector2D, VertexUndoData>> dataAfter, World* mWorld, bool vertexShading, QUndoCommand* parent)
+: QUndoCommand(parent)
+, dataBeforeList(dataBefore)
+, dataAfterList(dataAfter)
+, world(mWorld)
+, vertexLighting(!vertexShading)
+{
+}
+
+void ModifyVertexsCommand::undo()
+{
+    for(int i = 0; i < dataBeforeList.count(); ++i)
+    {
+        QPair<QVector2D, VertexUndoData> pair = dataBeforeList.at(i);
+
+        MapChunk* chunk = world->getMapChunkAt(QVector3D(pair.first.x(), 0.0f, pair.first.y()));
+
+        if(chunk && vertexLighting)
+            chunk->setVertexLighting(pair.second.index, QColor(MathHelper::toInt(pair.second.r), MathHelper::toInt(pair.second.g), MathHelper::toInt(pair.second.b), MathHelper::toInt(pair.second.a)), pair.second.position);
+        else if(chunk && !vertexLighting)
+            chunk->setVertexShading(pair.second.index, QColor(MathHelper::toInt(pair.second.r), MathHelper::toInt(pair.second.g), MathHelper::toInt(pair.second.b), MathHelper::toInt(pair.second.a)), pair.second.position);
+    }
+}
+
+void ModifyVertexsCommand::redo()
+{
+    for(int i = 0; i < dataAfterList.count(); ++i)
+    {
+        QPair<QVector2D, VertexUndoData> pair = dataAfterList.at(i);
+
+        MapChunk* chunk = world->getMapChunkAt(QVector3D(pair.first.x(), 0.0f, pair.first.y()));
+
+        if(chunk && vertexLighting)
+            chunk->setVertexLighting(pair.second.index, QColor(MathHelper::toInt(pair.second.r), MathHelper::toInt(pair.second.g), MathHelper::toInt(pair.second.b), MathHelper::toInt(pair.second.a)), pair.second.position);
+        else if(chunk && !vertexLighting)
+            chunk->setVertexShading(pair.second.index, QColor(MathHelper::toInt(pair.second.r), MathHelper::toInt(pair.second.g), MathHelper::toInt(pair.second.b), MathHelper::toInt(pair.second.a)), pair.second.position);
     }
 }

@@ -60,7 +60,12 @@ void TexturePicker::initialize(TextureManager* manager)
     QPair<QString, TexturePtr> pair;
 
     foreach(pair, textureManager->getTextures())
-        textures.append(qMakePair<QImage, QString>(pair.second->getImage(), pair.first));
+    {
+        if(pair.first.endsWith("ModelTexture"))
+            continue;
+
+        textures.append(qMakePair<QImage, QString>(QImage(pair.second->getPath()), pair.first));
+    }
 
     if(textures.count() < columns)
         columns = textures.count(); // careful with this!!!
@@ -105,7 +110,19 @@ void TexturePicker::resizeEvent(QResizeEvent* e)
 
 void TexturePicker::selectedTexture(int row, int cell)
 {
-    textureManager->setSelectedTexture(cell + row * columns);
+    QVector<QString> textures;
+
+    QPair<QString, TexturePtr> pair;
+
+    foreach(pair, textureManager->getTextures())
+    {
+        if(pair.first.endsWith("ModelTexture"))
+            continue;
+
+        textures.append(pair.second->getPath());
+    }
+
+    textureManager->setSelectedTexture(textures.at(cell + row * columns));
 }
 
 void TexturePicker::setChunk(MapChunk* chunk)
@@ -127,7 +144,7 @@ void TexturePicker::setChunk(MapChunk* chunk)
         QTableWidgetItem* item = ui->tableWidget->item(i, 0);
 
         if(!chunk->getTexture(i)->isNull())
-            item->setData(Qt::DecorationRole, QPixmap::fromImage(chunk->getTexture(i)->getImage()).scaled(QSize(48, 48)));
+            item->setData(Qt::DecorationRole, QPixmap::fromImage(QImage(chunk->getTexture(i)->getPath())).scaled(QSize(48, 48)));
     }
 }
 

@@ -62,6 +62,11 @@ const int MathHelper::toInt(const unsigned int value)
     return static_cast<int>(value);
 }
 
+const int MathHelper::toInt(const unsigned char value)
+{
+    return static_cast<int>(value);
+}
+
 const double MathHelper::toDouble(const int value)
 {
     return static_cast<double>(value);

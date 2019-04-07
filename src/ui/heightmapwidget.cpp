@@ -18,14 +18,23 @@ along with QEditor.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QHostAddress>
+#include <QNetworkInterface>
 
 #include "mathhelper.h"
 
 HeightmapWidget::HeightmapWidget(QWidget* parent)
 : QDialog(parent)
 , ui(new Ui::HeightmapWidget)
+//, server(NULL)
 {
     ui->setupUi(this);
+
+    foreach(const QHostAddress& address, QNetworkInterface::allAddresses())
+    {
+        if(address.protocol() == QAbstractSocket::IPv4Protocol && address != QHostAddress(QHostAddress::LocalHost))
+             ui->ipAddressBox->addItem(address.toString(), address.toString());
+    }
 
     connect(ui->importBrowseButton,    SIGNAL(clicked()), this, SLOT(showImportBrowser()));
     connect(ui->exportBrowseButton,    SIGNAL(clicked()), this, SLOT(showExportBrowser()));
@@ -36,6 +45,8 @@ HeightmapWidget::HeightmapWidget(QWidget* parent)
     connect(ui->stlExportButton, SIGNAL(clicked()), this, SLOT(doSTLExport()));
 
     connect(ui->heightmapScale, SIGNAL(valueChanged(double)), this, SLOT(setScale(double)));
+
+    connect(ui->serverButton, SIGNAL(clicked()), this, SLOT(serverSwitch()));
 }
 
 HeightmapWidget::~HeightmapWidget()
@@ -93,3 +104,59 @@ void HeightmapWidget::setScale(double scale)
 {
     emit setScale(MathHelper::toFloat(scale));
 }
+
+void HeightmapWidget::serverSwitch()
+{
+    /*if(ui->ipAddressBox->itemData(ui->ipAddressBox->currentIndex()) == QVariant() && ui->serverButton->text() == tr("Start"))
+    {
+        QMessageBox msg;
+        msg.setWindowTitle(tr("Error"));
+        msg.setText(tr("There is no available IP Address for host."));
+        msg.setIcon(QMessageBox::Critical);
+
+        msg.exec();
+
+        return;
+    }
+
+    if(ui->serverButton->text() != tr("Start"))
+    {
+        server->close();
+
+        delete server;
+
+        server = NULL;
+
+        ui->serverButton->setText(tr("Start"));
+    }
+    else
+    {
+        ui->serverButton->setText(tr("Stop"));
+
+        if(server)
+        {
+            server->close();
+
+            delete server;
+
+            server = NULL;
+        }
+
+        server = new PhoneDataServer(ui->portBox->text().toInt());
+    }*/
+}
+
+/*PhoneDataServer::PhoneDataServer(quint16 port, QObject* parent)
+: QTcpServer(parent)
+{
+    listen(QHostAddress::Any, port);
+}
+
+void PhoneDataServer::incomingConnection(qintptr socketDescriptor)
+{
+    PhoneDataSocket* socket = new PhoneDataSocket(this);
+    socket->setSocketDescriptor(socketDescriptor);
+
+    emit newConnection(socket);
+}
+*/

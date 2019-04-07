@@ -139,6 +139,8 @@ struct MDDF
         qreal rotation[3];
         qreal scale[3];
 
+        bool used;
+
         // maybe some flags in future
     } entries[MAX_OBJECTS * 4];
 };
@@ -266,7 +268,8 @@ inline QDataStream& operator<<(QDataStream& dataStream, const MapHeader& mapHead
                    << mapHeader.mddf->entries[i].rotation[2]
                    << mapHeader.mddf->entries[i].scale[0]
                    << mapHeader.mddf->entries[i].scale[1]
-                   << mapHeader.mddf->entries[i].scale[2];
+                   << mapHeader.mddf->entries[i].scale[2]
+                   << mapHeader.mddf->entries[i].used;
     }
 
     return dataStream;
@@ -336,7 +339,7 @@ inline QDataStream& operator>>(QDataStream& dataStream, MapHeader& mapHeader) //
 
     /// Tile data
     /// MOBJ
-    /*for(int i = 0; i < MAX_OBJECTS; ++i)
+    for(int i = 0; i < MAX_OBJECTS; ++i)
         dataStream >> mapHeader.mobj->fileNames[i];
 
     /// MDDF
@@ -352,8 +355,9 @@ inline QDataStream& operator>>(QDataStream& dataStream, MapHeader& mapHeader) //
                    >> mapHeader.mddf->entries[i].rotation[2]
                    >> mapHeader.mddf->entries[i].scale[0]
                    >> mapHeader.mddf->entries[i].scale[1]
-                   >> mapHeader.mddf->entries[i].scale[2];
-    }*/
+                   >> mapHeader.mddf->entries[i].scale[2]
+                   >> mapHeader.mddf->entries[i].used;
+    }
 
     return dataStream;
 }

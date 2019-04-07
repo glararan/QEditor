@@ -67,6 +67,10 @@ public:
     const float getMapData(const int& index) const;
 
     const float getAlphaFromWorld(float x, float z, int layer);
+    const float getAlphaMapsData(const int& index, const int& layer) const;
+
+    const QColor getVertexShadingData(const int& index) const;
+    const QColor getVertexLightingData(const int& index) const;
 
     const int chunkIndex() const;
 
@@ -109,7 +113,12 @@ public:
     void setHighlight(bool on);
     void setSelected(bool on);
 
+    void setHeight(int index, float height, QPoint textureCoords);
+    void setAlphas(int index, QVector<float> alphas, QPoint textureCoords);
+    void setVertexShading(int index, QColor color, QPoint textureCoords);
+    void setVertexLighting(int index, QColor color, QPoint textureCoords);
     void setHeightFromWorld(QVector2D position, float height);
+    void setAlphaFromWorld(QVector2D position, QVector<float> alphas);
 
     void setHeightmap(float* data);
     void setGeneratedHeightmap(float* tileData);

@@ -52,6 +52,7 @@ public:
 
     void setAntialiasing(World* world, const float antialiasing);
     void setSelectedTexture(int index);
+    void setSelectedTexture(QString path);
 
 private:
     SamplerPtr sampler;

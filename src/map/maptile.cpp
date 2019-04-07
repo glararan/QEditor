@@ -142,6 +142,35 @@ MapTile::MapTile(World* mWorld, int x, int y, const QString& mapFile) // File ba
 
     waterTile = new WaterTile(this, file);
 
+    // load objects
+    for(int i = 0; i < MAX_OBJECTS * 4; ++i)
+    {
+        if(!tileHeader.mddf->entries[i].used)
+            continue;
+
+        int id = tileHeader.mddf->entries[i].mobjEntry;
+
+        const QVector3D position(tileHeader.mddf->entries[i].position[0],
+                                 tileHeader.mddf->entries[i].position[1],
+                                 tileHeader.mddf->entries[i].position[2]);
+
+        const QVector3D rotation(tileHeader.mddf->entries[i].rotation[0],
+                                 tileHeader.mddf->entries[i].rotation[1],
+                                 tileHeader.mddf->entries[i].rotation[2]);
+
+        const QVector3D scale(tileHeader.mddf->entries[i].scale[0],
+                              tileHeader.mddf->entries[i].scale[1],
+                              tileHeader.mddf->entries[i].scale[2]);
+
+        MapObject* object = new MapObject(world->getModelManager()->getModel(world->getModelManager()->getIndex(tileHeader.mobj->fileNames[id])));
+        object->setTranslate(position);
+        object->setRotation(rotation);
+        object->setScale(scale);
+        object->updateBoundingBox();
+
+        objects.append(object);
+    }
+
     file.close();
 }
 
@@ -656,7 +685,7 @@ void MapTile::saveTile()
 
     for(int i = 0; i < objects.size(); ++i)
     {
-        QString filePath = objects.at(i)->getModel()->getModelInterface()->getFilePath();
+        QString filePath = objects.at(i)->getModel()->getModelInterface()->getFilePath() + objects.at(i)->getModel()->getModelInterface()->getFileName();
 
         if(empty >= MAX_OBJECTS)
             continue;
@@ -680,13 +709,16 @@ void MapTile::saveTile()
 
     empty = 0;
 
+    for(int i = 0; i < MAX_OBJECTS * 4; ++i)
+        mapHeader.mddf->entries[i].used = false;
+
     for(int i = 0; i < objects.size(); ++i)
     {
         if(empty >= MAX_OBJECTS * 4) // sorry we are full
             break;
 
         // lets add entries
-        QString filePath = objects.at(i)->getModel()->getModelInterface()->getFilePath();
+        QString filePath = objects.at(i)->getModel()->getModelInterface()->getFilePath() + objects.at(i)->getModel()->getModelInterface()->getFileName();
 
         int id = -1;
 
@@ -717,6 +749,7 @@ void MapTile::saveTile()
         mapHeader.mddf->entries[empty].scale[0]    = object->getScale().x();
         mapHeader.mddf->entries[empty].scale[1]    = object->getScale().y();
         mapHeader.mddf->entries[empty].scale[2]    = object->getScale().z();
+        mapHeader.mddf->entries[empty].used        = true;
 
         ++empty;
     }

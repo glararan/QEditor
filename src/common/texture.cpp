@@ -52,6 +52,7 @@ Texture::Texture(Target target, QString path)
 Texture::Texture(const QImage& image, MipMapGeneration genMipMaps, QString path)
 : QOpenGLTexture(image, genMipMaps)
 , filePath(path)
+, texture(image.convertToFormat(QImage::Format_RGBA8888))
 {
     QOpenGLContext* context = QOpenGLContext::currentContext();
 
@@ -76,6 +77,7 @@ Texture::Texture(const QImage& image, MipMapGeneration genMipMaps, QString path)
 Texture::Texture(const QImage& image, QString path, MipMapGeneration genMipMaps)
 : QOpenGLTexture(image, genMipMaps)
 , filePath(path)
+, texture(image.convertToFormat(QImage::Format_RGBA8888))
 {
     QOpenGLContext* context = QOpenGLContext::currentContext();
 
@@ -147,7 +149,7 @@ void Texture::setTexture(const void* data, int layer)
 
 const QImage Texture::getImage()
 {
-    int width, height;
+    /*int width, height;
 
     bind();
 
@@ -167,7 +169,9 @@ const QImage Texture::getImage()
 
     //free(data); // ! investigate memory leaks if this is commented => uncommented => crash cause QImage using data as pointer
 
-    return img;
+    return img;*/
+
+    return texture;
 }
 
 const QImage Texture::getImage(int layer)

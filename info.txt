@@ -48,7 +48,7 @@ MapChunk:
 
 in development, in near future(code is almost ready):
 - water display (wireframe, ..)
-- 3D printer support (need to print test on 3D printer)
+- 3D printer support (bugs with stl borders)
 - 3D stereoscopic
 
 discuss features:
@@ -115,6 +115,8 @@ C++ standards:
 
     4) use switch if its possible
         ex. for QString its not possible, also switch is faster than multiple statements
+
+    5) use QVector instead of QList for large iterations, if QList is by QHash etc.. use .toVector()
 
 
 Lag Troubleshooter:

@@ -75,7 +75,8 @@ SOURCES  += $$PWD/main.cpp \
     $$PWD/boundingbox.cpp \
     $$PWD/map/mapobject.cpp \
     $$PWD/ui/detaildoodadswidget.cpp \
-    $$PWD/undoredomanager.cpp
+    $$PWD/undoredomanager.cpp \
+    $$PWD/mapexplorer.cpp
 
 HEADERS  += $$PWD/mainwindow.h \
             $$PWD/ui/teleportwidget.h \
@@ -136,7 +137,8 @@ HEADERS  += $$PWD/mainwindow.h \
     $$PWD/map/mapobject.h \
     $$PWD/model/modelheader.h \
     $$PWD/ui/detaildoodadswidget.h \
-    $$PWD/undoredomanager.h
+    $$PWD/undoredomanager.h \
+    $$PWD/mapexplorer.h
 
 FORMS    += $$PWD/mainwindow.ui \
             $$PWD/ui/teleportwidget.ui \

@@ -94,7 +94,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
         if(textures[i]->isNull())
             continue;
 
-        QImage texture = textures[i]->getImage();
+        QImage texture = QImage(textures[i]->getPath()).convertToFormat(QImage::Format_RGBA8888);
 
         if(texture.width() > MAX_TEXTURE_SIZE || texture.height() > MAX_TEXTURE_SIZE)
             qCritical() << QObject::tr("Texture is larger than") << MAX_TEXTURE_SIZE << "px";
@@ -135,7 +135,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, int x, int y) // Cache MapChunk
         if(depthTextures[i]->isNull())
             continue;
 
-        QImage depthTex = depthTextures[i]->getImage();
+        QImage depthTex = QImage(depthTextures[i]->getPath()).convertToFormat(QImage::Format_RGBA8888);
 
         if(depthTex.width() > MAX_TEXTURE_SIZE || depthTex.height() > MAX_TEXTURE_SIZE)
             qCritical() << QObject::tr("Depth texture is larger than") << MAX_TEXTURE_SIZE << "px";
@@ -275,14 +275,14 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
         {
             QString texturePath = tile->getHeader().mcin->entries[chunkIndex()].mcnk->terrainOffset->textures[i];
 
-            if(i == 0)
+            /*if(i == 0)
                 texturePath = "textures/KLS_GRASS04_1024.png";
             else if(i == 1)
                 texturePath = "textures/6ng_grass03_1024.png";
             else if(i == 2)
                 texturePath = "textures/KLS_Rock05_1024.png";
             else
-                texturePath = "textures/V4W_CLIFF01_1024.png";
+                texturePath = "textures/V4W_CLIFF01_1024.png";*/
 
             if(texturePath == QString())
             {
@@ -421,7 +421,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
         if(textures[i]->isNull())
             continue;
 
-        QImage texture = textures[i]->getImage();
+        QImage texture = textures[i]->getImage();//QImage(textures[i]->getPath()).convertToFormat(QImage::Format_RGBA8888);
 
         if(texture.width() > MAX_TEXTURE_SIZE || texture.height() > MAX_TEXTURE_SIZE)
             qCritical() << QObject::tr("Texture is larger than") << MAX_TEXTURE_SIZE << "px";
@@ -457,7 +457,7 @@ MapChunk::MapChunk(World* mWorld, MapTile* tile, QFile& file, int x, int y) // F
         if(depthTextures[i]->isNull())
             continue;
 
-        QImage depthTex = depthTextures[i]->getImage();
+        QImage depthTex = depthTextures[i]->getImage();//QImage(depthTextures[i]->getPath()).convertToFormat(QImage::Format_RGBA8888);
 
         if(depthTex.width() > MAX_TEXTURE_SIZE || depthTex.height() > MAX_TEXTURE_SIZE)
             qCritical() << QObject::tr("Depth texture is larger than") << MAX_TEXTURE_SIZE << "px";
@@ -729,6 +729,13 @@ const float MapChunk::getHeightFromWorld(float x, float z)
 
 const float MapChunk::getMapData(const int& index) const
 {
+    if(index >= (TILE_WIDTH / CHUNKS) * (TILE_HEIGHT / CHUNKS))
+    {
+        qCritical() << QObject::tr("Trying to getMapData with index out of range:") << index;
+
+        return 0.0f;
+    }
+
     return mapData[index];
 }
 
@@ -746,13 +753,59 @@ const float MapChunk::getAlphaFromWorld(float x, float z, int layer)
     {
         float alpha = 0.0f;
 
-        for(int i = 0; i < MAX_TEXTURES - 1; ++i)
+        for(int i = 0; i < ALPHAMAPS; ++i)
             alpha += MathHelper::toFloat(alphaMapsData[i][index]) / 255.0f;
 
         return 1.0f - alpha;
     }
     else // layer - 1 cause we already started at 1 but index starts at 0
         return MathHelper::toFloat(alphaMapsData[layer - 1][index]) / 255.0f;;
+}
+
+const float MapChunk::getAlphaMapsData(const int& index, const int& layer) const
+{
+    if(index >= (TILE_WIDTH / CHUNKS) * (TILE_HEIGHT / CHUNKS))
+    {
+        qCritical() << QObject::tr("Trying to getAlphaMapsData with index out of range:") << index;
+
+        return 0.0f;
+    }
+
+    if(layer == 0)
+    {
+        float alpha = 0.0f;
+
+        for(int i = 0; i < ALPHAMAPS; ++i)
+            alpha += MathHelper::toFloat(alphaMapsData[i][index]) / 255.0f;
+
+        return 1.0f - alpha;
+    }
+    else // layer - 1 cause we already started at 1 but index starts at 0
+        return MathHelper::toFloat(alphaMapsData[layer - 1][index] / 255.0f);
+}
+
+const QColor MapChunk::getVertexShadingData(const int& index) const
+{
+    if(index + 3 >= (TILE_WIDTH / CHUNKS) * (TILE_HEIGHT / CHUNKS) * 4) // 4 channels
+    {
+        qCritical() << QObject::tr("Trying to getVertexShadingData with index out of range:") << index;
+
+        return QColor();
+    }
+
+    return QColor(MathHelper::toInt(vertexShadingData[index]), MathHelper::toInt(vertexShadingData[index + 1]), MathHelper::toInt(vertexShadingData[index + 2]), MathHelper::toInt(vertexShadingData[index + 3]));
+}
+
+const QColor MapChunk::getVertexLightingData(const int& index) const
+{
+    if(index + 3 >= (TILE_WIDTH / CHUNKS) * (TILE_HEIGHT / CHUNKS) * 4) // 4 channels
+    {
+        qCritical() << QObject::tr("Trying to getVertexLightingData with index out of range:") << index;
+
+        return QColor();
+    }
+
+    return QColor(MathHelper::toInt(vertexLightingData[index]), MathHelper::toInt(vertexLightingData[index + 1]), MathHelper::toInt(vertexLightingData[index + 2]), MathHelper::toInt(vertexLightingData[index + 3]));
 }
 
 const int MapChunk::chunkIndex() const
@@ -871,6 +924,7 @@ bool MapChunk::changeTerrain(float x, float z, float change)
         return changed;
 
     QList<QPair<float, QVector2D>> changing;
+    QVector<TerrainUndoData>       undo;
 
     int minX = horizToHMapSize(x - brush->OuterRadius());
     int maxX = horizToHMapSize(x + brush->OuterRadius());
@@ -946,6 +1000,7 @@ bool MapChunk::changeTerrain(float x, float z, float change)
                                 //mapData[index] = world->getTileAt(x, z)->getChunk(chunkX - 1, chunkY)->getHeight(TILE_WIDTH / CHUNKS - 1, Y) + 0.001f;
 
                             changing.append(qMakePair<float, QVector2D>(mapData[index], QVector2D(X, Y)));
+                            undo.append(TerrainUndoData(index, mapData[index] - changeFormula, QPoint(X, Y)));
 
                             changed = true;
                         }
@@ -972,22 +1027,7 @@ bool MapChunk::changeTerrain(float x, float z, float change)
 
             QVector2D position = QVector2D(chunkBaseX + changing.value(i).second.x() / MathHelper::toFloat(CHUNK_WIDTH) * CHUNKSIZE, chunkBaseY + changing.value(i).second.y() / MathHelper::toFloat(CHUNK_HEIGHT) * CHUNKSIZE);
 
-            bool avail = true;
-
-            for(int j = 0; j < world->getModifiedTerrain().count(); ++j)
-            {
-                QPair<QVector2D, float> pair = world->getModifiedTerrain().at(j);
-
-                if(pair.first == position)
-                {
-                    avail = false;
-
-                    break;
-                }
-            }
-
-            if(avail)
-                world->addModifiedTerrain(QPair<QVector2D, float>(position, changing.value(i).first));
+            world->addModifiedTerrain(QPair<QVector2D, TerrainUndoData>(position, undo.at(i)));
 
             terrainData->setHeight(changing.value(i).first, changing.value(i).second);
         }
@@ -1019,6 +1059,7 @@ bool MapChunk::flattenTerrain(float x, float z, float y, float change)
         return changed;
 
     QList<QPair<float, QVector2D>> changing;
+    QVector<TerrainUndoData>       undo;
 
     int minX = horizToHMapSize(x - brush->OuterRadius());
     int maxX = horizToHMapSize(x + brush->OuterRadius());
@@ -1083,9 +1124,12 @@ bool MapChunk::flattenTerrain(float x, float z, float y, float change)
                             if(MathHelper::isNaN(changeFormula))
                                 continue;
 
+                            float preVal = mapData[index];
+
                             mapData[index] = changeFormula;
 
                             changing.append(qMakePair<float, QVector2D>(mapData[index], QVector2D(X, Y)));
+                            undo.append(TerrainUndoData(index, preVal, QPoint(X, Y)));
 
                             changed = true;
                         }
@@ -1109,6 +1153,10 @@ bool MapChunk::flattenTerrain(float x, float z, float y, float change)
 
             if(changing.value(i).second.x() == 0)
                 verticalData.append(QPair<int, float>(changing.value(i).second.y(), changing.value(i).first));
+
+            QVector2D position = QVector2D(chunkBaseX + changing.value(i).second.x() / MathHelper::toFloat(CHUNK_WIDTH) * CHUNKSIZE, chunkBaseY + changing.value(i).second.y() / MathHelper::toFloat(CHUNK_HEIGHT) * CHUNKSIZE);
+
+            world->addModifiedTerrain(QPair<QVector2D, TerrainUndoData>(position, undo.at(i)));
 
             terrainData->setHeight(changing.value(i).first, changing.value(i).second);
         }
@@ -1140,6 +1188,7 @@ bool MapChunk::blurTerrain(float x, float z, float change)
         return changed;
 
     QList<QPair<float, QVector2D>> changing;
+    QVector<TerrainUndoData>       undo;
 
     int minX = horizToHMapSize(x - brush->OuterRadius());
     int maxX = horizToHMapSize(x + brush->OuterRadius());
@@ -1247,9 +1296,12 @@ bool MapChunk::blurTerrain(float x, float z, float change)
                             if(MathHelper::isNaN(changeFormula))
                                 continue;
 
+                            float preVal = mapData[index];
+
                             mapData[index] = changeFormula;
 
                             changing.append(qMakePair<float, QVector2D>(mapData[index], QVector2D(X, Y)));
+                            undo.append(TerrainUndoData(index, preVal, QPoint(X, Y)));
 
                             changed = true;
                         }
@@ -1273,6 +1325,10 @@ bool MapChunk::blurTerrain(float x, float z, float change)
 
             if(changing.value(i).second.x() == 0)
                 verticalData.append(QPair<int, float>(changing.value(i).second.y(), changing.value(i).first));
+
+            QVector2D position = QVector2D(chunkBaseX + changing.value(i).second.x() / MathHelper::toFloat(CHUNK_WIDTH) * CHUNKSIZE, chunkBaseY + changing.value(i).second.y() / MathHelper::toFloat(CHUNK_HEIGHT) * CHUNKSIZE);
+
+            world->addModifiedTerrain(QPair<QVector2D, TerrainUndoData>(position, undo.at(i)));
 
             terrainData->setHeight(changing.value(i).first, changing.value(i).second);
         }
@@ -1304,6 +1360,7 @@ bool MapChunk::uniformTerrain(float x, float z, float height)
         return changed;
 
     QList<QPair<float, QVector2D>> changing;
+    QVector<TerrainUndoData>       undo;
 
     int minX = horizToHMapSize(x - brush->OuterRadius());
     int maxX = horizToHMapSize(x + brush->OuterRadius());
@@ -1341,9 +1398,12 @@ bool MapChunk::uniformTerrain(float x, float z, float height)
                             if(mapData[index] == height)
                                 continue;
 
+                            float changeFormula = mapData[index];
+
                             mapData[index] = height;
 
                             changing.append(qMakePair<float, QVector2D>(mapData[index], QVector2D(X, Y)));
+                            undo.append(TerrainUndoData(index, changeFormula, QPoint(X, Y)));
 
                             changed = true;
                         }
@@ -1358,7 +1418,13 @@ bool MapChunk::uniformTerrain(float x, float z, float height)
         terrainData->bind();
 
         for(int i = 0; i < changing.count(); ++i)
+        {
+            QVector2D position = QVector2D(chunkBaseX + changing.value(i).second.x() / MathHelper::toFloat(CHUNK_WIDTH) * CHUNKSIZE, chunkBaseY + changing.value(i).second.y() / MathHelper::toFloat(CHUNK_HEIGHT) * CHUNKSIZE);
+
+            world->addModifiedTerrain(QPair<QVector2D, TerrainUndoData>(position, undo.at(i)));
+
             terrainData->setHeight(changing.value(i).first, changing.value(i).second);
+        }
 
         chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
     }
@@ -1420,7 +1486,7 @@ bool MapChunk::paintTerrain(float x, float z, float flow, TexturePtr texture)
 
                 if(!textures[i]->isNull())
                 {
-                    QImage _texture = textures[i]->getImage();
+                    QImage _texture = QImage(textures[i]->getPath()).convertToFormat(QImage::Format_RGBA8888);
 
                     if(_texture.width() > MAX_TEXTURE_SIZE || _texture.height() > MAX_TEXTURE_SIZE)
                         qCritical() << QObject::tr("Texture is larger than") << MAX_TEXTURE_SIZE << "px";
@@ -1452,7 +1518,7 @@ bool MapChunk::paintTerrain(float x, float z, float flow, TexturePtr texture)
 
                 if(!depthTexture->isNull())
                 {
-                    QImage _depthTexture = depthTexture->getImage();
+                    QImage _depthTexture = QImage(depthTexture->getPath()).convertToFormat(QImage::Format_RGBA8888);
 
                     if(_depthTexture.width() > MAX_TEXTURE_SIZE || _depthTexture.height() > MAX_TEXTURE_SIZE)
                         qCritical() << QObject::tr("Depth Texture is larger than") << MAX_TEXTURE_SIZE << "px";
@@ -1488,6 +1554,8 @@ bool MapChunk::paintTerrain(float x, float z, float flow, TexturePtr texture)
 
     QList<QPair<unsigned char, QVector2D>>          changing;
     QMultiMap<int, QPair<unsigned char, QVector2D>> changing2;
+
+    QVector<TextureUndoData> undo;
 
     int minX = horizToHMapSize(x - brush->OuterRadius());
     int maxX = horizToHMapSize(x + brush->OuterRadius());
@@ -1532,6 +1600,13 @@ bool MapChunk::paintTerrain(float x, float z, float flow, TexturePtr texture)
                                 case Brush::TexturingType::Solid:
                                 default:
                                     {
+                                        QVector<float> values;
+
+                                        for(int i = 0; i < ALPHAMAPS; ++i)
+                                            values.append(MathHelper::toFloat(alphaMapsData[i][index]) / 255.0f);
+
+                                        undo.append(TextureUndoData(index, values, QPoint(X, Y)));
+
                                         if(textureIndex > 0)
                                         {
                                             --textureIndex;
@@ -1598,6 +1673,13 @@ bool MapChunk::paintTerrain(float x, float z, float flow, TexturePtr texture)
 
             chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Alphamap1 + i, alphaMaps[i], terrainSampler, uniformName.toLatin1());
         }
+
+        for(int i = 0; i < undo.count(); ++i)
+        {
+            QVector2D position = QVector2D(chunkBaseX + undo.at(i).position.x() / MathHelper::toFloat(CHUNK_WIDTH) * CHUNKSIZE, chunkBaseY + undo.at(i).position.y() / MathHelper::toFloat(CHUNK_HEIGHT) * CHUNKSIZE);
+
+            world->addModifiedTextures(QPair<QVector2D, TextureUndoData>(position, undo.at(i)));
+        }
     }
 
     return changed;
@@ -1618,6 +1700,7 @@ bool MapChunk::paintVertexShading(float x, float z, float flow, QColor& color)
         return changed;
 
     QList<QPair<QVector<unsigned char>, QVector2D>> changing;
+    QVector<VertexUndoData>                         undo;
 
     int minX = horizToHMapSize(x - brush->OuterRadius());
     int maxX = horizToHMapSize(x + brush->OuterRadius());
@@ -1675,6 +1758,7 @@ bool MapChunk::paintVertexShading(float x, float z, float flow, QColor& color)
                                         dataContainer.append(vertexShadingData[index + 3]); // A
 
                                         changing.append(qMakePair<QVector<unsigned char>, QVector2D>(dataContainer, QVector2D(X, Y)));
+                                        undo.append(VertexUndoData(index, dataContainer.at(0), dataContainer.at(1), dataContainer.at(2), dataContainer.at(3), QPoint(X, Y)));
                                     }
                                     break;
                             }
@@ -1699,6 +1783,10 @@ bool MapChunk::paintVertexShading(float x, float z, float flow, QColor& color)
                 data[j] = changing.value(i).first.at(j);
 
             vertexShadingMap->setVertexShade(data, changing.value(i).second);
+
+            QVector2D position = QVector2D(chunkBaseX + changing.at(i).second.x() / MathHelper::toFloat(CHUNK_WIDTH) * CHUNKSIZE, chunkBaseY + changing.at(i).second.y() / MathHelper::toFloat(CHUNK_HEIGHT) * CHUNKSIZE);
+
+            world->addModifiedVertex(QPair<QVector2D, VertexUndoData>(position, undo.at(i)));
         }
 
         chunkMaterial->setTextureUnitConfiguration(ShaderUnits::VertexShading, vertexShadingMap, terrainSampler, "vertexShading");
@@ -1722,6 +1810,7 @@ bool MapChunk::paintVertexLighting(float x, float z, float flow, QColor& lightCo
         return changed;
 
     QList<QPair<QVector<unsigned char>, QVector2D>> changing;
+    QVector<VertexUndoData>                         undo;
 
     int minX = horizToHMapSize(x - brush->OuterRadius());
     int maxX = horizToHMapSize(x + brush->OuterRadius());
@@ -1779,6 +1868,7 @@ bool MapChunk::paintVertexLighting(float x, float z, float flow, QColor& lightCo
                                         dataContainer.append(vertexLightingData[index + 3]); // A
 
                                         changing.append(qMakePair<QVector<unsigned char>, QVector2D>(dataContainer, QVector2D(X, Y)));
+                                        undo.append(VertexUndoData(index, dataContainer.at(0), dataContainer.at(1), dataContainer.at(2), dataContainer.at(3), QPoint(X, Y)));
                                     }
                                     break;
                             }
@@ -1803,6 +1893,10 @@ bool MapChunk::paintVertexLighting(float x, float z, float flow, QColor& lightCo
                 data[j] = changing.value(i).first.at(j);
 
             vertexLightingMap->setVertexShade(data, changing.value(i).second);
+
+            QVector2D position = QVector2D(chunkBaseX + changing.at(i).second.x() / MathHelper::toFloat(CHUNK_WIDTH) * CHUNKSIZE, chunkBaseY + changing.at(i).second.y() / MathHelper::toFloat(CHUNK_HEIGHT) * CHUNKSIZE);
+
+            world->addModifiedVertex(QPair<QVector2D, VertexUndoData>(position, undo.at(i)));
         }
 
         chunkMaterial->setTextureUnitConfiguration(ShaderUnits::VertexLighting, vertexLightingMap, terrainSampler, "vertexLighting");
@@ -2099,6 +2193,9 @@ void MapChunk::moveAlphaMap(int index, bool up)
                 TexturePtr temp      = textures[index - 1];
                 TexturePtr tempDepth = depthTextures[index - 1];
 
+                qDebug() << textures[index - 1]->getPath() << "going bot" << chunkIndex();
+                qDebug() << textures[index]->getPath() << "going top";
+
                 textures[index - 1] = textures[index];
                 textures[index]     = temp;
 
@@ -2112,7 +2209,7 @@ void MapChunk::moveAlphaMap(int index, bool up)
 
                 if(!textures[index - 1]->isNull())
                 {
-                    QImage texture = textures[index - 1]->getImage();
+                    QImage texture = QImage(textures[index - 1]->getPath()).convertToFormat(QImage::Format_RGBA8888);
 
                     if(texture.width() > MAX_TEXTURE_SIZE || texture.height() > MAX_TEXTURE_SIZE)
                         qCritical() << QObject::tr("Texture is larger than") << MAX_TEXTURE_SIZE << "px";
@@ -2137,7 +2234,7 @@ void MapChunk::moveAlphaMap(int index, bool up)
 
                 if(!depthTextures[index - 1]->isNull())
                 {
-                    QImage depthTexture = depthTextures[index - 1]->getImage();
+                    QImage depthTexture = QImage(depthTextures[index - 1]->getPath()).convertToFormat(QImage::Format_RGBA8888);
 
                     if(depthTexture.width() > MAX_TEXTURE_SIZE || depthTexture.height() > MAX_TEXTURE_SIZE)
                         qCritical() << QObject::tr("Depth Texture is larger than") << MAX_TEXTURE_SIZE << "px";
@@ -2177,7 +2274,7 @@ void MapChunk::moveAlphaMap(int index, bool up)
 
                 if(!textures[index + 1]->isNull())
                 {
-                    QImage texture = textures[index + 1]->getImage();
+                    QImage texture = QImage(textures[index + 1]->getPath()).convertToFormat(QImage::Format_RGBA8888);
 
                     if(texture.width() > MAX_TEXTURE_SIZE || texture.height() > MAX_TEXTURE_SIZE)
                         qCritical() << QObject::tr("Texture is larger than") << MAX_TEXTURE_SIZE << "px";
@@ -2202,7 +2299,7 @@ void MapChunk::moveAlphaMap(int index, bool up)
 
                 if(!depthTextures[index + 1]->isNull())
                 {
-                    QImage depthTexture = depthTextures[index + 1]->getImage();
+                    QImage depthTexture = QImage(depthTextures[index + 1]->getPath()).convertToFormat(QImage::Format_RGBA8888);
 
                     if(depthTexture.width() > MAX_TEXTURE_SIZE || depthTexture.height() > MAX_TEXTURE_SIZE)
                         qCritical() << QObject::tr("Depth Texture is larger than") << MAX_TEXTURE_SIZE << "px";
@@ -2232,7 +2329,7 @@ void MapChunk::moveAlphaMap(int index, bool up)
 
     if(!textures[index]->isNull())
     {
-        QImage texture = textures[index]->getImage();
+        QImage texture = QImage(textures[index]->getPath()).convertToFormat(QImage::Format_RGBA8888);
 
         if(texture.width() > MAX_TEXTURE_SIZE || texture.height() > MAX_TEXTURE_SIZE)
             qCritical() << QObject::tr("Texture is larger than") << MAX_TEXTURE_SIZE << "px";
@@ -2257,7 +2354,7 @@ void MapChunk::moveAlphaMap(int index, bool up)
 
     if(!depthTextures[index]->isNull())
     {
-        QImage depthTexture = depthTextures[index]->getImage();
+        QImage depthTexture = QImage(depthTextures[index]->getPath()).convertToFormat(QImage::Format_RGBA8888);
 
         if(depthTexture.width() > MAX_TEXTURE_SIZE || depthTexture.height() > MAX_TEXTURE_SIZE)
             qCritical() << QObject::tr("Depth Texture is larger than") << MAX_TEXTURE_SIZE << "px";
@@ -2368,6 +2465,73 @@ void MapChunk::setSelected(bool on)
     selected = on;
 }
 
+void MapChunk::setHeight(int index, float height, QPoint textureCoords)
+{
+    if(index >= (TILE_WIDTH / CHUNKS) * (TILE_HEIGHT / CHUNKS))
+        return;
+
+    mapData[index] = height;
+
+    terrainData->bind();
+    terrainData->setHeight(height, QVector2D(textureCoords.x(), textureCoords.y()));
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
+}
+
+void MapChunk::setAlphas(int index, QVector<float> alphas, QPoint textureCoords)
+{
+    if(index >= (TILE_WIDTH / CHUNKS) * (TILE_HEIGHT / CHUNKS))
+        return;
+
+    for(int i = 0; i < alphas.count(); ++i)
+    {
+        alphaMapsData[i][index] = MathHelper::toUChar(alphas.at(i) * 255.0f);
+
+        alphaMaps[i]->bind();
+        alphaMaps[i]->setAlpha(alphaMapsData[i][index], QVector2D(textureCoords.x(), textureCoords.y()));
+
+        QString uniformName = QString("layer%1Alpha").arg(i + 1);
+
+        chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Alphamap1 + i, alphaMaps[i], terrainSampler, uniformName.toLatin1());
+    }
+}
+
+void MapChunk::setVertexShading(int index, QColor color, QPoint textureCoords)
+{
+    if(index + 3 >= (TILE_WIDTH / CHUNKS) * (TILE_HEIGHT / CHUNKS) * 4) // 4 channels
+        return;
+
+    unsigned char data[4];
+
+    vertexShadingData[index]     = data[0] = MathHelper::toUChar(color.red());
+    vertexShadingData[index + 1] = data[1] = MathHelper::toUChar(color.green());
+    vertexShadingData[index + 2] = data[2] = MathHelper::toUChar(color.blue());
+    vertexShadingData[index + 3] = data[3] = MathHelper::toUChar(color.alpha());
+
+    vertexShadingMap->bind();
+    vertexShadingMap->setVertexShade(data, QVector2D(textureCoords.x(), textureCoords.y()));
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::VertexShading, vertexShadingMap, terrainSampler, "vertexShading");
+}
+
+void MapChunk::setVertexLighting(int index, QColor color, QPoint textureCoords)
+{
+    if(index + 3 >= (TILE_WIDTH / CHUNKS) * (TILE_HEIGHT / CHUNKS) * 4) // 4 channels
+        return;
+
+    unsigned char data[4];
+
+    vertexLightingData[index]     = data[0] = MathHelper::toUChar(color.red());
+    vertexLightingData[index + 1] = data[1] = MathHelper::toUChar(color.green());
+    vertexLightingData[index + 2] = data[2] = MathHelper::toUChar(color.blue());
+    vertexLightingData[index + 3] = data[3] = MathHelper::toUChar(color.alpha());
+
+    vertexLightingMap->bind();
+    vertexLightingMap->setVertexShade(data, QVector2D(textureCoords.x(), textureCoords.y()));
+
+    chunkMaterial->setTextureUnitConfiguration(ShaderUnits::VertexShading, vertexShadingMap, terrainSampler, "vertexLighting");
+}
+
 void MapChunk::setHeightFromWorld(QVector2D position, float height)
 {
     int X = horizToHMapSize(position.x()) % TILE_WIDTH;
@@ -2381,9 +2545,32 @@ void MapChunk::setHeightFromWorld(QVector2D position, float height)
     mapData[index] = height;
 
     terrainData->bind();
-    terrainData->setHeight(height, position);
+    terrainData->setHeight(height, QVector2D(X, Y));
 
     chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Heightmap, terrainData, terrainSampler, QByteArrayLiteral("heightMap"));
+}
+
+void MapChunk::setAlphaFromWorld(QVector2D position, QVector<float> alphas)
+{
+    int X = horizToHMapSize(position.x()) % TILE_WIDTH;
+    int Y = horizToHMapSize(position.y()) % TILE_HEIGHT;
+
+    X -= chunkX * (TILE_WIDTH / CHUNKS);
+    Y -= chunkY * (TILE_HEIGHT / CHUNKS);
+
+    int index = (Y * TILE_WIDTH / CHUNKS) + X;
+
+    for(int i = 0; i < alphas.count(); ++i)
+    {
+        alphaMapsData[i][index] = MathHelper::toUChar(alphas.at(i) * 255.0f);
+
+        alphaMaps[i]->bind();
+        alphaMaps[i]->setAlpha(alphaMapsData[i][index], QVector2D(X, Y));
+
+        QString uniformName = QString("layer%1Alpha").arg(i + 1);
+
+        chunkMaterial->setTextureUnitConfiguration(ShaderUnits::Alphamap1 + i, alphaMaps[i], terrainSampler, uniformName.toLatin1());
+    }
 }
 
 void MapChunk::setHeightmap(float* data)

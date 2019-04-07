@@ -98,6 +98,7 @@ MainWindow::MainWindow(QWidget* parent)
 , undoRedoManager(new UndoRedoManager(this))
 , world(NULL)
 , mapView(NULL)
+, mapExplorer(NULL)
 {
     ui->setupUi(this);
 
@@ -209,6 +210,8 @@ MainWindow::~MainWindow()
 
     deleteObject(startUp);
 
+    delete mapExplorer;
+
     if(world)
         world->deleteMe();
 
@@ -314,6 +317,7 @@ void MainWindow::openWorld(ProjectFileData projectData, bool** mapCoords)
     connect(ui->action_Map_Generator,  SIGNAL(triggered()),     this,    SLOT(showMapGeneration()));
     connect(ui->action_Heightmap,      SIGNAL(triggered()),     this,    SLOT(showHeightmap()));
     connect(ui->action_Detail_Doodads, SIGNAL(triggered()),     this,    SLOT(showDetailDoodads()));
+    connect(ui->action_Map_Explorer,   SIGNAL(triggered()),     this,    SLOT(showMapExplorer()));
     connect(ui->action_Reset_camera,   SIGNAL(triggered()),     mapView, SLOT(resetCamera()));
     connect(ui->action_Lock_camera,    SIGNAL(triggered(bool)), mapView, SLOT(lockCamera(bool)));
 
@@ -790,14 +794,28 @@ void MainWindow::setFullscreen(bool checked)
     {
         case true:
             {
-                nonFullScreenState = windowState();
+                /*nonFullScreenState = windowState();
 
-                setWindowState(Qt::WindowFullScreen);
+                setWindowState(Qt::WindowFullScreen);*/
+
+                /// Qt 5.4 fix - workaround
+                hide();
+                    setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
+                    setWindowState(windowState() | Qt::WindowFullScreen);
+                    setFixedSize(windowHandle()->screen()->size() - QSize(0, 1));
+                show();
             }
             break;
 
         case false:
-            setWindowState(nonFullScreenState);
+            {
+                hide();
+                    setWindowFlags(windowFlags() & ~Qt::WindowStaysOnTopHint);
+                    setWindowState(windowState() & ~Qt::WindowFullScreen);
+                    setFixedSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+                show();
+            }
+            //setWindowState(nonFullScreenState);
             break;
     }
 }
@@ -858,6 +876,19 @@ void MainWindow::showHeightmap()
 void MainWindow::showDetailDoodads()
 {
     addDockWindow(tr("Detail Doodads"), detailDoodadsW);
+}
+
+void MainWindow::showMapExplorer()
+{
+    if(mapExplorer)
+    {
+        mapExplorer->show();
+
+        return;
+    }
+
+    mapExplorer = new MapExplorer(world, mapView);
+    mapExplorer->show();
 }
 
 void MainWindow::addDockWindow(const QString& title, QWidget* widget, Qt::DockWidgetArea area)
